@@ -3,7 +3,9 @@ import 'package:omni_ai/features/system_core/models/system_core_process_state.da
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class SystemCoreTopBar extends StatelessWidget {
-  const SystemCoreTopBar({super.key});
+  const SystemCoreTopBar({required this.onHistoryPressed, super.key});
+
+  final VoidCallback onHistoryPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -35,13 +37,26 @@ class SystemCoreTopBar extends StatelessWidget {
             ),
           ],
         ),
-        const Text(
-          'SYS.01',
-          style: TextStyle(
-            color: SystemCorePalette.muted,
-            fontSize: 11,
-            letterSpacing: 1.5,
-          ),
+        Row(
+          children: [
+            const Text(
+              'SYS.01',
+              style: TextStyle(
+                color: SystemCorePalette.muted,
+                fontSize: 11,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              tooltip: 'Run history',
+              onPressed: onHistoryPressed,
+              icon: const Icon(Icons.history, size: 18),
+              color: SystemCorePalette.muted,
+              constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+              padding: EdgeInsets.zero,
+            ),
+          ],
         ),
       ],
     );

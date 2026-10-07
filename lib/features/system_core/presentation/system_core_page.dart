@@ -1,15 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:omni_ai/features/run_history/data/in_memory_run_history_repository.dart';
+import 'package:omni_ai/features/run_history/presentation/run_history_page.dart';
+import 'package:omni_ai/features/run_history/repositories/run_history_repository.dart';
+import 'package:omni_ai/features/run_history/services/run_history_recorder.dart';
 import 'package:omni_ai/features/system_core/models/system_core_process_state.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_widgets.dart';
 import 'package:omni_ai/features/system_core/services/system_core_process_service.dart';
 
 class SystemCorePage extends StatefulWidget {
-  const SystemCorePage({super.key, this.service});
+  const SystemCorePage({super.key, this.service, this.historyRepository});
 
   final SystemCoreProcessService? service;
+  final RunHistoryRepository? historyRepository;
 
   @override
   State<SystemCorePage> createState() => _SystemCorePageState();
@@ -18,6 +23,9 @@ class SystemCorePage extends StatefulWidget {
 class _SystemCorePageState extends State<SystemCorePage> {
   late final SystemCoreProcessService _service;
   late final bool _ownsService;
+  late final RunHistoryRepository _historyRepository;
+  late final bool _ownsHistoryRepository;
+  late final RunHistoryRecorder _historyRecorder;
   late final StreamSubscription<SystemCoreProcessState> _subscription;
   late SystemCoreProcessState _process;
 
@@ -26,6 +34,13 @@ class _SystemCorePageState extends State<SystemCorePage> {
     super.initState();
     _ownsService = widget.service == null;
     _service = widget.service ?? SystemCoreProcessService();
+    _ownsHistoryRepository = widget.historyRepository == null;
+    _historyRepository =
+        widget.historyRepository ?? InMemoryRunHistoryRepository();
+    _historyRecorder = RunHistoryRecorder(
+      processStates: _service.states,
+      repository: _historyRepository,
+    );
     _process = _service.state;
     _subscription = _service.states.listen((process) {
       if (mounted) setState(() => _process = process);
@@ -40,11 +55,25 @@ class _SystemCorePageState extends State<SystemCorePage> {
     }
   }
 
+  void _openRunHistory() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => RunHistoryPage(repository: _historyRepository),
+      ),
+    );
+  }
+
   @override
   void dispose() {
-    unawaited(_subscription.cancel());
-    if (_ownsService) unawaited(_service.dispose());
+    unawaited(_disposeResources());
     super.dispose();
+  }
+
+  Future<void> _disposeResources() async {
+    await _subscription.cancel();
+    await _historyRecorder.dispose();
+    if (_ownsService) await _service.dispose();
+    if (_ownsHistoryRepository) await _historyRepository.dispose();
   }
 
   @override
@@ -59,7 +88,7 @@ class _SystemCorePageState extends State<SystemCorePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SystemCoreTopBar(),
+                  SystemCoreTopBar(onHistoryPressed: _openRunHistory),
                   const SizedBox(height: 48),
                   const _Eyebrow('AUTONOMOUS INTELLIGENCE PLATFORM'),
                   const SizedBox(height: 14),
