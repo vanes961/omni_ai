@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/features/run_history/data/in_memory_run_history_repository.dart';
+import 'package:omni_ai/features/run_history/data/shared_preferences_run_history_repository.dart';
 import 'package:omni_ai/features/run_history/models/process_run_record.dart';
 import 'package:omni_ai/features/run_history/services/run_history_recorder.dart';
 import 'package:omni_ai/features/system_core/models/system_core_process_state.dart';
@@ -173,6 +175,149 @@ void main() {
       expect(snapshots[3].map((record) => record.id), ['earlier']);
     });
   });
+
+  group('SharedPreferencesRunHistoryRepository', () {
+    test(
+      'persists and restores run records with their complete log data',
+      () async {
+        final store = _FakeRunHistoryStringStore();
+        final repository = SharedPreferencesRunHistoryRepository(store: store);
+        final record = ProcessRunRecord(
+          id: 'restored-run',
+          startedAt: DateTime(2026, 10, 8, 12, 30),
+          finishedAt: DateTime(2026, 10, 8, 12, 31),
+          status: SystemCoreProcessStatus.failed,
+          errorMessage: 'worker stopped',
+          logEntries: [
+            SystemCoreLogEntry(
+              timestamp: DateTime(2026, 10, 8, 12, 30, 15),
+              message: 'WORKER FAILED',
+              level: SystemCoreLogLevel.error,
+            ),
+          ],
+        );
+        addTearDown(repository.dispose);
+
+        await repository.save(record);
+        final restoredRepository = SharedPreferencesRunHistoryRepository(
+          store: store,
+        );
+        addTearDown(restoredRepository.dispose);
+        final restored = (await restoredRepository.getAll()).single;
+
+        expect(restored.id, record.id);
+        expect(restored.startedAt, record.startedAt.toUtc());
+        expect(restored.finishedAt, record.finishedAt!.toUtc());
+        expect(restored.status, record.status);
+        expect(restored.errorMessage, record.errorMessage);
+        expect(
+          restored.logEntries.single.timestamp,
+          record.logEntries.single.timestamp.toUtc(),
+        );
+        expect(restored.logEntries.single.message, 'WORKER FAILED');
+        expect(restored.logEntries.single.level, SystemCoreLogLevel.error);
+      },
+    );
+
+    test('keeps only the newest records up to the retention limit', () async {
+      final store = _FakeRunHistoryStringStore();
+      final repository = SharedPreferencesRunHistoryRepository(
+        store: store,
+        maxRecords: 3,
+      );
+      addTearDown(repository.dispose);
+
+      for (var index = 0; index < 5; index++) {
+        await repository.save(
+          _record('run-$index', DateTime(2026, 10, 8, 12, index)),
+        );
+      }
+
+      expect((await repository.getAll()).map((record) => record.id), [
+        'run-4',
+        'run-3',
+        'run-2',
+      ]);
+    });
+
+    test(
+      'removes malformed data and skips invalid records without losing valid ones',
+      () async {
+        final store = _FakeRunHistoryStringStore();
+        final repository = SharedPreferencesRunHistoryRepository(store: store);
+        addTearDown(repository.dispose);
+
+        await store.write(
+          SharedPreferencesRunHistoryRepository.storageKey,
+          '{bad',
+        );
+        expect(await repository.getAll(), isEmpty);
+        expect(
+          await store.read(SharedPreferencesRunHistoryRepository.storageKey),
+          isNull,
+        );
+
+        await store.write(
+          SharedPreferencesRunHistoryRepository.storageKey,
+          jsonEncode({
+            'version': 1,
+            'records': [
+              _record('valid', DateTime(2026, 10, 8)).toJson(),
+              {'id': 'invalid'},
+            ],
+          }),
+        );
+        expect((await repository.getAll()).map((record) => record.id), [
+          'valid',
+        ]);
+        expect(
+          jsonDecode(
+            (await store.read(
+              SharedPreferencesRunHistoryRepository.storageKey,
+            ))!,
+          )['records'],
+          hasLength(1),
+        );
+      },
+    );
+
+    test('preserves data written with an unsupported format version', () async {
+      final store = _FakeRunHistoryStringStore();
+      final repository = SharedPreferencesRunHistoryRepository(store: store);
+      addTearDown(repository.dispose);
+      const encoded = '{"version":2,"records":[]}';
+      await store.write(
+        SharedPreferencesRunHistoryRepository.storageKey,
+        encoded,
+      );
+
+      await expectLater(repository.getAll(), throwsFormatException);
+
+      expect(
+        await store.read(SharedPreferencesRunHistoryRepository.storageKey),
+        encoded,
+      );
+    });
+
+    test(
+      'deletes persistent records and publishes updated snapshots',
+      () async {
+        final store = _FakeRunHistoryStringStore();
+        final repository = SharedPreferencesRunHistoryRepository(store: store);
+        addTearDown(repository.dispose);
+        final snapshots = <List<ProcessRunRecord>>[];
+        final subscription = repository.watch().listen(snapshots.add);
+        addTearDown(subscription.cancel);
+
+        await repository.save(_record('to-delete', DateTime(2026, 10, 8)));
+        await repository.delete('to-delete');
+        await Future<void>.delayed(Duration.zero);
+
+        expect(await repository.getAll(), isEmpty);
+        expect(snapshots.last, isEmpty);
+      },
+    );
+  });
 }
 
 ProcessRunRecord _record(String id, DateTime startedAt) {
@@ -182,4 +327,21 @@ ProcessRunRecord _record(String id, DateTime startedAt) {
     status: SystemCoreProcessStatus.completed,
     logEntries: const [],
   );
+}
+
+class _FakeRunHistoryStringStore implements RunHistoryStringStore {
+  final Map<String, String> _values = {};
+
+  @override
+  Future<String?> read(String key) async => _values[key];
+
+  @override
+  Future<void> write(String key, String value) async {
+    _values[key] = value;
+  }
+
+  @override
+  Future<void> remove(String key) async {
+    _values.remove(key);
+  }
 }

@@ -7,14 +7,18 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:omni_ai/main.dart';
+import 'package:omni_ai/features/run_history/data/in_memory_run_history_repository.dart';
+import 'package:omni_ai/features/system_core/presentation/system_core_page.dart';
 
 void main() {
   testWidgets('system core page starts the auto-process', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const MyApp());
+    final historyRepository = InMemoryRunHistoryRepository();
+    addTearDown(historyRepository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(home: SystemCorePage(historyRepository: historyRepository)),
+    );
 
     expect(find.text('// OMNI_AI : SYS_CORE'), findsOneWidget);
     expect(find.text('STATUS: ONLINE'), findsOneWidget);

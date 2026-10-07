@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:omni_ai/features/run_history/data/in_memory_run_history_repository.dart';
+import 'package:omni_ai/features/run_history/data/shared_preferences_run_history_repository.dart';
 import 'package:omni_ai/features/run_history/presentation/run_history_page.dart';
 import 'package:omni_ai/features/run_history/repositories/run_history_repository.dart';
 import 'package:omni_ai/features/run_history/services/run_history_recorder.dart';
@@ -36,7 +36,7 @@ class _SystemCorePageState extends State<SystemCorePage> {
     _service = widget.service ?? SystemCoreProcessService();
     _ownsHistoryRepository = widget.historyRepository == null;
     _historyRepository =
-        widget.historyRepository ?? InMemoryRunHistoryRepository();
+        widget.historyRepository ?? SharedPreferencesRunHistoryRepository();
     _historyRecorder = RunHistoryRecorder(
       processStates: _service.states,
       repository: _historyRepository,

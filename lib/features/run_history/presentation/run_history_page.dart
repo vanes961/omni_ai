@@ -212,16 +212,20 @@ Color _logLevelColor(SystemCoreLogLevel level) => switch (level) {
   SystemCoreLogLevel.error => SystemCorePalette.red,
 };
 
-String _formatDateTime(DateTime dateTime) =>
-    '${dateTime.year.toString().padLeft(4, '0')}-'
-    '${dateTime.month.toString().padLeft(2, '0')}-'
-    '${dateTime.day.toString().padLeft(2, '0')}  '
-    '${_formatTime(dateTime)}';
+String _formatDateTime(DateTime dateTime) {
+  final localDateTime = dateTime.toLocal();
+  return '${localDateTime.year.toString().padLeft(4, '0')}-'
+      '${localDateTime.month.toString().padLeft(2, '0')}-'
+      '${localDateTime.day.toString().padLeft(2, '0')}  '
+      '${_formatTime(localDateTime)}';
+}
 
-String _formatTime(DateTime dateTime) =>
-    '${dateTime.hour.toString().padLeft(2, '0')}:'
-    '${dateTime.minute.toString().padLeft(2, '0')}:'
-    '${dateTime.second.toString().padLeft(2, '0')}';
+String _formatTime(DateTime dateTime) {
+  final localDateTime = dateTime.toLocal();
+  return '${localDateTime.hour.toString().padLeft(2, '0')}:'
+      '${localDateTime.minute.toString().padLeft(2, '0')}:'
+      '${localDateTime.second.toString().padLeft(2, '0')}';
+}
 
 String _formatDuration(Duration duration) {
   final minutes = duration.inMinutes.toString().padLeft(2, '0');

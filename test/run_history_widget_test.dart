@@ -8,7 +8,11 @@ import 'package:omni_ai/features/system_core/presentation/system_core_page.dart'
 
 void main() {
   testWidgets('opens run history from the system core page', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: SystemCorePage()));
+    final repository = InMemoryRunHistoryRepository();
+    addTearDown(repository.dispose);
+    await tester.pumpWidget(
+      MaterialApp(home: SystemCorePage(historyRepository: repository)),
+    );
 
     await tester.tap(find.byTooltip('Run history'));
     await tester.pumpAndSettle();

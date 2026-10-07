@@ -19,6 +19,46 @@ class ProcessRunRecord {
 
   Duration? get duration => finishedAt?.difference(startedAt);
 
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'startedAt': startedAt.toUtc().toIso8601String(),
+    'finishedAt': finishedAt?.toUtc().toIso8601String(),
+    'status': status.name,
+    'errorMessage': errorMessage,
+    'logEntries': [
+      for (final entry in logEntries)
+        {
+          'timestamp': entry.timestamp.toUtc().toIso8601String(),
+          'message': entry.message,
+          'level': entry.level.name,
+        },
+    ],
+  };
+
+  factory ProcessRunRecord.fromJson(Map<String, Object?> json) {
+    final rawEntries = json['logEntries'];
+    if (rawEntries is! List) {
+      throw const FormatException('Run log entries must be a list.');
+    }
+
+    final rawFinishedAt = json['finishedAt'];
+    final rawErrorMessage = json['errorMessage'];
+
+    return ProcessRunRecord(
+      id: json['id'] as String,
+      startedAt: DateTime.parse(json['startedAt'] as String),
+      finishedAt: rawFinishedAt == null
+          ? null
+          : DateTime.parse(rawFinishedAt as String),
+      status: SystemCoreProcessStatus.values.byName(json['status'] as String),
+      errorMessage: rawErrorMessage as String?,
+      logEntries: [
+        for (final rawEntry in rawEntries)
+          _logEntryFromJson(Map<String, Object?>.from(rawEntry as Map)),
+      ],
+    );
+  }
+
   ProcessRunRecord copyWith({
     DateTime? finishedAt,
     SystemCoreProcessStatus? status,
@@ -35,4 +75,12 @@ class ProcessRunRecord {
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
   }
+}
+
+SystemCoreLogEntry _logEntryFromJson(Map<String, Object?> json) {
+  return SystemCoreLogEntry(
+    timestamp: DateTime.parse(json['timestamp'] as String),
+    message: json['message'] as String,
+    level: SystemCoreLogLevel.values.byName(json['level'] as String),
+  );
 }
