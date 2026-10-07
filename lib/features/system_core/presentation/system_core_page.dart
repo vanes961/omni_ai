@@ -1,20 +1,50 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:omni_ai/features/system_core/models/system_core_process_state.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_widgets.dart';
+import 'package:omni_ai/features/system_core/services/system_core_process_service.dart';
 
 class SystemCorePage extends StatefulWidget {
-  const SystemCorePage({super.key});
+  const SystemCorePage({super.key, this.service});
+
+  final SystemCoreProcessService? service;
 
   @override
   State<SystemCorePage> createState() => _SystemCorePageState();
 }
 
 class _SystemCorePageState extends State<SystemCorePage> {
-  SystemCoreProcessState _process = SystemCoreProcessState.initial();
+  late final SystemCoreProcessService _service;
+  late final bool _ownsService;
+  late final StreamSubscription<SystemCoreProcessState> _subscription;
+  late SystemCoreProcessState _process;
 
-  void _startProcess() {
-    setState(() => _process = _process.start());
+  @override
+  void initState() {
+    super.initState();
+    _ownsService = widget.service == null;
+    _service = widget.service ?? SystemCoreProcessService();
+    _process = _service.state;
+    _subscription = _service.states.listen((process) {
+      if (mounted) setState(() => _process = process);
+    });
+  }
+
+  void _handleProcessAction() {
+    if (_process.isActive) {
+      _service.cancel();
+    } else {
+      unawaited(_service.start());
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_subscription.cancel());
+    if (_ownsService) unawaited(_service.dispose());
+    super.dispose();
   }
 
   @override
@@ -58,7 +88,7 @@ class _SystemCorePageState extends State<SystemCorePage> {
                   const SizedBox(height: 26),
                   SystemCoreRunButton(
                     status: _process.status,
-                    onPressed: _startProcess,
+                    onPressed: _handleProcessAction,
                   ),
                   const SizedBox(height: 18),
                   const Center(

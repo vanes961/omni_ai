@@ -23,8 +23,10 @@ void main() {
 
     await tester.tap(find.text('ЗАПУСТИТЬ АВТО-ПРОЦЕСС'));
     await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
 
-    expect(find.text('АВТО-ПРОЦЕСС ЗАПУЩЕН'), findsOneWidget);
+    expect(find.text('ЗАПУСТИТЬ СНОВА'), findsOneWidget);
     expect(
       find.byWidgetPredicate(
         (widget) =>

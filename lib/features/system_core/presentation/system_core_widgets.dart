@@ -154,7 +154,7 @@ class SystemCoreTerminalWindow extends StatelessWidget {
                         ),
                         children: [
                           TextSpan(
-                            text: '${entry.timestamp} ',
+                            text: '${_formatTimestamp(entry.timestamp)} ',
                             style: const TextStyle(
                               color: SystemCorePalette.muted,
                             ),
@@ -214,6 +214,8 @@ class SystemCoreRunButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isActive = _isProcessActive(status);
+
     return SizedBox(
       width: double.infinity,
       height: 58,
@@ -229,13 +231,14 @@ class SystemCoreRunButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.play_arrow_rounded, size: 19),
+            Icon(
+              isActive ? Icons.stop_rounded : Icons.play_arrow_rounded,
+              size: 19,
+            ),
             const SizedBox(width: 9),
             Flexible(
               child: Text(
-                status == SystemCoreProcessStatus.running
-                    ? 'АВТО-ПРОЦЕСС ЗАПУЩЕН'
-                    : 'ЗАПУСТИТЬ АВТО-ПРОЦЕСС',
+                _processButtonLabel(status),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 12,
@@ -251,8 +254,30 @@ class SystemCoreRunButton extends StatelessWidget {
   }
 }
 
+String _formatTimestamp(DateTime timestamp) {
+  final localTime = timestamp.toLocal();
+  final hours = localTime.hour.toString().padLeft(2, '0');
+  final minutes = localTime.minute.toString().padLeft(2, '0');
+  final seconds = localTime.second.toString().padLeft(2, '0');
+  return '[$hours:$minutes:$seconds]';
+}
+
 Color _logLevelColor(SystemCoreLogLevel level) => switch (level) {
   SystemCoreLogLevel.neutral => Colors.white70,
   SystemCoreLogLevel.success => SystemCorePalette.green,
   SystemCoreLogLevel.accent => SystemCorePalette.red,
+  SystemCoreLogLevel.error => SystemCorePalette.red,
 };
+
+String _processButtonLabel(SystemCoreProcessStatus status) => switch (status) {
+  SystemCoreProcessStatus.ready => 'ЗАПУСТИТЬ АВТО-ПРОЦЕСС',
+  SystemCoreProcessStatus.starting => 'ОТМЕНИТЬ ЗАПУСК',
+  SystemCoreProcessStatus.running => 'ОТМЕНИТЬ АВТО-ПРОЦЕСС',
+  SystemCoreProcessStatus.completed => 'ЗАПУСТИТЬ СНОВА',
+  SystemCoreProcessStatus.failed => 'ПОВТОРИТЬ ЗАПУСК',
+  SystemCoreProcessStatus.cancelled => 'ЗАПУСТИТЬ СНОВА',
+};
+
+bool _isProcessActive(SystemCoreProcessStatus status) =>
+    status == SystemCoreProcessStatus.starting ||
+    status == SystemCoreProcessStatus.running;

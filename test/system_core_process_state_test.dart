@@ -3,27 +3,21 @@ import 'package:omni_ai/features/system_core/models/system_core_process_state.da
 
 void main() {
   group('SystemCoreProcessState', () {
-    test('starts ready with the initial log entries', () {
-      final state = SystemCoreProcessState.initial();
+    test('starts ready with DateTime-stamped initial log entries', () {
+      final timestamps = List.generate(
+        4,
+        (index) => DateTime(2026, 10, 8, 12, 30, index),
+      );
+      var timestampIndex = 0;
+      final state = SystemCoreProcessState.initial(
+        clock: () => timestamps[timestampIndex++],
+      );
 
       expect(state.status, SystemCoreProcessStatus.ready);
-      expect(state.isRunning, isFalse);
+      expect(state.canStart, isTrue);
       expect(state.logEntries, hasLength(4));
       expect(state.logEntries.first.message, ' BOOTING OMNI_AI KERNEL...');
-    });
-
-    test('start returns a running state with process logs', () {
-      final state = SystemCoreProcessState.initial().start();
-
-      expect(state.status, SystemCoreProcessStatus.running);
-      expect(state.isRunning, isTrue);
-      expect(state.logEntries.first.message, ' AUTO-PROCESS INITIALIZED');
-    });
-
-    test('starting an already running process preserves its state', () {
-      final state = SystemCoreProcessState.initial().start();
-
-      expect(state.start(), same(state));
+      expect(state.logEntries.map((entry) => entry.timestamp), timestamps);
     });
   });
 }
