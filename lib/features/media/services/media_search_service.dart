@@ -1,14 +1,26 @@
+import 'dart:convert';
+
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/core/network/network_service.dart';
 
 class MediaSearchService {
-  const MediaSearchService({this.networkService = const NetworkService()});
+  const MediaSearchService({
+    this.networkService = const NetworkService(),
+    this.apiKey = const String.fromEnvironment('KINOPOISK_API_KEY'),
+  });
 
   final NetworkService networkService;
+  final String apiKey;
+
+  static const _searchEndpoint =
+      'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword';
 
   static const String _demoVideoUrl =
       'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+  static const List<String> _demoVideoFallbackUrls = [
+    'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+  ];
 
   static const List<MediaItem> _catalog = [
     MediaItem(
@@ -20,6 +32,7 @@ class MediaSearchService {
       rating: 8.3,
       voiceovers: ['Anilibria', 'AniDUB', 'Оригинал'],
       videoUrl: _demoVideoUrl,
+      videoFallbackUrls: _demoVideoFallbackUrls,
       categories: ['Аниме', 'Игры'],
       episodes: [
         MediaEpisode(number: 1, title: 'Пилот', videoUrl: _demoVideoUrl),
@@ -40,6 +53,7 @@ class MediaSearchService {
       rating: 8.7,
       voiceovers: ['LostFilm', 'Оригинал'],
       videoUrl: _demoVideoUrl,
+      videoFallbackUrls: _demoVideoFallbackUrls,
       categories: ['Фильмы', 'Технологии'],
     ),
     MediaItem(
@@ -51,6 +65,7 @@ class MediaSearchService {
       rating: 8.0,
       voiceovers: ['RHS', 'LostFilm', 'Оригинал'],
       videoUrl: _demoVideoUrl,
+      videoFallbackUrls: _demoVideoFallbackUrls,
       categories: ['Сериалы', 'Фэнтези'],
       episodes: [
         MediaEpisode(
@@ -70,6 +85,7 @@ class MediaSearchService {
       rating: 9.0,
       voiceovers: ['Anilibria', 'RHS', 'Оригинал'],
       videoUrl: _demoVideoUrl,
+      videoFallbackUrls: _demoVideoFallbackUrls,
       categories: ['Аниме'],
       episodes: [
         MediaEpisode(
@@ -89,6 +105,7 @@ class MediaSearchService {
       rating: 8.1,
       voiceovers: ['HDRezka', 'Оригинал'],
       videoUrl: _demoVideoUrl,
+      videoFallbackUrls: _demoVideoFallbackUrls,
       categories: ['Фильмы', 'Фантастика'],
     ),
     MediaItem(
@@ -100,6 +117,7 @@ class MediaSearchService {
       rating: 9.1,
       voiceovers: ['RHS', 'Оригинал'],
       videoUrl: _demoVideoUrl,
+      videoFallbackUrls: _demoVideoFallbackUrls,
       categories: ['Сериалы', 'Игры'],
       episodes: [
         MediaEpisode(
@@ -119,6 +137,64 @@ class MediaSearchService {
   List<MediaItem> get catalog => List.unmodifiable(_catalog);
 
   List<MediaItem> get trending => List.unmodifiable(_catalog.take(4));
+
+  Future<List<MediaItem>> searchOnline(String query) async {
+    final keyword = query.trim();
+    if (apiKey.isEmpty || keyword.length < 2) return const [];
+
+    final response = await networkService.get(
+      Uri.parse(
+        _searchEndpoint,
+      ).replace(queryParameters: {'keyword': keyword, 'page': '1'}),
+      headers: {'X-API-KEY': apiKey, 'Accept': 'application/json'},
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return const [];
+    }
+
+    final payload = jsonDecode(response.body);
+    if (payload is! Map<String, dynamic>) return const [];
+    final films = payload['searchFilms'];
+    if (films is! List) return const [];
+
+    return films.whereType<Map<String, dynamic>>().map(_toMediaItem).toList();
+  }
+
+  MediaItem _toMediaItem(Map<String, dynamic> film) {
+    final id = film['filmId']?.toString() ?? film['kinopoiskId']?.toString();
+    final russianTitle = film['nameRu'] as String? ?? '';
+    final englishTitle = film['nameEn'] as String? ?? '';
+    final title = russianTitle.trim().isNotEmpty
+        ? russianTitle.trim()
+        : englishTitle.trim();
+    final rawRating = film['rating']?.toString() ?? '';
+    final rawGenres = film['genres'];
+    final genres = rawGenres is List
+        ? rawGenres
+              .whereType<Map<String, dynamic>>()
+              .map((genre) => genre['genre']?.toString() ?? '')
+              .where((genre) => genre.isNotEmpty)
+              .toList(growable: false)
+        : const <String>[];
+    final rawType = (film['type'] as String? ?? '').toUpperCase();
+    final type = switch (rawType) {
+      'TV_SERIES' || 'TV_SHOW' || 'MINI_SERIES' => 'Сериал',
+      'FILM' => 'Фильм',
+      _ => rawType.contains('ANIME') ? 'Аниме' : 'Фильм',
+    };
+
+    return MediaItem(
+      id: 'kinopoisk-${id ?? title.hashCode}',
+      title: title.isEmpty ? 'Без названия' : title,
+      type: type,
+      posterUrl: film['posterUrl'] as String? ?? '',
+      rating: double.tryParse(rawRating.replaceAll(',', '.')) ?? 0,
+      voiceovers: const [],
+      videoUrl: '',
+      categories: genres,
+      description: film['description'] as String? ?? '',
+    );
+  }
 
   List<MediaItem> search(String query, {String? type}) {
     final normalizedQuery = query.trim().toLowerCase();

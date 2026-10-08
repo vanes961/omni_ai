@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:omni_ai/core/network/widgets/network_image_with_fallback.dart';
+import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 import 'package:omni_ai/features/telegram/data/telegram_post.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -92,9 +94,10 @@ class TelegramPostCard extends StatelessWidget {
               const SizedBox(height: 12),
               AspectRatio(
                 aspectRatio: 16 / 9,
-                child: Image.network(
-                  mediaUrl,
+                child: NetworkImageWithFallback(
+                  url: mediaUrl,
                   fit: BoxFit.cover,
+                  headers: MediaHeaders.getHeaders(mediaUrl),
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: SystemCorePalette.background,
                     alignment: Alignment.center,

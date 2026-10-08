@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
@@ -71,12 +73,17 @@ class _PlayerPageState extends State<PlayerPage> {
   Future<void> _loadEpisode(int episodeIndex) async {
     final generation = ++_playerGeneration;
     final oldPlayer = _player;
-    final source = _hasEpisodes
-        ? widget.item.episodes[episodeIndex].videoUrl
-        : widget.item.videoUrl;
-    final nextPlayer = (widget.playerFactory ?? _videoPlayerFactory)(
-      Uri.parse(source),
-    );
+    final episode = _hasEpisodes ? widget.item.episodes[episodeIndex] : null;
+    final source = episode?.videoUrl ?? widget.item.videoUrl;
+    final fallbackUrls = [
+      ...widget.item.videoFallbackUrls,
+      if (episode != null) ...episode.videoFallbackUrls,
+    ];
+    final sources = <String>{
+      source.trim(),
+      ...fallbackUrls.map((url) => url.trim()),
+    }.where((url) => url.isNotEmpty).toList(growable: false);
+    final playerFactory = widget.playerFactory ?? _videoPlayerFactory;
 
     setState(() {
       _selectedEpisode = episodeIndex;
@@ -84,25 +91,45 @@ class _PlayerPageState extends State<PlayerPage> {
       _playerError = null;
       _player = null;
     });
-    await oldPlayer?.dispose();
+    await _disposePlayer(oldPlayer);
 
-    try {
-      await nextPlayer.initialize();
-      if (!mounted || generation != _playerGeneration) {
-        await nextPlayer.dispose();
-        return;
-      }
-      setState(() {
-        _player = nextPlayer;
-        _isLoading = false;
-      });
-    } catch (error) {
-      await nextPlayer.dispose();
+    Object? playerError;
+    for (var index = 0; index < sources.length; index++) {
       if (!mounted || generation != _playerGeneration) return;
-      setState(() {
-        _playerError = error;
-        _isLoading = false;
-      });
+      MediaPlaybackController? nextPlayer;
+      try {
+        nextPlayer = playerFactory(Uri.parse(sources[index]));
+        await nextPlayer.initialize();
+        if (!mounted || generation != _playerGeneration) {
+          await _disposePlayer(nextPlayer);
+          return;
+        }
+        setState(() {
+          _player = nextPlayer;
+          _isLoading = false;
+        });
+        return;
+      } on PlatformException catch (error) {
+        playerError = error;
+        await _disposePlayer(nextPlayer);
+      } on Object catch (error) {
+        playerError = error;
+        await _disposePlayer(nextPlayer);
+      }
+    }
+    if (!mounted || generation != _playerGeneration) return;
+    setState(() {
+      _playerError = playerError;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _disposePlayer(MediaPlaybackController? player) async {
+    if (player == null) return;
+    try {
+      await player.dispose();
+    } on Object {
+      // A dispose failure must not prevent trying the next stream source.
     }
   }
 
@@ -144,13 +171,18 @@ class _PlayerPageState extends State<PlayerPage> {
             DropdownButtonFormField<int>(
               key: const ValueKey('episode-selector'),
               initialValue: _selectedEpisode,
+              isExpanded: true,
               dropdownColor: SystemCorePalette.panel,
               decoration: _selectorDecoration(),
               items: [
                 for (var index = 0; index < episodes.length; index++)
                   DropdownMenuItem(
                     value: index,
-                    child: Text(episodes[index].label),
+                    child: Text(
+                      episodes[index].label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
               ],
               onChanged: (index) {
@@ -166,11 +198,19 @@ class _PlayerPageState extends State<PlayerPage> {
           DropdownButtonFormField<String>(
             key: const ValueKey('voiceover-selector'),
             initialValue: _selectedVoiceover,
+            isExpanded: true,
             dropdownColor: SystemCorePalette.panel,
             decoration: _selectorDecoration(),
             items: [
               for (final voiceover in widget.item.voiceovers)
-                DropdownMenuItem(value: voiceover, child: Text(voiceover)),
+                DropdownMenuItem(
+                  value: voiceover,
+                  child: Text(
+                    voiceover,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
             ],
             onChanged: (voiceover) {
               if (voiceover != null) {
@@ -304,7 +344,10 @@ MediaPlaybackController _videoPlayerFactory(Uri source) {
 
 class _VideoPlayerAdapter implements MediaPlaybackController {
   _VideoPlayerAdapter(Uri source)
-    : _controller = VideoPlayerController.networkUrl(source);
+    : _controller = VideoPlayerController.networkUrl(
+        source,
+        httpHeaders: MediaHeaders.getHeaders(source.toString()),
+      );
 
   final VideoPlayerController _controller;
 

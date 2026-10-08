@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:omni_ai/core/network/widgets/network_image_with_fallback.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
+import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
@@ -25,11 +29,14 @@ class _MediaPageState extends State<MediaPage> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
   String? _selectedType;
+  Timer? _searchDebounce;
+  Future<List<MediaItem>>? _onlineSearch;
 
   static const _types = ['Фильм', 'Сериал', 'Аниме'];
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -88,7 +95,20 @@ class _MediaPageState extends State<MediaPage> {
         TextField(
           key: const ValueKey('media-search'),
           controller: _searchController,
-          onChanged: (value) => setState(() => _query = value),
+          onChanged: (value) {
+            _searchDebounce?.cancel();
+            setState(() {
+              _query = value;
+              _onlineSearch = null;
+            });
+            _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+              if (mounted) {
+                setState(() {
+                  _onlineSearch = widget.searchService.searchOnline(value);
+                });
+              }
+            });
+          },
           style: const TextStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Найти фильм, сериал или аниме',
@@ -102,8 +122,12 @@ class _MediaPageState extends State<MediaPage> {
                 : IconButton(
                     tooltip: 'Очистить поиск',
                     onPressed: () {
+                      _searchDebounce?.cancel();
                       _searchController.clear();
-                      setState(() => _query = '');
+                      setState(() {
+                        _query = '';
+                        _onlineSearch = null;
+                      });
                     },
                     icon: const Icon(Icons.close),
                   ),
@@ -149,32 +173,70 @@ class _MediaPageState extends State<MediaPage> {
   );
 
   Widget _buildSearchResults(List<MediaItem> items) {
-    if (items.isEmpty) {
-      return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(
-          child: Text(
-            'НЕТ СОВПАДЕНИЙ',
-            style: TextStyle(color: SystemCorePalette.muted, fontSize: 12),
-          ),
-        ),
-      );
-    }
+    return SliverToBoxAdapter(
+      child: FutureBuilder<List<MediaItem>>(
+        future: _onlineSearch,
+        builder: (context, snapshot) {
+          final combined = [...items];
+          for (final onlineItem in snapshot.data ?? const <MediaItem>[]) {
+            final duplicate = combined.any(
+              (item) =>
+                  item.title.toLowerCase() == onlineItem.title.toLowerCase(),
+            );
+            if (!duplicate &&
+                (_selectedType == null || onlineItem.type == _selectedType)) {
+              combined.add(onlineItem);
+            }
+          }
 
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      sliver: SliverList.separated(
-        itemCount: items.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 10),
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return _MediaResultTile(
-            item: item,
-            preferredVoiceover: widget.searchService.preferredVoiceover(
-              item,
-              widget.preferences,
-            ),
-            onTap: () => _openPlayer(item),
+          if (combined.isEmpty &&
+              snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (combined.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(
+                child: Text(
+                  'НЕТ СОВПАДЕНИЙ',
+                  style: TextStyle(
+                    color: SystemCorePalette.muted,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const LinearProgressIndicator(minHeight: 2),
+              ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: combined.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final item = combined[index];
+                  return _MediaResultTile(
+                    item: item,
+                    preferredVoiceover: widget.searchService.preferredVoiceover(
+                      item,
+                      widget.preferences,
+                    ),
+                    onTap: item.videoUrl.isEmpty
+                        ? null
+                        : () => _openPlayer(item),
+                  );
+                },
+              ),
+            ],
           );
         },
       ),
@@ -295,7 +357,10 @@ class _MediaPosterCard extends StatelessWidget {
               SizedBox(
                 width: 144,
                 height: 164,
-                child: _PosterImage(url: item.posterUrl),
+                child: _PosterImage(
+                  url: item.posterUrl,
+                  fallbackUrls: item.posterFallbackUrls,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
@@ -350,7 +415,7 @@ class _MediaResultTile extends StatelessWidget {
 
   final MediaItem item;
   final String? preferredVoiceover;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +430,10 @@ class _MediaResultTile extends StatelessWidget {
               SizedBox(
                 width: 62,
                 height: 86,
-                child: _PosterImage(url: item.posterUrl),
+                child: _PosterImage(
+                  url: item.posterUrl,
+                  fallbackUrls: item.posterFallbackUrls,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -390,6 +458,18 @@ class _MediaResultTile extends StatelessWidget {
                         fontSize: 10,
                       ),
                     ),
+                    if (item.description.isNotEmpty) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        item.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 7),
                     Wrap(
                       spacing: 5,
@@ -410,7 +490,8 @@ class _MediaResultTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: SystemCorePalette.muted),
+              if (onTap != null)
+                const Icon(Icons.chevron_right, color: SystemCorePalette.muted),
             ],
           ),
         ),
@@ -420,15 +501,18 @@ class _MediaResultTile extends StatelessWidget {
 }
 
 class _PosterImage extends StatelessWidget {
-  const _PosterImage({required this.url});
+  const _PosterImage({required this.url, this.fallbackUrls = const []});
 
   final String url;
+  final List<String> fallbackUrls;
 
   @override
   Widget build(BuildContext context) {
-    return Image.network(
-      url,
+    return NetworkImageWithFallback(
+      url: url,
+      fallbackUrls: fallbackUrls,
       fit: BoxFit.cover,
+      headers: MediaHeaders.getHeaders(url),
       errorBuilder: (context, error, stackTrace) => Container(
         color: SystemCorePalette.panel,
         alignment: Alignment.center,

@@ -8,6 +8,21 @@ import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/settings/presentation/pages/network_settings_page.dart';
 
 void main() {
+  test('default mirrors are public HTTPS healthchecks', () {
+    expect(
+      NetworkSettingsPage.defaultMirrors.map((uri) => uri.host),
+      containsAll([
+        'one.one.one.one',
+        'connectivitycheck.gstatic.com',
+        'www.google.com',
+      ]),
+    );
+    expect(
+      NetworkSettingsPage.defaultMirrors.every((uri) => uri.scheme == 'https'),
+      isTrue,
+    );
+  });
+
   testWidgets('saves proxy settings and displays mirror health', (
     tester,
   ) async {

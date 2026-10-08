@@ -1,3 +1,5 @@
+import 'package:http/http.dart' as http;
+
 import 'network_service.dart';
 
 typedef MirrorProbe = Future<Duration?> Function(Uri mirror);
@@ -51,7 +53,10 @@ class MirrorResolver {
       if (override != null) return await override(mirror);
 
       final stopwatch = Stopwatch()..start();
-      final response = await networkService.get(mirror);
+      final request = http.Request('GET', mirror)
+        ..followRedirects = true
+        ..maxRedirects = 10;
+      final response = await networkService.send(request);
       if (response.statusCode < 200 || response.statusCode >= 300) return null;
       return stopwatch.elapsed;
     } on Exception {

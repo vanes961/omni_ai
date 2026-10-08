@@ -36,10 +36,13 @@ class NetworkService {
 
   static final http.Client _defaultClient = transport.createNetworkClient(null);
 
+  static Map<String, String> get defaultHeaders =>
+      Map.unmodifiable(transport.defaultRequestHeaders());
+
   http.Client get _client => _providedClient ?? _defaultClient;
 
   Future<http.Response> get(Uri uri, {Map<String, String>? headers}) {
-    return _run(uri, () => _client.get(uri, headers: headers));
+    return _run(uri, () => _client.get(uri, headers: _mergeHeaders(headers)));
   }
 
   Future<http.Response> post(
@@ -47,14 +50,35 @@ class NetworkService {
     Map<String, String>? headers,
     Object? body,
   }) {
-    return _run(uri, () => _client.post(uri, headers: headers, body: body));
+    return _run(
+      uri,
+      () => _client.post(uri, headers: _mergeHeaders(headers), body: body),
+    );
   }
 
   Future<http.Response> send(http.BaseRequest request) {
+    for (final entry in transport.defaultRequestHeaders().entries) {
+      if (!request.headers.containsKey(entry.key)) {
+        request.headers[entry.key] = entry.value;
+      }
+    }
     return _run(
       request.url,
       () async => http.Response.fromStream(await _client.send(request)),
     );
+  }
+
+  Map<String, String> _mergeHeaders(Map<String, String>? headers) {
+    final merged = Map<String, String>.from(transport.defaultRequestHeaders());
+    if (headers != null) {
+      for (final entry in headers.entries) {
+        merged.removeWhere(
+          (name, _) => name.toLowerCase() == entry.key.toLowerCase(),
+        );
+        merged[entry.key] = entry.value;
+      }
+    }
+    return merged;
   }
 
   Future<http.Response> _run(

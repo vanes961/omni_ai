@@ -2,6 +2,19 @@
 
 A new Flutter project.
 
+## Kinopoisk metadata
+
+Online title search uses the Kinopoisk API key supplied through
+`KINOPOISK_API_KEY`. The local demo catalog remains available without a key.
+
+```powershell
+flutter run --dart-define=KINOPOISK_API_KEY=your-api-key
+flutter build apk --debug --dart-define=KINOPOISK_API_KEY=your-api-key
+```
+
+The key is embedded in the app binary. Use a restricted key and avoid
+committing it to source control.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

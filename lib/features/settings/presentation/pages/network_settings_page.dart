@@ -20,8 +20,9 @@ class NetworkSettingsPage extends StatefulWidget {
   }) : mirrors = mirrors ?? defaultMirrors;
 
   static final List<Uri> defaultMirrors = List.unmodifiable([
-    Uri.parse('https://t.me/'),
-    Uri.parse('https://telegram.me/'),
+    Uri.https('one.one.one.one', '/cdn-cgi/trace'),
+    Uri.https('connectivitycheck.gstatic.com', '/generate_204'),
+    Uri.https('www.google.com', '/generate_204'),
   ]);
 
   final UserPreferences preferences;

@@ -5,6 +5,50 @@ import 'package:omni_ai/core/network/mirror_resolver.dart';
 import 'package:omni_ai/core/network/network_service.dart';
 
 void main() {
+  test('adds a User-Agent and honors explicit overrides', () async {
+    final requests = <http.BaseRequest>[];
+    final service = NetworkService(
+      client: MockClient((request) async {
+        requests.add(request);
+        return http.Response('', 200);
+      }),
+    );
+
+    await service.get(Uri.https('example.com', '/'));
+    await service.get(
+      Uri.https('example.com', '/custom'),
+      headers: {'uSeR-aGeNt': 'custom-agent'},
+    );
+
+    expect(
+      requests.first.headers['user-agent'],
+      NetworkService.defaultHeaders['User-Agent'],
+    );
+    expect(requests.last.headers['user-agent'], 'custom-agent');
+  });
+
+  test('mirror probes allow redirects and send the app User-Agent', () async {
+    http.Request? capturedRequest;
+    final service = NetworkService(
+      client: MockClient((request) async {
+        capturedRequest = request;
+        return http.Response('', 200);
+      }),
+    );
+
+    final results = await MirrorResolver(
+      networkService: service,
+    ).checkAll([Uri.https('mirror.example', '/')]);
+
+    expect(results, hasLength(1));
+    expect(capturedRequest?.followRedirects, isTrue);
+    expect(capturedRequest?.maxRedirects, 10);
+    expect(
+      capturedRequest?.headers['user-agent'],
+      NetworkService.defaultHeaders['User-Agent'],
+    );
+  });
+
   test('reports timed out requests to the critical failure handler', () async {
     NetworkException? reportedError;
     final service = NetworkService(

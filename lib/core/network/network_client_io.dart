@@ -5,6 +5,10 @@ import 'package:http/http.dart' as http;
 
 import 'proxy_config.dart';
 
+Map<String, String> defaultRequestHeaders() => const {
+  'User-Agent': 'OmniAI/1.0 (Flutter)',
+};
+
 http.Client createNetworkClient(ProxyConfig? proxyConfig) {
   final config = proxyConfig;
   if (config == null || !config.enabled) return IOClient(HttpClient());
