@@ -18,11 +18,15 @@ OMNI_AI — единый персональный AI-хаб, объединяю�
 
 **Repository:** `vanes961/omni_ai`
 
-**Current branch:** `main`
-
-**Stable baseline:** `6f290ce`
+**Stable baseline (main):** `6f290ce`
 
 **Baseline commit:** `feat: update media network and telegram integration`
+
+**Current development branch:** `feat/ai-engine-foundation`
+
+**Current architectural checkpoint:** `e606085` — `feat: orchestrate AI runs through system core`
+
+**Latest test status:** `59/59 passed`
 
 Android является главным целевым направлением разработки.
 
@@ -36,6 +40,10 @@ Android является главным целевым направлением 
 lib/
 ├── main.dart
 ├── core/
+│   ├── ai_engine/
+│   │   ├── models/
+│   │   ├── providers/
+│   │   └── services/
 │   └── network/
 │       ├── mirror_resolver.dart
 │       ├── network_client_io.dart
@@ -658,9 +666,16 @@ OMNI Guard is a system layer, not merely a decorative AI indicator.
 
 Existing System Core is part of the foundation.
 
-It should remain independent from individual UI modules and provide a reliable way to execute system operations through interfaces.
+It remains independent from individual UI modules and provides a reliable way to execute system operations through interfaces.
 
-Existing capabilities include process state management, cancellation and run history integration.
+Current capabilities include:
+
+process state management;
+cancellation;
+run history integration;
+AI process orchestration through `AIProcessOrchestrator`.
+
+The System Core should remain a system-level execution layer rather than becoming a UI-specific service.
 
 28. Run History
 
@@ -668,7 +683,16 @@ Existing Run History provides persistence for system operations.
 
 The current implementation uses SharedPreferences and repository abstractions.
 
-It should remain independent of UI and support future system/AI operations.
+It remains independent of UI and now records AI operation outcomes through the System Core orchestration layer.
+
+Recorded AI outcomes include:
+
+completed;
+failed;
+cancelled;
+timeout.
+
+Records can retain request ID, provider information and duration where available.
 
 29. Target Architecture Direction
 
@@ -773,6 +797,7 @@ Android is the primary target.
 Foldable support must be considered from the architecture stage.
 Visual quality is part of the product, but visual effects must not compromise reliability or performance.
 33. Current Development State
+
 Completed / existing
 Flutter application foundation
 System Core
@@ -791,23 +816,47 @@ Current stable baseline
 
 6f290ce
 
+Current AI architecture checkpoint
+
+e606085 — AI Engine runs are orchestrated through System Core and persisted in Run History.
+
+AI Engine foundation status
+
+Provider-independent AI Engine implemented.
+AI request/response/error models implemented.
+Cancellation and timeout support implemented.
+AI provider abstraction implemented.
+AIProcessOrchestrator implemented.
+System Core integration implemented.
+Run History integration implemented.
+AI orchestration tests implemented.
+Latest full test suite: 59/59 passed.
+
 Working tree note
 
 At the time this document was created, generated Flutter platform files for Linux/macOS/Windows had local modifications. They are not part of the Android feature baseline and should not be committed without a deliberate reason.
 
 34. Immediate Next Phase
 
-The next architectural phase is to establish the AI Engine foundation.
+The AI Engine foundation and System Core orchestration phase are complete.
 
-Before implementing a large AI feature, define:
+The next architectural phase is to add a real provider adapter while preserving provider independence.
+
+Target flow:
 
 AI Request
+    ↓
+AI Process Orchestrator
     ↓
 AI Engine
     ↓
 Provider Adapter
     ↓
 AI Response
+    ↓
+Run History
+
+The first real provider integration must remain isolated behind the existing `AIProvider` interface. Provider SDK details must not leak into UI or core request/response models.
 
 The engine must support future use by:
 
@@ -862,8 +911,10 @@ reactive/3D OMNI visual core
 
 Project status: Active development
 
-Current baseline: 6f290ce
+Stable baseline: 6f290ce
 
-Next major architectural target: AI Engine foundation
+Current development checkpoint: e606085
+
+Next major architectural target: real AI provider adapter
 
 Document purpose: Preserve product vision, architecture, decisions and development state across AI sessions and coding environments.
