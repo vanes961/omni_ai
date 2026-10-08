@@ -112,7 +112,14 @@ void main() {
 
     expect(find.byType(DashboardPage), findsOneWidget);
     expect(find.byType(OnboardingPage), findsNothing);
-    expect(find.text('ИНТЕРЕСЫ  //  АНИМЕ'), findsOneWidget);
+    expect(find.text('AI-GUARD ACTIVE'), findsOneWidget);
+    expect(
+      tester
+          .widget<DashboardPage>(find.byType(DashboardPage))
+          .preferences
+          .categories,
+      ['Аниме'],
+    );
   });
 }
 

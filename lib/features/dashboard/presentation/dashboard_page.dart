@@ -2,11 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
+import 'package:omni_ai/features/telegram/data/telegram_post.dart';
+import 'package:omni_ai/features/telegram/presentation/widgets/telegram_post_card.dart';
+import 'package:omni_ai/features/telegram/services/telegram_parser_service.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({required this.preferences, super.key});
+  const DashboardPage({
+    required this.preferences,
+    this.telegramService = const TelegramParserService(),
+    this.sourceLauncher,
+    super.key,
+  });
 
   final UserPreferences preferences;
+  final TelegramParserService telegramService;
+  final TelegramSourceLauncher? sourceLauncher;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -14,29 +24,22 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedTab = 0;
-  int _feedPage = 0;
+  final TextEditingController _feedSearchController = TextEditingController();
+  late Future<List<TelegramPost>> _feedFuture;
+  String _feedQuery = '';
+  String? _selectedFeedChannel;
 
-  static const _feedCards = [
-    _FeedCardData(
-      number: '01',
-      icon: Icons.movie_outlined,
-      title: 'МЕДИА-МОДУЛЬ',
-      subtitle: 'ПЕРСОНАЛЬНАЯ ПОДБОРКА',
-      description: 'Ваш следующий фильм, сериал или тайтл появится здесь.',
-      status: 'MODULE STANDBY',
-      accent: SystemCorePalette.red,
-    ),
-    _FeedCardData(
-      number: '02',
-      icon: Icons.rss_feed_rounded,
-      title: 'TELEGRAM // NEWS',
-      subtitle: 'ИЗ ВАШИХ ИСТОЧНИКОВ',
-      description:
-          'Выжимка новостей из выбранных Telegram-каналов появится здесь.',
-      status: 'CHANNEL SYNC PENDING',
-      accent: SystemCorePalette.green,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _feedFuture = widget.telegramService.fetchPosts(widget.preferences);
+  }
+
+  @override
+  void dispose() {
+    _feedSearchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,70 +107,150 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildFeed() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 24, 22, 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'OMNI // PERSONAL FEED',
-            style: TextStyle(
-              color: SystemCorePalette.muted,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-            ),
+    return FutureBuilder<List<TelegramPost>>(
+      future: _feedFuture,
+      builder: (context, snapshot) {
+        final posts = snapshot.data ?? const <TelegramPost>[];
+        final visiblePosts = widget.telegramService.filterPosts(
+          posts,
+          query: _feedQuery,
+          channelName: _selectedFeedChannel,
+        );
+        final channels = widget.preferences.tgChannels;
+        final isLoading =
+            snapshot.connectionState != ConnectionState.done &&
+            !snapshot.hasData;
+        final itemCount =
+            1 +
+            (isLoading || snapshot.hasError || visiblePosts.isEmpty
+                ? 1
+                : visiblePosts.length);
+
+        return RefreshIndicator(
+          onRefresh: _refreshFeed,
+          color: SystemCorePalette.green,
+          backgroundColor: SystemCorePalette.panel,
+          child: ListView.separated(
+            key: const ValueKey('telegram-feed'),
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+            itemCount: itemCount,
+            separatorBuilder: (context, index) => index == 0
+                ? const SizedBox(height: 14)
+                : const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              if (index == 0) return _buildFeedHeader(channels);
+              if (isLoading) {
+                return const Padding(
+                  padding: EdgeInsets.all(28),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: SystemCorePalette.green,
+                    ),
+                  ),
+                );
+              }
+              if (snapshot.hasError) {
+                return _FeedMessage(
+                  message: 'НЕ УДАЛОСЬ ОБНОВИТЬ ЛЕНТУ',
+                  actionLabel: 'ПОВТОРИТЬ',
+                  onAction: _refreshFeed,
+                );
+              }
+              if (visiblePosts.isEmpty) {
+                return _FeedMessage(
+                  message: channels.isEmpty
+                      ? 'ВЫБЕРИТЕ TELEGRAM-КАНАЛЫ В НАСТРОЙКАХ ПРОФИЛЯ'
+                      : 'ПОСТЫ НЕ НАЙДЕНЫ',
+                );
+              }
+
+              final post = visiblePosts[index - 1];
+              return TelegramPostCard(
+                post: post,
+                sourceLauncher: widget.sourceLauncher,
+              );
+            },
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'ВАША ЛЕНТА',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-            ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFeedHeader(List<String> channels) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'OMNI // TELEGRAM FEED',
+          style: TextStyle(
+            color: SystemCorePalette.muted,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 22),
-          Expanded(
-            child: PageView.builder(
-              itemCount: _feedCards.length,
-              onPageChanged: (page) => setState(() => _feedPage = page),
-              itemBuilder: (context, index) =>
-                  _FeedCard(data: _feedCards[index]),
-            ),
+        ),
+        const SizedBox(height: 7),
+        const Text(
+          'ВАША ЛЕНТА',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              _feedCards.length,
-              (index) => Container(
-                width: index == _feedPage ? 22 : 6,
-                height: 6,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: index == _feedPage
-                      ? SystemCorePalette.green
-                      : SystemCorePalette.muted,
-                  borderRadius: BorderRadius.circular(3),
+        ),
+        const SizedBox(height: 14),
+        TextField(
+          key: const ValueKey('telegram-feed-search'),
+          controller: _feedSearchController,
+          onChanged: (value) => setState(() => _feedQuery = value),
+          style: const TextStyle(color: Colors.white, fontSize: 13),
+          decoration: InputDecoration(
+            hintText: 'Поиск по каналам и постам',
+            hintStyle: const TextStyle(color: SystemCorePalette.muted),
+            prefixIcon: const Icon(
+              Icons.search,
+              color: SystemCorePalette.green,
+            ),
+            isDense: true,
+            filled: true,
+            fillColor: SystemCorePalette.panel,
+            border: const OutlineInputBorder(borderRadius: BorderRadius.zero),
+          ),
+        ),
+        if (channels.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _FeedChannelFilter(
+                  label: 'Все',
+                  selected: _selectedFeedChannel == null,
+                  onTap: () => setState(() => _selectedFeedChannel = null),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            widget.preferences.categories.isEmpty
-                ? 'ИНТЕРЕСЫ НЕ ВЫБРАНЫ'
-                : 'ИНТЕРЕСЫ  //  ${widget.preferences.categories.join(' · ').toUpperCase()}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: SystemCorePalette.muted,
-              fontSize: 10,
+                for (final channel in channels)
+                  _FeedChannelFilter(
+                    label: channel,
+                    selected: _selectedFeedChannel == channel,
+                    onTap: () => setState(
+                      () => _selectedFeedChannel =
+                          _selectedFeedChannel == channel ? null : channel,
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
-      ),
+      ],
     );
+  }
+
+  Future<void> _refreshFeed() async {
+    final refreshed = widget.telegramService.refresh(widget.preferences);
+    setState(() {
+      _feedFuture = refreshed;
+    });
+    await refreshed;
   }
 
   Widget _buildSettings() {
@@ -220,104 +303,68 @@ class _GuardHeader extends StatelessWidget {
   }
 }
 
-class _FeedCardData {
-  const _FeedCardData({
-    required this.number,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.description,
-    required this.status,
-    required this.accent,
+class _FeedChannelFilter extends StatelessWidget {
+  const _FeedChannelFilter({
+    required this.label,
+    required this.selected,
+    required this.onTap,
   });
 
-  final String number;
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String description;
-  final String status;
-  final Color accent;
-}
-
-class _FeedCard extends StatelessWidget {
-  const _FeedCard({required this.data});
-
-  final _FeedCardData data;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: SystemCorePalette.panel,
-          border: Border.all(color: data.accent.withValues(alpha: 0.5)),
+      padding: const EdgeInsets.only(right: 6),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: selected,
+        onSelected: (_) => onTap(),
+        showCheckmark: false,
+        selectedColor: SystemCorePalette.green.withValues(alpha: 0.16),
+        labelStyle: TextStyle(
+          color: selected ? SystemCorePalette.green : Colors.white70,
+          fontSize: 9,
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    data.number,
-                    style: TextStyle(color: data.accent, fontSize: 11),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Container(
-                      height: 1,
-                      color: data.accent.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'OMNI_FEED',
-                    style: TextStyle(
-                      color: SystemCorePalette.muted,
-                      fontSize: 9,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Icon(data.icon, size: 38, color: data.accent),
-              const SizedBox(height: 20),
-              Text(
-                data.subtitle,
-                style: const TextStyle(
-                  color: SystemCorePalette.muted,
-                  fontSize: 10,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                data.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 21,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                data.description,
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
-              ),
-              const Spacer(),
-              Text(
-                data.status,
-                style: TextStyle(
-                  color: data.accent,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+          side: BorderSide(
+            color: selected ? SystemCorePalette.green : Colors.white24,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FeedMessage extends StatelessWidget {
+  const _FeedMessage({required this.message, this.actionLabel, this.onAction});
+
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 12),
+      child: Column(
+        children: [
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: SystemCorePalette.muted,
+              fontSize: 11,
+            ),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 8),
+            TextButton(onPressed: onAction, child: Text(actionLabel!)),
+          ],
+        ],
       ),
     );
   }
