@@ -1,8 +1,11 @@
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/telegram/data/telegram_post.dart';
+import 'package:omni_ai/core/network/network_service.dart';
 
 class TelegramParserService {
-  const TelegramParserService();
+  const TelegramParserService({this.networkService = const NetworkService()});
+
+  final NetworkService networkService;
 
   static final List<TelegramPost> _mockPosts = [
     TelegramPost(

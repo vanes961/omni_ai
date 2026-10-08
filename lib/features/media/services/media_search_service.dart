@@ -1,8 +1,11 @@
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
+import 'package:omni_ai/core/network/network_service.dart';
 
 class MediaSearchService {
-  const MediaSearchService();
+  const MediaSearchService({this.networkService = const NetworkService()});
+
+  final NetworkService networkService;
 
   static const String _demoVideoUrl =
       'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
