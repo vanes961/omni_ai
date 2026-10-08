@@ -34,7 +34,7 @@ class AIEngine {
     );
 
     try {
-      return await Future.any<AIResponse>([
+      final response = await Future.any<AIResponse>([
         providerFuture,
         _throwWhenCancelled(token),
       ]).timeout(
@@ -50,6 +50,17 @@ class AIEngine {
           );
         },
       );
+
+      if (token.isCancelled) {
+        throw const AIEngineException(
+          AIError(
+            code: AIErrorCode.cancelled,
+            message: 'AI request cancelled.',
+          ),
+        );
+      }
+
+      return response;
     } on AIEngineException {
       rethrow;
     } catch (error) {
