@@ -5,6 +5,12 @@ import 'package:omni_ai/features/system_core/models/system_core_process_state.da
 typedef SystemCoreProcessRunner =
     Future<void> Function(SystemCoreProcessContext context);
 
+class SystemCoreProcessTimeout implements Exception {
+  const SystemCoreProcessTimeout(this.message);
+
+  final String message;
+}
+
 class SystemCoreProcessContext {
   const SystemCoreProcessContext._({
     required this.cancellationRequested,
@@ -51,7 +57,7 @@ class SystemCoreProcessService {
   SystemCoreProcessState get state => _state;
   Stream<SystemCoreProcessState> get states => _states.stream;
 
-  Future<void> start() async {
+  Future<void> start({SystemCoreProcessRunner? runner}) async {
     if (_disposed || !_state.canStart) return;
 
     final runGeneration = ++_runGeneration;
@@ -91,7 +97,7 @@ class SystemCoreProcessService {
 
     try {
       await Future.any<void>([
-        Future<void>.sync(() => _runner(context)),
+        Future<void>.sync(() => (runner ?? _runner)(context)),
         cancellation.future.then<void>((_) => throw const _ProcessCancelled()),
       ]);
       if (runGeneration != _runGeneration) return;
@@ -104,6 +110,16 @@ class SystemCoreProcessService {
       }
     } on _ProcessCancelled {
       // cancel() already records the terminal state and journal event.
+    } on SystemCoreProcessTimeout catch (error) {
+      if (runGeneration == _runGeneration &&
+          _state.status != SystemCoreProcessStatus.cancelled) {
+        _transition(
+          SystemCoreProcessStatus.timeout,
+          'AUTO-PROCESS TIMEOUT: ${error.message}',
+          SystemCoreLogLevel.error,
+          errorMessage: error.message,
+        );
+      }
     } catch (error) {
       if (runGeneration == _runGeneration &&
           _state.status != SystemCoreProcessStatus.cancelled) {

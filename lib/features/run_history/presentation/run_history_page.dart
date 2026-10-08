@@ -191,6 +191,7 @@ IconData _statusIcon(SystemCoreProcessStatus status) => switch (status) {
   SystemCoreProcessStatus.completed => Icons.check_circle_outline,
   SystemCoreProcessStatus.failed => Icons.error_outline,
   SystemCoreProcessStatus.cancelled => Icons.cancel_outlined,
+  SystemCoreProcessStatus.timeout => Icons.timer_off_outlined,
 };
 
 Color _statusColor(SystemCoreProcessStatus status) => switch (status) {
@@ -200,6 +201,7 @@ Color _statusColor(SystemCoreProcessStatus status) => switch (status) {
   SystemCoreProcessStatus.completed => SystemCorePalette.green,
   SystemCoreProcessStatus.failed => SystemCorePalette.red,
   SystemCoreProcessStatus.cancelled => SystemCorePalette.muted,
+  SystemCoreProcessStatus.timeout => SystemCorePalette.red,
 };
 
 String _statusLabel(SystemCoreProcessStatus status) =>

@@ -5,6 +5,7 @@ enum SystemCoreProcessStatus {
   completed,
   failed,
   cancelled,
+  timeout,
 }
 
 enum SystemCoreLogLevel { neutral, success, accent, error }

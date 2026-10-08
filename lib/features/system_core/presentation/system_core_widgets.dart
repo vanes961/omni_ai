@@ -291,6 +291,7 @@ String _processButtonLabel(SystemCoreProcessStatus status) => switch (status) {
   SystemCoreProcessStatus.completed => 'ЗАПУСТИТЬ СНОВА',
   SystemCoreProcessStatus.failed => 'ПОВТОРИТЬ ЗАПУСК',
   SystemCoreProcessStatus.cancelled => 'ЗАПУСТИТЬ СНОВА',
+  SystemCoreProcessStatus.timeout => 'ПОВТОРИТЬ ЗАПУСК',
 };
 
 bool _isProcessActive(SystemCoreProcessStatus status) =>

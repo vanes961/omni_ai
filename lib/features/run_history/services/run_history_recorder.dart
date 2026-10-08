@@ -56,7 +56,9 @@ class RunHistoryRecorder {
       logEntries: [...activeRecord.logEntries, ...newEntries],
       finishedAt: isFinished ? lastEventAt : null,
       errorMessage: state.errorMessage,
-      clearError: state.status != SystemCoreProcessStatus.failed,
+      clearError:
+          state.status != SystemCoreProcessStatus.failed &&
+          state.status != SystemCoreProcessStatus.timeout,
     );
 
     _activeRecord = isFinished ? null : updatedRecord;
@@ -79,7 +81,8 @@ class RunHistoryRecorder {
   static bool _isFinished(SystemCoreProcessStatus status) =>
       status == SystemCoreProcessStatus.completed ||
       status == SystemCoreProcessStatus.failed ||
-      status == SystemCoreProcessStatus.cancelled;
+      status == SystemCoreProcessStatus.cancelled ||
+      status == SystemCoreProcessStatus.timeout;
 }
 
 String _defaultIdFactory() => 'run-${DateTime.now().microsecondsSinceEpoch}';
