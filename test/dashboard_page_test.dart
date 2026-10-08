@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/features/dashboard/presentation/dashboard_page.dart';
+import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 void main() {
@@ -18,6 +19,13 @@ void main() {
     expect(find.text('Семья & Здоровье'), findsOneWidget);
     expect(find.text('Настройки'), findsOneWidget);
 
+    await tester.tap(find.text('Медиа'));
+    await tester.pumpAndSettle();
+    expect(find.byType(MediaPage), findsOneWidget);
+    expect(find.byKey(const ValueKey('media-search')), findsOneWidget);
+
+    await tester.tap(find.text('Лента'));
+    await tester.pumpAndSettle();
     await tester.drag(find.byType(PageView), const Offset(-500, 0));
     await tester.pumpAndSettle();
     expect(find.text('TELEGRAM // NEWS'), findsOneWidget);

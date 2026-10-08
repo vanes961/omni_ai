@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
@@ -92,11 +93,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildTab() {
     return switch (_selectedTab) {
       0 => _buildFeed(),
-      1 => const _ModulePlaceholder(
-        eyebrow: '02 // MEDIA',
-        title: 'МЕДИА-МОДУЛЬ',
-        icon: Icons.movie_outlined,
-      ),
+      1 => MediaPage(preferences: widget.preferences),
       2 => const _ModulePlaceholder(
         eyebrow: '03 // FAMILY & HEALTH',
         title: 'СЕМЬЯ & ЗДОРОВЬЕ',
