@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:omni_ai/features/onboarding/presentation/onboarding_page.dart';
+import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/run_history/data/shared_preferences_run_history_repository.dart';
 import 'package:omni_ai/features/run_history/presentation/run_history_page.dart';
 import 'package:omni_ai/features/run_history/repositories/run_history_repository.dart';
@@ -11,10 +13,16 @@ import 'package:omni_ai/features/system_core/presentation/system_core_widgets.da
 import 'package:omni_ai/features/system_core/services/system_core_process_service.dart';
 
 class SystemCorePage extends StatefulWidget {
-  const SystemCorePage({super.key, this.service, this.historyRepository});
+  const SystemCorePage({
+    super.key,
+    this.service,
+    this.historyRepository,
+    this.preferencesStore,
+  });
 
   final SystemCoreProcessService? service;
   final RunHistoryRepository? historyRepository;
+  final UserPreferencesStore? preferencesStore;
 
   @override
   State<SystemCorePage> createState() => _SystemCorePageState();
@@ -48,7 +56,15 @@ class _SystemCorePageState extends State<SystemCorePage> {
   }
 
   void _handleProcessAction() {
-    if (_process.isActive) {
+    if (_process.status == SystemCoreProcessStatus.completed ||
+        _process.status == SystemCoreProcessStatus.cancelled) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (context) =>
+              OnboardingPage(preferencesStore: widget.preferencesStore),
+        ),
+      );
+    } else if (_process.isActive) {
       _service.cancel();
     } else {
       unawaited(_service.start());
