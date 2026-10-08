@@ -9,12 +9,22 @@ class UserPreferences {
   List<String> favoriteTitles = [];
   List<String> voiceDubbing = [];
   List<String> tgChannels = [];
+  bool autoMirrorEnabled = true;
+  bool proxyEnabled = false;
+  String proxyType = 'http';
+  String proxyHost = '';
+  int proxyPort = 1080;
 
   Map<String, dynamic> toJson() => {
     'categories': categories,
     'favoriteTitles': favoriteTitles,
     'voiceDubbing': voiceDubbing,
     'tgChannels': tgChannels,
+    'autoMirrorEnabled': autoMirrorEnabled,
+    'proxyEnabled': proxyEnabled,
+    'proxyType': proxyType,
+    'proxyHost': proxyHost,
+    'proxyPort': proxyPort,
   };
 
   factory UserPreferences.fromJson(Map<String, dynamic> json) {
@@ -22,7 +32,18 @@ class UserPreferences {
       ..categories = _stringList(json['categories'])
       ..favoriteTitles = _stringList(json['favoriteTitles'])
       ..voiceDubbing = _stringList(json['voiceDubbing'])
-      ..tgChannels = _stringList(json['tgChannels']);
+      ..tgChannels = _stringList(json['tgChannels'])
+      ..autoMirrorEnabled = json['autoMirrorEnabled'] is bool
+          ? json['autoMirrorEnabled'] as bool
+          : true
+      ..proxyEnabled = json['proxyEnabled'] is bool
+          ? json['proxyEnabled'] as bool
+          : false
+      ..proxyType = _proxyType(json['proxyType'])
+      ..proxyHost = json['proxyHost'] is String
+          ? json['proxyHost'] as String
+          : ''
+      ..proxyPort = json['proxyPort'] is int ? json['proxyPort'] as int : 1080;
   }
 }
 
@@ -92,3 +113,8 @@ class _SharedPreferencesStringStore implements UserPreferencesStringStore {
 
 List<String> _stringList(Object? value) =>
     value is List ? value.whereType<String>().toList() : <String>[];
+
+String _proxyType(Object? value) =>
+    value is String && {'http', 'socks5', 'mtproto'}.contains(value)
+    ? value
+    : 'http';

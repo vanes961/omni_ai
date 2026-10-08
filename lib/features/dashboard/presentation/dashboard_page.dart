@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
+import 'package:omni_ai/features/settings/presentation/pages/network_settings_page.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 import 'package:omni_ai/features/telegram/data/telegram_post.dart';
 import 'package:omni_ai/features/telegram/presentation/widgets/telegram_post_card.dart';
@@ -9,12 +10,14 @@ import 'package:omni_ai/features/telegram/services/telegram_parser_service.dart'
 class DashboardPage extends StatefulWidget {
   const DashboardPage({
     required this.preferences,
+    this.preferencesStore,
     this.telegramService = const TelegramParserService(),
     this.sourceLauncher,
     super.key,
   });
 
   final UserPreferences preferences;
+  final UserPreferencesStore? preferencesStore;
   final TelegramParserService telegramService;
   final TelegramSourceLauncher? sourceLauncher;
 
@@ -24,6 +27,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedTab = 0;
+  late final UserPreferencesStore _preferencesStore;
   final TextEditingController _feedSearchController = TextEditingController();
   late Future<List<TelegramPost>> _feedFuture;
   String _feedQuery = '';
@@ -32,6 +36,8 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    _preferencesStore =
+        widget.preferencesStore ?? SharedPreferencesUserPreferencesStore();
     _feedFuture = widget.telegramService.fetchPosts(widget.preferences);
   }
 
@@ -254,12 +260,9 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildSettings() {
-    return _ModulePlaceholder(
-      eyebrow: '04 // SETTINGS',
-      title: 'НАСТРОЙКИ',
-      icon: Icons.settings_outlined,
-      detail:
-          '${widget.preferences.categories.length} ИНТЕРЕСОВ СИНХРОНИЗИРОВАНО',
+    return NetworkSettingsPage(
+      preferences: widget.preferences,
+      preferencesStore: _preferencesStore,
     );
   }
 
@@ -375,14 +378,11 @@ class _ModulePlaceholder extends StatelessWidget {
     required this.eyebrow,
     required this.title,
     required this.icon,
-    this.detail = 'MODULE STANDBY',
   });
 
   final String eyebrow;
   final String title;
   final IconData icon;
-  final String detail;
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -412,7 +412,7 @@ class _ModulePlaceholder extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              detail,
+              'MODULE STANDBY',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: SystemCorePalette.muted,

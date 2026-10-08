@@ -12,7 +12,12 @@ void main() {
         ..categories = ['Аниме', 'Технологии']
         ..favoriteTitles = ['Cyberpunk']
         ..voiceDubbing = ['Anilibria']
-        ..tgChannels = ['Игромания'];
+        ..tgChannels = ['Игромания']
+        ..autoMirrorEnabled = false
+        ..proxyEnabled = true
+        ..proxyType = 'mtproto'
+        ..proxyHost = 'proxy.example'
+        ..proxyPort = 443;
 
       await store.save(preferences);
       final restored = await SharedPreferencesUserPreferencesStore(
@@ -28,6 +33,21 @@ void main() {
         preferences.toJson(),
       );
     });
+
+    test(
+      'uses network defaults for profiles saved before network settings',
+      () {
+        final preferences = UserPreferences.fromJson({
+          'categories': ['Аниме'],
+        });
+
+        expect(preferences.autoMirrorEnabled, isTrue);
+        expect(preferences.proxyEnabled, isFalse);
+        expect(preferences.proxyType, 'http');
+        expect(preferences.proxyHost, isEmpty);
+        expect(preferences.proxyPort, 1080);
+      },
+    );
 
     test(
       'clears a malformed saved profile and reports no completed profile',

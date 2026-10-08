@@ -91,7 +91,10 @@ class _AppStartupPageState extends State<_AppStartupPage> {
 
         final preferences = snapshot.data;
         if (preferences != null) {
-          return DashboardPage(preferences: preferences);
+          return DashboardPage(
+            preferences: preferences,
+            preferencesStore: _preferencesStore,
+          );
         }
         return SystemCorePage(preferencesStore: _preferencesStore);
       },

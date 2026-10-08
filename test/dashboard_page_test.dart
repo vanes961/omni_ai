@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/features/dashboard/presentation/dashboard_page.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
+import 'package:omni_ai/features/settings/presentation/pages/network_settings_page.dart';
 import 'package:omni_ai/features/telegram/presentation/widgets/telegram_post_card.dart';
 import 'package:omni_ai/features/telegram/data/telegram_post.dart';
 import 'package:omni_ai/features/telegram/services/telegram_parser_service.dart';
@@ -46,7 +47,14 @@ void main() {
 
     await tester.tap(find.text('Настройки'));
     await tester.pumpAndSettle();
-    expect(find.text('04 // SETTINGS'), findsOneWidget);
+    expect(find.byType(NetworkSettingsPage), findsOneWidget);
+    expect(find.text('Авто-выбор зеркал'), findsOneWidget);
+
+    await tester.tap(find.text('Лента'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Профиль'));
+    await tester.pumpAndSettle();
+    expect(find.byType(NetworkSettingsPage), findsOneWidget);
   });
 
   testWidgets('pull to refresh requests fresh Telegram posts', (tester) async {
