@@ -29,14 +29,16 @@ void main() {
           200,
           headers: {'content-type': 'application/json'},
         );
-      });
+      }, apiKeySource: const EnvironmentGeminiApiKeySource(
+        apiKey: 'local-test-key',
+      ));
       addTearDown(provider.close);
 
       final result = await _engine(provider).execute(_request());
 
       expect(capturedRequest?.method, 'POST');
       expect(capturedRequest?.url, Uri.parse(GeminiApiConfig().endpoint));
-      expect(capturedRequest?.headers['x-goog-api-key'], 'test-only-key');
+      expect(capturedRequest?.headers['x-goog-api-key'], 'local-test-key');
       expect(jsonDecode(capturedRequest!.body), {
         'model': 'gemini-3.8-flash',
         'input': 'Say hello',
@@ -50,6 +52,43 @@ void main() {
         'interactionId': 'interaction-123',
       });
       expect(result.generatedAt, isA<DateTime>());
+    });
+
+    test('reports a clear error when the API key is missing', () async {
+      var requestSent = false;
+      final provider = _provider((_) async {
+        requestSent = true;
+        return http.Response('', 200);
+      }, apiKeySource: _FakeApiKeySource(null));
+      addTearDown(provider.close);
+
+      await expectLater(
+        _engine(provider).execute(_request()),
+        throwsA(
+          isA<AIEngineException>()
+              .having(
+                (error) => error.error.code,
+                'code',
+                AIErrorCode.invalidRequest,
+              )
+              .having(
+                (error) => error.error.message,
+                'message',
+                contains('Gemini API key is not configured'),
+              ),
+        ),
+      );
+      expect(requestSent, isFalse);
+    });
+
+    test('reads and trims the configured development environment key', () async {
+      const source = EnvironmentGeminiApiKeySource(apiKey: ' local-test-key ');
+
+      expect(await source.readApiKey(), 'local-test-key');
+      expect(
+        await const EnvironmentGeminiApiKeySource(apiKey: '').readApiKey(),
+        isNull,
+      );
     });
 
     test('maps Gemini API errors to AIEngine provider errors', () async {
@@ -195,15 +234,20 @@ AIEngine _engine(AIProvider provider) =>
 GeminiProvider _provider(
   Future<http.Response> Function(http.Request) handler, {
   GeminiApiConfig config = const GeminiApiConfig(),
+  GeminiApiKeySource? apiKeySource,
 }) => GeminiProvider(
-  apiKeySource: _FakeApiKeySource(),
+  apiKeySource: apiKeySource ?? _FakeApiKeySource(),
   config: config,
   client: MockClient(handler),
 );
 
 class _FakeApiKeySource implements GeminiApiKeySource {
+  _FakeApiKeySource([this.apiKey = 'test-only-key']);
+
+  final String? apiKey;
+
   @override
-  Future<String?> readApiKey() async => 'test-only-key';
+  Future<String?> readApiKey() async => apiKey;
 }
 
 class _CapturingClient extends http.BaseClient {
