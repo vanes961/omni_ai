@@ -53,11 +53,13 @@ void main() {
         'https://primary.example/poster.jpg',
       )['User-Agent'],
     );
-    final fallback = primary.errorWidget!(
-      tester.element(find.byType(CachedNetworkImage)),
-      primary.imageUrl,
-      Exception('primary image failed'),
-    ) as CachedNetworkImage;
+    final fallback =
+        primary.errorWidget!(
+              tester.element(find.byType(CachedNetworkImage)),
+              primary.imageUrl,
+              Exception('primary image failed'),
+            )
+            as CachedNetworkImage;
     expect(fallback.imageUrl, 'https://backup.example/poster.jpg');
     expect(fallback.httpHeaders, primary.httpHeaders);
   });
@@ -265,7 +267,8 @@ void main() {
       episodes: const [
         MediaEpisode(
           number: 1,
-          title: 'A very long episode title that used to overflow the screen width',
+          title:
+              'A very long episode title that used to overflow the screen width',
           videoUrl: 'https://example.com/video.mp4',
         ),
         MediaEpisode(

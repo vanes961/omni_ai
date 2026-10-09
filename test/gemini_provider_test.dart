@@ -199,8 +199,9 @@ void main() {
         addTearDown(provider.close);
         final cancellationToken = AICancellationToken();
 
-        final execution = _engine(provider)
-            .execute(_request(), cancellationToken: cancellationToken);
+        final execution = _engine(
+          provider,
+        ).execute(_request(), cancellationToken: cancellationToken);
         final request = await requestSent.future;
         cancellationToken.cancel();
 
