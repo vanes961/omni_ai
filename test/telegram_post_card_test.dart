@@ -29,10 +29,7 @@ void main() {
     final image = tester.widget<CachedNetworkImage>(
       find.byType(CachedNetworkImage),
     );
-    expect(
-      image.httpHeaders,
-      MediaHeaders.getHeaders(post.mediaUrl!),
-    );
+    expect(image.httpHeaders, MediaHeaders.getHeaders(post.mediaUrl!));
     expect(find.byIcon(Icons.push_pin_outlined), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('source-post-test')));

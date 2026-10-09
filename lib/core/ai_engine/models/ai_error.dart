@@ -1,10 +1,4 @@
-enum AIErrorCode {
-  cancelled,
-  timeout,
-  provider,
-  invalidRequest,
-  unknown,
-}
+enum AIErrorCode { cancelled, timeout, provider, invalidRequest, unknown }
 
 class AIError {
   const AIError({
@@ -24,5 +18,6 @@ class AIEngineException implements Exception {
   final AIError error;
 
   @override
-  String toString() => 'AIEngineException(${error.code.name}): ${error.message}';
+  String toString() =>
+      'AIEngineException(${error.code.name}): ${error.message}';
 }

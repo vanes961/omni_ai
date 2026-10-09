@@ -9,16 +9,11 @@ void main() {
   group('AIEngine', () {
     test('returns provider response', () async {
       final engine = AIEngine(
-        provider: _FakeProvider(
-          responseText: 'Привет из AI Engine.',
-        ),
+        provider: _FakeProvider(responseText: 'Привет из AI Engine.'),
       );
 
       final response = await engine.execute(
-        const AIRequest(
-          id: 'request-1',
-          prompt: 'Привет',
-        ),
+        const AIRequest(id: 'request-1', prompt: 'Привет'),
       );
 
       expect(response.requestId, 'request-1');
@@ -31,12 +26,7 @@ void main() {
       final engine = AIEngine(provider: provider);
 
       await expectLater(
-        engine.execute(
-          const AIRequest(
-            id: 'request-2',
-            prompt: '   ',
-          ),
-        ),
+        engine.execute(const AIRequest(id: 'request-2', prompt: '   ')),
         throwsA(
           isA<AIEngineException>().having(
             (error) => error.error.code,
@@ -54,43 +44,25 @@ void main() {
       );
 
       await expectLater(
-        engine.execute(
-          const AIRequest(
-            id: 'request-3',
-            prompt: 'Тест',
-          ),
-        ),
+        engine.execute(const AIRequest(id: 'request-3', prompt: 'Тест')),
         throwsA(
           isA<AIEngineException>()
-              .having(
-                (error) => error.error.code,
-                'code',
-                AIErrorCode.provider,
-              )
-              .having(
-                (error) => error.error.retryable,
-                'retryable',
-                isTrue,
-              ),
+              .having((error) => error.error.code, 'code', AIErrorCode.provider)
+              .having((error) => error.error.retryable, 'retryable', isTrue),
         ),
       );
     });
 
     test('supports cooperative cancellation', () async {
       final token = AICancellationToken();
-      final provider = _FakeProvider(
-        waitForCancellation: true,
-      );
+      final provider = _FakeProvider(waitForCancellation: true);
       final engine = AIEngine(
         provider: provider,
         timeout: const Duration(seconds: 1),
       );
 
       final future = engine.execute(
-        const AIRequest(
-          id: 'request-4',
-          prompt: 'Долгая задача',
-        ),
+        const AIRequest(id: 'request-4', prompt: 'Долгая задача'),
         cancellationToken: token,
       );
 
@@ -109,9 +81,7 @@ void main() {
     });
 
     test('times out and requests provider cancellation', () async {
-      final provider = _FakeProvider(
-        waitForCancellation: true,
-      );
+      final provider = _FakeProvider(waitForCancellation: true);
       final engine = AIEngine(
         provider: provider,
         timeout: const Duration(milliseconds: 20),
@@ -119,10 +89,7 @@ void main() {
       final token = AICancellationToken();
 
       final future = engine.execute(
-        const AIRequest(
-          id: 'request-5',
-          prompt: 'Зависшая задача',
-        ),
+        const AIRequest(id: 'request-5', prompt: 'Зависшая задача'),
         cancellationToken: token,
       );
 

@@ -265,8 +265,7 @@ void main() {
       episodes: const [
         MediaEpisode(
           number: 1,
-          title:
-              'A very long episode title that used to overflow the screen width',
+          title: 'A very long episode title that used to overflow the screen width',
           videoUrl: 'https://example.com/video.mp4',
         ),
         MediaEpisode(

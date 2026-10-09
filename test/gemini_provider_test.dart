@@ -16,22 +16,25 @@ void main() {
   group('GeminiProvider', () {
     test('maps successful Interactions API response to AIResponse', () async {
       http.Request? capturedRequest;
-      final provider = _provider((request) async {
-        capturedRequest = request;
-        return http.Response(
-          jsonEncode({
-            'id': 'interaction-123',
-            'outputs': [
-              {'type': 'text', 'text': 'Hello '},
-              {'type': 'text', 'text': 'from Gemini'},
-            ],
-          }),
-          200,
-          headers: {'content-type': 'application/json'},
-        );
-      }, apiKeySource: const EnvironmentGeminiApiKeySource(
-        apiKey: 'local-test-key',
-      ));
+      final provider = _provider(
+        (request) async {
+          capturedRequest = request;
+          return http.Response(
+            jsonEncode({
+              'id': 'interaction-123',
+              'outputs': [
+                {'type': 'text', 'text': 'Hello '},
+                {'type': 'text', 'text': 'from Gemini'},
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        },
+        apiKeySource: const EnvironmentGeminiApiKeySource(
+          apiKey: 'local-test-key',
+        ),
+      );
       addTearDown(provider.close);
 
       final result = await _engine(provider).execute(_request());
@@ -81,15 +84,20 @@ void main() {
       expect(requestSent, isFalse);
     });
 
-    test('reads and trims the configured development environment key', () async {
-      const source = EnvironmentGeminiApiKeySource(apiKey: ' local-test-key ');
+    test(
+      'reads and trims the configured development environment key',
+      () async {
+        const source = EnvironmentGeminiApiKeySource(
+          apiKey: ' local-test-key ',
+        );
 
-      expect(await source.readApiKey(), 'local-test-key');
-      expect(
-        await const EnvironmentGeminiApiKeySource(apiKey: '').readApiKey(),
-        isNull,
-      );
-    });
+        expect(await source.readApiKey(), 'local-test-key');
+        expect(
+          await const EnvironmentGeminiApiKeySource(apiKey: '').readApiKey(),
+          isNull,
+        );
+      },
+    );
 
     test('maps Gemini API errors to AIEngine provider errors', () async {
       final provider = _provider(
@@ -191,9 +199,8 @@ void main() {
         addTearDown(provider.close);
         final cancellationToken = AICancellationToken();
 
-        final execution = _engine(
-          provider,
-        ).execute(_request(), cancellationToken: cancellationToken);
+        final execution = _engine(provider)
+            .execute(_request(), cancellationToken: cancellationToken);
         final request = await requestSent.future;
         cancellationToken.cancel();
 

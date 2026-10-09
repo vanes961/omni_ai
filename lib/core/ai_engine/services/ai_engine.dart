@@ -28,28 +28,26 @@ class AIEngine {
       );
     }
 
-    final providerFuture = provider.complete(
-      request,
-      cancellationToken: token,
-    );
+    final providerFuture = provider.complete(request, cancellationToken: token);
 
     try {
-      final response = await Future.any<AIResponse>([
-        providerFuture,
-        _throwWhenCancelled(token),
-      ]).timeout(
-        timeout,
-        onTimeout: () {
-          token.cancel();
-          throw const AIEngineException(
-            AIError(
-              code: AIErrorCode.timeout,
-              message: 'AI provider request timed out.',
-              retryable: true,
-            ),
+      final response =
+          await Future.any<AIResponse>([
+            providerFuture,
+            _throwWhenCancelled(token),
+          ]).timeout(
+            timeout,
+            onTimeout: () {
+              token.cancel();
+              throw const AIEngineException(
+                AIError(
+                  code: AIErrorCode.timeout,
+                  message: 'AI provider request timed out.',
+                  retryable: true,
+                ),
+              );
+            },
           );
-        },
-      );
 
       if (token.isCancelled) {
         throw const AIEngineException(
@@ -77,10 +75,7 @@ class AIEngine {
   Future<AIResponse> _throwWhenCancelled(AICancellationToken token) async {
     await token.cancelled;
     throw const AIEngineException(
-      AIError(
-        code: AIErrorCode.cancelled,
-        message: 'AI request cancelled.',
-      ),
+      AIError(code: AIErrorCode.cancelled, message: 'AI request cancelled.'),
     );
   }
 }
