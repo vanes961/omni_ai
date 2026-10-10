@@ -23,14 +23,13 @@ void main() {
     }
   });
 
-  LocalModelSpec spec({int expectedBytes = 10}) =>
-      LocalModelSpec(
-        id: 'test-model',
-        displayName: 'Test model',
-        fileName: 'test.gguf',
-        downloadUri: 'https://example.test/test.gguf',
-        expectedBytesApprox: expectedBytes,
-      );
+  LocalModelSpec spec({int expectedBytes = 10}) => LocalModelSpec(
+    id: 'test-model',
+    displayName: 'Test model',
+    fileName: 'test.gguf',
+    downloadUri: 'https://example.test/test.gguf',
+    expectedBytesApprox: expectedBytes,
+  );
 
   test('downloads and atomically installs a complete model', () async {
     final bytes = Uint8List.fromList(List<int>.generate(10, (i) => i));
@@ -111,19 +110,22 @@ void main() {
     expect(await File('${file.path}.part').exists(), isFalse);
   });
 
-  test('delete removes both the installed model and stale partial file', () async {
-    storage = LocalModelStorage(
-      client: MockClient((_) async => http.Response('', 200)),
-      supportDirectoryProvider: () async => temporaryDirectory,
-    );
-    final file = await storage.modelFile(spec());
-    await file.parent.create(recursive: true);
-    await file.writeAsBytes(List<int>.filled(10, 1));
-    await File('${file.path}.part').writeAsBytes([1]);
+  test(
+    'delete removes both the installed model and stale partial file',
+    () async {
+      storage = LocalModelStorage(
+        client: MockClient((_) async => http.Response('', 200)),
+        supportDirectoryProvider: () async => temporaryDirectory,
+      );
+      final file = await storage.modelFile(spec());
+      await file.parent.create(recursive: true);
+      await file.writeAsBytes(List<int>.filled(10, 1));
+      await File('${file.path}.part').writeAsBytes([1]);
 
-    await storage.delete(spec());
+      await storage.delete(spec());
 
-    expect(await file.exists(), isFalse);
-    expect(await File('${file.path}.part').exists(), isFalse);
-  });
+      expect(await file.exists(), isFalse);
+      expect(await File('${file.path}.part').exists(), isFalse);
+    },
+  );
 }
