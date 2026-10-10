@@ -21,7 +21,11 @@ class SharedPreferencesAIMemoryRepository implements AIMemoryRepository {
     this.maxMemoryCharacters = defaultMaxMemoryCharacters,
   }) : _store = store ?? _SharedPreferencesMemoryStringStore() {
     if (maxMemories <= 0) {
-      throw ArgumentError.value(maxMemories, 'maxMemories', 'Must be positive.');
+      throw ArgumentError.value(
+        maxMemories,
+        'maxMemories',
+        'Must be positive.',
+      );
     }
     if (maxMemoryCharacters <= 0) {
       throw ArgumentError.value(
@@ -51,7 +55,11 @@ class SharedPreferencesAIMemoryRepository implements AIMemoryRepository {
   Future<void> save(AIMemory memory) {
     final content = memory.content.trim();
     if (content.isEmpty) {
-      throw ArgumentError.value(memory.content, 'content', 'Must not be empty.');
+      throw ArgumentError.value(
+        memory.content,
+        'content',
+        'Must not be empty.',
+      );
     }
     if (content.length > maxMemoryCharacters) {
       throw ArgumentError.value(
@@ -69,11 +77,7 @@ class SharedPreferencesAIMemoryRepository implements AIMemoryRepository {
       final records = await _readMemories();
       records.removeWhere((existing) => existing.id == memory.id);
       records.add(
-        AIMemory(
-          id: memory.id,
-          content: content,
-          createdAt: memory.createdAt,
-        ),
+        AIMemory(id: memory.id, content: content, createdAt: memory.createdAt),
       );
       records.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       final retained = records.take(maxMemories).toList(growable: false);
