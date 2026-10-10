@@ -281,9 +281,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.download),
-                  label: Text(
-                    _downloading ? 'ЗАГРУЗКА…' : 'ЗАГРУЗИТЬ МОДЕЛЬ',
-                  ),
+                  label: Text(_downloading ? 'ЗАГРУЗКА…' : 'ЗАГРУЗИТЬ МОДЕЛЬ'),
                 ),
               ),
               const SizedBox(height: 8),
