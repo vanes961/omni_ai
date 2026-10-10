@@ -162,10 +162,11 @@ class NewsRssService {
     return (decodeEntities ? _decodeEntities(value) : value).trim();
   }
 
-  String _stripMarkup(String value) => _decodeEntities(value)
-      .replaceAll(RegExp(r'<[^>]*>'), ' ')
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .trim();
+  String _stripMarkup(String value) => _decodeEntities(
+    value
+        .replaceAll(RegExp(r'<[^>]*>'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' '),
+  ).trim();
 
   String _decodeEntities(String value) => value
       .replaceAll('&amp;', '&')
