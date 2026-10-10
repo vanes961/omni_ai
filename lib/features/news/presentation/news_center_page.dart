@@ -129,8 +129,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       });
       // When no valid cached feed exists, load the selected topics on entry
       // instead of leaving a blank screen until the user discovers Refresh.
-      if ((loadedProfile ?? _profile)?.topics.isNotEmpty == true &&
-          _articles.isEmpty) {
+      if (_profile?.topics.isNotEmpty == true && _articles.isEmpty) {
         unawaited(_refreshNews());
       }
     } catch (_) {
