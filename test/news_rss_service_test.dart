@@ -147,6 +147,45 @@ void main() {
     );
   });
 
+  test('keeps repeated URL query values distinct during deduplication', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response(
+        '''<rss><channel>
+          <item>
+            <title>Anime story with comma tag</title>
+            <link>https://publisher.example/story?tag=a%2Cb&amp;tag=c</link>
+            <description>Anime news</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            <source>Anime News</source>
+          </item>
+          <item>
+            <title>Anime story with split tags</title>
+            <link>https://publisher.example/story?tag=a&amp;tag=b%2Cc</link>
+            <description>Anime news</description>
+            <pubDate>Sat, 10 Oct 2026 11:00:00 GMT</pubDate>
+            <source>Anime News</source>
+          </item>
+        </channel></rss>''',
+        200,
+        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+      )),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+
+    expect(articles, hasLength(2));
+    expect(
+      articles.map((article) => article.sourceUrl),
+      containsAll([
+        'https://publisher.example/story?tag=a%2Cb&tag=c',
+        'https://publisher.example/story?tag=a&tag=b%2Cc',
+      ]),
+    );
+  });
+
   test('fetches international editions and filters topics without locale lock', () async {
     var requests = 0;
     final service = NewsRssService(
