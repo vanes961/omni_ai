@@ -13,16 +13,14 @@ import 'local_model_storage.dart';
 /// remote service. The user must install the model from settings first.
 class StoredLocalLlamaProvider implements AIProvider {
   StoredLocalLlamaProvider({
-    required LocalModelStorage storage,
-    LocalModelSpec model = LocalModelCatalog.qwen3Small,
+    required this.storage,
+    this.model = LocalModelCatalog.qwen3Small,
     LocalLlamaProvider Function(File modelFile)? providerFactory,
-  }) : _storage = storage,
-       _model = model,
-       _providerFactory =
+  }) : _providerFactory =
            providerFactory ?? ((file) => LocalLlamaProvider(modelFile: file));
 
-  final LocalModelStorage _storage;
-  final LocalModelSpec _model;
+  final LocalModelStorage storage;
+  final LocalModelSpec model;
   final LocalLlamaProvider Function(File modelFile) _providerFactory;
 
   LocalLlamaProvider? _provider;
@@ -58,18 +56,18 @@ class StoredLocalLlamaProvider implements AIProvider {
   Future<LocalLlamaProvider> _initialize() async {
     LocalLlamaProvider? provider;
     try {
-      final isDownloaded = await _storage.isDownloaded(_model);
+      final isDownloaded = await storage.isDownloaded(model);
       _ensureNotDisposed();
       if (!isDownloaded) {
         throw AIEngineException(
           AIError(
             code: AIErrorCode.invalidRequest,
             message:
-                'Local model is not downloaded. Open Local AI settings and download ${_model.displayName}.',
+                'Local model is not downloaded. Open Local AI settings and download ${model.displayName}.',
           ),
         );
       }
-      final file = await _storage.modelFile(_model);
+      final file = await storage.modelFile(model);
       _ensureNotDisposed();
       provider = _providerFactory(file);
       await provider.loadModel();
