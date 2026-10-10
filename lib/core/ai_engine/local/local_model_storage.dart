@@ -14,7 +14,8 @@ class LocalModelCatalog {
     id: 'qwen3-0.6b-q4-k-m',
     displayName: 'Qwen3 0.6B (Q4_K_M)',
     fileName: 'Qwen3-0.6B-Q4_K_M.gguf',
-    downloadUri: 'https://huggingface.co/tensorblock/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf',
+    downloadUri:
+        'https://huggingface.co/tensorblock/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf',
     expectedBytesApprox: 484000000,
   );
 }
@@ -39,7 +40,8 @@ class LocalModelSpec {
 /// demand. A `.part` file is used so interrupted downloads are never treated
 /// as a complete model.
 class LocalModelStorage {
-  LocalModelStorage({http.Client? client}) : _client = client ?? http.Client();
+  LocalModelStorage({http.Client? client})
+    : _client = client ?? http.Client();
 
   final http.Client _client;
 
@@ -70,7 +72,10 @@ class LocalModelStorage {
     final response = await _client.send(http.Request('GET', uri));
     if (response.statusCode != HttpStatus.ok) {
       await response.stream.drain<void>();
-      throw HttpException('Model download failed with HTTP ${response.statusCode}.', uri: uri);
+      throw HttpException(
+        'Model download failed with HTTP ${response.statusCode}.',
+        uri: uri,
+      );
     }
 
     final total = response.contentLength;
@@ -93,7 +98,9 @@ class LocalModelStorage {
     final actualLength = await temporary.length();
     if (actualLength < model.expectedBytesApprox * 0.95) {
       await temporary.delete();
-      throw const FormatException('Downloaded model is smaller than expected; please retry.');
+      throw const FormatException(
+        'Downloaded model is smaller than expected; please retry.',
+      );
     }
 
     if (await destination.exists()) await destination.delete();
