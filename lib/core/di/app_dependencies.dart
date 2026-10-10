@@ -11,26 +11,37 @@ import 'package:omni_ai/providers/gemini/gemini_api_key_source.dart';
 ///
 /// This object does not start an AI request automatically.
 class AppDependencies {
-  AppDependencies({
+  factory AppDependencies({
     GeminiApiKeySource? apiKeySource,
     GeminiApiConfig geminiConfig = const GeminiApiConfig(),
     http.Client? httpClient,
     Duration aiTimeout = const Duration(seconds: 30),
     SystemCoreProcessService? processService,
     RunHistoryRepository? runHistoryRepository,
-  }) : ai = AIDependencies(
-         apiKeySource: apiKeySource,
-         config: geminiConfig,
-         httpClient: httpClient,
-         timeout: aiTimeout,
-       ),
-       processService = processService ?? SystemCoreProcessService(),
-       historyRepository =
-           runHistoryRepository ?? SharedPreferencesRunHistoryRepository() {
+  }) {
+    final ai = AIDependencies(
+      apiKeySource: apiKeySource,
+      config: geminiConfig,
+      httpClient: httpClient,
+      timeout: aiTimeout,
+    );
+    return AppDependencies._(
+      ai: ai,
+      processService: processService ?? SystemCoreProcessService(),
+      historyRepository:
+          runHistoryRepository ?? SharedPreferencesRunHistoryRepository(),
+    );
+  }
+
+  AppDependencies._({
+    required this.ai,
+    required this.processService,
+    required this.historyRepository,
+  }) {
     orchestrator = AIProcessOrchestrator(
-      _engine: ai.engine,
-      processService: this.processService,
-      historyRepository: this.historyRepository,
+      engine: ai.engine,
+      processService: processService,
+      historyRepository: historyRepository,
     );
   }
 
