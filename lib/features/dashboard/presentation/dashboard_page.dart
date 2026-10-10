@@ -75,7 +75,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _disposeOwnedAI() async {
     await _chatDependencies.dispose();
-    _localModelStorage.dispose();
   }
 
   @override
