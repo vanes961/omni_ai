@@ -139,7 +139,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _digest = digest;
         if (digest == null) _digestError = 'Нет подходящих материалов для дайджеста.';
       });
-    } catch (error) {
+    } catch (_) {
       if (!mounted) return;
       setState(() => _digestError = 'Не удалось создать дайджест. Проверьте выбранный режим ИИ и попробуйте снова.');
     } finally {
