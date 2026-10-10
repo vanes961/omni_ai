@@ -497,6 +497,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                       selectedColor: SystemCorePalette.green.withValues(
                         alpha: 0.18,
                       ),
+                      showCheckmark: false,
                       checkmarkColor: SystemCorePalette.green,
                     ),
                 ],
