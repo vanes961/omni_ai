@@ -104,7 +104,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
   Future<void> _download() async {
     if (_installing) return;
     setState(() {
-      _downloading = true;
+      _installing = true;
       _error = null;
       _status = 'Установка встроенной модели из APK… Интернет не нужен.';
     });
@@ -113,7 +113,8 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
       if (!mounted) return;
       setState(() {
         _installed = true;
-        _status = 'Встроенная модель скопирована и проверена. Интернет не нужен.';
+        _status =
+            'Встроенная модель скопирована и проверена. Интернет не нужен.';
       });
     } on Object catch (error) {
       if (!mounted) return;
@@ -122,12 +123,12 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
         _status = null;
       });
     } finally {
-      if (mounted) setState(() => _downloading = false);
+      if (mounted) setState(() => _installing = false);
     }
   }
 
   Future<void> _delete() async {
-    if (_downloading) return;
+    if (_installing) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -335,22 +336,6 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                     ),
                   ],
                 ),
-              if (_downloading) ...[
-                const SizedBox(height: 14),
-                LinearProgressIndicator(
-                  value: progress,
-                  color: SystemCorePalette.green,
-                  backgroundColor: Colors.white12,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${_formatBytes(_receivedBytes)} / ${_formatBytes(total)}',
-                  style: const TextStyle(
-                    color: SystemCorePalette.muted,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
               if (_status != null) ...[
                 const SizedBox(height: 12),
                 Text(
@@ -376,16 +361,18 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   key: const ValueKey('local-model-download-button'),
-                  onPressed: _checking || _downloading || _installed
+                  onPressed: _checking || _installing || _installed
                       ? null
                       : _download,
-                  icon: _downloading
+                  icon: _installing
                       ? const SizedBox.square(
                           dimension: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.download),
-                  label: Text(_downloading ? 'УСТАНОВКА…' : 'УСТАНОВИТЬ МОДЕЛЬ ИЗ APK'),
+                  label: Text(
+                    _installing ? 'УСТАНОВКА…' : 'УСТАНОВИТЬ МОДЕЛЬ ИЗ APK',
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -393,14 +380,14 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   key: const ValueKey('local-model-delete-button'),
-                  onPressed: _checking || _downloading || !_installed
+                  onPressed: _checking || _installing || !_installed
                       ? null
                       : _delete,
                   icon: const Icon(Icons.delete_outline),
                   label: const Text('УДАЛИТЬ ФАЙЛ'),
                 ),
               ),
-              if (!_downloading && !_checking) ...[
+              if (!_installing && !_checking) ...[
                 const SizedBox(height: 4),
                 TextButton.icon(
                   onPressed: _refreshStatus,
