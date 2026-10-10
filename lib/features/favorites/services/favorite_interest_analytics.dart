@@ -1,5 +1,6 @@
 import 'package:omni_ai/features/favorites/data/favorite_item.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/news/models/news_article.dart';
 
 /// Local, explainable interest profile derived from saved favorites.
 class FavoriteInterestProfile {
@@ -104,6 +105,56 @@ class FavoriteInterestAnalytics {
       score += 0.5;
     }
     return score;
+  }
+
+  /// Ranks news and trailers using the same local favorites profile.
+  /// It only reorders candidates; it never hides an article or makes network calls.
+  double scoreNews(NewsArticle article, FavoriteInterestProfile profile) {
+    if (profile.totalFavorites == 0) return 0;
+    final candidateTerms = <String>{
+      ..._normalizeAll(article.topics),
+      ..._tokens(article.title),
+      ..._tokens(article.summary),
+      ..._tokens(article.channelName ?? ''),
+    };
+    var score = 0.0;
+    for (final term in candidateTerms) {
+      score += profile.interestWeights[term] ?? 0;
+    }
+    if (article.contentType == NewsContentType.trailer &&
+        profile.countFor(FavoriteCategory.trailer) > 0) {
+      score += 0.5;
+    }
+    final topicCategories = <String, FavoriteCategory>{
+      'movie': FavoriteCategory.movie,
+      'movies': FavoriteCategory.movie,
+      'кино': FavoriteCategory.movie,
+      'series': FavoriteCategory.series,
+      'сериалы': FavoriteCategory.series,
+      'anime': FavoriteCategory.anime,
+      'аниме': FavoriteCategory.anime,
+      'manga': FavoriteCategory.manga,
+      'манга': FavoriteCategory.manga,
+    };
+    final familiarCategory = article.topics
+        .map((topic) => topicCategories[topic.trim().toLowerCase()])
+        .whereType<FavoriteCategory>()
+        .any((category) => profile.countFor(category) > 0);
+    if (familiarCategory) score += 0.35;
+    return score;
+  }
+
+  List<NewsArticle> rankNews(
+    List<NewsArticle> articles,
+    FavoriteInterestProfile profile,
+  ) {
+    final indexed = articles.indexed.toList();
+    indexed.sort((a, b) {
+      final scoreComparison =
+          scoreNews(b.$2, profile).compareTo(scoreNews(a.$2, profile));
+      return scoreComparison != 0 ? scoreComparison : a.$1.compareTo(b.$1);
+    });
+    return List<NewsArticle>.unmodifiable(indexed.map((entry) => entry.$2));
   }
 
   List<MediaItem> rank(
