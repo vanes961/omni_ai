@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:omni_ai/core/network/widgets/network_image_with_fallback.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/favorites/data/favorite_item.dart';
+import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
+import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
@@ -27,6 +30,7 @@ class MediaPage extends StatefulWidget {
 
 class _MediaPageState extends State<MediaPage> {
   final TextEditingController _searchController = TextEditingController();
+  final FavoritesRepository _favoritesRepository = FavoritesRepository();
   String _query = '';
   String? _selectedType;
   Timer? _searchDebounce;
@@ -83,13 +87,29 @@ class _MediaPageState extends State<MediaPage> {
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'МЕДИА-ХАБ',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 21,
-            fontWeight: FontWeight.w800,
-          ),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'МЕДИА-ХАБ',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            OutlinedButton.icon(
+              key: const ValueKey('open-favorites'),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const FavoritesPage(),
+                ),
+              ),
+              icon: const Icon(Icons.favorite_border, size: 16),
+              label: const Text('ИЗБРАННОЕ'),
+            ),
+          ],
         ),
         const SizedBox(height: 14),
         TextField(
@@ -277,6 +297,7 @@ class _MediaPageState extends State<MediaPage> {
                   return _MediaPosterCard(
                     item: item,
                     onTap: () => _openPlayer(item),
+                    onFavorite: () => _saveFavorite(item),
                   );
                 },
               ),
@@ -284,6 +305,31 @@ class _MediaPageState extends State<MediaPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _saveFavorite(MediaItem item) async {
+    final category = switch (item.type.toLowerCase()) {
+      'фильм' || 'movie' => FavoriteCategory.movie,
+      'сериал' || 'series' => FavoriteCategory.series,
+      'аниме' || 'anime' => FavoriteCategory.anime,
+      _ => null,
+    };
+    if (category == null) return;
+    await _favoritesRepository.add(
+      FavoriteItem(
+        id: item.id,
+        title: item.title,
+        category: category,
+        addedAt: DateTime.now(),
+        description: item.description,
+        imageUrl: item.posterUrl.isEmpty ? null : item.posterUrl,
+        sourceUrl: item.videoUrl.isEmpty ? null : item.videoUrl,
+      ),
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('«${item.title}» добавлено в «${category.label}»')),
     );
   }
 
@@ -338,10 +384,15 @@ class _TypeFilter extends StatelessWidget {
 }
 
 class _MediaPosterCard extends StatelessWidget {
-  const _MediaPosterCard({required this.item, required this.onTap});
+  const _MediaPosterCard({
+    required this.item,
+    required this.onTap,
+    required this.onFavorite,
+  });
 
   final MediaItem item;
   final VoidCallback onTap;
+  final VoidCallback onFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -357,9 +408,23 @@ class _MediaPosterCard extends StatelessWidget {
               SizedBox(
                 width: 144,
                 height: 164,
-                child: _PosterImage(
-                  url: item.posterUrl,
-                  fallbackUrls: item.posterFallbackUrls,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _PosterImage(
+                      url: item.posterUrl,
+                      fallbackUrls: item.posterFallbackUrls,
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: IconButton.filledTonal(
+                        tooltip: 'В избранное',
+                        onPressed: onFavorite,
+                        icon: const Icon(Icons.favorite_border, size: 18),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 6),
@@ -411,11 +476,13 @@ class _MediaResultTile extends StatelessWidget {
     required this.item,
     required this.preferredVoiceover,
     required this.onTap,
+    required this.onFavorite,
   });
 
   final MediaItem item;
   final String? preferredVoiceover;
   final VoidCallback? onTap;
+  final VoidCallback onFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -489,6 +556,11 @@ class _MediaResultTile extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              IconButton(
+                tooltip: 'В избранное',
+                onPressed: onFavorite,
+                icon: const Icon(Icons.favorite_border),
               ),
               if (onTap != null)
                 const Icon(Icons.chevron_right, color: SystemCorePalette.muted),
