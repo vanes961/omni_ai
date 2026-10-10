@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
+import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/settings/presentation/pages/local_model_settings_page.dart';
@@ -39,6 +40,7 @@ class _DashboardPageState extends State<DashboardPage> {
   late final bool _ownsDependencies;
   late final LocalModelStorage _localModelStorage;
   late final AIDependencies _aiDependencies;
+  late final AppDependencies _chatDependencies;
   late final UserPreferencesStore _preferencesStore;
   final TextEditingController _feedSearchController = TextEditingController();
   late Future<List<TelegramPost>> _feedFuture;
@@ -53,9 +55,11 @@ class _DashboardPageState extends State<DashboardPage> {
     if (dependencies == null) {
       _localModelStorage = LocalModelStorage();
       _aiDependencies = AIDependencies(localModelStorage: _localModelStorage);
+      _chatDependencies = AppDependencies(localModelStorage: _localModelStorage);
     } else {
       _localModelStorage = dependencies.localModelStorage;
       _aiDependencies = dependencies.ai;
+      _chatDependencies = dependencies;
     }
     _preferencesStore =
         widget.preferencesStore ?? SharedPreferencesUserPreferencesStore();
@@ -70,7 +74,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _disposeOwnedAI() async {
-    await _aiDependencies.dispose();
+    await _chatDependencies.dispose();
     _localModelStorage.dispose();
   }
 
@@ -107,6 +111,11 @@ class _DashboardPageState extends State<DashboardPage> {
             label: 'Лента',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble),
+            label: 'AI',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.movie_outlined),
             activeIcon: Icon(Icons.movie),
             label: 'Медиа',
@@ -129,8 +138,9 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildTab() {
     return switch (_selectedTab) {
       0 => _buildFeed(),
-      1 => MediaPage(preferences: widget.preferences),
-      2 => const _ModulePlaceholder(
+      1 => AIChatPage(dependencies: _chatDependencies),
+      2 => MediaPage(preferences: widget.preferences),
+      3 => const _ModulePlaceholder(
         eyebrow: '03 // FAMILY & HEALTH',
         title: 'СЕМЬЯ & ЗДОРОВЬЕ',
         icon: Icons.favorite_border,
