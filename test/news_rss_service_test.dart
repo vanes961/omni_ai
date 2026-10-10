@@ -98,6 +98,55 @@ void main() {
     expect(articles.single.summary, contains('A new anime series'));
   });
 
+  test('deduplicates tracking URL variants across international editions', () async {
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        final language = request.url.queryParameters['hl'];
+        final region = request.url.queryParameters['gl'];
+        final isRussian = language == 'ru';
+        final isUs = region == 'US';
+        final title = isRussian
+            ? 'Анонсирован новый сезон аниме'
+            : 'New anime season announced';
+        final link = isRussian
+            ? 'https://publisher.example/story?utm_source=ru#top'
+            : 'https://publisher.example/story?utm_source=$region&amp;fbclid=tracking';
+        final date = isRussian
+            ? 'Sat, 10 Oct 2026 10:00:00 GMT'
+            : isUs
+                ? 'Sat, 10 Oct 2026 12:00:00 GMT'
+                : 'Sat, 10 Oct 2026 11:00:00 GMT';
+        return http.Response(
+          '''<rss><channel><item>
+            <title>$title</title>
+            <link>$link</link>
+            <description>Anime news update from the $region edition</description>
+            <pubDate>$date</pubDate>
+            <source>News source</source>
+          </item></channel></rss>''',
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetchInternational(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.title, 'New anime season announced');
+    expect(articles.single.language, 'en');
+    expect(articles.single.region, 'us');
+    expect(articles.single.publishedAt, DateTime.utc(2026, 10, 10, 12));
+    // The comparison URL is normalized, but navigation keeps the source URL.
+    expect(
+      articles.single.sourceUrl,
+      'https://publisher.example/story?utm_source=US&fbclid=tracking',
+    );
+  });
+
   test('fetches international editions and filters topics without locale lock', () async {
     var requests = 0;
     final service = NewsRssService(
