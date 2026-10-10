@@ -6,6 +6,7 @@ import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
+import 'package:omni_ai/features/news/presentation/news_center_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/settings/presentation/pages/local_model_settings_page.dart';
 import 'package:omni_ai/features/settings/presentation/pages/network_settings_page.dart';
@@ -238,6 +239,22 @@ class _DashboardPageState extends State<DashboardPage> {
             color: Colors.white,
             fontSize: 22,
             fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: OutlinedButton.icon(
+            key: const ValueKey('open-news-center'),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const NewsCenterPage(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.rss_feed, size: 17),
+            label: const Text('ПЕРСОНАЛЬНЫЕ НОВОСТИ'),
           ),
         ),
         const SizedBox(height: 14),
