@@ -207,11 +207,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _newsError = null;
     });
     try {
-      // The first release is Russian-language and Russia-focused. Keep
-      // locale controls out of the UI until international support is planned.
-      final articles = await _newsService.fetch(
-        profile.copyWith(languages: const ['ru'], regions: const ['ru']),
-      );
+      // Search Russian and English editions, while keeping Russian as the
+      // app's output language. Feed locale is not the article's geography.
+      final articles = await _newsService.fetchInternational(profile);
       if (revisionAtStart != _interestRevision) return;
       // A digest describes a specific set of articles. Never keep showing a
       // digest generated from the previous feed after a successful refresh.
