@@ -41,6 +41,70 @@ void main() {
     expect(await restoredCache.loadDigest(), 'Персональный дайджест');
   });
 
+
+  test('round-trips trailer metadata and source-backed release date', () async {
+    final store = _MemoryStore();
+    final cache = SharedPreferencesNewsCache(store: store);
+    final trailer = NewsArticle(
+      id: 'trailer-1',
+      title: 'New game trailer',
+      summary: 'Official announcement trailer.',
+      sourceName: 'Official Channel',
+      sourceUrl: 'https://example.com/trailer-page',
+      publishedAt: DateTime.utc(2026, 10, 10, 12),
+      topics: const ['games'],
+      language: 'en',
+      contentType: NewsContentType.trailer,
+      videoUrl: 'https://video.example/watch/123',
+      thumbnailUrl: 'https://video.example/thumb/123.jpg',
+      channelName: 'Official Channel',
+      releaseDate: DateTime.utc(2027, 3, 4),
+      releaseDateSourceUrl: 'https://example.com/release-date',
+    );
+
+    await cache.saveArticles([trailer], selectedTopics: const ['games']);
+    final restored = await cache.loadArticles();
+
+    expect(restored, hasLength(1));
+    expect(restored.single.contentType, NewsContentType.trailer);
+    expect(restored.single.videoUrl, trailer.videoUrl);
+    expect(restored.single.thumbnailUrl, trailer.thumbnailUrl);
+    expect(restored.single.channelName, trailer.channelName);
+    expect(restored.single.releaseDate, trailer.releaseDate);
+    expect(restored.single.releaseDateSourceUrl, trailer.releaseDateSourceUrl);
+  });
+
+  test('loads legacy article cache and ignores unsafe optional video metadata', () async {
+    final store = _MemoryStore()
+      ..values[SharedPreferencesNewsCache.articlesKey] = jsonEncode([
+        {
+          'id': 'legacy-1',
+          'title': 'Old cached article',
+          'summary': 'Saved before video metadata existed.',
+          'sourceName': 'Example',
+          'sourceUrl': 'https://example.com/legacy',
+          'publishedAt': '2026-10-10T12:00:00.000Z',
+          'topics': ['anime'],
+          'language': 'ru',
+          'isVerified': true,
+          'videoUrl': 'javascript:alert(1)',
+          'thumbnailUrl': 'http://insecure.example/thumb.jpg',
+          'releaseDate': '2027-03-04T00:00:00.000Z',
+          'releaseDateSourceUrl': 'javascript:alert(1)',
+        },
+      ]);
+    final cache = SharedPreferencesNewsCache(store: store);
+
+    final restored = await cache.loadArticles();
+
+    expect(restored, hasLength(1));
+    expect(restored.single.contentType, NewsContentType.article);
+    expect(restored.single.videoUrl, isNull);
+    expect(restored.single.thumbnailUrl, isNull);
+    expect(restored.single.releaseDate, isNull);
+    expect(restored.single.releaseDateSourceUrl, isNull);
+  });
+
   test('returns empty data for missing cache and removes empty digest', () async {
     final store = _MemoryStore();
     final cache = SharedPreferencesNewsCache(store: store);
