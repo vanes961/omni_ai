@@ -75,11 +75,12 @@ class NewsRssService {
 
     final byUrl = <String, NewsArticle>{};
     for (final article in batches.expand((batch) => batch)) {
-      final url = article.sourceUrl.trim();
+      // Apply the same tracking-parameter normalization across editions as
+      // within a single feed, while retaining the original user-facing URL.
+      final url = _canonicalUrl(article.sourceUrl);
       if (url.isEmpty) continue;
       final previous = byUrl[url];
-      if (previous == null ||
-          article.publishedAt.isAfter(previous.publishedAt)) {
+      if (previous == null || _preferArticle(article, previous)) {
         byUrl[url] = article;
       }
     }
