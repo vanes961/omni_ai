@@ -1,4 +1,5 @@
 import 'package:http/http.dart' as http;
+import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/features/run_history/data/shared_preferences_run_history_repository.dart';
 import 'package:omni_ai/features/run_history/repositories/run_history_repository.dart';
@@ -19,9 +20,11 @@ class AppDependencies {
     Duration aiTimeout = const Duration(seconds: 30),
     SystemCoreProcessService? processService,
     RunHistoryRepository? runHistoryRepository,
+    LocalModelStorage? localModelStorage,
   }) {
     final ownsProcessService = processService == null;
     final ownsHistoryRepository = runHistoryRepository == null;
+    final ownsLocalModelStorage = localModelStorage == null;
     final ai = AIDependencies(
       apiKeySource: apiKeySource,
       config: geminiConfig,
@@ -33,8 +36,10 @@ class AppDependencies {
       processService: processService ?? SystemCoreProcessService(),
       historyRepository:
           runHistoryRepository ?? SharedPreferencesRunHistoryRepository(),
+      localModelStorage: localModelStorage ?? LocalModelStorage(),
       ownsProcessService: ownsProcessService,
       ownsHistoryRepository: ownsHistoryRepository,
+      ownsLocalModelStorage: ownsLocalModelStorage,
     );
   }
 
@@ -44,6 +49,8 @@ class AppDependencies {
     required this.historyRepository,
     required this._ownsProcessService,
     required this._ownsHistoryRepository,
+    required this.localModelStorage,
+    required this._ownsLocalModelStorage,
   }) {
     orchestrator = AIProcessOrchestrator(
       engine: ai.engine,
@@ -57,12 +64,15 @@ class AppDependencies {
   final RunHistoryRepository historyRepository;
   final bool _ownsProcessService;
   final bool _ownsHistoryRepository;
+  final LocalModelStorage localModelStorage;
+  final bool _ownsLocalModelStorage;
   late final AIProcessOrchestrator orchestrator;
 
   Future<void> dispose() async {
     await orchestrator.dispose();
     if (_ownsProcessService) await processService.dispose();
     if (_ownsHistoryRepository) await historyRepository.dispose();
+    if (_ownsLocalModelStorage) localModelStorage.dispose();
     ai.dispose();
   }
 }
