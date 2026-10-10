@@ -271,6 +271,40 @@ void main() {
     expect(await cache.loadTopics(), ['technology']);
   });
 
+  test('invalidates the old digest when replacing articles fails', () async {
+    final store = _MemoryStore();
+    final cache = SharedPreferencesNewsCache(store: store);
+    final oldArticle = NewsArticle(
+      id: 'old-1',
+      title: 'Old article',
+      summary: 'Old feed.',
+      sourceName: 'Example',
+      sourceUrl: 'https://example.com/old',
+      publishedAt: DateTime.utc(2026, 10, 9, 12),
+      topics: const ['anime'],
+    );
+    final newArticle = NewsArticle(
+      id: 'new-1',
+      title: 'New article',
+      summary: 'New feed.',
+      sourceName: 'Example',
+      sourceUrl: 'https://example.com/new',
+      publishedAt: DateTime.utc(2026, 10, 10, 12),
+      topics: const ['technology'],
+    );
+    await cache.saveArticles([oldArticle], selectedTopics: const ['anime']);
+    await cache.saveDigest('Digest for the old feed');
+    store.failWriteKey = SharedPreferencesNewsCache.articlesKey;
+
+    await expectLater(
+      cache.saveArticles([newArticle], selectedTopics: const ['technology']),
+      throwsStateError,
+    );
+
+    expect(await cache.loadDigest(), isNull);
+    expect(await cache.loadArticles(), isEmpty);
+  });
+
   test('drops malformed cached interests', () async {
     final store = _MemoryStore()
       ..values[SharedPreferencesNewsCache.topicsKey] = '{"topic":"anime"}';
