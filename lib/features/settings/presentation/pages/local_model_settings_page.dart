@@ -1,11 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
+import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class LocalModelSettingsPage extends StatefulWidget {
-  const LocalModelSettingsPage({required this.storage, super.key});
+  const LocalModelSettingsPage({
+    required this.storage,
+    this.aiDependencies,
+    super.key,
+  });
 
   final LocalModelStorage storage;
+  final AIDependencies? aiDependencies;
 
   @override
   State<LocalModelSettingsPage> createState() => _LocalModelSettingsPageState();
@@ -21,11 +30,55 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
   int? _totalBytes;
   String? _error;
   String? _status;
+  AIExecutionMode _executionMode = AIExecutionMode.local;
+  bool _modeLoading = false;
+  bool _modeSaving = false;
+  String? _modeError;
 
   @override
   void initState() {
     super.initState();
     _refreshStatus();
+    if (widget.aiDependencies != null) {
+      _modeLoading = true;
+      unawaited(_restoreExecutionMode());
+    }
+  }
+
+  Future<void> _restoreExecutionMode() async {
+    try {
+      await widget.aiDependencies!.restoreExecutionMode();
+      if (!mounted) return;
+      setState(() => _executionMode = widget.aiDependencies!.executionMode);
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _modeError = 'Не удалось восстановить режим AI: $error');
+    } finally {
+      if (mounted) setState(() => _modeLoading = false);
+    }
+  }
+
+  Future<void> _selectExecutionMode(AIExecutionMode mode) async {
+    final dependencies = widget.aiDependencies;
+    if (dependencies == null || _modeLoading || _modeSaving) return;
+    final previousMode = _executionMode;
+    setState(() {
+      _executionMode = mode;
+      _modeSaving = true;
+      _modeError = null;
+    });
+    try {
+      await dependencies.setExecutionMode(mode);
+    } on Object catch (error) {
+      if (mounted) {
+        setState(() {
+          _executionMode = previousMode;
+          _modeError = 'Не удалось сохранить режим AI: $error';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _modeSaving = false);
+    }
   }
 
   Future<void> _refreshStatus() async {
@@ -168,6 +221,75 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
           'генерация уже подключена к основному чату.',
           style: TextStyle(color: SystemCorePalette.muted, fontSize: 12),
         ),
+        if (widget.aiDependencies != null) ...[
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: SystemCorePalette.panel,
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'РЕЖИМ ВЫПОЛНЕНИЯ AI',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SegmentedButton<AIExecutionMode>(
+                  segments: const [
+                    ButtonSegment(
+                      value: AIExecutionMode.local,
+                      icon: Icon(Icons.phone_android),
+                      label: Text('Local AI'),
+                    ),
+                    ButtonSegment(
+                      value: AIExecutionMode.cloud,
+                      icon: Icon(Icons.cloud_outlined),
+                      label: Text('Cloud AI'),
+                    ),
+                  ],
+                  selected: {_executionMode},
+                  onSelectionChanged: _modeLoading || _modeSaving
+                      ? null
+                      : (selection) =>
+                            unawaited(_selectExecutionMode(selection.first)),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  _executionMode == AIExecutionMode.local
+                      ? 'Локальный режим: запросы не отправляются облачному провайдеру. Сначала загрузите модель ниже.'
+                      : 'Облачный режим: запросы отправляются в Gemini. Используйте его только при явном выборе; нужен настроенный API-ключ.',
+                  style: const TextStyle(
+                    color: SystemCorePalette.muted,
+                    fontSize: 11,
+                  ),
+                ),
+                if (_modeLoading || _modeSaving) ...[
+                  const SizedBox(height: 10),
+                  const LinearProgressIndicator(
+                    color: SystemCorePalette.green,
+                  ),
+                ],
+                if (_modeError != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    _modeError!,
+                    style: const TextStyle(
+                      color: Colors.orangeAccent,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(16),
