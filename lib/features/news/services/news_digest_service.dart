@@ -21,7 +21,7 @@ class NewsDigestService {
       if (article.topics.isEmpty) return false;
       return article.topics.any(
         (topic) => profile.topics.any(
-          (interest) => interest.toLowerCase() == topic.toLowerCase(),
+          (interest) => interest.trim().toLowerCase() == topic.trim().toLowerCase(),
         ),
       );
     }).toList(growable: false);
