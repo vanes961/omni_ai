@@ -87,7 +87,7 @@ class NewsRssService {
       final item = match.group(1) ?? '';
       final title = _tag(item, 'title');
       final link = _tag(item, 'link');
-      final description = _tag(item, 'description');
+      final description = _tag(item, 'description', decodeEntities: false);
       final published = _parseDate(_tag(item, 'pubDate')) ??
           _parseDate(_tag(item, 'dc:date'));
       if (title.isEmpty || link.isEmpty || published == null) continue;
@@ -147,7 +147,7 @@ class NewsRssService {
     }
   }
 
-  String _tag(String xml, String name) {
+  String _tag(String xml, String name, {bool decodeEntities = true}) {
     final escapedName = RegExp.escape(name);
     final match = RegExp(
       '<$escapedName(?:\\s[^>]*)?>([\\s\\S]*?)</$escapedName>',
@@ -159,11 +159,13 @@ class NewsRssService {
       RegExp(r'<!\[CDATA\[([\s\S]*?)\]\]>'),
       (match) => match.group(1) ?? '',
     );
-    return _decodeEntities(value).trim();
+    return (decodeEntities ? _decodeEntities(value) : value).trim();
   }
 
   String _stripMarkup(String value) => _decodeEntities(
-    value.replaceAll(RegExp(r'<[^>]*>'), ' ').replaceAll(RegExp(r'\s+'), ' '),
+    value
+        .replaceAll(RegExp(r'<[^>]*>'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' '),
   ).trim();
 
   String _decodeEntities(String value) => value
