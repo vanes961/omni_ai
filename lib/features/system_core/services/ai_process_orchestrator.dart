@@ -4,6 +4,7 @@ import 'package:omni_ai/core/ai_engine/models/ai_error.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_response.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
+import 'package:omni_ai/core/ai_engine/services/ai_context_manager.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 import 'package:omni_ai/features/run_history/repositories/run_history_repository.dart';
 import 'package:omni_ai/features/run_history/services/run_history_recorder.dart';
@@ -16,7 +17,9 @@ class AIProcessOrchestrator {
     required SystemCoreProcessService processService,
     required RunHistoryRepository historyRepository,
     ProcessRunIdFactory? runIdFactory,
-  }) : _processService = processService,
+    AIContextManager contextManager = const AIContextManager(),
+  }) : _contextManager = contextManager,
+       _processService = processService,
        _historyRecorder = RunHistoryRecorder(
          processStates: processService.states,
          repository: historyRepository,
@@ -24,6 +27,7 @@ class AIProcessOrchestrator {
        );
 
   final AIEngine engine;
+  final AIContextManager _contextManager;
   final SystemCoreProcessService _processService;
   final RunHistoryRecorder _historyRecorder;
   bool _disposed = false;
@@ -31,12 +35,19 @@ class AIProcessOrchestrator {
   Future<AIResponse> execute(
     AIRequest request, {
     AICancellationToken? cancellationToken,
+    List<AIContextMessage> conversationHistory = const [],
+    List<String> explicitMemories = const [],
   }) async {
     if (_disposed) throw StateError('AI process orchestrator is disposed.');
     if (!_processService.state.canStart) {
       throw StateError('A System Core process is already active.');
     }
 
+    final preparedRequest = _contextManager.prepareRequest(
+      request: request,
+      conversationHistory: conversationHistory,
+      explicitMemories: explicitMemories,
+    );
     final cancellationSubscription = cancellationToken?.cancelled
         .asStream()
         .listen((_) => _processService.cancel());
@@ -57,7 +68,7 @@ class AIProcessOrchestrator {
 
           try {
             response = await engine.execute(
-              request,
+              preparedRequest,
               cancellationToken: engineCancellationToken,
             );
             context.log(
