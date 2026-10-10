@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:omni_ai/features/favorites/data/favorite_item.dart';
 import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
+import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class FavoritesPage extends StatefulWidget {
@@ -96,25 +97,130 @@ class _FavoritesPageState extends State<FavoritesPage> {
                     ),
                   );
                 }
+                final showAnalytics = _selectedCategory == null;
+                final profile = const FavoriteInterestAnalytics().analyze(all);
+                final offset = showAnalytics ? 1 : 0;
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                  itemCount: visible.length,
+                  itemCount: visible.length + offset,
                   separatorBuilder: (_, index) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) => _FavoriteTile(
-                    item: visible[index],
-                    onRemove: () async {
-                      await widget.repository.remove(visible[index].id);
-                      if (mounted) _reload();
-                    },
-                    onMove: (category) async {
-                      await widget.repository.move(visible[index].id, category);
-                      if (mounted) _reload();
-                    },
-                  ),
+                  itemBuilder: (context, index) {
+                    if (showAnalytics && index == 0) {
+                      return _InterestSummary(
+                        totalFavorites: all.length,
+                        categoryCounts: profile.categoryCounts,
+                        topInterests: profile.topInterests
+                            .take(6)
+                            .toList(growable: false),
+                      );
+                    }
+                    final item = visible[index - offset];
+                    return _FavoriteTile(
+                      item: item,
+                      onRemove: () async {
+                        await widget.repository.remove(item.id);
+                        if (mounted) _reload();
+                      },
+                      onMove: (category) async {
+                        await widget.repository.move(item.id, category);
+                        if (mounted) _reload();
+                      },
+                    );
+                  },
                 );
               },
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InterestSummary extends StatelessWidget {
+  const _InterestSummary({
+    required this.totalFavorites,
+    required this.categoryCounts,
+    required this.topInterests,
+  });
+
+  final int totalFavorites;
+  final Map<FavoriteCategory, int> categoryCounts;
+  final List<MapEntry<String, double>> topInterests;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: SystemCorePalette.panel,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.insights, color: SystemCorePalette.green),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'АНАЛИТИКА ИНТЕРЕСОВ',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              Text(
+                '${totalFavorites} сохранено',
+                style: const TextStyle(
+                  color: SystemCorePalette.muted,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final category in FavoriteCategory.values)
+                Chip(
+                  label: Text(
+                    '${category.label}: ${categoryCounts[category] ?? 0}',
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  side: BorderSide.none,
+                  backgroundColor: SystemCorePalette.background,
+                ),
+            ],
+          ),
+          if (topInterests.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Чаще встречающиеся темы',
+              style: TextStyle(color: SystemCorePalette.muted, fontSize: 11),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final interest in topInterests)
+                  Chip(
+                    label: Text(
+                      interest.key,
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    side: BorderSide.none,
+                    backgroundColor: SystemCorePalette.green.withValues(alpha: 0.12),
+                    labelStyle: const TextStyle(color: SystemCorePalette.green),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
