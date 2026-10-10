@@ -143,7 +143,7 @@ class SharedPreferencesAIMemoryRepository implements AIMemoryRepository {
     }
 
     records.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    final retained = records.take(maxMemories).toList(growable: false);
+    final retained = records.take(maxMemories).toList();
     if (skippedInvalidRecord || retained.length != records.length) {
       await _writeMemories(retained);
     }
