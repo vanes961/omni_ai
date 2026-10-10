@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
+import 'package:omni_ai/features/settings/presentation/pages/local_model_settings_page.dart';
 import 'package:omni_ai/features/settings/presentation/pages/network_settings_page.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 import 'package:omni_ai/features/telegram/data/telegram_post.dart';
@@ -27,6 +29,8 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedTab = 0;
+  int _selectedSettingsTab = 0;
+  late final LocalModelStorage _localModelStorage = LocalModelStorage();
   late final UserPreferencesStore _preferencesStore;
   final TextEditingController _feedSearchController = TextEditingController();
   late Future<List<TelegramPost>> _feedFuture;
@@ -44,6 +48,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void dispose() {
     _feedSearchController.dispose();
+    _localModelStorage.dispose();
     super.dispose();
   }
 
@@ -260,9 +265,39 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildSettings() {
-    return NetworkSettingsPage(
-      preferences: widget.preferences,
-      preferencesStore: _preferencesStore,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: SegmentedButton<int>(
+            key: const ValueKey('settings-section-selector'),
+            segments: const [
+              ButtonSegment(
+                value: 0,
+                icon: Icon(Icons.public),
+                label: Text('Сеть'),
+              ),
+              ButtonSegment(
+                value: 1,
+                icon: Icon(Icons.memory),
+                label: Text('Локальная AI'),
+              ),
+            ],
+            selected: {_selectedSettingsTab},
+            onSelectionChanged: (selection) {
+              setState(() => _selectedSettingsTab = selection.first);
+            },
+          ),
+        ),
+        Expanded(
+          child: _selectedSettingsTab == 0
+              ? NetworkSettingsPage(
+                  preferences: widget.preferences,
+                  preferencesStore: _preferencesStore,
+                )
+              : LocalModelSettingsPage(storage: _localModelStorage),
+        ),
+      ],
     );
   }
 
