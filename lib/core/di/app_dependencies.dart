@@ -77,7 +77,7 @@ class AppDependencies {
     await orchestrator.dispose();
     if (_ownsProcessService) await processService.dispose();
     if (_ownsHistoryRepository) await historyRepository.dispose();
-    if (_ownsLocalModelStorage) localModelStorage.dispose();
     await ai.dispose();
+    if (_ownsLocalModelStorage) localModelStorage.dispose();
   }
 }
