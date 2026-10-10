@@ -110,8 +110,8 @@ class LocalModelStorage {
         );
       }
 
-      // Keep any previous destination intact until the new download validates.
-      if (await destination.exists()) await destination.delete();
+      // On Android's filesystem, rename within the same directory replaces
+      // the destination atomically, avoiding a gap with no installed model.
       await temporary.rename(destination.path);
       return destination;
     } catch (_) {
