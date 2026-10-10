@@ -90,12 +90,13 @@ class LocalLlamaProvider implements AIProvider {
     var generationFinished = false;
     final cancellationListener = cancellationToken.cancelled.then(
       (_) async {
-      if (generationFinished) return;
-      cancelled = true;
-      try {
-        await _controller.stop();
-      } on Object {
-        // Cancellation is best-effort; preserve the generation result/error.
+        if (generationFinished) return;
+        cancelled = true;
+        try {
+          await _controller.stop();
+        } on Object {
+          // Cancellation is best-effort; preserve the generation result/error.
+        }
       },
     );
 
