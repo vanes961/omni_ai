@@ -32,7 +32,7 @@ class RoutingAIProvider implements AIProvider {
   Future<AIResponse> complete(
     AIRequest request, {
     required AICancellationToken cancellationToken,
-  }) {
+  }) async {
     if (cancellationToken.isCancelled) {
       throw const AIEngineException(
         AIError(code: AIErrorCode.cancelled, message: 'AI request cancelled.'),
