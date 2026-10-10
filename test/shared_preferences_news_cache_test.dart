@@ -19,7 +19,7 @@ void main() {
       isVerified: true,
     );
 
-    await cache.saveArticles([article]);
+    await cache.saveArticles([article], selectedTopics: const ['anime', 'technology']);
     await cache.saveDigest('Персональный дайджест');
     final restored = await cache.loadArticles();
 
@@ -29,6 +29,7 @@ void main() {
     expect(restored.single.publishedAt, article.publishedAt);
     expect(restored.single.topics, ['anime']);
     expect(restored.single.isVerified, isTrue);
+    expect(await cache.loadTopics(), ['anime', 'technology']);
     expect(await cache.loadDigest(), 'Персональный дайджест');
   });
 
@@ -40,6 +41,19 @@ void main() {
     expect(await cache.loadDigest(), isNull);
     await cache.saveDigest('  ');
     expect(await cache.loadDigest(), isNull);
+  });
+
+  test('clears articles, digest and saved interests together', () async {
+    final store = _MemoryStore();
+    final cache = SharedPreferencesNewsCache(store: store);
+    await cache.saveArticles(const [], selectedTopics: const ['anime']);
+    await cache.saveDigest('Старый дайджест');
+
+    await cache.clear();
+
+    expect(await cache.loadArticles(), isEmpty);
+    expect(await cache.loadDigest(), isNull);
+    expect(await cache.loadTopics(), isNull);
   });
 
   test('drops malformed cached article payload', () async {
