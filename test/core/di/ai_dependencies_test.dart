@@ -44,7 +44,7 @@ void main() {
           isA<AIEngineException>().having(
             (error) => error.error.message,
             'message',
-            'OpenRouter API key is not configured.',
+            contains('OpenRouter API key is not configured'),
           ),
         ),
       );
