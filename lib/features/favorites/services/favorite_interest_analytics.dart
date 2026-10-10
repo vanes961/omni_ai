@@ -115,7 +115,7 @@ class FavoriteInterestAnalytics {
   /// Ranks news and trailers using the same local favorites profile.
   /// It only reorders candidates; it never hides an article or makes network calls.
   double scoreNews(NewsArticle article, FavoriteInterestProfile profile) {
-    if (profile.totalFavorites == 0) return 0;
+    if (profile.totalFavorites == 0 && lessInterested.isEmpty) return 0;
     final candidateTerms = <String>{
       ..._normalizeAll(article.topics),
       ..._tokens(article.title),
