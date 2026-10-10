@@ -43,6 +43,69 @@ class NewsRssService {
     'gadgets': 'gadgets consumer electronics',
   };
 
+
+  /// Collects candidates from Russian and English Google News editions.
+  /// Edition locale describes the feed, not the article's actual geography.
+  Future<List<NewsArticle>> fetchInternational(
+    NewsInterestProfile profile,
+  ) async {
+    if (profile.topics.isEmpty) return const <NewsArticle>[];
+
+    const locales = <List<String>>[
+      ['ru', 'RU'],
+      ['en', 'US'],
+      ['en', 'GB'],
+    ];
+    final batches = await Future.wait(
+      locales.map((locale) async {
+        try {
+          return await fetch(
+            profile.copyWith(
+              languages: <String>[locale[0]],
+              regions: <String>[locale[1]],
+            ),
+            applyRelevanceFilter: false,
+          );
+        } catch (_) {
+          // One unavailable edition should not block the remaining sources.
+          return const <NewsArticle>[];
+        }
+      }),
+    );
+
+    final byUrl = <String, NewsArticle>{};
+    for (final article in batches.expand((batch) => batch)) {
+      final url = article.sourceUrl.trim();
+      if (url.isEmpty) continue;
+      final previous = byUrl[url];
+      if (previous == null ||
+          article.publishedAt.isAfter(previous.publishedAt)) {
+        byUrl[url] = article;
+      }
+    }
+
+    // Different editions can repeat a headline with tracking URLs.
+    final byTitle = <String, NewsArticle>{};
+    for (final article in byUrl.values) {
+      final titleKey = article.title
+          .trim()
+          .toLowerCase()
+          .replaceAll(RegExp(r'\s+'), ' ');
+      if (titleKey.isEmpty) continue;
+      final previous = byTitle[titleKey];
+      if (previous == null ||
+          article.publishedAt.isAfter(previous.publishedAt)) {
+        byTitle[titleKey] = article;
+      }
+    }
+
+    final unrestrictedProfile = profile.copyWith(
+      languages: const <String>[],
+      regions: const <String>[],
+    );
+    return _filter.filter(byTitle.values, unrestrictedProfile);
+  }
+
   Future<List<NewsArticle>> fetch(
     NewsInterestProfile profile, {
     bool applyRelevanceFilter = true,
