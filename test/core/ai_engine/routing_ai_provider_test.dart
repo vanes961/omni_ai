@@ -13,10 +13,7 @@ void main() {
     setUp(() {
       local = _FakeProvider('local');
       cloud = _FakeProvider('cloud');
-      router = RoutingAIProvider(
-        localProvider: local,
-        cloudProvider: cloud,
-      );
+      router = RoutingAIProvider(localProvider: local, cloudProvider: cloud);
     });
 
     test('defaults to local and never invokes cloud', () async {
@@ -47,10 +44,7 @@ void main() {
       local.failure = StateError('local model unavailable');
 
       await expectLater(
-        router.complete(
-          _request,
-          cancellationToken: AICancellationToken(),
-        ),
+        router.complete(_request, cancellationToken: AICancellationToken()),
         throwsA(isA<StateError>()),
       );
 
