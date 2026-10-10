@@ -30,6 +30,61 @@ void main() {
     expect(provider.requests, isEmpty);
   });
 
+  test('does not call AI when the article list is empty', () async {
+    final provider = _FakeProvider();
+    final service = NewsDigestService(engine: AIEngine(provider: provider));
+
+    final result = await service.createDigest(
+      profile: const NewsInterestProfile(topics: ['anime']),
+      articles: const [],
+    );
+
+    expect(result, isNull);
+    expect(provider.requests, isEmpty);
+  });
+
+  test('limits digest input to twenty matching articles', () async {
+    final provider = _FakeProvider();
+    final service = NewsDigestService(engine: AIEngine(provider: provider));
+    final articles = [
+      for (var i = 1; i <= 21; i++)
+        NewsArticle(
+          id: 'anime-$i',
+          title: 'Anime headline $i',
+          summary: 'Summary $i',
+          sourceName: 'Test Source',
+          sourceUrl: 'https://example.com/anime-$i',
+          publishedAt: DateTime.utc(2026, 10, 10),
+          topics: const ['anime'],
+        ),
+      _article('technology'),
+    ];
+
+    await service.createDigest(
+      profile: const NewsInterestProfile(topics: ['anime']),
+      articles: articles,
+    );
+
+    final prompt = provider.requests.single.prompt;
+    expect(prompt, contains('Anime headline 1'));
+    expect(prompt, contains('Anime headline 20'));
+    expect(prompt, isNot(contains('Anime headline 21')));
+    expect(prompt, isNot(contains('Technology headline')));
+  });
+
+  test('returns null when the configured AI provider returns blank text', () async {
+    final provider = _FakeProvider(responseText: '  \n ');
+    final service = NewsDigestService(engine: AIEngine(provider: provider));
+
+    final result = await service.createDigest(
+      profile: const NewsInterestProfile(topics: ['anime']),
+      articles: [_article('anime')],
+    );
+
+    expect(result, isNull);
+    expect(provider.requests, hasLength(1));
+  });
+
   test('summarizes only selected topic articles', () async {
     final provider = _FakeProvider();
     final service = NewsDigestService(engine: AIEngine(provider: provider));
@@ -58,6 +113,9 @@ NewsArticle _article(String topic) => NewsArticle(
 );
 
 class _FakeProvider implements AIProvider {
+  _FakeProvider({this.responseText = 'Персональный дайджест'});
+
+  final String responseText;
   final requests = <AIRequest>[];
   @override
   String get id => 'test';
@@ -68,7 +126,7 @@ class _FakeProvider implements AIProvider {
     requests.add(request);
     return AIResponse(
       requestId: request.id,
-      text: 'Персональный дайджест',
+      text: responseText,
       providerId: id,
       generatedAt: DateTime.utc(2026, 10, 10),
     );
