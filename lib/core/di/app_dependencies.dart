@@ -9,7 +9,8 @@ import 'package:omni_ai/providers/gemini/gemini_api_key_source.dart';
 
 /// The application's manual dependency-composition root.
 ///
-/// This object does not start an AI request automatically.
+/// This object does not start an AI request automatically. Resources passed
+/// in by callers remain caller-owned and are not disposed by this object.
 class AppDependencies {
   factory AppDependencies({
     GeminiApiKeySource? apiKeySource,
@@ -19,6 +20,8 @@ class AppDependencies {
     SystemCoreProcessService? processService,
     RunHistoryRepository? runHistoryRepository,
   }) {
+    final ownsProcessService = processService == null;
+    final ownsHistoryRepository = runHistoryRepository == null;
     final ai = AIDependencies(
       apiKeySource: apiKeySource,
       config: geminiConfig,
@@ -30,6 +33,8 @@ class AppDependencies {
       processService: processService ?? SystemCoreProcessService(),
       historyRepository:
           runHistoryRepository ?? SharedPreferencesRunHistoryRepository(),
+      ownsProcessService: ownsProcessService,
+      ownsHistoryRepository: ownsHistoryRepository,
     );
   }
 
@@ -37,7 +42,10 @@ class AppDependencies {
     required this.ai,
     required this.processService,
     required this.historyRepository,
-  }) {
+    required bool ownsProcessService,
+    required bool ownsHistoryRepository,
+  }) : _ownsProcessService = ownsProcessService,
+       _ownsHistoryRepository = ownsHistoryRepository {
     orchestrator = AIProcessOrchestrator(
       engine: ai.engine,
       processService: processService,
@@ -48,12 +56,14 @@ class AppDependencies {
   final AIDependencies ai;
   final SystemCoreProcessService processService;
   final RunHistoryRepository historyRepository;
+  final bool _ownsProcessService;
+  final bool _ownsHistoryRepository;
   late final AIProcessOrchestrator orchestrator;
 
   Future<void> dispose() async {
     await orchestrator.dispose();
-    await processService.dispose();
-    await historyRepository.dispose();
+    if (_ownsProcessService) await processService.dispose();
+    if (_ownsHistoryRepository) await historyRepository.dispose();
     ai.dispose();
   }
 }
