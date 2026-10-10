@@ -15,6 +15,7 @@ void main() {
     );
     final provider = StoredLocalLlamaProvider(
       storage: storage,
+      autoInstallBundledModel: false,
       model: const LocalModelSpec(
         id: 'test-model',
         displayName: 'Test model',
@@ -41,7 +42,7 @@ void main() {
         isA<AIEngineException>().having(
           (error) => error.error.message,
           'message',
-          contains('Local model is not downloaded'),
+          contains('Local model is not installed'),
         ),
       ),
     );
