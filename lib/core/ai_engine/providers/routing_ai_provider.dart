@@ -18,20 +18,14 @@ class RoutingAIProvider implements AIProvider {
     AIExecutionMode initialMode = AIExecutionMode.local,
   }) : _localProvider = localProvider,
        _cloudProvider = cloudProvider,
-       _mode = initialMode;
+       mode = initialMode;
 
   final AIProvider _localProvider;
   final AIProvider _cloudProvider;
-  AIExecutionMode _mode;
-
-  AIExecutionMode get mode => _mode;
-
-  set mode(AIExecutionMode value) {
-    _mode = value;
-  }
+  AIExecutionMode mode;
 
   @override
-  String get id => switch (_mode) {
+  String get id => switch (mode) {
     AIExecutionMode.local => _localProvider.id,
     AIExecutionMode.cloud => _cloudProvider.id,
   };
@@ -48,7 +42,7 @@ class RoutingAIProvider implements AIProvider {
     }
 
     // Select once for this request; never fall back to the other provider.
-    final selected = switch (_mode) {
+    final selected = switch (mode) {
       AIExecutionMode.local => _localProvider,
       AIExecutionMode.cloud => _cloudProvider,
     };
