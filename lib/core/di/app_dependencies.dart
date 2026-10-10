@@ -42,10 +42,9 @@ class AppDependencies {
     required this.ai,
     required this.processService,
     required this.historyRepository,
-    required bool ownsProcessService,
-    required bool ownsHistoryRepository,
-  }) : _ownsProcessService = ownsProcessService,
-       _ownsHistoryRepository = ownsHistoryRepository {
+    required this._ownsProcessService,
+    required this._ownsHistoryRepository,
+  }) {
     orchestrator = AIProcessOrchestrator(
       engine: ai.engine,
       processService: processService,
