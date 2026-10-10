@@ -162,11 +162,16 @@ class NewsRssService {
     return (decodeEntities ? _decodeEntities(value) : value).trim();
   }
 
-  String _stripMarkup(String value) => _decodeEntities(
-    value
-        .replaceAll(RegExp(r'<[^>]*>'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' '),
-  ).trim();
+  String _stripMarkup(String value) {
+    final decoded = _decodeEntities(
+      value
+          .replaceAll(RegExp(r'<[^>]*>'), ' ')
+          .replaceAll(RegExp(r'\s+'), ' '),
+    );
+    // Encoded angle brackets are text, not markup. Remove the brackets while
+    // retaining their contents so excerpts remain readable and predictable.
+    return decoded.replaceAll('<', '').replaceAll('>', '').trim();
+  }
 
   String _decodeEntities(String value) => value
       .replaceAll('&amp;', '&')
