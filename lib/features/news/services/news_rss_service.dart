@@ -164,7 +164,7 @@ class NewsRssService {
 
   String _stripMarkup(String value) => _decodeEntities(value)
       .replaceAll(RegExp(r'<[^>]*>'), ' ')
-      .replaceAll(RegExp(r'\\s+'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
       .trim();
 
   String _decodeEntities(String value) => value
