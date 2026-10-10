@@ -16,7 +16,8 @@ class AIProcessOrchestrator {
     required SystemCoreProcessService processService,
     required RunHistoryRepository historyRepository,
     ProcessRunIdFactory? runIdFactory,
-  }) : _processService = processService,
+  }) : _engine = engine,
+       _processService = processService,
        _historyRecorder = RunHistoryRecorder(
          processStates: processService.states,
          repository: historyRepository,
