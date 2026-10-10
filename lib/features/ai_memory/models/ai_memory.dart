@@ -19,8 +19,10 @@ class AIMemory {
     final id = json['id'];
     final content = json['content'];
     final createdAt = json['createdAt'];
-    if (id is! String || id.isEmpty ||
-        content is! String || content.trim().isEmpty ||
+    if (id is! String ||
+        id.isEmpty ||
+        content is! String ||
+        content.trim().isEmpty ||
         createdAt is! String) {
       throw const FormatException('Invalid AI memory record.');
     }
