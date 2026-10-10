@@ -149,13 +149,16 @@ class LocalLlamaProvider implements AIProvider {
         ),
       );
     } finally {
-      // Do not await this future: it remains pending when no cancellation occurs.
+      // Do not await this future: it remains pending when no cancellation
+      // occurs.
       unawaited(cancellationListener);
     }
   }
 
   void _ensureNotDisposed() {
-    if (_disposed) throw StateError('Local LLM provider has been disposed.');
+    if (_disposed) {
+      throw StateError('Local LLM provider has been disposed.');
+    }
   }
 
   Future<void> dispose() async {
