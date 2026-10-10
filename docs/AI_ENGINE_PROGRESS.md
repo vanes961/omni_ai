@@ -3,7 +3,7 @@
 Last updated: 2026-10-10
 
 ## Goal
-Move OMNI_AI away from Gemini as its default/central AI provider. Keep the provider layer replaceable, support optional on-device inference, and only use a cloud provider for tasks that need it and when the user has enabled it.
+Move OMNI_AI away from Gemini as its default/central AI provider. Keep provider adapters replaceable, support optional on-device inference, and only use a cloud provider for tasks that need it and when the user has explicitly enabled it.
 
 ## Branch safety
 - Repository: `vanes961/omni_ai`
@@ -12,33 +12,36 @@ Move OMNI_AI away from Gemini as its default/central AI provider. Keep the provi
 
 ## Current implementation
 - `AIProvider` interface and `AIEngine` cancellation/timeout wrapper exist.
-- Gemini provider still exists and is currently constructed by `AIDependencies`; it has not been removed or replaced in the app.
+- Gemini provider still exists and is currently constructed by `AIDependencies`; it has not been removed or replaced in app wiring.
 - `path_provider` and `llama_flutter_android: ^0.2.6` are in `pubspec.yaml`.
 - `LocalModelStorage` downloads a GGUF file into app-private support storage, reports byte progress, uses a `.part` file, and supports deletion.
-- Current model catalog candidate: Qwen3 0.6B Q4_K_M. Its source URL and approximate size are provisional and must be verified before shipping.
-- No local inference provider, model download UI, memory/preferences repository, or provider routing is wired into the app yet.
-- Do not claim device acceleration is available until verified on the target device.
+- Added `LocalLlamaProvider` adapter in `lib/core/ai_engine/local/local_llama_provider.dart` using the documented `LlamaController` API. It checks that the model exists/is loaded, generates locally, supports cancellation via controller.stop(), and exposes explicit model loading/disposal.
+- The adapter is not wired into UI/DI yet, and has not passed CI or device tests yet.
+- Current model catalog candidate: Qwen3 0.6B Q4_K_M. Source URL, license, exact size and model/template compatibility remain to be verified before shipping.
+- No provider router, download UI, or separate memory/preferences repository is wired into the app yet.
+- Plugin documentation lists Vulkan GPU support, but actual GPU support/performance on the target device must be tested; don't promise acceleration.
 
-## Latest commit
+## Latest commits
+- `362aada55e1ef8c88ab428c633979679ab5fd62a` — `feat: add local llama AI provider adapter`
 - `99cefee152fd0c2b48480f161345f7d27aa62b42` — `style: format local model storage`
-- This corrects the formatting failure reported by CI for `local_model_storage.dart`.
+- `79b6068f110c6204d6b075093260a4b297c8fae5` — `docs: save AI engine migration checkpoint`
 
-## CI state before formatting fix
-Run: https://github.com/vanes961/omni_ai/actions/runs/38046079684
+## CI state
+Previous run: https://github.com/vanes961/omni_ai/actions/runs/38046079684
 - Dependency resolution passed, including `llama_flutter_android 0.2.6`.
-- Formatting step failed only because `local_model_storage.dart` needed formatting.
-- Analyze, tests, and Android APK build were skipped as a result.
-- A new CI run must be checked after the formatting commit. Do not claim the build passes until the run completes successfully.
+- Formatting failed because `local_model_storage.dart` needed formatting. The formatting fix was committed afterward.
+- Analyze, tests, and Android APK build were skipped on that run.
+- A new run must be checked after commits; don't claim CI passes until a completed run succeeds.
 
 ## Next steps
-1. Check CI for commit `99cefee`; resolve formatting/analyzer/test/build failures before adding more features.
-2. Verify the real API of `llama_flutter_android` version 0.2.6 from its package documentation/source. Do not guess method names or model-loading APIs.
-3. Verify the Qwen model URL, license, exact file size, and model compatibility; change the catalog if needed.
-4. Implement a local `AIProvider` adapter only against the verified plugin API, including cancellation/disposal and resource limits.
-5. Add a provider-selection/routing abstraction that prefers local inference for supported simple/offline tasks; keep cloud fallback opt-in and never silently send prompts to a cloud service.
-6. Treat OpenAI or any other cloud model as an optional adapter, not as a bundled secret. Do not embed API secrets in the APK; document a safe key strategy before implementation.
-7. Add persistent memory/preferences as a separate service/repository, independent of the model provider.
-8. Wire UI/download controls only after core provider tests pass. Run CI and verify actual inference on the target HONOR Magic V2; no performance or accelerator promises before device testing.
+1. Run/check CI on the latest commit; fix formatting, analyzer, tests and Android build issues before wiring UI.
+2. Verify adapter API against version 0.2.6 and add tests around not-loaded model, cancellation, empty output and disposal where feasible.
+3. Verify the Qwen model URL, license, exact file size, chat template and model compatibility; update catalog if necessary.
+4. Add explicit model download/load controls and progress UI only after core code passes.
+5. Add a provider-selection/router abstraction that prefers local inference for suitable/offline tasks; cloud fallback must be opt-in and never silently send prompts off-device.
+6. Treat OpenAI or another cloud model as an optional adapter. Do not embed API secrets in the APK; define a safe key strategy before implementation.
+7. Add persistent memory/preferences as a separate service/repository, independent of model provider.
+8. Verify real inference and resource use on the HONOR Magic V2 before making performance/acceleration claims.
 
 ## User decisions
 - Replace Gemini as the primary/default AI direction.
