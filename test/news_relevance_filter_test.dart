@@ -80,4 +80,25 @@ void main() {
       ['allowed'],
     );
   });
+
+  test('normalizes topic, language and region matching and returns immutable results', () {
+    final profile = const NewsInterestProfile(
+      topics: [' Anime '],
+      languages: [' EN '],
+      regions: [' US '],
+    );
+    final matching = article(
+      'matching',
+      ['anime'],
+      language: 'en',
+      region: 'us',
+    );
+    final result = filter.filter([matching], profile);
+
+    expect(result.map((item) => item.id), ['matching']);
+    expect(
+      () => result.add(article('extra', ['anime'], language: 'en', region: 'us')),
+      throwsUnsupportedError,
+    );
+  });
 }
