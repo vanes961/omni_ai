@@ -45,15 +45,20 @@ class NewsRssService {
 
   Future<List<NewsArticle>> fetch(NewsInterestProfile profile) async {
     if (profile.topics.isEmpty) return const <NewsArticle>[];
-    final language = profile.languages.isNotEmpty ? profile.languages.first : 'ru';
+    final language = profile.languages
+        .map((value) => value.trim().toLowerCase())
+        .firstWhere((value) => value.isNotEmpty, orElse: () => 'ru');
+    final region = profile.regions
+        .map((value) => value.trim().toUpperCase())
+        .firstWhere((value) => value.isNotEmpty, orElse: () => 'RU');
     final query = profile.topics
         .map((topic) => _topicQueries[topic.toLowerCase()] ?? topic)
         .join(' OR ');
     final uri = Uri.https('news.google.com', '/rss/search', {
       'q': query,
       'hl': language == 'ru' ? 'ru' : language,
-      'gl': profile.regions.isNotEmpty ? profile.regions.first.toUpperCase() : 'RU',
-      'ceid': '${profile.regions.isNotEmpty ? profile.regions.first.toUpperCase() : 'RU'}:$language',
+      'gl': region,
+      'ceid': '$region:$language',
     });
     final response = await _client
         .get(uri, headers: const {'User-Agent': 'OMNI-AI-News/1.0'})
@@ -69,7 +74,7 @@ class NewsRssService {
     final articles = _parseItems(
       xml,
       language,
-      profile.regions.isNotEmpty ? profile.regions.first : null,
+      region.toLowerCase(),
     );
     final unique = <String, NewsArticle>{};
     for (final article in articles) {
