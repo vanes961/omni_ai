@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 
 import 'package:omni_ai/features/favorites/data/favorite_item.dart';
+import 'package:omni_ai/features/favorites/data/interest_feedback_repository.dart';
 import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
 import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class FavoritesPage extends StatefulWidget {
-  FavoritesPage({super.key, FavoritesRepository? repository})
-    : repository = repository ?? FavoritesRepository();
+  FavoritesPage({
+    super.key,
+    FavoritesRepository? repository,
+    InterestFeedbackRepository? feedbackRepository,
+  }) : repository = repository ?? FavoritesRepository(),
+       feedbackRepository = feedbackRepository ?? InterestFeedbackRepository();
 
   final FavoritesRepository repository;
+  final InterestFeedbackRepository feedbackRepository;
 
   @override
   State<FavoritesPage> createState() => _FavoritesPageState();
@@ -18,11 +24,37 @@ class FavoritesPage extends StatefulWidget {
 class _FavoritesPageState extends State<FavoritesPage> {
   FavoriteCategory? _selectedCategory;
   late Future<List<FavoriteItem>> _items;
+  Set<String> _lessInterested = <String>{};
+  bool _feedbackLoading = true;
 
   @override
   void initState() {
     super.initState();
     _items = widget.repository.getAll();
+    _loadFeedback();
+  }
+
+  Future<void> _loadFeedback() async {
+    try {
+      final topics = await widget.feedbackRepository.loadLessInterested();
+      if (!mounted) return;
+      setState(() {
+        _lessInterested = topics;
+        _feedbackLoading = false;
+      });
+    } on Object catch (_) {
+      if (!mounted) return;
+      setState(() => _feedbackLoading = false);
+    }
+  }
+
+  Future<void> _removeFeedback(String topic) async {
+    final updated = await widget.feedbackRepository.removeLessInterested([topic]);
+    if (!mounted) return;
+    setState(() => _lessInterested = updated);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Тема «$topic» снова учитывается в новостях.')),
+    );
   }
 
   void _reload() {
@@ -83,35 +115,50 @@ class _FavoritesPageState extends State<FavoritesPage> {
                           item.category == _selectedCategory,
                     )
                     .toList(growable: false);
-                if (visible.isEmpty) {
+                final showAnalytics = _selectedCategory == null;
+                if (visible.isEmpty && !showAnalytics) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(28),
                       child: Text(
-                        _selectedCategory == null
-                            ? 'Здесь будут сохранённые фильмы, сериалы, аниме, манга и трейлеры.'
-                            : 'В разделе «${_selectedCategory!.label}» пока пусто.',
+                        'В разделе «${_selectedCategory!.label}» пока пусто.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: SystemCorePalette.muted),
                       ),
                     ),
                   );
                 }
-                final showAnalytics = _selectedCategory == null;
                 final profile = const FavoriteInterestAnalytics().analyze(all);
-                final offset = showAnalytics ? 1 : 0;
+                final offset = showAnalytics ? 2 : 0;
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   itemCount: visible.length + offset,
                   separatorBuilder: (_, index) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    if (showAnalytics && index == 0) {
+                    if (showAnalytics && index == 0 && all.isNotEmpty) {
                       return _InterestSummary(
                         totalFavorites: all.length,
                         categoryCounts: profile.categoryCounts,
                         topInterests: profile.topInterests
                             .take(6)
                             .toList(growable: false),
+                      );
+                    }
+                    if (showAnalytics && index == (all.isNotEmpty ? 1 : 0)) {
+                      return _InterestFeedbackPanel(
+                        topics: _lessInterested,
+                        loading: _feedbackLoading,
+                        onRemove: _removeFeedback,
+                      );
+                    }
+                    if (showAnalytics && all.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          'Здесь будут сохранённые фильмы, сериалы, аниме, манга и трейлеры.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: SystemCorePalette.muted),
+                        ),
                       );
                     }
                     final item = visible[index - offset];
@@ -217,6 +264,78 @@ class _InterestSummary extends StatelessWidget {
                     side: BorderSide.none,
                     backgroundColor: SystemCorePalette.green.withValues(alpha: 0.12),
                     labelStyle: const TextStyle(color: SystemCorePalette.green),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InterestFeedbackPanel extends StatelessWidget {
+  const _InterestFeedbackPanel({
+    required this.topics,
+    required this.loading,
+    required this.onRemove,
+  });
+
+  final Set<String> topics;
+  final bool loading;
+  final ValueChanged<String> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: SystemCorePalette.panel,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.tune, color: SystemCorePalette.green),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'НАСТРОЙКИ ИНТЕРЕСОВ',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Темы с пониженным приоритетом. Удалите отметку, чтобы снова учитывать их при ранжировании новостей. Настройки хранятся только на устройстве.',
+            style: TextStyle(color: SystemCorePalette.muted, fontSize: 11),
+          ),
+          if (loading) ...[
+            const SizedBox(height: 10),
+            const LinearProgressIndicator(color: SystemCorePalette.green),
+          ] else if (topics.isEmpty) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Пока нет тем с пониженным приоритетом.',
+              style: TextStyle(color: SystemCorePalette.muted, fontSize: 11),
+            ),
+          ] else ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final topic in topics.toList()..sort())
+                  InputChip(
+                    key: ValueKey('less-interested-$topic'),
+                    label: Text(topic),
+                    onDeleted: () => onRemove(topic),
+                    deleteIcon: const Icon(Icons.close, size: 16),
+                    visualDensity: VisualDensity.compact,
                   ),
               ],
             ),
