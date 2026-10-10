@@ -114,6 +114,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         await _newsCache.clear();
       }
       if (!mounted) return;
+      _profile ??= profile;
       setState(() {
         if (revisionAtStart == _interestRevision && cacheMatchesProfile) {
           _articles = cachedArticles;
@@ -121,6 +122,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         }
         _loadingNewsCache = false;
       });
+      // When no valid cached feed exists, load the selected topics on entry
+      // instead of leaving a blank screen until the user discovers Refresh.
+      if (_profile?.topics.isNotEmpty == true && _articles.isEmpty) {
+        unawaited(_refreshNews());
+      }
     } catch (_) {
       if (mounted) setState(() => _loadingNewsCache = false);
     }
