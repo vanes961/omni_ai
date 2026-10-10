@@ -1,12 +1,14 @@
 import 'dart:io';
 
+import 'package:flutter/services.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
-/// Metadata for the first optional on-device model.
+/// Metadata for the bundled on-device model.
 ///
-/// The model is downloaded separately from the APK to keep the installation
-/// small. This service only manages the file; inference is handled separately.
+/// The model is bundled into the Android APK by CI and copied into app-private
+/// storage on first use. Inference is handled separately.
 class LocalModelCatalog {
   const LocalModelCatalog._();
 
@@ -17,6 +19,7 @@ class LocalModelCatalog {
     downloadUri:
         'https://huggingface.co/SandLogicTechnologies/Qwen3-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
     expectedBytesApprox: 484000000,
+    expectedSha256: '9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14',
   );
 }
 
@@ -27,6 +30,7 @@ class LocalModelSpec {
     required this.fileName,
     required this.downloadUri,
     required this.expectedBytesApprox,
+    this.expectedSha256,
   });
 
   final String id;
@@ -34,6 +38,7 @@ class LocalModelSpec {
   final String fileName;
   final String downloadUri;
   final int expectedBytesApprox;
+  final String? expectedSha256;
 }
 
 /// Stores optional GGUF files in app-private storage and downloads them on
@@ -46,6 +51,8 @@ class LocalModelStorage {
   }) : _client = client ?? http.Client(),
        _supportDirectoryProvider =
            supportDirectoryProvider ?? getApplicationSupportDirectory;
+
+  static const _channel = MethodChannel('omni_ai/bundled_model');
 
   final http.Client _client;
   final Future<Directory> Function() _supportDirectoryProvider;
@@ -60,6 +67,29 @@ class LocalModelStorage {
     if (!await file.exists()) return false;
     final length = await file.length();
     return length > 0 && length >= model.expectedBytesApprox * 0.95;
+  }
+
+  /// Copies the model packaged inside the APK into app-private storage.
+  /// The Android side streams the asset in chunks to avoid loading ~484 MB
+  /// into Dart memory at once.
+  Future<File> installBundled(LocalModelSpec model) async {
+    final destination = await modelFile(model);
+    if (await isDownloaded(model)) return destination;
+
+    await destination.parent.create(recursive: true);
+    await _channel.invokeMethod<void>('copyBundledModel', <String, Object>{
+      'assetPath': 'models/' + model.fileName,
+      'destinationPath': destination.path,
+      'expectedBytes': model.expectedBytesApprox,
+      'expectedSha256': model.expectedSha256 ?? '',
+    });
+
+    if (!await isDownloaded(model)) {
+      throw const FormatException(
+        'The bundled model failed its size validation. Reinstall the app.',
+      );
+    }
+    return destination;
   }
 
   Future<File> download(
