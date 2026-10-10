@@ -9,10 +9,14 @@ class AIEngine {
   const AIEngine({
     required this.provider,
     this.timeout = const Duration(seconds: 30),
+    this.beforeExecute,
   });
 
   final AIProvider provider;
   final Duration timeout;
+
+  /// Runs setup before a provider can receive a request.
+  final Future<void> Function()? beforeExecute;
 
   Future<AIResponse> execute(
     AIRequest request, {
@@ -28,9 +32,12 @@ class AIEngine {
       );
     }
 
-    final providerFuture = provider.complete(request, cancellationToken: token);
-
     try {
+      await beforeExecute?.call();
+      final providerFuture = provider.complete(
+        request,
+        cancellationToken: token,
+      );
       final response =
           await Future.any<AIResponse>([
             providerFuture,
