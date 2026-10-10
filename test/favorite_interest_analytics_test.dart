@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/features/favorites/data/favorite_item.dart';
 import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/news/models/news_article.dart';
 
 void main() {
   const analytics = FavoriteInterestAnalytics();
@@ -82,6 +83,25 @@ void main() {
     );
   });
 
+  test('ranks news by saved topics without hiding unrelated articles', () {
+    final profile = analytics.analyze([
+      _favorite(
+        'anime-fav',
+        FavoriteCategory.anime,
+        title: 'Cyberpunk Edgerunners',
+        interests: ['anime', 'cyberpunk'],
+        addedAt: now,
+      ),
+    ], now: now);
+    final unrelated = _news('unrelated', topics: ['gardening']);
+    final matching = _news('matching', topics: ['anime', 'cyberpunk']);
+
+    final ranked = analytics.rankNews([unrelated, matching], profile);
+
+    expect(ranked.map((article) => article.id), ['matching', 'unrelated']);
+    expect(ranked, hasLength(2));
+  });
+
   test('empty favorites do not alter result order', () {
     final items = [
       _media('a', 'First', categories: ['Drama']),
@@ -91,6 +111,18 @@ void main() {
 
     expect(ranked.map((item) => item.id), ['a', 'b']);
   });
+}
+
+NewsArticle _news(String id, {required List<String> topics}) {
+  return NewsArticle(
+    id: id,
+    title: id,
+    summary: '',
+    sourceName: 'test',
+    sourceUrl: 'https://example.com/$id',
+    publishedAt: DateTime.utc(2026, 10, 10),
+    topics: topics,
+  );
 }
 
 FavoriteItem _favorite(
