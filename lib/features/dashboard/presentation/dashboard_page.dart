@@ -248,7 +248,7 @@ class _DashboardPageState extends State<DashboardPage> {
             key: const ValueKey('open-news-center'),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const NewsCenterPage()),
+                MaterialPageRoute<void>(builder: (_) => NewsCenterPage(aiEngine: _aiDependencies.engine)),
               );
             },
             icon: const Icon(Icons.rss_feed, size: 17),
