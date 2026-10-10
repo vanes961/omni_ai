@@ -54,13 +54,13 @@ void main() {
 
   test('removes a partial file when response size does not match', () async {
     storage = LocalModelStorage(
-      client: MockClient((_) async {
-        return http.StreamedResponse(
-          Stream.value(Uint8List.fromList([1, 2, 3])),
+      client: MockClient(
+        (_) async => http.Response(
+          '123',
           200,
-          contentLength: 10,
-        );
-      }),
+          headers: {'content-length': '10'},
+        ),
+      ),
       supportDirectoryProvider: () async => temporaryDirectory,
     );
 
@@ -100,7 +100,7 @@ void main() {
     await expectLater(
       storage.download(
         spec(),
-        onProgress: (_, __) => throw StateError('cancel'),
+        onProgress: (_, _) => throw StateError('cancel'),
       ),
       throwsA(isA<StateError>()),
     );
