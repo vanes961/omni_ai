@@ -58,6 +58,49 @@ void main() {
     expect(articles.single.summary, contains('A new anime series'));
   });
 
+  test('fetches international editions and filters topics without locale lock', () async {
+    var requests = 0;
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        requests++;
+        final language = request.url.queryParameters['hl'];
+        final region = request.url.queryParameters['gl'];
+        expect(
+          <String>{'ru:RU', 'en:US', 'en:GB'},
+          contains('$language:$region'),
+        );
+        final isRussian = language == 'ru';
+        final title = isRussian
+            ? 'Новый сезон аниме объявлен'
+            : 'New anime season announced';
+        final link = isRussian
+            ? 'https://publisher.example/ru-anime'
+            : 'https://publisher.example/en-anime-$region';
+        return http.Response(
+          '''<rss><channel><item>
+            <title>$title</title>
+            <link>$link</link>
+            <description>Anime news update</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            <source>News source</source>
+          </item></channel></rss>''',
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetchInternational(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+
+    expect(requests, 3);
+    expect(articles.map((article) => article.language), contains('ru'));
+    expect(articles.map((article) => article.language), contains('en'));
+    expect(articles, hasLength(2));
+  });
+
   test('recognizes Russian-language headlines for selected topics', () async {
     final service = NewsRssService(
       client: MockClient((_) async => http.Response.bytes(
