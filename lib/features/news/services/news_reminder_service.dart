@@ -52,7 +52,7 @@ class NewsReminderService {
         body: 'Открой OMNI AI, чтобы загрузить новости по твоим интересам и создать AI-дайджест.',
       );
     } else {
-      await _plugin.cancel(id: _morningId);
+      await _plugin.cancel(_morningId);
     }
     return true;
   }
@@ -71,7 +71,7 @@ class NewsReminderService {
         body: 'Открой OMNI AI, чтобы обновить персональные новости и создать AI-дайджест.',
       );
     } else {
-      await _plugin.cancel(id: _eveningId);
+      await _plugin.cancel(_eveningId);
     }
     return true;
   }
