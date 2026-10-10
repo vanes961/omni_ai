@@ -253,6 +253,7 @@ class _MediaPageState extends State<MediaPage> {
                     onTap: item.videoUrl.isEmpty
                         ? null
                         : () => _openPlayer(item),
+                    onFavorite: () => _saveFavorite(item),
                   );
                 },
               ),
