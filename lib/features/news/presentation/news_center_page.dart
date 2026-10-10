@@ -92,8 +92,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
 
   Future<void> _loadNewsCache() async {
     final revisionAtStart = _interestRevision;
+    NewsInterestProfile? loadedProfile;
     try {
       final profile = await _profileFuture;
+      loadedProfile = profile;
+      if (!mounted) return;
+      setState(() => _profile ??= profile);
       final cached = await Future.wait<Object?>([
         _newsCache.loadArticles(),
         _newsCache.loadDigest(),
@@ -115,7 +119,6 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         await _newsCache.clear();
       }
       if (!mounted) return;
-      _profile ??= profile;
       setState(() {
         if (revisionAtStart == _interestRevision && cacheMatchesProfile) {
           _articles = cachedArticles;
@@ -126,7 +129,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       });
       // When no valid cached feed exists, load the selected topics on entry
       // instead of leaving a blank screen until the user discovers Refresh.
-      if (_profile?.topics.isNotEmpty == true && _articles.isEmpty) {
+      if ((loadedProfile ?? _profile)?.topics.isNotEmpty == true &&
+          _articles.isEmpty) {
         unawaited(_refreshNews());
       }
     } catch (_) {
@@ -135,7 +139,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // Cache restoration is best-effort. If storage is unavailable or the
       // cached payload cannot be read, still attempt a fresh feed rather than
       // leaving users with a blank screen until they manually tap Refresh.
-      if (_profile?.topics.isNotEmpty == true && _articles.isEmpty) {
+      if ((loadedProfile ?? _profile)?.topics.isNotEmpty == true &&
+          _articles.isEmpty) {
         unawaited(_refreshNews());
       }
     }
