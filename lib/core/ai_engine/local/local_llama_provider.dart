@@ -31,6 +31,7 @@ class LocalLlamaProvider implements AIProvider {
 
   bool _disposed = false;
   bool _loading = false;
+  bool _generating = false;
 
   static const providerId = 'local-llama';
 
@@ -41,6 +42,9 @@ class LocalLlamaProvider implements AIProvider {
     _ensureNotDisposed();
     if (_loading) {
       throw StateError('Local model is already loading.');
+    }
+    if (_generating) {
+      throw StateError('Cannot load a model while generation is running.');
     }
     if (!await modelFile.exists()) {
       throw FileSystemException(
@@ -69,7 +73,21 @@ class LocalLlamaProvider implements AIProvider {
     required AICancellationToken cancellationToken,
   }) async {
     _ensureNotDisposed();
+    if (_loading) {
+      throw StateError('Cannot generate while the local model is loading.');
+    }
+    if (_generating) {
+      throw const AIEngineException(
+        AIError(
+          code: AIErrorCode.provider,
+          message: 'A local generation is already in progress.',
+          retryable: true,
+        ),
+      );
+    }
+    _generating = true;
     if (!await _controller.isModelLoaded()) {
+      _generating = false;
       throw const AIEngineException(
         AIError(
           code: AIErrorCode.invalidRequest,
@@ -78,6 +96,7 @@ class LocalLlamaProvider implements AIProvider {
       );
     }
     if (cancellationToken.isCancelled) {
+      _generating = false;
       throw const AIEngineException(
         AIError(code: AIErrorCode.cancelled, message: 'AI request cancelled.'),
       );
@@ -157,6 +176,7 @@ class LocalLlamaProvider implements AIProvider {
       );
     } finally {
       generationFinished = true;
+      _generating = false;
       // This listener intentionally remains pending until cancellation.
       unawaited(cancellationListener);
     }
