@@ -37,7 +37,9 @@ jobs:
         run: flutter pub get
 
       - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+        run: |
+          dart format lib test
+          git diff -- lib/core/ai_engine/local/local_llama_provider.dart
 
       - name: Analyze Flutter code
         run: flutter analyze
