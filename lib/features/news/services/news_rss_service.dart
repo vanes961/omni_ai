@@ -43,7 +43,10 @@ class NewsRssService {
     'gadgets': 'gadgets consumer electronics',
   };
 
-  Future<List<NewsArticle>> fetch(NewsInterestProfile profile) async {
+  Future<List<NewsArticle>> fetch(
+    NewsInterestProfile profile, {
+    bool applyRelevanceFilter = true,
+  }) async {
     if (profile.topics.isEmpty) return const <NewsArticle>[];
     final language = profile.languages
         .map((value) => value.trim().toLowerCase())
@@ -86,6 +89,11 @@ class NewsRssService {
     for (final article in articles) {
       final key = article.sourceUrl.trim();
       if (key.isNotEmpty) unique.putIfAbsent(key, () => article);
+    }
+    if (!applyRelevanceFilter) {
+      final candidates = unique.values.toList(growable: false)
+        ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+      return List<NewsArticle>.unmodifiable(candidates);
     }
     return _filter.filter(unique.values, profile);
   }
