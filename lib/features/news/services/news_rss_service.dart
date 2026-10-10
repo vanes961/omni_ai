@@ -173,16 +173,37 @@ class NewsRssService {
     return decoded.replaceAll('<', '').replaceAll('>', '').trim();
   }
 
-  String _decodeEntities(String value) => value
-      .replaceAll('&amp;', '&')
-      .replaceAll('&quot;', '"')
-      .replaceAll('&#39;', "'")
-      .replaceAll('&apos;', "'")
-      .replaceAll('&lt;', '<')
-      .replaceAll('&gt;', '>')
-      .replaceAll('&#8217;', '’')
-      .replaceAll('&#8211;', '–')
-      .replaceAll('&#160;', ' ');
+  String _decodeEntities(String value) {
+    final namedDecoded = value
+        .replaceAll('&amp;', '&')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&apos;', "'")
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&#8217;', '’')
+        .replaceAll('&#8211;', '–')
+        .replaceAll('&#160;', ' ');
+
+    // RSS publishers commonly encode punctuation and symbols as decimal or
+    // hexadecimal numeric references. Decode valid Unicode scalar values only.
+    return namedDecoded.replaceAllMapped(
+      RegExp(r'&#(x[0-9a-f]+|[0-9]+);', caseSensitive: false),
+      (match) {
+        final token = match.group(1)!;
+        final codePoint = token.toLowerCase().startsWith('x')
+            ? int.tryParse(token.substring(1), radix: 16)
+            : int.tryParse(token);
+        if (codePoint == null ||
+            codePoint <= 0 ||
+            codePoint > 0x10ffff ||
+            (codePoint >= 0xd800 && codePoint <= 0xdfff)) {
+          return match.group(0)!;
+        }
+        return String.fromCharCode(codePoint);
+      },
+    );
+  }
 
   void dispose() => _client.close();
 }
