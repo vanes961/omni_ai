@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
@@ -13,6 +14,7 @@ class DashboardPage extends StatefulWidget {
   const DashboardPage({
     required this.preferences,
     this.preferencesStore,
+    this.dependencies,
     this.telegramService = const TelegramParserService(),
     this.sourceLauncher,
     super.key,
@@ -20,6 +22,7 @@ class DashboardPage extends StatefulWidget {
 
   final UserPreferences preferences;
   final UserPreferencesStore? preferencesStore;
+  final AppDependencies? dependencies;
   final TelegramParserService telegramService;
   final TelegramSourceLauncher? sourceLauncher;
 
@@ -30,7 +33,9 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedTab = 0;
   int _selectedSettingsTab = 0;
-  late final LocalModelStorage _localModelStorage = LocalModelStorage();
+  late final AppDependencies _dependencies;
+  late final bool _ownsDependencies;
+  late final LocalModelStorage _localModelStorage;
   late final UserPreferencesStore _preferencesStore;
   final TextEditingController _feedSearchController = TextEditingController();
   late Future<List<TelegramPost>> _feedFuture;
@@ -40,6 +45,9 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    _ownsDependencies = widget.dependencies == null;
+    _dependencies = widget.dependencies ?? AppDependencies();
+    _localModelStorage = _dependencies.localModelStorage;
     _preferencesStore =
         widget.preferencesStore ?? SharedPreferencesUserPreferencesStore();
     _feedFuture = widget.telegramService.fetchPosts(widget.preferences);
@@ -48,7 +56,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void dispose() {
     _feedSearchController.dispose();
-    _localModelStorage.dispose();
+    if (_ownsDependencies) unawaited(_dependencies.dispose());
     super.dispose();
   }
 
@@ -295,7 +303,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   preferences: widget.preferences,
                   preferencesStore: _preferencesStore,
                 )
-              : LocalModelSettingsPage(storage: _localModelStorage),
+              : LocalModelSettingsPage(
+                  storage: _localModelStorage,
+                  aiDependencies: _dependencies.ai,
+                ),
         ),
       ],
     );
