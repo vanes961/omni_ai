@@ -129,11 +129,14 @@ class _MediaPageState extends State<MediaPage> {
             ),
             OutlinedButton.icon(
               key: const ValueKey('open-favorites'),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => FavoritesPage(),
-                ),
-              ),
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => FavoritesPage(),
+                  ),
+                );
+                await _loadFavoriteInterests();
+              },
               icon: const Icon(Icons.favorite_border, size: 16),
               label: const Text('ИЗБРАННОЕ'),
             ),
@@ -237,14 +240,16 @@ class _MediaPageState extends State<MediaPage> {
             }
           }
 
-          if (combined.isEmpty &&
+          final rankedCombined = _rankByFavoriteInterests(combined);
+
+          if (rankedCombined.isEmpty &&
               snapshot.connectionState == ConnectionState.waiting) {
             return const Padding(
               padding: EdgeInsets.all(24),
               child: Center(child: CircularProgressIndicator()),
             );
           }
-          if (combined.isEmpty) {
+          if (rankedCombined.isEmpty) {
             return const Padding(
               padding: EdgeInsets.all(24),
               child: Center(
@@ -267,11 +272,11 @@ class _MediaPageState extends State<MediaPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: combined.length,
+                itemCount: rankedCombined.length,
                 separatorBuilder: (context, index) =>
                     const SizedBox(height: 10),
                 itemBuilder: (context, index) {
-                  final item = combined[index];
+                  final item = rankedCombined[index];
                   return _MediaResultTile(
                     item: item,
                     preferredVoiceover: widget.searchService.preferredVoiceover(
