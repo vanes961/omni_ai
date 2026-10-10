@@ -9,10 +9,7 @@ void main() {
     final prepared = manager.prepareRequest(
       request: const AIRequest(id: 'r1', prompt: 'And what about tomorrow?'),
       conversationHistory: const [
-        AIContextMessage(
-          role: AIConversationRole.user,
-          content: 'Plan a trip.',
-        ),
+        AIContextMessage(role: AIConversationRole.user, content: 'Plan a trip.'),
         AIContextMessage(
           role: AIConversationRole.assistant,
           content: 'Where would you like to go?',
