@@ -53,9 +53,9 @@ class _DashboardPageState extends State<DashboardPage> {
     final dependencies = widget.dependencies;
     _ownsDependencies = dependencies == null;
     if (dependencies == null) {
-      _localModelStorage = LocalModelStorage();
-      _aiDependencies = AIDependencies(localModelStorage: _localModelStorage);
-      _chatDependencies = AppDependencies(localModelStorage: _localModelStorage);
+      _chatDependencies = AppDependencies();
+      _localModelStorage = _chatDependencies.localModelStorage;
+      _aiDependencies = _chatDependencies.ai;
     } else {
       _localModelStorage = dependencies.localModelStorage;
       _aiDependencies = dependencies.ai;
@@ -88,7 +88,7 @@ class _DashboardPageState extends State<DashboardPage> {
             constraints: const BoxConstraints(maxWidth: 720),
             child: Column(
               children: [
-                _GuardHeader(onProfilePressed: () => _selectTab(3)),
+                _GuardHeader(onProfilePressed: () => _selectTab(4)),
                 Expanded(child: _buildTab()),
               ],
             ),
