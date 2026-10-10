@@ -40,8 +40,7 @@ class LocalModelSpec {
 /// demand. A `.part` file is used so interrupted downloads are never treated
 /// as a complete model.
 class LocalModelStorage {
-  LocalModelStorage({http.Client? client})
-    : _client = client ?? http.Client();
+  LocalModelStorage({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
 
