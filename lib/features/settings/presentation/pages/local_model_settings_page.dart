@@ -3,10 +3,7 @@ import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class LocalModelSettingsPage extends StatefulWidget {
-  const LocalModelSettingsPage({
-    required this.storage,
-    super.key,
-  });
+  const LocalModelSettingsPage({required this.storage, super.key});
 
   final LocalModelStorage storage;
 
@@ -140,9 +137,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final total = _totalBytes ?? _model.expectedBytesApprox;
-    final progress = total > 0
-        ? (_receivedBytes / total).clamp(0.0, 1.0)
-        : 0.0;
+    final progress = total > 0 ? (_receivedBytes / total).clamp(0.0, 1.0) : 0.0;
     return ListView(
       key: const ValueKey('local-model-settings-page'),
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
@@ -211,9 +206,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
               ),
               const SizedBox(height: 16),
               if (_checking)
-                const LinearProgressIndicator(
-                  color: SystemCorePalette.green,
-                )
+                const LinearProgressIndicator(color: SystemCorePalette.green)
               else
                 Row(
                   children: [
@@ -288,7 +281,9 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.download),
-                  label: Text(_downloading ? 'ЗАГРУЗКА…' : 'ЗАГРУЗИТЬ МОДЕЛЬ'),
+                  label: Text(
+                    _downloading ? 'ЗАГРУЗКА…' : 'ЗАГРУЗИТЬ МОДЕЛЬ',
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
