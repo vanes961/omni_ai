@@ -322,6 +322,30 @@ void main() {
     expect(await cache.loadArticles(), isEmpty);
     expect(store.values.containsKey(SharedPreferencesNewsCache.articlesKey), isFalse);
   });
+  test('serializes a cache clear after an in-flight feed save', () async {
+    final store = _MemoryStore();
+    final cache = SharedPreferencesNewsCache(store: store);
+    final article = NewsArticle(
+      id: 'stale-1',
+      title: 'Stale feed article',
+      summary: 'This feed was superseded by a topic change.',
+      sourceName: 'Example',
+      sourceUrl: 'https://example.com/stale',
+      publishedAt: DateTime.utc(2026, 10, 10, 12),
+      topics: const ['anime'],
+    );
+
+    // Both operations are started without awaiting the first one, matching a
+    // user changing interests while a refresh is saving its previous results.
+    final saving = cache.saveArticles([article], selectedTopics: const ['anime']);
+    final clearing = cache.clear();
+    await Future.wait([saving, clearing]);
+
+    expect(await cache.loadArticles(), isEmpty);
+    expect(await cache.loadDigest(), isNull);
+    expect(await cache.loadTopics(), isNull);
+  });
+
 }
 
 class _MemoryStore implements NewsCacheStringStore {
