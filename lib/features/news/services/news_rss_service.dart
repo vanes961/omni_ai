@@ -87,14 +87,10 @@ class NewsRssService {
     // Different editions can repeat a headline with tracking URLs.
     final byTitle = <String, NewsArticle>{};
     for (final article in byUrl.values) {
-      final titleKey = article.title
-          .trim()
-          .toLowerCase()
-          .replaceAll(RegExp(r'\s+'), ' ');
+      final titleKey = _normalizedTitle(article.title);
       if (titleKey.isEmpty) continue;
       final previous = byTitle[titleKey];
-      if (previous == null ||
-          article.publishedAt.isAfter(previous.publishedAt)) {
+      if (previous == null || _preferArticle(article, previous)) {
         byTitle[titleKey] = article;
       }
     }
@@ -150,8 +146,12 @@ class NewsRssService {
     );
     final unique = <String, NewsArticle>{};
     for (final article in articles) {
-      final key = article.sourceUrl.trim();
-      if (key.isNotEmpty) unique.putIfAbsent(key, () => article);
+      final key = _canonicalUrl(article.sourceUrl);
+      if (key.isEmpty) continue;
+      final previous = unique[key];
+      if (previous == null || _preferArticle(article, previous)) {
+        unique[key] = article;
+      }
     }
     if (!applyRelevanceFilter) {
       final candidates = unique.values.toList(growable: false)
@@ -159,6 +159,61 @@ class NewsRssService {
       return List<NewsArticle>.unmodifiable(candidates);
     }
     return _filter.filter(unique.values, profile);
+  }
+
+
+  /// Removes common tracking parameters without changing the URL shown to
+  /// the user. This lets editions deduplicate the same story when publishers
+  /// append campaign IDs or fragments to an otherwise identical link.
+  String _canonicalUrl(String value) {
+    final uri = Uri.tryParse(value.trim());
+    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) return '';
+    const trackingKeys = <String>{
+      'fbclid',
+      'gclid',
+      'dclid',
+      'mc_cid',
+      'mc_eid',
+      'ref',
+      'ref_src',
+      'source',
+    };
+    final kept = uri.queryParametersAll.entries
+        .where((entry) {
+          final key = entry.key.toLowerCase();
+          return !key.startsWith('utm_') && !trackingKeys.contains(key);
+        })
+        .toList()
+      ..sort((a, b) {
+        final byKey = a.key.toLowerCase().compareTo(b.key.toLowerCase());
+        return byKey != 0
+            ? byKey
+            : a.value.join(',').compareTo(b.value.join(','));
+      });
+    final query = <String, String>{
+      for (final entry in kept) entry.key: entry.value.join(','),
+    };
+    return uri.replace(
+      fragment: '',
+      queryParameters: query.isEmpty ? null : query,
+      path: uri.path.isEmpty ? '/' : uri.path,
+    ).toString();
+  }
+
+  String _normalizedTitle(String title) => title
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'''[.,!?;:()\[\]{}"'«»—–-]'''), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+
+  bool _preferArticle(NewsArticle candidate, NewsArticle current) {
+    if (candidate.publishedAt.isAfter(current.publishedAt)) return true;
+    if (candidate.publishedAt.isBefore(current.publishedAt)) return false;
+    if (candidate.summary.trim().length != current.summary.trim().length) {
+      return candidate.summary.trim().length > current.summary.trim().length;
+    }
+    return candidate.isVerified && !current.isVerified;
   }
 
   List<NewsArticle> _parseItems(String xml, String language, String? profileRegion) {
