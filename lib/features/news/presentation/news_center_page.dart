@@ -234,7 +234,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _newsError = null;
       });
     } catch (_) {
-      if (!mounted) return;
+      // A failed request for an old topic selection must not surface an error
+      // in the newly selected feed.
+      if (!mounted || revisionAtStart != _interestRevision) return;
       setState(() {
         _newsError = 'Не удалось загрузить новости. Проверьте соединение и попробуйте снова.';
       });
@@ -282,7 +284,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         }
       });
     } catch (_) {
-      if (!mounted) return;
+      // Ignore errors from digest requests started before interests changed.
+      if (!mounted || revisionAtStart != _interestRevision) return;
       setState(() => _digestError = 'Не удалось создать дайджест. Проверьте выбранный режим ИИ и попробуйте снова.');
     } finally {
       if (mounted) setState(() => _generatingDigest = false);
