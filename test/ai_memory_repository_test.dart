@@ -6,28 +6,33 @@ import 'package:omni_ai/features/ai_memory/models/ai_memory.dart';
 
 void main() {
   group('SharedPreferencesAIMemoryRepository', () {
-    test('persists explicit memories and restores them after recreation', () async {
-      final store = _MemoryStringStore();
-      final repository = SharedPreferencesAIMemoryRepository(store: store);
-      final memory = AIMemory(
-        id: 'memory-1',
-        content: 'Prefers concise answers',
-        createdAt: DateTime.utc(2026, 1, 2),
-      );
+    test(
+      'persists explicit memories and restores them after recreation',
+      () async {
+        final store = _MemoryStringStore();
+        final repository = SharedPreferencesAIMemoryRepository(store: store);
+        final memory = AIMemory(
+          id: 'memory-1',
+          content: 'Prefers concise answers',
+          createdAt: DateTime.utc(2026, 1, 2),
+        );
 
-      await repository.save(memory);
-      final restored = await SharedPreferencesAIMemoryRepository(
-        store: store,
-      ).getAll();
+        await repository.save(memory);
+        final restored = await SharedPreferencesAIMemoryRepository(
+          store: store,
+        ).getAll();
 
-      expect(restored, hasLength(1));
-      expect(restored.single.toJson(), memory.toJson());
-      expect(
-        jsonDecode(store.values[SharedPreferencesAIMemoryRepository.storageKey]!),
-        isA<Map<String, dynamic>>(),
-      );
-      await repository.dispose();
-    });
+        expect(restored, hasLength(1));
+        expect(restored.single.toJson(), memory.toJson());
+        expect(
+          jsonDecode(
+            store.values[SharedPreferencesAIMemoryRepository.storageKey]!,
+          ),
+          isA<Map<String, dynamic>>(),
+        );
+        await repository.dispose();
+      },
+    );
 
     test('deletes only the requested memory', () async {
       final repository = SharedPreferencesAIMemoryRepository(
@@ -91,25 +96,30 @@ void main() {
         );
       }
 
-      expect(
-        (await repository.getAll()).map((memory) => memory.id),
-        ['m3', 'm2'],
-      );
+      expect((await repository.getAll()).map((memory) => memory.id), [
+        'm3',
+        'm2',
+      ]);
       await repository.dispose();
     });
 
-    test('clears malformed storage instead of returning corrupt data', () async {
-      final store = _MemoryStringStore()
-        ..values[SharedPreferencesAIMemoryRepository.storageKey] = '{broken';
-      final repository = SharedPreferencesAIMemoryRepository(store: store);
+    test(
+      'clears malformed storage instead of returning corrupt data',
+      () async {
+        final store = _MemoryStringStore()
+          ..values[SharedPreferencesAIMemoryRepository.storageKey] = '{broken';
+        final repository = SharedPreferencesAIMemoryRepository(store: store);
 
-      expect(await repository.getAll(), isEmpty);
-      expect(
-        store.values.containsKey(SharedPreferencesAIMemoryRepository.storageKey),
-        isFalse,
-      );
-      await repository.dispose();
-    });
+        expect(await repository.getAll(), isEmpty);
+        expect(
+          store.values.containsKey(
+            SharedPreferencesAIMemoryRepository.storageKey,
+          ),
+          isFalse,
+        );
+        await repository.dispose();
+      },
+    );
   });
 }
 
