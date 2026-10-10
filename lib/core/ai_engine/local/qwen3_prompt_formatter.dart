@@ -30,7 +30,7 @@ class Qwen3PromptFormatter {
       if (index >= 0) text = text.substring(0, index).trim();
     }
     text = text.replaceFirst(
-      RegExp(r'^(?:Assistant|assistant)\s*:\s*'),
+      RegExp(r'^(?:Assistant|User)\s*:\s*', caseSensitive: false),
       '',
     );
     return text.trim();
