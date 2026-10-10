@@ -19,7 +19,8 @@ class LocalModelCatalog {
     downloadUri:
         'https://huggingface.co/SandLogicTechnologies/Qwen3-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
     expectedBytesApprox: 484000000,
-    expectedSha256: '9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14',
+    expectedSha256:
+        '9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14',
   );
 }
 
@@ -41,9 +42,8 @@ class LocalModelSpec {
   final String? expectedSha256;
 }
 
-/// Stores optional GGUF files in app-private storage and downloads them on
-/// demand. A `.part` file is used so interrupted downloads are never treated
-/// as a complete model.
+/// Stores GGUF files in app-private storage. The production model is copied
+/// from the APK; the download method remains available for development tools.
 class LocalModelStorage {
   LocalModelStorage({
     http.Client? client,
