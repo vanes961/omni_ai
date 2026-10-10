@@ -314,6 +314,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         category: FavoriteCategory.trailer,
         addedAt: DateTime.now(),
         description: article.summary,
+        interests: article.topics,
         imageUrl: article.thumbnailUrl,
         sourceUrl: (article.videoUrl?.isNotEmpty ?? false)
             ? article.videoUrl
