@@ -52,6 +52,24 @@ void main() {
     expect(await File('${file.path}.part').exists(), isFalse);
   });
 
+
+  test('replaces an existing model after the new download validates', () async {
+    final previousBytes = Uint8List.fromList(List<int>.filled(10, 1));
+    final replacementBytes = Uint8List.fromList(List<int>.filled(10, 2));
+    storage = LocalModelStorage(
+      client: MockClient((_) async => http.Response.bytes(replacementBytes, 200)),
+      supportDirectoryProvider: () async => temporaryDirectory,
+    );
+    final existing = await storage.modelFile(spec());
+    await existing.parent.create(recursive: true);
+    await existing.writeAsBytes(previousBytes);
+
+    final installed = await storage.download(spec());
+
+    expect(await installed.readAsBytes(), replacementBytes);
+    expect(await File('${installed.path}.part').exists(), isFalse);
+  });
+
   test('removes a partial file when response size does not match', () async {
     storage = LocalModelStorage(
       client: MockClient(
