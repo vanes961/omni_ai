@@ -60,6 +60,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _loadingNewsCache = true;
   int _interestRevision = 0;
   List<NewsArticle> _articles = const [];
+  bool _showingCachedNews = false;
   bool _refreshingNews = false;
   String? _newsError;
   bool _generatingDigest = false;
@@ -119,6 +120,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         if (revisionAtStart == _interestRevision && cacheMatchesProfile) {
           _articles = cachedArticles;
           _digest = cached[1] as String?;
+          _showingCachedNews = cachedArticles.isNotEmpty;
         }
         _loadingNewsCache = false;
       });
@@ -271,6 +273,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (!mounted) return;
       setState(() {
         _articles = rankedArticles;
+        _showingCachedNews = false;
         _digest = null;
         _digestError = null;
         _newsError = null;
@@ -442,6 +445,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     setState(() {
       _profile = profile.copyWith(topics: topics.toList());
       _articles = const [];
+      _showingCachedNews = false;
       _digest = null;
       _digestError = null;
     });
@@ -636,7 +640,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   child: LinearProgressIndicator(),
                 ),
               ],
-              if (!_loadingNewsCache && _articles.isNotEmpty && !_refreshingNews) ...[
+              if (_showingCachedNews && !_loadingNewsCache && _articles.isNotEmpty && !_refreshingNews) ...[
                 const Padding(
                   padding: EdgeInsets.only(bottom: 6),
                   child: Text('Показана последняя сохранённая лента; обнови её, чтобы проверить новые публикации.', style: TextStyle(color: SystemCorePalette.muted, fontSize: 12)),
