@@ -12,19 +12,18 @@ import 'package:omni_ai/features/system_core/services/system_core_process_servic
 
 class AIProcessOrchestrator {
   AIProcessOrchestrator({
-    required AIEngine _engine,
+    required this.engine,
     required SystemCoreProcessService processService,
     required RunHistoryRepository historyRepository,
     ProcessRunIdFactory? runIdFactory,
-  }) : _engine = _engine,
-       _processService = processService,
+  }) : _processService = processService,
        _historyRecorder = RunHistoryRecorder(
          processStates: processService.states,
          repository: historyRepository,
          idFactory: runIdFactory,
        );
 
-  final AIEngine _engine;
+  final AIEngine engine;
   final SystemCoreProcessService _processService;
   final RunHistoryRecorder _historyRecorder;
   bool _disposed = false;
@@ -57,7 +56,7 @@ class AIProcessOrchestrator {
           );
 
           try {
-            response = await _engine.execute(
+            response = await engine.execute(
               request,
               cancellationToken: engineCancellationToken,
             );
