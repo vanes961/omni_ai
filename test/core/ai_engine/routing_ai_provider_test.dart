@@ -58,9 +58,7 @@ void main() {
       expect(cloud.calls, 0);
     });
 
-    test(
-      'rejects already-cancelled requests before invoking providers',
-      () async {
+    test('rejects already-cancelled requests before invoking providers', () async {
         final token = AICancellationToken()..cancel();
 
         await expectLater(
@@ -70,8 +68,7 @@ void main() {
 
         expect(local.calls, 0);
         expect(cloud.calls, 0);
-      },
-    );
+    });
   });
 }
 
