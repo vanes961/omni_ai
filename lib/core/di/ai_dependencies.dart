@@ -25,7 +25,7 @@ class AIDependencies {
     final storage = localModelStorage ?? LocalModelStorage();
     final local = localProvider ?? StoredLocalLlamaProvider(storage: storage);
     final cloud = GeminiProvider(
-      apiKeySource: apiKeySource ?? const EnvironmentGeminiApiKeySource(),
+      apiKeySource: apiKeySource ?? const UnconfiguredGeminiApiKeySource(),
       config: config,
       client: httpClient,
     );
