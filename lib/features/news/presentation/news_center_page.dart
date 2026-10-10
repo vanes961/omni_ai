@@ -281,7 +281,14 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     } else {
       topics.remove(topic);
     }
-    setState(() => _profile = profile.copyWith(topics: topics.toList()));
+    setState(() {
+      _profile = profile.copyWith(topics: topics.toList());
+      _articles = const [];
+      _digest = null;
+      _digestError = null;
+    });
+    unawaited(_newsCache.saveArticles(const []));
+    unawaited(_newsCache.saveDigest(null));
   }
 
   @override
