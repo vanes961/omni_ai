@@ -12,11 +12,11 @@ import 'package:omni_ai/features/system_core/services/system_core_process_servic
 
 class AIProcessOrchestrator {
   AIProcessOrchestrator({
-    required AIEngine engine,
+    required AIEngine _engine,
     required SystemCoreProcessService processService,
     required RunHistoryRepository historyRepository,
     ProcessRunIdFactory? runIdFactory,
-  }) : _engine = engine,
+  }) : _engine = _engine,
        _processService = processService,
        _historyRecorder = RunHistoryRecorder(
          processStates: processService.states,
