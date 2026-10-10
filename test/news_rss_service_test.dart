@@ -330,4 +330,22 @@ void main() {
     expect(articles.single.summary, 'Anime — manga & updates');
     expect(articles.single.sourceName, 'publisher.example');
   });
+
+  test('does not make a network request when selected topics are blank', () async {
+    var requests = 0;
+    final service = NewsRssService(
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('', 200);
+      }),
+    );
+    addTearDown(service.dispose);
+
+    expect(
+      await service.fetch(const NewsInterestProfile(topics: [' ', '  '])),
+      isEmpty,
+    );
+    expect(requests, 0);
+  });
+
 }
