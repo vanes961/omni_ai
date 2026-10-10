@@ -6,6 +6,7 @@ import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/favorites/data/favorite_item.dart';
 import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
 import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
+import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
@@ -31,12 +32,35 @@ class MediaPage extends StatefulWidget {
 class _MediaPageState extends State<MediaPage> {
   final TextEditingController _searchController = TextEditingController();
   final FavoritesRepository _favoritesRepository = FavoritesRepository();
+  final FavoriteInterestAnalytics _interestAnalytics = const FavoriteInterestAnalytics();
+  List<FavoriteItem> _favoriteItems = const <FavoriteItem>[];
   String _query = '';
   String? _selectedType;
   Timer? _searchDebounce;
   Future<List<MediaItem>>? _onlineSearch;
 
   static const _types = ['Фильм', 'Сериал', 'Аниме'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavoriteInterests();
+  }
+
+  Future<void> _loadFavoriteInterests() async {
+    try {
+      final items = await _favoritesRepository.getAll();
+      if (!mounted) return;
+      setState(() => _favoriteItems = items);
+    } catch (_) {
+      // Search remains usable if local favorite analytics cannot be read.
+    }
+  }
+
+  List<MediaItem> _rankByFavoriteInterests(List<MediaItem> items) {
+    final profile = _interestAnalytics.analyze(_favoriteItems);
+    return _interestAnalytics.rank(items, profile);
+  }
 
   @override
   void dispose() {
@@ -47,7 +71,9 @@ class _MediaPageState extends State<MediaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final results = widget.searchService.search(_query, type: _selectedType);
+    final results = _rankByFavoriteInterests(
+      widget.searchService.search(_query, type: _selectedType),
+    );
     final isFiltering = _query.isNotEmpty || _selectedType != null;
 
     return Material(
@@ -65,7 +91,9 @@ class _MediaPageState extends State<MediaPage> {
             _buildCarouselSection('ТРЕНДЫ', widget.searchService.trending),
             _buildCarouselSection(
               'РЕКОМЕНДОВАНО ДЛЯ ТЕБЯ',
-              widget.searchService.recommendedFor(widget.preferences),
+              _rankByFavoriteInterests(
+                widget.searchService.recommendedFor(widget.preferences),
+              ),
             ),
           ],
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -324,10 +352,12 @@ class _MediaPageState extends State<MediaPage> {
         category: category,
         addedAt: DateTime.now(),
         description: item.description,
+        interests: item.categories,
         imageUrl: item.posterUrl.isEmpty ? null : item.posterUrl,
         sourceUrl: item.videoUrl.isEmpty ? null : item.videoUrl,
       ),
     );
+    await _loadFavoriteInterests();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('«${item.title}» добавлено в «${category.label}»')),
