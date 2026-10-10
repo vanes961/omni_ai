@@ -21,6 +21,18 @@ class SharedPreferencesNewsCache {
 
   final NewsCacheStringStore _store;
 
+  // SharedPreferences operations are asynchronous. Serialize cache mutations so
+  // a topic-change clear cannot interleave with an in-flight feed/digest write.
+  Future<void> _mutationTail = Future<void>.value();
+
+  Future<void> _serializeMutation(Future<void> Function() operation) {
+    final next = _mutationTail.then((_) => operation());
+    // Keep the queue usable after a failed write while returning the failure to
+    // the caller that initiated that write.
+    _mutationTail = next.catchError((Object _) {});
+    return next;
+  }
+
   Future<List<NewsArticle>> loadArticles() async {
     final encoded = await _store.read(articlesKey);
     if (encoded == null || encoded.isEmpty) return const <NewsArticle>[];
@@ -63,7 +75,7 @@ class SharedPreferencesNewsCache {
   Future<void> saveArticles(
     List<NewsArticle> articles, {
     List<String> selectedTopics = const <String>[],
-  }) async {
+  }) => _serializeMutation(() async {
     final encoded = articles
         .map((article) => <String, Object?>{
           'id': article.id,
@@ -94,7 +106,7 @@ class SharedPreferencesNewsCache {
     await _store.remove(articlesKey);
     await _store.write(topicsKey, jsonEncode(_normalizeTopics(selectedTopics)));
     await _store.write(articlesKey, jsonEncode(encoded));
-  }
+  });
 
   Future<String?> loadDigest() async {
     final digest = await _store.read(digestKey);
@@ -102,11 +114,11 @@ class SharedPreferencesNewsCache {
     return digest;
   }
 
-  Future<void> clear() async {
+  Future<void> clear() => _serializeMutation(() async {
     await _store.remove(articlesKey);
     await _store.remove(digestKey);
     await _store.remove(topicsKey);
-  }
+  });
 
   List<String> _normalizeTopics(List<String> topics) => topics
       .map((topic) => topic.trim().toLowerCase())
@@ -114,13 +126,13 @@ class SharedPreferencesNewsCache {
       .toSet()
       .toList()..sort();
 
-  Future<void> saveDigest(String? digest) async {
+  Future<void> saveDigest(String? digest) => _serializeMutation(() async {
     if (digest == null || digest.trim().isEmpty) {
       await _store.remove(digestKey);
     } else {
       await _store.write(digestKey, digest.trim());
     }
-  }
+  });
 
   String? _safeHttpsUrl(Object? value) {
     if (value is! String || value.trim().isEmpty) return null;
