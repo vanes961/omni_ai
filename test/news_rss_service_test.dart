@@ -7,6 +7,46 @@ import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
 
 void main() {
+  test('deduplicates tracking URL variants and keeps the newest story', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response(
+        '''<rss><channel>
+          <item>
+            <title>Anime: New season!</title>
+            <link>https://publisher.example/story?utm_source=ru#top</link>
+            <description>Earlier summary</description>
+            <pubDate>Sat, 10 Oct 2026 10:00:00 GMT</pubDate>
+            <source>Publisher</source>
+          </item>
+          <item>
+            <title>Anime — New season</title>
+            <link>https://publisher.example/story?utm_source=en&amp;fbclid=tracking</link>
+            <description>The latest summary from the publisher.</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            <source>Publisher</source>
+          </item>
+        </channel></rss>''',
+        200,
+        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+      )),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.title, 'Anime — New season');
+    expect(articles.single.summary, 'The latest summary from the publisher.');
+    // Keep the publisher's original link for the user; only the dedupe key is
+    // canonicalized, so attribution and navigation remain unchanged.
+    expect(
+      articles.single.sourceUrl,
+      'https://publisher.example/story?utm_source=en&fbclid=tracking',
+    );
+  });
+
   test('returns only selected-topic RSS articles and removes duplicates', () async {
     final client = MockClient((request) async {
       expect(request.url.host, 'news.google.com');
