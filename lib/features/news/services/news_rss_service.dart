@@ -97,6 +97,7 @@ class NewsRssService {
     }
 
     final unrestrictedProfile = profile.copyWith(
+      topics: profile.topics.map(_canonicalTopic).toSet().toList(growable: false),
       languages: const <String>[],
       regions: const <String>[],
     );
@@ -114,14 +115,15 @@ class NewsRssService {
     final region = profile.regions
         .map((value) => value.trim().toUpperCase())
         .firstWhere((value) => value.isNotEmpty, orElse: () => 'RU');
-    final query = profile.topics
-        .map((topic) {
-          final normalized = topic.trim().toLowerCase();
-          return _topicQueries[normalized] ?? normalized;
-        })
+    final canonicalTopics = profile.topics
+        .map(_canonicalTopic)
         .where((topic) => topic.isNotEmpty)
         .toSet()
+        .toList(growable: false);
+    final query = canonicalTopics
+        .map((topic) => _topicQueries[topic] ?? topic)
         .join(' OR ');
+    final canonicalProfile = profile.copyWith(topics: canonicalTopics);
     if (query.isEmpty) return const <NewsArticle>[];
     final uri = Uri.https('news.google.com', '/rss/search', {
       'q': query,
@@ -159,7 +161,7 @@ class NewsRssService {
         ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
       return List<NewsArticle>.unmodifiable(candidates);
     }
-    return _filter.filter(unique.values, profile);
+    return _filter.filter(unique.values, canonicalProfile);
   }
 
 
@@ -200,6 +202,18 @@ class NewsRssService {
       queryParameters: query.isEmpty ? null : query,
       path: uri.path.isEmpty ? '/' : uri.path,
     ).toString();
+  }
+
+  String _canonicalTopic(String topic) {
+    final normalized = topic.trim().toLowerCase();
+    return switch (normalized) {
+      'ai' || 'ии' || 'нейросети' => 'artificial intelligence',
+      'tech' || 'technology news' => 'technology',
+      'gaming' || 'video games' => 'games',
+      'cinema' || 'film' || 'films' => 'movies',
+      'tv' || 'tv series' => 'series',
+      _ => normalized,
+    };
   }
 
   String _normalizedTitle(String title) => title
