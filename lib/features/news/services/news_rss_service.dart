@@ -66,7 +66,11 @@ class NewsRssService {
     }
 
     final xml = utf8.decode(response.bodyBytes, allowMalformed: true);
-    final articles = _parseItems(xml, language);
+    final articles = _parseItems(
+      xml,
+      language,
+      profile.regions.isNotEmpty ? profile.regions.first : null,
+    );
     final unique = <String, NewsArticle>{};
     for (final article in articles) {
       final key = article.sourceUrl.trim();
@@ -75,7 +79,7 @@ class NewsRssService {
     return _filter.filter(unique.values, profile);
   }
 
-  List<NewsArticle> _parseItems(String xml, String language) {
+  List<NewsArticle> _parseItems(String xml, String language, String? profileRegion) {
     final items = RegExp(r'<item(?:\s[^>]*)?>([\s\S]*?)</item>',
       caseSensitive: false).allMatches(xml);
     final result = <NewsArticle>[];
@@ -109,6 +113,7 @@ class NewsRssService {
         publishedAt: published.toUtc(),
         topics: topics,
         language: language,
+        region: profileRegion,
         isVerified: true,
       ));
     }
