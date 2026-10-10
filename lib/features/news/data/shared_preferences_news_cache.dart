@@ -79,8 +79,11 @@ class SharedPreferencesNewsCache {
           'isVerified': article.isVerified,
         })
         .toList(growable: false);
-    await _store.write(articlesKey, jsonEncode(encoded));
+    // Persist the topic marker first. If the article write fails, startup can
+    // detect the topic mismatch and discard the old feed rather than showing
+    // articles that belong to a previous selection.
     await _store.write(topicsKey, jsonEncode(_normalizeTopics(selectedTopics)));
+    await _store.write(articlesKey, jsonEncode(encoded));
   }
 
   Future<String?> loadDigest() async {
