@@ -114,7 +114,11 @@ class FavoriteInterestAnalytics {
 
   /// Ranks news and trailers using the same local favorites profile.
   /// It only reorders candidates; it never hides an article or makes network calls.
-  double scoreNews(NewsArticle article, FavoriteInterestProfile profile) {
+  double scoreNews(
+    NewsArticle article,
+    FavoriteInterestProfile profile, {
+    Set<String> lessInterested = const <String>{},
+  }) {
     if (profile.totalFavorites == 0 && lessInterested.isEmpty) return 0;
     final candidateTerms = <String>{
       ..._normalizeAll(article.topics),
@@ -125,6 +129,7 @@ class FavoriteInterestAnalytics {
     var score = 0.0;
     for (final term in candidateTerms) {
       score += profile.interestWeights[term] ?? 0;
+      if (lessInterested.contains(term)) score -= 4.0;
     }
     if (article.contentType == NewsContentType.trailer &&
         profile.countFor(FavoriteCategory.trailer) > 0) {
@@ -151,12 +156,18 @@ class FavoriteInterestAnalytics {
 
   List<NewsArticle> rankNews(
     List<NewsArticle> articles,
-    FavoriteInterestProfile profile,
-  ) {
+    FavoriteInterestProfile profile, {
+    Set<String> lessInterested = const <String>{},
+  }) {
     final indexed = articles.indexed.toList();
     indexed.sort((a, b) {
-      final scoreComparison =
-          scoreNews(b.$2, profile).compareTo(scoreNews(a.$2, profile));
+      final scoreComparison = scoreNews(
+        b.$2,
+        profile,
+        lessInterested: lessInterested,
+      ).compareTo(
+        scoreNews(a.$2, profile, lessInterested: lessInterested),
+      );
       return scoreComparison != 0 ? scoreComparison : a.$1.compareTo(b.$1);
     });
     return List<NewsArticle>.unmodifiable(indexed.map((entry) => entry.$2));
