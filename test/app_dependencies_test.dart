@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
+import 'package:omni_ai/core/ai_engine/providers/ai_execution_mode_store.dart';
+import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/run_history/data/in_memory_run_history_repository.dart';
 import 'package:omni_ai/features/system_core/services/system_core_process_service.dart';
@@ -15,6 +17,7 @@ void main() {
     final processService = SystemCoreProcessService();
     final dependencies = AppDependencies(
       apiKeySource: const _TestApiKeySource(),
+      aiExecutionModeStore: _TestExecutionModeStore(),
       httpClient: MockClient((request) async {
         expect(request.method, 'POST');
         expect(request.headers['x-goog-api-key'], 'test-key');
@@ -61,4 +64,12 @@ class _TestApiKeySource implements GeminiApiKeySource {
 
   @override
   Future<String?> readApiKey() async => 'test-key';
+}
+
+class _TestExecutionModeStore implements AIExecutionModeStore {
+  @override
+  Future<AIExecutionMode> load() async => AIExecutionMode.cloud;
+
+  @override
+  Future<void> save(AIExecutionMode mode) async {}
 }
