@@ -78,6 +78,40 @@ void main() {
     expect(articles.single.topics, contains('anime'));
   });
 
+  test('matches the Russian AI abbreviation only as a whole word', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response(
+        '''<rss><channel>
+          <item>
+            <title>Новости России за сегодня</title>
+            <link>https://publisher.example/russia</link>
+            <description>Главные события в России</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            <source>Новости</source>
+          </item>
+          <item>
+            <title>Новые модели ИИ прошли испытания</title>
+            <link>https://publisher.example/ai</link>
+            <description>Развитие ИИ и нейросетей</description>
+            <pubDate>Sat, 10 Oct 2026 11:00:00 GMT</pubDate>
+            <source>Новости технологий</source>
+          </item>
+        </channel></rss>''',
+        200,
+        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+      )),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: ['artificial intelligence']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.sourceUrl, 'https://publisher.example/ai');
+    expect(articles.single.topics, contains('artificial intelligence'));
+  });
+
   test('preserves the selected region so region filtering keeps RSS articles', () async {
     final service = NewsRssService(
       client: MockClient((_) async => http.Response.bytes(
