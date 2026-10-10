@@ -138,6 +138,10 @@ class NewsRssService {
     if (input.isEmpty) return null;
     try {
       return HttpDate.parse(input).toUtc();
+    } on HttpException {
+      // RSS feeds may contain arbitrary date strings. Treat malformed dates as
+      // missing publication metadata so the item is skipped safely.
+      return DateTime.tryParse(input)?.toUtc();
     } on FormatException {
       return DateTime.tryParse(input)?.toUtc();
     }
