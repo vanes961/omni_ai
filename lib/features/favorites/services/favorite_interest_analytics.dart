@@ -107,6 +107,11 @@ class FavoriteInterestAnalytics {
     return score;
   }
 
+  Set<String> feedbackTermsFor(NewsArticle article) => {
+    ..._normalizeAll(article.topics),
+    ..._tokens(article.title),
+  };
+
   /// Ranks news and trailers using the same local favorites profile.
   /// It only reorders candidates; it never hides an article or makes network calls.
   double scoreNews(NewsArticle article, FavoriteInterestProfile profile) {
