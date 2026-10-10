@@ -42,7 +42,6 @@ class NewsReminderService {
     await initialize();
     if (enabled && !await _requestPermission()) return false;
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setBool(_morningKey, enabled);
     if (enabled) {
       await _scheduleDaily(
         id: _morningId,
@@ -54,6 +53,9 @@ class NewsReminderService {
     } else {
       await _plugin.cancel(_morningId);
     }
+    // Persist only after the platform scheduling operation succeeds, so a
+    // plugin failure does not leave the switch enabled without a reminder.
+    await preferences.setBool(_morningKey, enabled);
     return true;
   }
 
@@ -61,7 +63,6 @@ class NewsReminderService {
     await initialize();
     if (enabled && !await _requestPermission()) return false;
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setBool(_eveningKey, enabled);
     if (enabled) {
       await _scheduleDaily(
         id: _eveningId,
@@ -73,6 +74,8 @@ class NewsReminderService {
     } else {
       await _plugin.cancel(_eveningId);
     }
+    // Keep persisted state aligned with the actual scheduled notification.
+    await preferences.setBool(_eveningKey, enabled);
     return true;
   }
 
