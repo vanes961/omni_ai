@@ -21,9 +21,15 @@ void main() {
       isVerified: true,
     );
 
-    await cache.saveArticles([article], selectedTopics: const ['anime', 'technology']);
+    await cache.saveArticles(
+      [article],
+      selectedTopics: const [' Anime ', 'technology', 'anime', ' '],
+    );
     await cache.saveDigest('Персональный дайджест');
-    final restored = await cache.loadArticles();
+
+    // A fresh cache instance simulates restoring the feed after app restart.
+    final restoredCache = SharedPreferencesNewsCache(store: store);
+    final restored = await restoredCache.loadArticles();
 
     expect(restored, hasLength(1));
     expect(restored.single.title, article.title);
@@ -31,8 +37,8 @@ void main() {
     expect(restored.single.publishedAt, article.publishedAt);
     expect(restored.single.topics, ['anime']);
     expect(restored.single.isVerified, isTrue);
-    expect(await cache.loadTopics(), ['anime', 'technology']);
-    expect(await cache.loadDigest(), 'Персональный дайджест');
+    expect(await restoredCache.loadTopics(), ['anime', 'technology']);
+    expect(await restoredCache.loadDigest(), 'Персональный дайджест');
   });
 
   test('returns empty data for missing cache and removes empty digest', () async {
