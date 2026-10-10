@@ -238,6 +238,31 @@ void main() {
     );
   });
 
+  test('normalizes selected topic names before building the RSS query', () async {
+    final client = MockClient((request) async {
+      expect(request.url.queryParameters['q'], 'anime OR technology');
+      return http.Response(
+        '''<rss><channel><item>
+          <title>New anime season announced</title>
+          <link>https://publisher.example/normalized-topic</link>
+          <description>A new anime series is coming.</description>
+          <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+          <source>Anime News</source>
+        </item></channel></rss>''',
+        200,
+      );
+    });
+    final service = NewsRssService(client: client);
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: [' Anime ', 'technology', 'ANIME']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.topics, contains('anime'));
+  });
+
   test('normalizes whitespace and case in selected locale parameters', () async {
     final client = MockClient((request) async {
       expect(request.url.queryParameters['hl'], 'en');
