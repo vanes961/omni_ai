@@ -28,10 +28,15 @@ class SharedPreferencesNewsCache {
       final decoded = jsonDecode(encoded);
       if (decoded is! List) throw const FormatException('Expected a list.');
       final articles = <NewsArticle>[];
+      final seenIds = <String>{};
       for (final item in decoded) {
         if (item is! Map<String, dynamic>) continue;
         final article = _articleFromJson(item);
-        if (article != null) articles.add(article);
+        // A corrupt or duplicated cache entry must not create repeated cards
+        // (or repeated widget keys) when the feed is restored after restart.
+        if (article != null && seenIds.add(article.id)) {
+          articles.add(article);
+        }
       }
       return articles;
     } on FormatException {
@@ -116,9 +121,12 @@ class SharedPreferencesNewsCache {
         : null;
     final uri = Uri.tryParse(sourceUrl is String ? sourceUrl : '');
     if (id is! String ||
+        id.trim().isEmpty ||
         title is! String ||
+        title.trim().isEmpty ||
         summary is! String ||
         sourceName is! String ||
+        sourceName.trim().isEmpty ||
         sourceUrl is! String ||
         uri == null ||
         uri.scheme != 'https' ||
