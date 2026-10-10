@@ -1,18 +1,21 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:omni_ai/features/news/data/news_interest_repository.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_interest_repository.dart';
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/models/news_article.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
+import 'package:omni_ai/features/news/services/news_digest_service.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class NewsCenterPage extends StatefulWidget {
-  const NewsCenterPage({super.key, this.repository});
+  const NewsCenterPage({super.key, this.repository, this.aiEngine});
 
   final NewsInterestRepository? repository;
+  final AIEngine? aiEngine;
 
   @override
   State<NewsCenterPage> createState() => _NewsCenterPageState();
@@ -42,6 +45,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   List<NewsArticle> _articles = const [];
   bool _refreshingNews = false;
   String? _newsError;
+  bool _generatingDigest = false;
+  String? _digest;
+  String? _digestError;
 
   @override
   void initState() {
@@ -107,6 +113,37 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       });
     } finally {
       if (mounted) setState(() => _refreshingNews = false);
+    }
+  }
+
+  Future<void> _createDigest() async {
+    final profile = _profile;
+    final engine = widget.aiEngine;
+    if (profile == null || engine == null || _generatingDigest) return;
+    if (profile.topics.isEmpty || _articles.isEmpty) {
+      setState(() => _digestError = 'Сначала выберите интересы и загрузите новости.');
+      return;
+    }
+    setState(() {
+      _generatingDigest = true;
+      _digestError = null;
+      _digest = null;
+    });
+    try {
+      final digest = await NewsDigestService(engine: engine).createDigest(
+        profile: profile,
+        articles: _articles,
+      );
+      if (!mounted) return;
+      setState(() {
+        _digest = digest;
+        if (digest == null) _digestError = 'Нет подходящих материалов для дайджеста.';
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _digestError = 'Не удалось создать дайджест. Проверьте выбранный режим ИИ и попробуйте снова.');
+    } finally {
+      if (mounted) setState(() => _generatingDigest = false);
     }
   }
 
@@ -281,6 +318,33 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               if (_newsError != null) ...[
                 const SizedBox(height: 12),
                 Text(_newsError!, style: const TextStyle(color: Colors.orangeAccent)),
+              ],
+              if (widget.aiEngine != null) ...[
+                const SizedBox(height: 10),
+                FilledButton.icon(
+                  onPressed: _generatingDigest ? null : _createDigest,
+                  icon: _generatingDigest
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.auto_awesome),
+                  label: Text(_generatingDigest ? 'СОЗДАЮ ДАЙДЖЕСТ…' : 'СОЗДАТЬ AI-ДАЙДЖЕСТ'),
+                ),
+                if (_digestError != null) ...[
+                  const SizedBox(height: 8),
+                  Text(_digestError!, style: const TextStyle(color: Colors.orangeAccent)),
+                ],
+                if (_digest != null) ...[
+                  const SizedBox(height: 12),
+                  Card(
+                    color: SystemCorePalette.panel,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: SelectableText(
+                        _digest!,
+                        style: const TextStyle(color: Colors.white, height: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
               ],
               if (!_refreshingNews && _newsError == null && _articles.isEmpty) ...[
                 const SizedBox(height: 12),
