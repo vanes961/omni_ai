@@ -33,8 +33,9 @@ class _AIMemoryManagerDialogState extends State<AIMemoryManagerDialog> {
         _error = null;
       });
     } on Object catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'Не удалось загрузить память: $error');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
