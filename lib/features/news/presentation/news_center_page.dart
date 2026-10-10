@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:omni_ai/features/news/data/news_interest_repository.dart';
+import 'package:omni_ai/features/news/data/shared_preferences_news_cache.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_interest_repository.dart';
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/models/news_article.dart';
@@ -43,6 +44,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _saving = false;
   String? _status;
   final NewsRssService _newsService = NewsRssService();
+  final SharedPreferencesNewsCache _newsCache = SharedPreferencesNewsCache();
+  bool _loadingNewsCache = true;
   List<NewsArticle> _articles = const [];
   bool _refreshingNews = false;
   String? _newsError;
@@ -63,6 +66,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         widget.repository ?? SharedPreferencesNewsInterestRepository();
     _profileFuture = _repository.load();
     unawaited(_loadReminderSettings());
+    unawaited(_loadNewsCache());
   }
 
   @override
@@ -70,6 +74,23 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     if (_ownsRepository) unawaited(_repository.dispose());
     _newsService.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadNewsCache() async {
+    try {
+      final cached = await Future.wait<Object?>([
+        _newsCache.loadArticles(),
+        _newsCache.loadDigest(),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _articles = cached[0] as List<NewsArticle>;
+        _digest = cached[1] as String?;
+        _loadingNewsCache = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingNewsCache = false);
+    }
   }
 
   Future<void> _loadReminderSettings() async {
@@ -153,6 +174,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     });
     try {
       final articles = await _newsService.fetch(profile);
+      await _newsCache.saveArticles(articles);
       if (!mounted) return;
       setState(() {
         _articles = articles;
@@ -186,6 +208,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         profile: profile,
         articles: _articles,
       );
+      await _newsCache.saveDigest(digest);
       if (!mounted) return;
       setState(() {
         _digest = digest;
@@ -441,6 +464,18 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     ),
                   ),
                 ],
+              ],
+              if (_loadingNewsCache) ...[
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: LinearProgressIndicator(),
+                ),
+              ],
+              if (!_loadingNewsCache && _articles.isNotEmpty && !_refreshingNews) ...[
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 6),
+                  child: Text('Показана последняя сохранённая лента; обнови её, чтобы проверить новые публикации.', style: TextStyle(color: SystemCorePalette.muted, fontSize: 12)),
+                ),
               ],
               if (!_refreshingNews && _newsError == null && _articles.isEmpty) ...[
                 const SizedBox(height: 12),
