@@ -79,7 +79,10 @@ class LocalLlamaProvider implements AIProvider {
     }
     if (cancellationToken.isCancelled) {
       throw const AIEngineException(
-        AIError(code: AIErrorCode.cancelled, message: 'AI request cancelled.'),
+        AIError(
+          code: AIErrorCode.cancelled,
+          message: 'AI request cancelled.',
+        ),
       );
     }
 
@@ -108,7 +111,10 @@ class LocalLlamaProvider implements AIProvider {
       }
       if (cancelled || cancellationToken.isCancelled) {
         throw const AIEngineException(
-          AIError(code: AIErrorCode.cancelled, message: 'AI request cancelled.'),
+          AIError(
+            code: AIErrorCode.cancelled,
+            message: 'AI request cancelled.',
+          ),
         );
       }
 
@@ -138,7 +144,10 @@ class LocalLlamaProvider implements AIProvider {
     } on Object catch (error) {
       if (cancellationToken.isCancelled) {
         throw const AIEngineException(
-          AIError(code: AIErrorCode.cancelled, message: 'AI request cancelled.'),
+          AIError(
+            code: AIErrorCode.cancelled,
+            message: 'AI request cancelled.',
+          ),
         );
       }
       throw AIEngineException(
