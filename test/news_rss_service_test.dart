@@ -186,6 +186,23 @@ void main() {
     );
   });
 
+  test('reports an error when all international news editions fail', () async {
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        final region = request.url.queryParameters['gl'];
+        throw http.ClientException('Edition $region unavailable');
+      }),
+    );
+    addTearDown(service.dispose);
+
+    expect(
+      service.fetchInternational(
+        const NewsInterestProfile(topics: ['anime']),
+      ),
+      throwsA(isA<http.ClientException>()),
+    );
+  });
+
   test('keeps other editions when one international RSS source fails', () async {
     final service = NewsRssService(
       client: MockClient((request) async {
