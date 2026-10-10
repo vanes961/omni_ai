@@ -190,6 +190,35 @@ void main() {
     expect(articles, hasLength(2));
   });
 
+  test('normalizes common topic aliases before querying and filtering', () async {
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        expect(
+          request.url.queryParameters['q'],
+          'artificial intelligence AI',
+        );
+        return http.Response(
+          '''<rss><channel><item>
+            <title>New artificial intelligence model announced</title>
+            <link>https://publisher.example/ai-alias</link>
+            <description>AI and neural network research update</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            <source>Technology News</source>
+          </item></channel></rss>''',
+          200,
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: [' AI ']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.topics, contains('artificial intelligence'));
+  });
+
   test('recognizes Russian-language headlines for selected topics', () async {
     final service = NewsRssService(
       client: MockClient((_) async => http.Response.bytes(
