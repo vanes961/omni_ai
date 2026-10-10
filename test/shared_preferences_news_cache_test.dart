@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -323,7 +324,9 @@ void main() {
     expect(store.values.containsKey(SharedPreferencesNewsCache.articlesKey), isFalse);
   });
   test('serializes a cache clear after an in-flight feed save', () async {
-    final store = _MemoryStore();
+    final store = _MemoryStore()
+      ..writeStarted = Completer<void>()
+      ..blockWrite = Completer<void>();
     final cache = SharedPreferencesNewsCache(store: store);
     final article = NewsArticle(
       id: 'stale-1',
@@ -335,10 +338,16 @@ void main() {
       topics: const ['anime'],
     );
 
-    // Both operations are started without awaiting the first one, matching a
-    // user changing interests while a refresh is saving its previous results.
+    // Pause the save during its final write, then simulate a topic change.
     final saving = cache.saveArticles([article], selectedTopics: const ['anime']);
-    final clearing = cache.clear();
+    await store.writeStarted!.future;
+    var clearCompleted = false;
+    final clearing = cache.clear().whenComplete(() => clearCompleted = true);
+
+    // The queued clear must wait for the already-running save to finish.
+    await Future<void>.delayed(Duration.zero);
+    expect(clearCompleted, isFalse);
+    store.blockWrite!.complete();
     await Future.wait([saving, clearing]);
 
     expect(await cache.loadArticles(), isEmpty);
@@ -351,6 +360,8 @@ void main() {
 class _MemoryStore implements NewsCacheStringStore {
   final values = <String, String>{};
   String? failWriteKey;
+  Completer<void>? writeStarted;
+  Completer<void>? blockWrite;
 
   @override
   Future<String?> read(String key) async => values[key];
@@ -358,6 +369,11 @@ class _MemoryStore implements NewsCacheStringStore {
   @override
   Future<void> write(String key, String value) async {
     if (key == failWriteKey) throw StateError('Simulated storage failure.');
+    if (key == SharedPreferencesNewsCache.articlesKey && blockWrite != null) {
+      if (!(writeStarted?.isCompleted ?? true)) writeStarted!.complete();
+      await blockWrite!.future;
+      blockWrite = null;
+    }
     values[key] = value;
   }
 
