@@ -87,6 +87,25 @@ void main() {
     );
   });
 
+  test('preserves the beginning of a message when history is truncated', () {
+    const bounded = AIContextManager(
+      maxHistoryMessages: 1,
+      maxHistoryCharacters: 20,
+    );
+    final prepared = bounded.prepareRequest(
+      request: const AIRequest(id: 'r6', prompt: 'Current'),
+      conversationHistory: const [
+        AIContextMessage(
+          role: AIConversationRole.user,
+          content: 'Important beginning; irrelevant trailing details',
+        ),
+      ],
+    );
+
+    expect(prepared.prompt, contains('User: Important'));
+    expect(prepared.prompt, isNot(contains('trailing details')));
+  });
+
   test('leaves a request without context unchanged', () {
     const request = AIRequest(
       id: 'r5',
