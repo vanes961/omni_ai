@@ -13,9 +13,9 @@ class LocalModelCatalog {
   static const qwen3Small = LocalModelSpec(
     id: 'qwen3-0.6b-q4-k-m',
     displayName: 'Qwen3 0.6B (Q4_K_M)',
-    fileName: 'Qwen3-0.6B-Q4_K_M.gguf',
+    fileName: 'Qwen_Qwen3-0.6B-Q4_K_M.gguf',
     downloadUri:
-        'https://huggingface.co/tensorblock/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf',
+        'https://huggingface.co/SandLogicTechnologies/Qwen3-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
     expectedBytesApprox: 484000000,
   );
 }
