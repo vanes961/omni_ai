@@ -102,6 +102,29 @@ void main() {
     expect(ranked, hasLength(2));
   });
 
+  test('less-interested feedback pushes matching news lower', () {
+    final profile = analytics.analyze([
+      _favorite(
+        'anime-fav',
+        FavoriteCategory.anime,
+        title: 'Something Else',
+        interests: ['anime'],
+        addedAt: now,
+      ),
+    ], now: now);
+    final matching = _news('matching', topics: ['anime']);
+    final unrelated = _news('unrelated', topics: ['gardening']);
+
+    final ranked = analytics.rankNews(
+      [matching, unrelated],
+      profile,
+      lessInterested: {'anime'},
+    );
+
+    expect(ranked.map((article) => article.id), ['unrelated', 'matching']);
+    expect(ranked, hasLength(2));
+  });
+
   test('empty favorites do not alter result order', () {
     final items = [
       _media('a', 'First', categories: ['Drama']),
