@@ -97,7 +97,6 @@ class LocalModelStorage {
     void Function(int receivedBytes, int? totalBytes)? onProgress,
   }) async {
     final destination = await modelFile(model);
-    if (await isDownloaded(model)) return destination;
 
     await destination.parent.create(recursive: true);
     final temporary = File('${destination.path}.part');
