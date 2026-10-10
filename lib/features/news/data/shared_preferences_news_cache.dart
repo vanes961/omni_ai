@@ -17,6 +17,7 @@ class SharedPreferencesNewsCache {
 
   static const articlesKey = 'omni_ai.news_cache.articles.v1';
   static const digestKey = 'omni_ai.news_cache.digest.v1';
+  static const topicsKey = 'omni_ai.news_cache.topics.v1';
 
   final NewsCacheStringStore _store;
 
@@ -39,7 +40,25 @@ class SharedPreferencesNewsCache {
     }
   }
 
-  Future<void> saveArticles(List<NewsArticle> articles) async {
+  Future<List<String>?> loadTopics() async {
+    final encoded = await _store.read(topicsKey);
+    if (encoded == null || encoded.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(encoded);
+      if (decoded is! List || decoded.any((item) => item is! String)) {
+        throw const FormatException('Expected a list of topic strings.');
+      }
+      return decoded.cast<String>();
+    } on FormatException {
+      await _store.remove(topicsKey);
+      return null;
+    }
+  }
+
+  Future<void> saveArticles(
+    List<NewsArticle> articles, {
+    List<String> selectedTopics = const <String>[],
+  }) async {
     final encoded = articles
         .map((article) => <String, Object?>{
           'id': article.id,
@@ -56,6 +75,7 @@ class SharedPreferencesNewsCache {
         })
         .toList(growable: false);
     await _store.write(articlesKey, jsonEncode(encoded));
+    await _store.write(topicsKey, jsonEncode(_normalizeTopics(selectedTopics)));
   }
 
   Future<String?> loadDigest() async {
@@ -63,6 +83,18 @@ class SharedPreferencesNewsCache {
     if (digest == null || digest.trim().isEmpty) return null;
     return digest;
   }
+
+  Future<void> clear() async {
+    await _store.remove(articlesKey);
+    await _store.remove(digestKey);
+    await _store.remove(topicsKey);
+  }
+
+  List<String> _normalizeTopics(List<String> topics) => topics
+      .map((topic) => topic.trim().toLowerCase())
+      .where((topic) => topic.isNotEmpty)
+      .toSet()
+      .toList()..sort();
 
   Future<void> saveDigest(String? digest) async {
     if (digest == null || digest.trim().isEmpty) {
