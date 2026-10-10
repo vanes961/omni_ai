@@ -52,12 +52,13 @@ void main() {
     expect(await File('${file.path}.part').exists(), isFalse);
   });
 
-
   test('replaces an existing model after the new download validates', () async {
     final previousBytes = Uint8List.fromList(List<int>.filled(10, 1));
     final replacementBytes = Uint8List.fromList(List<int>.filled(10, 2));
     storage = LocalModelStorage(
-      client: MockClient((_) async => http.Response.bytes(replacementBytes, 200)),
+      client: MockClient(
+        (_) async => http.Response.bytes(replacementBytes, 200),
+      ),
       supportDirectoryProvider: () async => temporaryDirectory,
     );
     final existing = await storage.modelFile(spec());
