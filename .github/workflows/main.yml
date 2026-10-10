@@ -39,8 +39,8 @@ jobs:
       - name: Check formatting
         run: |
           dart format --output=none --set-exit-if-changed lib test || {
-            dart format lib/features/ai_chat/presentation/ai_chat_page.dart test/core/ai_engine/routing_ai_provider_test.dart lib/features/settings/presentation/pages/local_model_settings_page.dart test/core/ai_engine/ai_context_manager_test.dart
-            git diff -- lib/features/ai_chat/presentation/ai_chat_page.dart test/core/ai_engine/routing_ai_provider_test.dart lib/features/settings/presentation/pages/local_model_settings_page.dart test/core/ai_engine/ai_context_manager_test.dart
+            dart format lib/features/ai_chat/presentation/ai_chat_page.dart test/core/ai_engine/routing_ai_provider_test.dart lib/features/settings/presentation/pages/local_model_settings_page.dart test/core/ai_engine/ai_context_manager_test.dart lib/features/ai_memory/models/ai_memory.dart lib/features/ai_memory/repositories/ai_memory_repository.dart lib/features/ai_memory/data/shared_preferences_ai_memory_repository.dart lib/features/ai_memory/presentation/ai_memory_manager_dialog.dart test/ai_memory_repository_test.dart
+            git diff -- lib/features/ai_chat/presentation/ai_chat_page.dart test/core/ai_engine/routing_ai_provider_test.dart lib/features/settings/presentation/pages/local_model_settings_page.dart test/core/ai_engine/ai_context_manager_test.dart lib/features/ai_memory/models/ai_memory.dart lib/features/ai_memory/repositories/ai_memory_repository.dart lib/features/ai_memory/data/shared_preferences_ai_memory_repository.dart lib/features/ai_memory/presentation/ai_memory_manager_dialog.dart test/ai_memory_repository_test.dart
             exit 1
           }
 
