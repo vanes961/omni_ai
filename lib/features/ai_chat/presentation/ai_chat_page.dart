@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
+import 'package:omni_ai/core/ai_engine/services/ai_context_manager.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
@@ -44,6 +45,17 @@ class _AIChatPageState extends State<AIChatPage> {
   Future<void> _send() async {
     final prompt = _input.text.trim();
     if (prompt.isEmpty || _sending || _modeLoading) return;
+    final conversationHistory = _messages
+        .where((message) => !message.isError)
+        .map(
+          (message) => AIContextMessage(
+            role: message.isUser
+                ? AIConversationRole.user
+                : AIConversationRole.assistant,
+            content: message.text,
+          ),
+        )
+        .toList(growable: false);
     _input.clear();
     final token = AICancellationToken();
     setState(() {
@@ -62,6 +74,7 @@ class _AIChatPageState extends State<AIChatPage> {
           prompt: prompt,
         ),
         cancellationToken: token,
+        conversationHistory: conversationHistory,
       );
       if (!mounted) return;
       setState(() {
