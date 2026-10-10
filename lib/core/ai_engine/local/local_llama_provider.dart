@@ -85,9 +85,7 @@ class LocalLlamaProvider implements AIProvider {
         ),
       );
     }
-    _generating = true;
     if (!await _controller.isModelLoaded()) {
-      _generating = false;
       throw const AIEngineException(
         AIError(
           code: AIErrorCode.invalidRequest,
@@ -95,12 +93,23 @@ class LocalLlamaProvider implements AIProvider {
         ),
       );
     }
+    // Recheck after the await: another request may have entered while the
+    // controller was checking its state.
+    if (_generating) {
+      throw const AIEngineException(
+        AIError(
+          code: AIErrorCode.provider,
+          message: 'A local generation is already in progress.',
+          retryable: true,
+        ),
+      );
+    }
     if (cancellationToken.isCancelled) {
-      _generating = false;
       throw const AIEngineException(
         AIError(code: AIErrorCode.cancelled, message: 'AI request cancelled.'),
       );
     }
+    _generating = true;
 
     var cancelled = false;
     var generationFinished = false;
