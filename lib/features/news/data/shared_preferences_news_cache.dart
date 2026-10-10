@@ -78,8 +78,11 @@ class SharedPreferencesNewsCache {
     final summary = json['summary'];
     final sourceName = json['sourceName'];
     final sourceUrl = json['sourceUrl'];
-    final publishedAt = DateTime.tryParse(json['publishedAt'] as String? ?? '');
-    final uri = Uri.tryParse(sourceUrl as String? ?? '');
+    final publishedRaw = json['publishedAt'];
+    final publishedAt = publishedRaw is String
+        ? DateTime.tryParse(publishedRaw)
+        : null;
+    final uri = Uri.tryParse(sourceUrl is String ? sourceUrl : '');
     if (id is! String ||
         title is! String ||
         summary is! String ||
