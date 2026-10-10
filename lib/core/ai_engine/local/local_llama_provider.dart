@@ -43,7 +43,10 @@ class LocalLlamaProvider implements AIProvider {
       throw StateError('Local model is already loading.');
     }
     if (!await modelFile.exists()) {
-      throw FileSystemException('Local model file does not exist.', modelFile.path);
+      throw FileSystemException(
+        'Local model file does not exist.',
+        modelFile.path,
+      );
     }
 
     _loading = true;
