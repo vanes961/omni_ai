@@ -120,7 +120,10 @@ class NewsRssService {
     ).firstMatch(xml);
     if (match == null) return '';
     var value = match.group(1) ?? '';
-    value = value.replaceAll(RegExp(r'<!\[CDATA\[([\s\S]*?)\]\]>'), r'$1');
+    value = value.replaceAllMapped(
+      RegExp(r'<!\[CDATA\[([\s\S]*?)\]\]>'),
+      (match) => match.group(1) ?? '',
+    );
     return _decodeEntities(value).trim();
   }
 
