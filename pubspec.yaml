@@ -41,7 +41,7 @@ dependencies:
   cached_network_image: ^4.0.3
   path_provider: ^2.1.5
   flutter_local_notifications: ^19.5.0
-  flutter_timezone: ^4.1.1
+  flutter_timezone: ^5.1.1
   timezone: ^0.10.1
   llama_flutter_android: ^0.2.6
 
