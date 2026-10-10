@@ -9,7 +9,10 @@ void main() {
     final prepared = manager.prepareRequest(
       request: const AIRequest(id: 'r1', prompt: 'And what about tomorrow?'),
       conversationHistory: const [
-        AIContextMessage(role: AIConversationRole.user, content: 'Plan a trip.'),
+        AIContextMessage(
+          role: AIConversationRole.user,
+          content: 'Plan a trip.',
+        ),
         AIContextMessage(
           role: AIConversationRole.assistant,
           content: 'Where would you like to go?',
@@ -18,7 +21,10 @@ void main() {
     );
 
     expect(prepared.prompt, contains('User: Plan a trip.'));
-    expect(prepared.prompt, contains('Assistant: Where would you like to go?'));
+    expect(
+      prepared.prompt,
+      contains('Assistant: Where would you like to go?'),
+    );
     expect(
       prepared.prompt,
       endsWith('Current user message:\nAnd what about tomorrow?'),
@@ -65,8 +71,14 @@ void main() {
     final prepared = bounded.prepareRequest(
       request: const AIRequest(id: 'r4', prompt: 'Current'),
       conversationHistory: const [
-        AIContextMessage(role: AIConversationRole.user, content: 'old'),
-        AIContextMessage(role: AIConversationRole.assistant, content: 'middle'),
+        AIContextMessage(
+          role: AIConversationRole.user,
+          content: 'old',
+        ),
+        AIContextMessage(
+          role: AIConversationRole.assistant,
+          content: 'middle',
+        ),
         AIContextMessage(
           role: AIConversationRole.user,
           content: 'the most recent history message',
@@ -78,7 +90,10 @@ void main() {
     expect(prepared.prompt.length, lessThanOrEqualTo(24 + 100));
     expect(prepared.prompt, contains('Current'));
     expect(prepared.systemInstruction!.length, lessThan(100));
-    expect(prepared.systemInstruction, contains('User-approved saved memories'));
+    expect(
+      prepared.systemInstruction,
+      contains('User-approved saved memories'),
+    );
   });
 
   test('leaves a request without context unchanged', () {
