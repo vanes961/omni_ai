@@ -23,6 +23,7 @@ class FavoriteItem {
     required this.category,
     required this.addedAt,
     this.description = '',
+    this.interests = const <String>[],
     this.imageUrl,
     this.sourceUrl,
     this.releaseDate,
@@ -34,6 +35,8 @@ class FavoriteItem {
   final FavoriteCategory category;
   final DateTime addedAt;
   final String description;
+  /// Genre, franchise, topic, author or other metadata used for local ranking.
+  final List<String> interests;
   final String? imageUrl;
   final String? sourceUrl;
   final DateTime? releaseDate;
@@ -45,6 +48,7 @@ class FavoriteItem {
     'category': category.name,
     'addedAt': addedAt.toIso8601String(),
     'description': description,
+    'interests': interests,
     'imageUrl': imageUrl,
     'sourceUrl': sourceUrl,
     'releaseDate': releaseDate?.toIso8601String(),
@@ -83,6 +87,14 @@ class FavoriteItem {
       description: value['description'] is String
           ? value['description'] as String
           : '',
+      interests: value['interests'] is List
+          ? (value['interests'] as List)
+                .whereType<String>()
+                .map((interest) => interest.trim())
+                .where((interest) => interest.isNotEmpty)
+                .toSet()
+                .toList(growable: false)
+          : const <String>[],
       imageUrl: _safeUrl(value['imageUrl']),
       sourceUrl: _safeUrl(value['sourceUrl']),
       releaseDate: value['releaseDate'] is String
