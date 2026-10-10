@@ -85,6 +85,9 @@ class SharedPreferencesNewsCache {
           'releaseDateSourceUrl': article.releaseDateSourceUrl,
         })
         .toList(growable: false);
+    // A digest describes one particular feed. Invalidate it before replacing
+    // the articles so it cannot be restored beside a different or empty feed.
+    await _store.remove(digestKey);
     // Remove the previous payload before changing its topic marker. Otherwise,
     // if the new article write fails, the new marker could incorrectly make the
     // previous feed look valid on the next launch.
