@@ -8,6 +8,8 @@ import 'package:omni_ai/features/news/data/shared_preferences_news_cache.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_interest_repository.dart';
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/models/news_article.dart';
+import 'package:omni_ai/features/favorites/data/favorite_item.dart';
+import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
 import 'package:omni_ai/features/news/services/news_digest_service.dart';
 import 'package:omni_ai/features/news/services/news_source_localization_service.dart';
@@ -45,6 +47,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _saving = false;
   String? _status;
   final NewsRssService _newsService = NewsRssService();
+  final FavoritesRepository _favoritesRepository = FavoritesRepository();
   final NewsSourceLocalizationService _sourceLocalizationService =
       const NewsSourceLocalizationService();
   final SharedPreferencesNewsCache _newsCache = SharedPreferencesNewsCache();
@@ -301,6 +304,28 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     } finally {
       if (mounted) setState(() => _generatingDigest = false);
     }
+  }
+
+  Future<void> _saveTrailer(NewsArticle article) async {
+    await _favoritesRepository.add(
+      FavoriteItem(
+        id: article.id,
+        title: article.title,
+        category: FavoriteCategory.trailer,
+        addedAt: DateTime.now(),
+        description: article.summary,
+        imageUrl: article.thumbnailUrl,
+        sourceUrl: article.videoUrl.isNotEmpty
+            ? article.videoUrl
+            : article.sourceUrl,
+        releaseDate: article.releaseDate,
+        releaseDateSourceUrl: article.releaseDateSourceUrl,
+      ),
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Трейлер «${article.title}» сохранён в избранном')),
+    );
   }
 
   Future<void> _openArticle(NewsArticle article) async {
@@ -591,8 +616,25 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(article.sourceName,
-                              style: const TextStyle(color: SystemCorePalette.green, fontSize: 12)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  article.sourceName,
+                                  style: const TextStyle(
+                                    color: SystemCorePalette.green,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              if (article.contentType == NewsContentType.trailer)
+                                IconButton(
+                                  tooltip: 'Сохранить трейлер в избранное',
+                                  onPressed: () => _saveTrailer(article),
+                                  icon: const Icon(Icons.favorite_border),
+                                ),
+                            ],
+                          ),
                           const SizedBox(height: 6),
                           Text(article.title,
                               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
