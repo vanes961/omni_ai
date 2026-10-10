@@ -32,8 +32,7 @@ class SharedPreferencesAIExecutionModeStore implements AIExecutionModeStore {
   }
 
   @override
-  Future<void> save(AIExecutionMode mode) =>
-      _write(storageKey, mode.name);
+  Future<void> save(AIExecutionMode mode) => _write(storageKey, mode.name);
 
   static Future<String?> _readSharedPreference(String key) =>
       SharedPreferencesAsync().getString(key);
