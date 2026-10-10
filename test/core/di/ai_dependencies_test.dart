@@ -44,7 +44,7 @@ void main() {
           isA<AIEngineException>().having(
             (error) => error.error.message,
             'message',
-            'Gemini API key is not configured.',
+            'OpenRouter API key is not configured.',
           ),
         ),
       );
