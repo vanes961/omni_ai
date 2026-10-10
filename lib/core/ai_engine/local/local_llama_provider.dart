@@ -79,10 +79,7 @@ class LocalLlamaProvider implements AIProvider {
     }
     if (cancellationToken.isCancelled) {
       throw const AIEngineException(
-        AIError(
-          code: AIErrorCode.cancelled,
-          message: 'AI request cancelled.',
-        ),
+        AIError(code: AIErrorCode.cancelled, message: 'AI request cancelled.'),
       );
     }
 
@@ -138,10 +135,7 @@ class LocalLlamaProvider implements AIProvider {
         text: text,
         providerId: id,
         generatedAt: DateTime.now(),
-        metadata: {
-          'modelPath': modelFile.path,
-          'local': true,
-        },
+        metadata: {'modelPath': modelFile.path, 'local': true},
       );
     } on AIEngineException {
       rethrow;
