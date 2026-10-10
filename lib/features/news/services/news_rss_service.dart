@@ -56,22 +56,30 @@ class NewsRssService {
       ['en', 'US'],
       ['en', 'GB'],
     ];
+    var successfulEditions = 0;
     final batches = await Future.wait(
       locales.map((locale) async {
         try {
-          return await fetch(
+          final articles = await fetch(
             profile.copyWith(
               languages: <String>[locale[0]],
               regions: <String>[locale[1]],
             ),
             applyRelevanceFilter: false,
           );
+          successfulEditions++;
+          return articles;
         } catch (_) {
           // One unavailable edition should not block the remaining sources.
           return const <NewsArticle>[];
         }
       }),
     );
+    if (successfulEditions == 0) {
+      throw http.ClientException(
+        'All international news editions are unavailable.',
+      );
+    }
 
     final byUrl = <String, NewsArticle>{};
     for (final article in batches.expand((batch) => batch)) {
