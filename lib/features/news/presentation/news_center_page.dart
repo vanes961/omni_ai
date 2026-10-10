@@ -46,6 +46,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   final NewsRssService _newsService = NewsRssService();
   final SharedPreferencesNewsCache _newsCache = SharedPreferencesNewsCache();
   bool _loadingNewsCache = true;
+  int _interestRevision = 0;
   List<NewsArticle> _articles = const [];
   bool _refreshingNews = false;
   String? _newsError;
@@ -77,6 +78,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   }
 
   Future<void> _loadNewsCache() async {
+    final revisionAtStart = _interestRevision;
     try {
       final cached = await Future.wait<Object?>([
         _newsCache.loadArticles(),
@@ -84,8 +86,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       ]);
       if (!mounted) return;
       setState(() {
-        _articles = cached[0] as List<NewsArticle>;
-        _digest = cached[1] as String?;
+        if (revisionAtStart == _interestRevision) {
+          _articles = cached[0] as List<NewsArticle>;
+          _digest = cached[1] as String?;
+        }
         _loadingNewsCache = false;
       });
     } catch (_) {
@@ -160,6 +164,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   Future<void> _refreshNews() async {
     final profile = _profile;
     if (profile == null || _refreshingNews) return;
+    final revisionAtStart = _interestRevision;
     if (profile.topics.isEmpty) {
       setState(() {
         _articles = const [];
@@ -174,8 +179,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     });
     try {
       final articles = await _newsService.fetch(profile);
+      if (revisionAtStart != _interestRevision) return;
       await _newsCache.saveArticles(articles);
-      if (!mounted) return;
+      if (!mounted || revisionAtStart != _interestRevision) return;
       setState(() {
         _articles = articles;
         _newsError = null;
@@ -194,6 +200,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     final profile = _profile;
     final engine = widget.aiEngine;
     if (profile == null || engine == null || _generatingDigest) return;
+    final revisionAtStart = _interestRevision;
     if (profile.topics.isEmpty || _articles.isEmpty) {
       setState(() => _digestError = 'Сначала выберите интересы и загрузите новости.');
       return;
@@ -208,8 +215,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         profile: profile,
         articles: _articles,
       );
+      if (revisionAtStart != _interestRevision) return;
       await _newsCache.saveDigest(digest);
-      if (!mounted) return;
+      if (!mounted || revisionAtStart != _interestRevision) return;
       setState(() {
         _digest = digest;
         if (digest == null) {
@@ -281,6 +289,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     } else {
       topics.remove(topic);
     }
+    _interestRevision++;
     setState(() {
       _profile = profile.copyWith(topics: topics.toList());
       _articles = const [];
