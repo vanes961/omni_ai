@@ -243,9 +243,9 @@ void main() {
       client: MockClient((_) async => http.Response(
         '''<rss><channel>
           <item>
-            <title>Anime &amp; manga news</title>
+            <title>Anime &#38; manga &#x1F3AE; news</title>
             <link>https://publisher.example/escaped</link>
-            <description>Anime &amp; manga &lt;updates&gt;</description>
+            <description>Anime &#x2014; manga &#38; &#x3C;updates&#x3E;</description>
             <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
           </item>
           <item>
@@ -269,8 +269,8 @@ void main() {
     );
 
     expect(articles, hasLength(1));
-    expect(articles.single.title, 'Anime & manga news');
-    expect(articles.single.summary, 'Anime & manga updates');
+    expect(articles.single.title, 'Anime & manga 🎮 news');
+    expect(articles.single.summary, 'Anime — manga & updates');
     expect(articles.single.sourceName, 'publisher.example');
   });
 }
