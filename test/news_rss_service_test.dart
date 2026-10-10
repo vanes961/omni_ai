@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -54,15 +56,16 @@ void main() {
 
   test('recognizes Russian-language headlines for selected topics', () async {
     final service = NewsRssService(
-      client: MockClient((_) async => http.Response(
-        '''<rss><channel><item>
+      client: MockClient((_) async => http.Response.bytes(
+        utf8.encode('''<rss><channel><item>
           <title>Анонсирован новый сезон аниме</title>
           <link>https://publisher.example/ru-anime</link>
           <description>Новости японской анимации</description>
           <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
           <source>Новости аниме</source>
-        </item></channel></rss>''',
+        </item></channel></rss>'''),
         200,
+        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
       )),
     );
     addTearDown(service.dispose);
