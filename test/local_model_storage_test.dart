@@ -85,7 +85,10 @@ void main() {
   test('removes a partial file when the progress callback throws', () async {
     storage = LocalModelStorage(
       client: MockClient(
-        (_) async => http.Response.bytes(Uint8List.fromList(List.filled(10, 1)), 200),
+        (_) async => http.Response.bytes(
+          Uint8List.fromList(List.filled(10, 1)),
+          200,
+        ),
       ),
       supportDirectoryProvider: () async => temporaryDirectory,
     );
