@@ -5,9 +5,8 @@ import 'smart_translation_service.dart';
 /// already present. Unmatched foreign articles remain available to the feed.
 class NewsSourceLocalizationService {
   const NewsSourceLocalizationService({
-    SmartTranslationService translationService =
-        const SmartTranslationService(),
-  }) : _translationService = translationService;
+    this._translationService = const SmartTranslationService(),
+  });
 
   final SmartTranslationService _translationService;
 
