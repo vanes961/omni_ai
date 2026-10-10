@@ -247,7 +247,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                 Text(
                   _executionMode == AIExecutionMode.local
                       ? 'Локальный режим: запросы не отправляются облачному провайдеру. Сначала установите встроенную модель ниже.'
-                      : 'Облачный режим: запросы отправляются в Gemini. Для работы ещё нужно безопасно подключить API через сервер или защищённый источник; ключ не вшивается в APK.',
+                      : 'Облачный режим: используется OpenRouter (openrouter/free). До настройки безопасного источника API-ключа облачные запросы могут быть недоступны; ключ не вшивается в APK.',
                   style: const TextStyle(
                     color: SystemCorePalette.muted,
                     fontSize: 11,
