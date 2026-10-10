@@ -11,6 +11,10 @@ void main() {
     final client = MockClient((request) async {
       expect(request.url.host, 'news.google.com');
       expect(request.url.path, '/rss/search');
+      expect(request.url.queryParameters['q'], 'anime');
+      expect(request.url.queryParameters['hl'], 'ru');
+      expect(request.url.queryParameters['gl'], 'RU');
+      expect(request.url.queryParameters['ceid'], 'RU:ru');
       return http.Response(
         '''
         <rss><channel>
