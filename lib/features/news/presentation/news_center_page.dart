@@ -236,7 +236,13 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   Future<void> _createDigest() async {
     final profile = _profile;
     final engine = widget.aiEngine;
-    if (profile == null || engine == null || _generatingDigest || _loadingNewsCache || _refreshingNews) return;
+    if (profile == null ||
+        engine == null ||
+        _generatingDigest ||
+        _loadingNewsCache ||
+        _refreshingNews) {
+      return;
+    }
     final revisionAtStart = _interestRevision;
     if (profile.topics.isEmpty || _articles.isEmpty) {
       setState(() => _digestError = 'Сначала выберите интересы и загрузите новости.');
