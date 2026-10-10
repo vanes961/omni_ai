@@ -78,7 +78,7 @@ class LocalModelStorage {
 
     await destination.parent.create(recursive: true);
     await _channel.invokeMethod<void>('copyBundledModel', <String, Object>{
-      'assetPath': 'models/' + model.fileName,
+      'assetPath': 'models/${model.fileName}',
       'destinationPath': destination.path,
       'expectedBytes': model.expectedBytesApprox,
       'expectedSha256': model.expectedSha256 ?? '',
