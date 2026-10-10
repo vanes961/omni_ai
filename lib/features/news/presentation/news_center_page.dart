@@ -130,7 +130,14 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         unawaited(_refreshNews());
       }
     } catch (_) {
-      if (mounted) setState(() => _loadingNewsCache = false);
+      if (!mounted) return;
+      setState(() => _loadingNewsCache = false);
+      // Cache restoration is best-effort. If storage is unavailable or the
+      // cached payload cannot be read, still attempt a fresh feed rather than
+      // leaving users with a blank screen until they manually tap Refresh.
+      if (_profile?.topics.isNotEmpty == true && _articles.isEmpty) {
+        unawaited(_refreshNews());
+      }
     }
   }
 
