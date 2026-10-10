@@ -228,7 +228,12 @@ void main() {
       throwsStateError,
     );
 
-    expect(store.values[SharedPreferencesNewsCache.articlesKey], oldPayload);
+    expect(oldPayload, isNotNull);
+    expect(
+      store.values.containsKey(SharedPreferencesNewsCache.articlesKey),
+      isFalse,
+    );
+    expect(await cache.loadArticles(), isEmpty);
     expect(await cache.loadTopics(), ['technology']);
   });
 
