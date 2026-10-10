@@ -340,6 +340,48 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     );
   }
 
+  String _selectedLanguage(NewsInterestProfile profile) {
+    for (final language in profile.languages) {
+      final normalized = language.trim().toLowerCase();
+      if (const {'ru', 'en', 'nl'}.contains(normalized)) return normalized;
+    }
+    return 'ru';
+  }
+
+  String _selectedRegion(NewsInterestProfile profile) {
+    for (final region in profile.regions) {
+      final normalized = region.trim().toUpperCase();
+      if (const {'RU', 'NL', 'US', 'GB'}.contains(normalized)) {
+        return normalized.toLowerCase();
+      }
+    }
+    return 'ru';
+  }
+
+  void _updateLocale({String? language, String? region}) {
+    final profile = _profile;
+    if (profile == null) return;
+    final nextLanguage = language ?? _selectedLanguage(profile);
+    final nextRegion = region ?? _selectedRegion(profile);
+    if (nextLanguage == _selectedLanguage(profile) &&
+        nextRegion == _selectedRegion(profile)) {
+      return;
+    }
+
+    _interestRevision++;
+    setState(() {
+      _profile = profile.copyWith(
+        languages: [nextLanguage],
+        regions: [nextRegion],
+      );
+      _articles = const [];
+      _digest = null;
+      _digestError = null;
+      _newsError = null;
+    });
+    unawaited(_newsCache.clear());
+  }
+
   void _toggleTopic(String topic, bool selected) {
     final profile = _profile;
     if (profile == null) return;
@@ -417,6 +459,33 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                       checkmarkColor: SystemCorePalette.green,
                     ),
                 ],
+              ),
+              const SizedBox(height: 18),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedLanguage(profile),
+                decoration: const InputDecoration(labelText: 'Язык новостей'),
+                items: const [
+                  DropdownMenuItem(value: 'ru', child: Text('Русский')),
+                  DropdownMenuItem(value: 'en', child: Text('English')),
+                  DropdownMenuItem(value: 'nl', child: Text('Nederlands')),
+                ],
+                onChanged: (value) {
+                  if (value != null) _updateLocale(language: value);
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedRegion(profile),
+                decoration: const InputDecoration(labelText: 'Регион новостей'),
+                items: const [
+                  DropdownMenuItem(value: 'ru', child: Text('Россия')),
+                  DropdownMenuItem(value: 'nl', child: Text('Нидерланды')),
+                  DropdownMenuItem(value: 'us', child: Text('США')),
+                  DropdownMenuItem(value: 'gb', child: Text('Великобритания')),
+                ],
+                onChanged: (value) {
+                  if (value != null) _updateLocale(region: value);
+                },
               ),
               const SizedBox(height: 18),
               const Divider(color: Colors.white12),
