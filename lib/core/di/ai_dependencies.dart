@@ -54,13 +54,7 @@ class AIDependencies {
     required this.cloudProvider,
     required this.router,
     required this.modeStore,
-  }) : _ownsLocalModelStorage = ownsLocalModelStorage {
-    engine = AIEngine(
-      provider: router,
-      timeout: timeout,
-      beforeExecute: restoreExecutionMode,
-    );
-  }
+  }) : _ownsLocalModelStorage = ownsLocalModelStorage; // ignore: prefer_initializing_formals
 
   final GeminiApiConfig config;
   final Duration timeout;
