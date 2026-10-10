@@ -64,9 +64,7 @@ class _AIChatPageState extends State<AIChatPage> {
       );
       if (!mounted) return;
       setState(() {
-        _messages.add(
-          _ChatMessage(text: response.text, isUser: false),
-        );
+        _messages.add(_ChatMessage(text: response.text, isUser: false));
       });
     } on Object catch (error) {
       if (!mounted) return;
@@ -167,8 +165,8 @@ class _AIChatPageState extends State<AIChatPage> {
                     _modeLoading
                         ? 'ЗАГРУЗКА РЕЖИМА...'
                         : mode == AIExecutionMode.local
-                        ? 'LOCAL AI — ЗАПРОСЫ ОСТАЮТСЯ НА УСТРОЙСТВЕ'
-                        : 'CLOUD AI — ЯВНО ВЫБРАННЫЙ ОБЛАЧНЫЙ РЕЖИМ',
+                            ? 'LOCAL AI — ЗАПРОСЫ ОСТАЮТСЯ НА УСТРОЙСТВЕ'
+                            : 'CLOUD AI — ЯВНО ВЫБРАННЫЙ ОБЛАЧНЫЙ РЕЖИМ',
                     style: const TextStyle(
                       color: SystemCorePalette.green,
                       fontSize: 10,
@@ -248,8 +246,8 @@ class _AIChatPageState extends State<AIChatPage> {
                             color: message.isError
                                 ? Colors.orangeAccent.withValues(alpha: 0.6)
                                 : message.isUser
-                                ? SystemCorePalette.green.withValues(alpha: 0.4)
-                                : Colors.white12,
+                                    ? SystemCorePalette.green.withValues(alpha: 0.4)
+                                    : Colors.white12,
                           ),
                         ),
                         child: SelectableText(
