@@ -58,17 +58,20 @@ void main() {
       expect(cloud.calls, 0);
     });
 
-    test('rejects already-cancelled requests before invoking providers', () async {
-      final token = AICancellationToken()..cancel();
+    test(
+      'rejects already-cancelled requests before invoking providers',
+      () async {
+        final token = AICancellationToken()..cancel();
 
-      await expectLater(
-        router.complete(_request, cancellationToken: token),
-        throwsA(isA<Exception>()),
-      );
+        await expectLater(
+          router.complete(_request, cancellationToken: token),
+          throwsA(isA<Exception>()),
+        );
 
-      expect(local.calls, 0);
-      expect(cloud.calls, 0);
-    });
+        expect(local.calls, 0);
+        expect(cloud.calls, 0);
+      },
+    );
   });
 }
 
