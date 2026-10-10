@@ -6,9 +6,9 @@ import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 /// Summarizes only articles already fetched and filtered for the user's topics.
 /// Uses the configured AI route; it never changes local/cloud mode itself.
 class NewsDigestService {
-  const NewsDigestService({required AIEngine engine}) : _engine = engine;
+  const NewsDigestService({required this.engine});
 
-  final AIEngine _engine;
+  final AIEngine engine;
 
   Future<String?> createDigest({
     required NewsInterestProfile profile,
@@ -36,7 +36,7 @@ class NewsDigestService {
           'Ссылка: ${article.sourceUrl}';
     }).join('\n\n');
 
-    final response = await _engine.execute(AIRequest(
+    final response = await engine.execute(AIRequest(
       id: requestId ?? 'news-digest-${DateTime.now().millisecondsSinceEpoch}',
       systemInstruction: 'Ты редактор персонального новостного дайджеста. '
           'Используй только предоставленные материалы. Не добавляй факты, '
