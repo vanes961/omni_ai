@@ -193,8 +193,8 @@ class NewsRssService {
             ? byKey
             : a.value.join(',').compareTo(b.value.join(','));
       });
-    final query = <String, String>{
-      for (final entry in kept) entry.key: entry.value.join(','),
+    final query = <String, dynamic>{
+      for (final entry in kept) entry.key: entry.value,
     };
     return uri.replace(
       fragment: '',
