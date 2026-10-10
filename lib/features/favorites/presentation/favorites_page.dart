@@ -171,7 +171,7 @@ class _InterestSummary extends StatelessWidget {
                 ),
               ),
               Text(
-                '${totalFavorites} сохранено',
+                '$totalFavorites сохранено',
                 style: const TextStyle(
                   color: SystemCorePalette.muted,
                   fontSize: 10,
