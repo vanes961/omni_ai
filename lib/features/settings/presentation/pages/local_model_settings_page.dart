@@ -190,9 +190,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final total = _totalBytes ?? _model.expectedBytesApprox;
-    final progress = total > 0
-        ? (_receivedBytes / total).clamp(0.0, 1.0)
-        : 0.0;
+    final progress = total > 0 ? (_receivedBytes / total).clamp(0.0, 1.0) : 0.0;
     return ListView(
       key: const ValueKey('local-model-settings-page'),
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
@@ -272,9 +270,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                 ),
                 if (_modeLoading || _modeSaving) ...[
                   const SizedBox(height: 10),
-                  const LinearProgressIndicator(
-                    color: SystemCorePalette.green,
-                  ),
+                  const LinearProgressIndicator(color: SystemCorePalette.green),
                 ],
                 if (_modeError != null) ...[
                   const SizedBox(height: 10),
