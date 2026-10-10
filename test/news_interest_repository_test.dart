@@ -23,8 +23,9 @@ void main() {
     expect(restored.languages, ['ru']);
     expect(restored.regions, ['nl']);
     expect(
-      jsonDecode(store.values[SharedPreferencesNewsInterestRepository.storageKey]!)
-          ['topics'],
+      jsonDecode(
+        store.values[SharedPreferencesNewsInterestRepository.storageKey]!,
+      )['topics'],
       contains('anime'),
     );
     await repository.dispose();

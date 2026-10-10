@@ -22,7 +22,8 @@ class NewsInterestProfile {
       languages: languages ?? this.languages,
       regions: regions ?? this.regions,
       includeCriticalOutsideInterests:
-          includeCriticalOutsideInterests ?? this.includeCriticalOutsideInterests,
+          includeCriticalOutsideInterests ??
+          this.includeCriticalOutsideInterests,
     );
   }
 
@@ -36,7 +37,8 @@ class NewsInterestProfile {
   factory NewsInterestProfile.fromJson(Map<String, Object?> json) {
     List<String> readStrings(Object? value) {
       if (value is! List) return const <String>[];
-      return value.whereType<String>()
+      return value
+          .whereType<String>()
           .map((item) => item.trim().toLowerCase())
           .where((item) => item.isNotEmpty)
           .toSet()

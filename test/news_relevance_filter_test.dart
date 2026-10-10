@@ -39,7 +39,9 @@ void main() {
 
   test('empty interests do not fill the feed with unrelated articles', () {
     expect(
-      filter.filter([article('game', ['games'])], const NewsInterestProfile()),
+      filter.filter([
+        article('game', ['games']),
+      ], const NewsInterestProfile()),
       isEmpty,
     );
   });
@@ -48,10 +50,9 @@ void main() {
     final critical = article('alert', ['politics'], critical: true);
     expect(filter.filter([critical], const NewsInterestProfile()), isEmpty);
     expect(
-      filter.filter(
-        [critical],
-        const NewsInterestProfile(includeCriticalOutsideInterests: true),
-      ),
+      filter.filter([
+        critical,
+      ], const NewsInterestProfile(includeCriticalOutsideInterests: true)),
       hasLength(1),
     );
   });
@@ -63,11 +64,19 @@ void main() {
       regions: ['nl'],
     );
     expect(
-      filter.filter([
-        article('english', ['other'], language: 'en', region: 'nl', critical: true),
-        article('wrong-region', ['other'], region: 'us', critical: true),
-        article('allowed', ['other'], region: 'nl', critical: true),
-      ], profile).map((item) => item.id),
+      filter
+          .filter([
+            article(
+              'english',
+              ['other'],
+              language: 'en',
+              region: 'nl',
+              critical: true,
+            ),
+            article('wrong-region', ['other'], region: 'us', critical: true),
+            article('allowed', ['other'], region: 'nl', critical: true),
+          ], profile)
+          .map((item) => item.id),
       ['allowed'],
     );
   });

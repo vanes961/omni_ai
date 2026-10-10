@@ -101,7 +101,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           }
           if (snapshot.hasError) {
             return const Center(
-              child: Text('Не удалось загрузить интересы. Перезапустите экран.'),
+              child: Text(
+                'Не удалось загрузить интересы. Перезапустите экран.',
+              ),
             );
           }
           final profile = _profile ??= snapshot.data!;
@@ -130,8 +132,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     FilterChip(
                       label: Text(entry.value),
                       selected: profile.topics.contains(entry.key),
-                      onSelected: (selected) => _toggleTopic(entry.key, selected),
-                      selectedColor: SystemCorePalette.green.withValues(alpha: 0.18),
+                      onSelected: (selected) =>
+                          _toggleTopic(entry.key, selected),
+                      selectedColor: SystemCorePalette.green.withValues(
+                        alpha: 0.18,
+                      ),
                       checkmarkColor: SystemCorePalette.green,
                     ),
                 ],
@@ -161,7 +166,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               ),
               if (_status != null) ...[
                 const SizedBox(height: 10),
-                Text(_status!, style: const TextStyle(color: SystemCorePalette.green)),
+                Text(
+                  _status!,
+                  style: const TextStyle(color: SystemCorePalette.green),
+                ),
               ],
               const SizedBox(height: 28),
               const Divider(color: Colors.white12),
@@ -175,7 +183,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              const Icon(Icons.rss_feed, size: 34, color: SystemCorePalette.muted),
+              const Icon(
+                Icons.rss_feed,
+                size: 34,
+                color: SystemCorePalette.muted,
+              ),
               const SizedBox(height: 8),
               const Text(
                 'Подключение источников — следующий шаг. Здесь пока нет загруженных новостей; выдуманные или нерелевантные материалы не подставляются.',
