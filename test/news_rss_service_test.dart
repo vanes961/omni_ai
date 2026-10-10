@@ -192,7 +192,7 @@ void main() {
         final language = request.url.queryParameters['hl'];
         final region = request.url.queryParameters['gl'];
         if (region == 'US') {
-          throw const SocketException('US edition unavailable');
+          throw Exception('US edition unavailable');
         }
         final isRussian = language == 'ru';
         return http.Response(
