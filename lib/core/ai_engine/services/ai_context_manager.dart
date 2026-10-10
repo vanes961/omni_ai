@@ -89,14 +89,16 @@ class AIContextManager {
     final selected = <String>[];
 
     for (final memory in memories.reversed) {
-      if (remaining <= 0) break;
       final content = memory.trim();
       if (content.isEmpty) continue;
-      final bounded = content.length > remaining
-          ? content.substring(0, remaining)
+      final separatorLength = selected.isEmpty ? 0 : 1;
+      final availableContent = remaining - 2 - separatorLength;
+      if (availableContent <= 0) break;
+      final bounded = content.length > availableContent
+          ? content.substring(0, availableContent)
           : content;
       selected.add('- $bounded');
-      remaining -= bounded.length;
+      remaining -= 2 + bounded.length + separatorLength;
     }
 
     return selected.reversed.join('\n');
