@@ -204,7 +204,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 return _FeedMessage(
                   message: channels.isEmpty
                       ? 'ВЫБЕРИТЕ TELEGRAM-КАНАЛЫ В НАСТРОЙКАХ ПРОФИЛЯ'
-                      : 'ПОСТЫ НЕ НАЙДЕНЫ',
+                      : 'РЕАЛЬНАЯ TELEGRAM-ЛЕНТА ПОКА НЕ ПОДКЛЮЧЕНА',
                 );
               }
 
