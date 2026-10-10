@@ -31,6 +31,27 @@ void main() {
     await repository.dispose();
   });
 
+  test('persists selected English language and UK region across reloads', () async {
+    final store = _Store();
+    final repository = SharedPreferencesNewsInterestRepository(store: store);
+
+    await repository.save(
+      const NewsInterestProfile(
+        topics: ['anime'],
+        languages: [' EN '],
+        regions: [' GB '],
+      ),
+    );
+
+    final restored = await SharedPreferencesNewsInterestRepository(
+      store: store,
+    ).load();
+
+    expect(restored.languages, ['en']);
+    expect(restored.regions, ['gb']);
+    await repository.dispose();
+  });
+
   test('corrupt settings safely reset to no selected topics', () async {
     final store = _Store()
       ..values[SharedPreferencesNewsInterestRepository.storageKey] = 'broken';
