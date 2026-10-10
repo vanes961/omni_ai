@@ -126,7 +126,7 @@ class NewsRssService {
     // substring matching would incorrectly classify «России» as AI news.
     if (normalizedKeyword == 'ии') {
       return RegExp(
-        r'''(^|[\\s.,!?()\\[\\]{}:;"'«»—-])ии([\\s.,!?()\\[\\]{}:;"'«»—-]|$)''',
+        r'''(^|[\s.,!?()\[\]{}:;"'«»—-])ии([\s.,!?()\[\]{}:;"'«»—-]|$)''',
         caseSensitive: false,
       ).hasMatch(text);
     }
