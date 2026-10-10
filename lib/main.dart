@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/dashboard/presentation/dashboard_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
@@ -8,10 +11,26 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key, this.preferencesStore});
+class MyApp extends StatefulWidget {
+  const MyApp({super.key, this.preferencesStore, this.dependencies});
 
   final UserPreferencesStore? preferencesStore;
+  final AppDependencies? dependencies;
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final bool _ownsDependencies = widget.dependencies == null;
+  late final AppDependencies _dependencies =
+      widget.dependencies ?? AppDependencies();
+
+  @override
+  void dispose() {
+    if (_ownsDependencies) unawaited(_dependencies.dispose());
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +48,22 @@ class MyApp extends StatelessWidget {
         fontFamily: 'monospace',
         useMaterial3: true,
       ),
-      home: _AppStartupPage(preferencesStore: preferencesStore),
+      home: _AppStartupPage(
+        preferencesStore: widget.preferencesStore,
+        dependencies: _dependencies,
+      ),
     );
   }
 }
 
 class _AppStartupPage extends StatefulWidget {
-  const _AppStartupPage({required this.preferencesStore});
+  const _AppStartupPage({
+    required this.preferencesStore,
+    required this.dependencies,
+  });
 
   final UserPreferencesStore? preferencesStore;
+  final AppDependencies dependencies;
 
   @override
   State<_AppStartupPage> createState() => _AppStartupPageState();
@@ -94,6 +120,7 @@ class _AppStartupPageState extends State<_AppStartupPage> {
           return DashboardPage(
             preferences: preferences,
             preferencesStore: _preferencesStore,
+            dependencies: widget.dependencies,
           );
         }
         return SystemCorePage(preferencesStore: _preferencesStore);
