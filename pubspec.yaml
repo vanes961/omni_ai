@@ -39,6 +39,8 @@ dependencies:
   url_launcher: ^6.3.3
   http: ^1.6.0
   cached_network_image: ^4.0.3
+  path_provider: ^2.1.5
+  llama_flutter_android: ^0.2.6
 
 dev_dependencies:
   flutter_test:
