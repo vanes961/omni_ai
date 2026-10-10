@@ -5,7 +5,7 @@ import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class FavoritesPage extends StatefulWidget {
-  const FavoritesPage({super.key, FavoritesRepository? repository})
+  FavoritesPage({super.key, FavoritesRepository? repository})
     : repository = repository ?? FavoritesRepository();
 
   final FavoritesRepository repository;
