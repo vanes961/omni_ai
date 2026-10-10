@@ -95,8 +95,14 @@ class AIDependencies {
   /// Changes the route explicitly and persists it separately from profile data.
   Future<void> setExecutionMode(AIExecutionMode mode) async {
     await restoreExecutionMode();
+    final previousMode = router.mode;
     router.mode = mode;
-    await modeStore.save(mode);
+    try {
+      await modeStore.save(mode);
+    } on Object {
+      router.mode = previousMode;
+      rethrow;
+    }
   }
 
   Future<void> dispose() async {
