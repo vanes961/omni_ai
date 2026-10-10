@@ -6,6 +6,7 @@ import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_context_manager.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
+import 'package:omni_ai/features/ai_memory/presentation/ai_memory_manager_dialog.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class AIChatPage extends StatefulWidget {
@@ -68,6 +69,8 @@ class _AIChatPageState extends State<AIChatPage> {
 
     try {
       await widget.dependencies.ai.restoreExecutionMode();
+      final savedMemories = await widget.dependencies.aiMemoryRepository
+          .getAll();
       final response = await widget.dependencies.orchestrator.execute(
         AIRequest(
           id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -75,6 +78,9 @@ class _AIChatPageState extends State<AIChatPage> {
         ),
         cancellationToken: token,
         conversationHistory: conversationHistory,
+        explicitMemories: savedMemories
+            .map((memory) => memory.content)
+            .toList(growable: false),
       );
       if (!mounted) return;
       setState(() {
@@ -102,6 +108,15 @@ class _AIChatPageState extends State<AIChatPage> {
         _scrollToBottom();
       }
     }
+  }
+
+  Future<void> _openMemoryManager() async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AIMemoryManagerDialog(
+        repository: widget.dependencies.aiMemoryRepository,
+      ),
+    );
   }
 
   void _cancel() {
@@ -154,13 +169,24 @@ class _AIChatPageState extends State<AIChatPage> {
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'ЕДИНЫЙ AI-ПОМОЩНИК',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                ),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'ЕДИНЫЙ AI-ПОМОЩНИК',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Долговременная память',
+                    onPressed: _openMemoryManager,
+                    icon: const Icon(Icons.bookmarks_outlined),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Row(
