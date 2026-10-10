@@ -88,15 +88,13 @@ class LocalLlamaProvider implements AIProvider {
 
     var cancelled = false;
     var generationFinished = false;
-    final cancellationListener = cancellationToken.cancelled.then((_) async {
-      if (generationFinished) return;
-      cancelled = true;
-      try {
-        await _controller.stop();
-      } on Object {
-        // Cancellation is best-effort; preserve the generation result/error.
-      }
-    });
+    final cancellationListener = _listenForCancellation(
+      cancellationToken,
+      () => generationFinished,
+      () {
+        cancelled = true;
+      },
+    );
 
     final prompt = <String>[
       if (request.systemInstruction?.trim().isNotEmpty ?? false)
@@ -167,6 +165,21 @@ class LocalLlamaProvider implements AIProvider {
       generationFinished = true;
       // This listener intentionally remains pending until cancellation.
       unawaited(cancellationListener);
+    }
+  }
+
+  Future<void> _listenForCancellation(
+    AICancellationToken cancellationToken,
+    bool Function() isGenerationFinished,
+    void Function() markCancelled,
+  ) async {
+    await cancellationToken.cancelled;
+    if (isGenerationFinished()) return;
+    markCancelled();
+    try {
+      await _controller.stop();
+    } on Object {
+      // Cancellation is best-effort; preserve the generation result/error.
     }
   }
 
