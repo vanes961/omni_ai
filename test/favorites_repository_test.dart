@@ -44,6 +44,17 @@ void main() {
     expect(all.single.title, 'Updated title');
   });
 
+  test('duplicate add cannot silently move an item to another category', () async {
+    await repository.add(_item('same-id', FavoriteCategory.movie));
+    await repository.add(_item('same-id', FavoriteCategory.trailer));
+
+    expect(
+      (await repository.getByCategory(FavoriteCategory.movie)).single.id,
+      'same-id',
+    );
+    expect(await repository.getByCategory(FavoriteCategory.trailer), isEmpty);
+  });
+
   test('removes an item and reports membership correctly', () async {
     await repository.add(_item('remove-me', FavoriteCategory.manga));
 
