@@ -95,6 +95,12 @@ class LocalModelStorage {
     await sink.close();
 
     final actualLength = await temporary.length();
+    if (total != null && actualLength != total) {
+      await temporary.delete();
+      throw const FormatException(
+        'Downloaded model size does not match the server response; please retry.',
+      );
+    }
     if (actualLength < model.expectedBytesApprox * 0.95) {
       await temporary.delete();
       throw const FormatException(
