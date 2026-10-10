@@ -17,9 +17,8 @@ class AIProcessOrchestrator {
     required SystemCoreProcessService processService,
     required RunHistoryRepository historyRepository,
     ProcessRunIdFactory? runIdFactory,
-    AIContextManager contextManager = const AIContextManager(),
-  }) : _contextManager = contextManager,
-       _processService = processService,
+    this._contextManager = const AIContextManager(),
+  }) : _processService = processService,
        _historyRecorder = RunHistoryRecorder(
          processStates: processService.states,
          repository: historyRepository,
