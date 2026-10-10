@@ -101,6 +101,39 @@ void main() {
     expect(restored.single.id, 'safe-1');
   });
 
+  test('skips malformed records and duplicate article IDs during recovery', () async {
+    final store = _MemoryStore();
+    final cache = SharedPreferencesNewsCache(store: store);
+    final article = NewsArticle(
+      id: 'duplicate-1',
+      title: 'First copy',
+      summary: 'A valid cached article.',
+      sourceName: 'Example',
+      sourceUrl: 'https://example.com/first',
+      publishedAt: DateTime.utc(2026, 10, 10, 12),
+      topics: const ['technology'],
+    );
+    await cache.saveArticles([article], selectedTopics: const ['technology']);
+    final payload = jsonDecode(
+      store.values[SharedPreferencesNewsCache.articlesKey]!,
+    ) as List<dynamic>;
+    final valid = payload.single as Map<String, dynamic>;
+    payload
+      ..add('not-an-article')
+      ..add({...valid, 'id': '   '})
+      ..add({
+        ...valid,
+        'title': 'Duplicate copy',
+        'sourceUrl': 'https://example.com/second',
+      });
+    store.values[SharedPreferencesNewsCache.articlesKey] = jsonEncode(payload);
+
+    final restored = await cache.loadArticles();
+
+    expect(restored, hasLength(1));
+    expect(restored.single.title, 'First copy');
+  });
+
   test('drops malformed cached interests', () async {
     final store = _MemoryStore()
       ..values[SharedPreferencesNewsCache.topicsKey] = '{"topic":"anime"}';
