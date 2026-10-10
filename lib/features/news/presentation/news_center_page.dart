@@ -137,7 +137,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (!mounted) return;
       setState(() {
         _digest = digest;
-        if (digest == null) _digestError = 'Нет подходящих материалов для дайджеста.';
+        if (digest == null) {
+          _digestError = 'Нет подходящих материалов для дайджеста.';
+        }
       });
     } catch (_) {
       if (!mounted) return;
