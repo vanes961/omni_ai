@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
+import 'package:omni_ai/core/ai_engine/providers/ai_execution_mode_store.dart';
 import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/features/run_history/data/shared_preferences_run_history_repository.dart';
 import 'package:omni_ai/features/run_history/repositories/run_history_repository.dart';
@@ -21,22 +22,26 @@ class AppDependencies {
     SystemCoreProcessService? processService,
     RunHistoryRepository? runHistoryRepository,
     LocalModelStorage? localModelStorage,
+    AIExecutionModeStore? aiExecutionModeStore,
   }) {
     final ownsProcessService = processService == null;
     final ownsHistoryRepository = runHistoryRepository == null;
     final ownsLocalModelStorage = localModelStorage == null;
+    final storage = localModelStorage ?? LocalModelStorage();
     final ai = AIDependencies(
       apiKeySource: apiKeySource,
       config: geminiConfig,
       httpClient: httpClient,
       timeout: aiTimeout,
+      localModelStorage: storage,
+      modeStore: aiExecutionModeStore,
     );
     return AppDependencies._(
       ai: ai,
       processService: processService ?? SystemCoreProcessService(),
       historyRepository:
           runHistoryRepository ?? SharedPreferencesRunHistoryRepository(),
-      localModelStorage: localModelStorage ?? LocalModelStorage(),
+      localModelStorage: storage,
       ownsProcessService: ownsProcessService,
       ownsHistoryRepository: ownsHistoryRepository,
       ownsLocalModelStorage: ownsLocalModelStorage,
@@ -73,6 +78,6 @@ class AppDependencies {
     if (_ownsProcessService) await processService.dispose();
     if (_ownsHistoryRepository) await historyRepository.dispose();
     if (_ownsLocalModelStorage) localModelStorage.dispose();
-    ai.dispose();
+    await ai.dispose();
   }
 }
