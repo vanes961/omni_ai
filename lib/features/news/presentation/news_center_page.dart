@@ -212,11 +212,21 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // A digest describes a specific set of articles. Never keep showing a
       // digest generated from the previous feed after a successful refresh.
       await _newsCache.saveDigest(null);
+      if (revisionAtStart != _interestRevision) {
+        await _newsCache.clear();
+        return;
+      }
       await _newsCache.saveArticles(
         articles,
         selectedTopics: profile.topics,
       );
-      if (!mounted || revisionAtStart != _interestRevision) return;
+      if (revisionAtStart != _interestRevision) {
+        // Topic changes clear the cache too, but an in-flight write may finish
+        // afterward. Clear again so stale results cannot survive that race.
+        await _newsCache.clear();
+        return;
+      }
+      if (!mounted) return;
       setState(() {
         _articles = articles;
         _digest = null;
@@ -260,7 +270,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       );
       if (revisionAtStart != _interestRevision) return;
       await _newsCache.saveDigest(digest);
-      if (!mounted || revisionAtStart != _interestRevision) return;
+      if (revisionAtStart != _interestRevision) {
+        await _newsCache.clear();
+        return;
+      }
+      if (!mounted) return;
       setState(() {
         _digest = digest;
         if (digest == null) {
