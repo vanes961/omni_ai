@@ -186,6 +186,38 @@ void main() {
     );
   });
 
+  test('keeps other editions when one international RSS source fails', () async {
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        final language = request.url.queryParameters['hl'];
+        final region = request.url.queryParameters['gl'];
+        if (region == 'US') {
+          throw const SocketException('US edition unavailable');
+        }
+        final isRussian = language == 'ru';
+        return http.Response(
+          '''<rss><channel><item>
+            <title>${isRussian ? 'Новый сезон аниме' : 'New anime season announced'}</title>
+            <link>https://publisher.example/anime-$region</link>
+            <description>Anime news update</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            <source>News source</source>
+          </item></channel></rss>''',
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetchInternational(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+
+    expect(articles, hasLength(2));
+    expect(articles.map((article) => article.region), containsAll(['ru', 'gb']));
+  });
+
   test('fetches international editions and filters topics without locale lock', () async {
     var requests = 0;
     final service = NewsRssService(
