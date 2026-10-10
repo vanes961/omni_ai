@@ -55,7 +55,8 @@ void main() {
   test('removes a partial file when response size does not match', () async {
     storage = LocalModelStorage(
       client: MockClient(
-        (_) async => http.Response('123', 200, headers: {'content-length': '10'}),
+        (_) async =>
+            http.Response('123', 200, headers: {'content-length': '10'}),
       ),
       supportDirectoryProvider: () async => temporaryDirectory,
     );
