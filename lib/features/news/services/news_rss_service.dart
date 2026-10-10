@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/features/news/models/news_article.dart';
@@ -70,8 +71,8 @@ class NewsRssService {
       final title = _tag(item, 'title');
       final link = _tag(item, 'link');
       final description = _tag(item, 'description');
-      final published = DateTime.tryParse(_tag(item, 'pubDate')) ??
-          DateTime.tryParse(_tag(item, 'dc:date'));
+      final published = _parseDate(_tag(item, 'pubDate')) ??
+          _parseDate(_tag(item, 'dc:date'));
       if (title.isEmpty || link.isEmpty || published == null) continue;
       final uri = Uri.tryParse(link);
       if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) continue;
@@ -99,6 +100,16 @@ class NewsRssService {
       ));
     }
     return result;
+  }
+
+  DateTime? _parseDate(String value) {
+    final input = value.trim();
+    if (input.isEmpty) return null;
+    try {
+      return HttpDate.parse(input).toUtc();
+    } on FormatException {
+      return DateTime.tryParse(input)?.toUtc();
+    }
   }
 
   String _tag(String xml, String name) {
