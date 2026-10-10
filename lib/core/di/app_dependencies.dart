@@ -2,6 +2,8 @@ import 'package:http/http.dart' as http;
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_execution_mode_store.dart';
 import 'package:omni_ai/core/di/ai_dependencies.dart';
+import 'package:omni_ai/features/ai_memory/data/shared_preferences_ai_memory_repository.dart';
+import 'package:omni_ai/features/ai_memory/repositories/ai_memory_repository.dart';
 import 'package:omni_ai/features/run_history/data/shared_preferences_run_history_repository.dart';
 import 'package:omni_ai/features/run_history/repositories/run_history_repository.dart';
 import 'package:omni_ai/features/system_core/services/ai_process_orchestrator.dart';
@@ -23,10 +25,14 @@ class AppDependencies {
     RunHistoryRepository? runHistoryRepository,
     LocalModelStorage? localModelStorage,
     AIExecutionModeStore? aiExecutionModeStore,
+    AIMemoryRepository? aiMemoryRepository,
   }) {
     final ownsProcessService = processService == null;
     final ownsHistoryRepository = runHistoryRepository == null;
     final ownsLocalModelStorage = localModelStorage == null;
+    final ownsAIMemoryRepository = aiMemoryRepository == null;
+    final memoryRepository =
+        aiMemoryRepository ?? SharedPreferencesAIMemoryRepository();
     final storage = localModelStorage ?? LocalModelStorage();
     final ai = AIDependencies(
       apiKeySource: apiKeySource,
@@ -42,6 +48,8 @@ class AppDependencies {
       historyRepository:
           runHistoryRepository ?? SharedPreferencesRunHistoryRepository(),
       localModelStorage: storage,
+      aiMemoryRepository: memoryRepository,
+      ownsAIMemoryRepository: ownsAIMemoryRepository,
       ownsProcessService: ownsProcessService,
       ownsHistoryRepository: ownsHistoryRepository,
       ownsLocalModelStorage: ownsLocalModelStorage,
@@ -55,6 +63,8 @@ class AppDependencies {
     required this._ownsProcessService,
     required this._ownsHistoryRepository,
     required this.localModelStorage,
+    required this.aiMemoryRepository,
+    required this.ownsAIMemoryRepository,
     required this._ownsLocalModelStorage,
   }) {
     orchestrator = AIProcessOrchestrator(
@@ -70,6 +80,8 @@ class AppDependencies {
   final bool _ownsProcessService;
   final bool _ownsHistoryRepository;
   final LocalModelStorage localModelStorage;
+  final AIMemoryRepository aiMemoryRepository;
+  final bool ownsAIMemoryRepository;
   final bool _ownsLocalModelStorage;
   late final AIProcessOrchestrator orchestrator;
 
@@ -78,6 +90,7 @@ class AppDependencies {
     if (_ownsProcessService) await processService.dispose();
     if (_ownsHistoryRepository) await historyRepository.dispose();
     await ai.dispose();
+    if (ownsAIMemoryRepository) await aiMemoryRepository.dispose();
     if (_ownsLocalModelStorage) localModelStorage.dispose();
   }
 }
