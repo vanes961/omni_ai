@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
+import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
@@ -35,9 +36,9 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedTab = 0;
   int _selectedSettingsTab = 0;
-  late final AppDependencies _dependencies;
   late final bool _ownsDependencies;
   late final LocalModelStorage _localModelStorage;
+  late final AIDependencies _aiDependencies;
   late final UserPreferencesStore _preferencesStore;
   final TextEditingController _feedSearchController = TextEditingController();
   late Future<List<TelegramPost>> _feedFuture;
@@ -47,9 +48,15 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _ownsDependencies = widget.dependencies == null;
-    _dependencies = widget.dependencies ?? AppDependencies();
-    _localModelStorage = _dependencies.localModelStorage;
+    final dependencies = widget.dependencies;
+    _ownsDependencies = dependencies == null;
+    if (dependencies == null) {
+      _localModelStorage = LocalModelStorage();
+      _aiDependencies = AIDependencies(localModelStorage: _localModelStorage);
+    } else {
+      _localModelStorage = dependencies.localModelStorage;
+      _aiDependencies = dependencies.ai;
+    }
     _preferencesStore =
         widget.preferencesStore ?? SharedPreferencesUserPreferencesStore();
     _feedFuture = widget.telegramService.fetchPosts(widget.preferences);
@@ -58,8 +65,13 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void dispose() {
     _feedSearchController.dispose();
-    if (_ownsDependencies) unawaited(_dependencies.dispose());
+    if (_ownsDependencies) unawaited(_disposeOwnedAI());
     super.dispose();
+  }
+
+  Future<void> _disposeOwnedAI() async {
+    await _aiDependencies.dispose();
+    _localModelStorage.dispose();
   }
 
   @override
@@ -307,7 +319,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 )
               : LocalModelSettingsPage(
                   storage: _localModelStorage,
-                  aiDependencies: _dependencies.ai,
+                  aiDependencies: _aiDependencies,
                 ),
         ),
       ],
