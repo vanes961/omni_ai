@@ -10,6 +10,7 @@ import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/models/news_article.dart';
 import 'package:omni_ai/features/favorites/data/favorite_item.dart';
 import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
+import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
 import 'package:omni_ai/features/news/services/news_digest_service.dart';
 import 'package:omni_ai/features/news/services/news_source_localization_service.dart';
@@ -48,6 +49,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   String? _status;
   final NewsRssService _newsService = NewsRssService();
   final FavoritesRepository _favoritesRepository = FavoritesRepository();
+  final FavoriteInterestAnalytics _favoriteAnalytics =
+      const FavoriteInterestAnalytics();
   final NewsSourceLocalizationService _sourceLocalizationService =
       const NewsSourceLocalizationService();
   final SharedPreferencesNewsCache _newsCache = SharedPreferencesNewsCache();
@@ -93,6 +96,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _newsCache.loadTopics(),
       ]);
       final savedTopics = cached[2] as List<String>?;
+      final favorites = await _favoritesRepository.getAll();
+      final favoriteProfile = _favoriteAnalytics.analyze(favorites);
+      final cachedArticles = _favoriteAnalytics.rankNews(
+        (cached[0] as List<NewsArticle>),
+        favoriteProfile,
+      );
       final selectedTopics = _normalizeTopics(profile.topics);
       final cacheMatchesProfile = savedTopics != null &&
           _sameTopics(savedTopics, selectedTopics);
@@ -102,7 +111,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (!mounted) return;
       setState(() {
         if (revisionAtStart == _interestRevision && cacheMatchesProfile) {
-          _articles = cached[0] as List<NewsArticle>;
+          _articles = cachedArticles;
           _digest = cached[1] as String?;
         }
         _loadingNewsCache = false;
@@ -222,6 +231,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       final articles = await _sourceLocalizationService.localizeCandidates(
         fetchedArticles,
       );
+      final favorites = await _favoritesRepository.getAll();
+      final favoriteProfile = _favoriteAnalytics.analyze(favorites);
+      final rankedArticles = _favoriteAnalytics.rankNews(articles, favoriteProfile);
       if (revisionAtStart != _interestRevision) return;
       // A digest describes a specific set of articles. Never keep showing a
       // digest generated from the previous feed after a successful refresh.
@@ -231,7 +243,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         return;
       }
       await _newsCache.saveArticles(
-        articles,
+        rankedArticles,
         selectedTopics: profile.topics,
       );
       if (revisionAtStart != _interestRevision) {
@@ -242,7 +254,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       }
       if (!mounted) return;
       setState(() {
-        _articles = articles;
+        _articles = rankedArticles;
         _digest = null;
         _digestError = null;
         _newsError = null;
