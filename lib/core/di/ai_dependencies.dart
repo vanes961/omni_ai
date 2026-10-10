@@ -6,15 +6,15 @@ import 'package:omni_ai/core/ai_engine/providers/ai_execution_mode_store.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
-import 'package:omni_ai/providers/gemini/gemini_api_config.dart';
-import 'package:omni_ai/providers/gemini/gemini_api_key_source.dart';
-import 'package:omni_ai/providers/gemini/gemini_provider.dart';
+import 'package:omni_ai/providers/openrouter/openrouter_api_config.dart';
+import 'package:omni_ai/providers/openrouter/openrouter_api_key_source.dart';
+import 'package:omni_ai/providers/openrouter/openrouter_provider.dart';
 
 /// Builds local and cloud providers behind one explicitly selected AI route.
 class AIDependencies {
   factory AIDependencies({
-    GeminiApiKeySource? apiKeySource,
-    GeminiApiConfig config = const GeminiApiConfig(),
+    OpenRouterApiKeySource? apiKeySource,
+    OpenRouterApiConfig config = const OpenRouterApiConfig(),
     http.Client? httpClient,
     Duration timeout = const Duration(seconds: 30),
     LocalModelStorage? localModelStorage,
@@ -24,8 +24,8 @@ class AIDependencies {
     final ownsLocalModelStorage = localModelStorage == null;
     final storage = localModelStorage ?? LocalModelStorage();
     final local = localProvider ?? StoredLocalLlamaProvider(storage: storage);
-    final cloud = GeminiProvider(
-      apiKeySource: apiKeySource ?? const UnconfiguredGeminiApiKeySource(),
+    final cloud = OpenRouterProvider(
+      apiKeySource: apiKeySource ?? const UnconfiguredOpenRouterApiKeySource(),
       config: config,
       client: httpClient,
     );
@@ -62,12 +62,12 @@ class AIDependencies {
     );
   }
 
-  final GeminiApiConfig config;
+  final OpenRouterApiConfig config;
   final Duration timeout;
   final LocalModelStorage localModelStorage;
   final bool ownsLocalModelStorage;
   final AIProvider localProvider;
-  final GeminiProvider cloudProvider;
+  final OpenRouterProvider cloudProvider;
   final RoutingAIProvider router;
   final AIExecutionModeStore modeStore;
   late final AIEngine engine;
