@@ -52,6 +52,29 @@ void main() {
     expect(articles.single.summary, contains('A new anime series'));
   });
 
+  test('recognizes Russian-language headlines for selected topics', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response(
+        '''<rss><channel><item>
+          <title>Анонсирован новый сезон аниме</title>
+          <link>https://publisher.example/ru-anime</link>
+          <description>Новости японской анимации</description>
+          <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+          <source>Новости аниме</source>
+        </item></channel></rss>''',
+        200,
+      )),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.topics, contains('anime'));
+  });
+
   test('does not make a network request when no interests are selected', () async {
     var requests = 0;
     final service = NewsRssService(
