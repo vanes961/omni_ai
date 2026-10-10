@@ -195,6 +195,7 @@ class NewsRssService {
     };
     return uri.replace(
       fragment: '',
+      query: query.isEmpty ? '' : null,
       queryParameters: query.isEmpty ? null : query,
       path: uri.path.isEmpty ? '/' : uri.path,
     ).toString();
