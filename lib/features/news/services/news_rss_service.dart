@@ -17,6 +17,19 @@ class NewsRssService {
   final http.Client _client;
   final NewsRelevanceFilter _filter;
 
+  static const _topicKeywords = <String, List<String>>{
+    'games': ['game', 'gaming', 'video game', 'игр', 'гейминг'],
+    'anime': ['anime', 'аниме'],
+    'manga': ['manga', 'манга'],
+    'movies': ['movie', 'movies', 'cinema', 'film', 'кино', 'фильм'],
+    'series': ['series', 'tv series', 'streaming', 'сериал', 'сериалы'],
+    'technology': ['technology', 'tech', 'технолог', 'техника'],
+    'artificial intelligence': ['artificial intelligence', ' ai ', 'ии', 'искусственн', 'нейросет'],
+    'science': ['science', 'scientific', 'наук', 'исследован'],
+    'space': ['space', 'astronomy', 'spaceflight', 'космос', 'астроном', 'космич'],
+    'gadgets': ['gadget', 'electronics', 'smartphone', 'гаджет', 'смартфон', 'электроник'],
+  };
+
   static const _topicQueries = <String, String>{
     'games': 'video games gaming',
     'anime': 'anime',
@@ -80,10 +93,10 @@ class NewsRssService {
           ? _tag(item, 'source')
           : uri.host;
       final text = _stripMarkup(description);
-      final normalized = '$title $text'.toLowerCase();
-      final topics = _topicQueries.entries
-          .where((entry) => entry.value.split(' ').any(
-                (word) => word.length > 3 && normalized.contains(word.toLowerCase()),
+      final normalized = ' ${title.toLowerCase()} ${text.toLowerCase()} ';
+      final topics = _topicKeywords.entries
+          .where((entry) => entry.value.any(
+                (keyword) => normalized.contains(keyword.toLowerCase()),
               ))
           .map((entry) => entry.key)
           .toList(growable: false);
