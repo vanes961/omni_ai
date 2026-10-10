@@ -19,8 +19,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('AI-GUARD ACTIVE'), findsOneWidget);
-    expect(find.byType(TelegramPostCard), findsOneWidget);
-    expect(find.text('Life Free Hub'), findsNWidgets(2));
+    expect(find.byType(TelegramPostCard), findsNothing);
+    expect(find.text('Life Free Hub'), findsOneWidget);
     expect(find.text('Лента'), findsOneWidget);
     expect(find.text('Медиа'), findsOneWidget);
     expect(find.text('Семья & Здоровье'), findsOneWidget);
@@ -43,7 +43,7 @@ void main() {
       const Offset(0, -500),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(TelegramPostCard), findsOneWidget);
+    expect(find.byType(TelegramPostCard), findsNothing);
 
     await tester.tap(find.text('Настройки'));
     await tester.pumpAndSettle();
