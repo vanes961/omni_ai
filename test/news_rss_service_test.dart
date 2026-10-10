@@ -140,6 +140,39 @@ void main() {
     expect(articles.single.region, 'ru');
   });
 
+  test('uses the selected language and region in the RSS request', () async {
+    final client = MockClient((request) async {
+      expect(request.url.queryParameters['q'], 'anime');
+      expect(request.url.queryParameters['hl'], 'en');
+      expect(request.url.queryParameters['gl'], 'US');
+      expect(request.url.queryParameters['ceid'], 'US:en');
+      return http.Response(
+        '''<rss><channel><item>
+          <title>New anime season announced</title>
+          <link>https://publisher.example/en-anime</link>
+          <description>A new anime series is coming.</description>
+          <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+          <source>Anime News</source>
+        </item></channel></rss>''',
+        200,
+      );
+    });
+    final service = NewsRssService(client: client);
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(
+        topics: ['anime'],
+        languages: ['en'],
+        regions: ['us'],
+      ),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.language, 'en');
+    expect(articles.single.region, 'us');
+  });
+
   test('ignores RSS items with invalid links or missing publication dates', () async {
     final service = NewsRssService(
       client: MockClient((_) async => http.Response(
