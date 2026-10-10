@@ -24,10 +24,8 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
   static const _model = LocalModelCatalog.qwen3Small;
 
   bool _checking = true;
-  bool _downloading = false;
+  bool _installing = false;
   bool _installed = false;
-  int _receivedBytes = 0;
-  int? _totalBytes;
   String? _error;
   String? _status;
   AIExecutionMode _executionMode = AIExecutionMode.local;
@@ -104,11 +102,9 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
   }
 
   Future<void> _download() async {
-    if (_downloading) return;
+    if (_installing) return;
     setState(() {
       _downloading = true;
-      _receivedBytes = 0;
-      _totalBytes = null;
       _error = null;
       _status = 'Установка встроенной модели из APK… Интернет не нужен.';
     });
@@ -179,8 +175,6 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final total = _totalBytes ?? _model.expectedBytesApprox;
-    final progress = total > 0 ? (_receivedBytes / total).clamp(0.0, 1.0) : 0.0;
     return ListView(
       key: const ValueKey('local-model-settings-page'),
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
@@ -251,7 +245,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                 const SizedBox(height: 10),
                 Text(
                   _executionMode == AIExecutionMode.local
-                      ? 'Локальный режим: запросы не отправляются облачному провайдеру. Сначала загрузите модель ниже.'
+                      ? 'Локальный режим: запросы не отправляются облачному провайдеру. Сначала установите встроенную модель ниже.'
                       : 'Облачный режим: запросы отправляются в Gemini. Для работы ещё нужно безопасно подключить API через сервер или защищённый источник; ключ не вшивается в APK.',
                   style: const TextStyle(
                     color: SystemCorePalette.muted,
@@ -332,7 +326,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                       child: Text(
                         _installed
                             ? 'Файл модели найден'
-                            : 'Модель не загружена',
+                            : 'Модель не установлена',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -419,8 +413,8 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
         ),
         const SizedBox(height: 18),
         const Text(
-          'Модель в APK проверяется по ожидаемому размеру и SHA-256 при копировании. '
-          'Сетевой загрузки модели и облачного AI API для этого не требуется.',
+          'Модель в APK проверяется по ожидаемому размеру и SHA-256 '
+          'при копировании. Сетевой загрузки модели не требуется.',
           style: TextStyle(color: SystemCorePalette.muted, fontSize: 11),
         ),
       ],
