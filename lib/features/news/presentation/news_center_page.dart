@@ -1,9 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:omni_ai/features/news/data/news_interest_repository.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_interest_repository.dart';
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
+import 'package:omni_ai/features/news/models/news_article.dart';
+import 'package:omni_ai/features/news/services/news_rss_service.dart';
+import 'package:omni_ai/features/news/services/news_relevance_filter.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class NewsCenterPage extends StatefulWidget {
@@ -35,6 +39,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   NewsInterestProfile? _profile;
   bool _saving = false;
   String? _status;
+  final NewsRssService _newsService = NewsRssService();
+  List<NewsArticle> _articles = const [];
+  bool _refreshingNews = false;
+  String? _newsError;
 
   @override
   void initState() {
@@ -48,6 +56,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   @override
   void dispose() {
     if (_ownsRepository) unawaited(_repository.dispose());
+    _newsService.dispose();
     super.dispose();
   }
 
@@ -68,6 +77,86 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Future<void> _refreshNews() async {
+    final profile = _profile;
+    if (profile == null || _refreshingNews) return;
+    if (profile.topics.isEmpty) {
+      setState(() {
+        _articles = const [];
+        _newsError = null;
+        _status = 'Выберите хотя бы одну тему, чтобы получить персональные новости.';
+      });
+      return;
+    }
+    setState(() {
+      _refreshingNews = true;
+      _newsError = null;
+    });
+    try {
+      final articles = await _newsService.fetch(profile);
+      if (!mounted) return;
+      setState(() {
+        _articles = articles;
+        _newsError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _newsError = 'Не удалось загрузить новости. Проверьте соединение и попробуйте снова.';
+      });
+    } finally {
+      if (mounted) setState(() => _refreshingNews = false);
+    }
+  }
+
+  Future<void> _openArticle(NewsArticle article) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: SystemCorePalette.panel,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(article.sourceName.toUpperCase(),
+                    style: const TextStyle(color: SystemCorePalette.green, fontSize: 12)),
+                const SizedBox(height: 8),
+                Text(article.title,
+                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Text(article.summary.isEmpty
+                    ? 'Источник не предоставил краткое описание. Откройте оригинальную публикацию.'
+                    : article.summary,
+                    style: const TextStyle(color: Colors.white70, height: 1.5)),
+                const SizedBox(height: 12),
+                Text('Опубликовано: ${article.publishedAt.toLocal()}',
+                    style: const TextStyle(color: SystemCorePalette.muted, fontSize: 12)),
+                const SizedBox(height: 18),
+                FilledButton.icon(
+                  onPressed: () async {
+                    final uri = Uri.tryParse(article.sourceUrl);
+                    if (uri != null && uri.scheme == 'https') {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    }
+                  },
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('ОТКРЫТЬ ИСТОЧНИК'),
+                ),
+                const SizedBox(height: 8),
+                const Text('В приложении показан RSS-фрагмент и краткое описание. Полный материал принадлежит издателю.',
+                    style: TextStyle(color: SystemCorePalette.muted, fontSize: 12)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _toggleTopic(String topic, bool selected) {
@@ -183,17 +272,66 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              const Icon(
+              FilledButton.icon(
+                onPressed: _refreshingNews ? null : _refreshNews,
+                icon: _refreshingNews
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.refresh),
+                label: Text(_refreshingNews ? 'ЗАГРУЗКА…' : 'ОБНОВИТЬ ПЕРСОНАЛЬНУЮ ЛЕНТУ'),
+              ),
+              if (_newsError != null) ...[
+                const SizedBox(height: 12),
+                Text(_newsError!, style: const TextStyle(color: Colors.orangeAccent)),
+              ],
+              if (!_refreshingNews && _newsError == null && _articles.isEmpty) ...[
+                const SizedBox(height: 12),
+                const Icon(
                 Icons.rss_feed,
                 size: 34,
                 color: SystemCorePalette.muted,
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Подключение источников — следующий шаг. Здесь пока нет загруженных новостей; выдуманные или нерелевантные материалы не подставляются.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: SystemCorePalette.muted, height: 1.4),
-              ),
+                Text(
+                  profile.topics.isEmpty
+                      ? 'Выберите интересы выше — лента останется пустой, пока темы не выбраны.'
+                      : 'Нажмите «Обновить», чтобы загрузить свежие материалы по выбранным темам.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: SystemCorePalette.muted, height: 1.4),
+                ),
+              ],
+              for (final article in _articles) ...[
+                const SizedBox(height: 10),
+                Card(
+                  color: SystemCorePalette.panel,
+                  child: InkWell(
+                    onTap: () => _openArticle(article),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(article.sourceName,
+                              style: const TextStyle(color: SystemCorePalette.green, fontSize: 12)),
+                          const SizedBox(height: 6),
+                          Text(article.title,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                          if (article.summary.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(article.summary,
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Colors.white70, height: 1.35)),
+                          ],
+                          const SizedBox(height: 8),
+                          Text(article.publishedAt.toLocal().toString(),
+                              style: const TextStyle(color: SystemCorePalette.muted, fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           );
         },
