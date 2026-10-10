@@ -4,8 +4,8 @@ import '../models/ai_error.dart';
 import '../models/ai_request.dart';
 import '../models/ai_response.dart';
 import '../providers/ai_provider.dart';
-import 'local_model_storage.dart';
 import 'local_llama_provider.dart';
+import 'local_model_storage.dart';
 
 /// Lazily initializes the installed GGUF model for local requests.
 ///
