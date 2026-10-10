@@ -40,12 +40,18 @@ class LocalModelSpec {
 /// demand. A `.part` file is used so interrupted downloads are never treated
 /// as a complete model.
 class LocalModelStorage {
-  LocalModelStorage({http.Client? client}) : _client = client ?? http.Client();
+  LocalModelStorage({
+    http.Client? client,
+    Future<Directory> Function()? supportDirectoryProvider,
+  }) : _client = client ?? http.Client(),
+       _supportDirectoryProvider =
+           supportDirectoryProvider ?? getApplicationSupportDirectory;
 
   final http.Client _client;
+  final Future<Directory> Function() _supportDirectoryProvider;
 
   Future<File> modelFile(LocalModelSpec model) async {
-    final directory = await getApplicationSupportDirectory();
+    final directory = await _supportDirectoryProvider();
     return File('${directory.path}/models/${model.fileName}');
   }
 
@@ -67,50 +73,51 @@ class LocalModelStorage {
     final temporary = File('${destination.path}.part');
     if (await temporary.exists()) await temporary.delete();
 
-    final uri = Uri.parse(model.downloadUri);
-    final response = await _client.send(http.Request('GET', uri));
-    if (response.statusCode != HttpStatus.ok) {
-      await response.stream.drain<void>();
-      throw HttpException(
-        'Model download failed with HTTP ${response.statusCode}.',
-        uri: uri,
-      );
-    }
-
-    final total = response.contentLength;
-    var received = 0;
-    final sink = temporary.openWrite();
     try {
-      await for (final chunk in response.stream) {
-        sink.add(chunk);
-        received += chunk.length;
-        onProgress?.call(received, total);
+      final uri = Uri.parse(model.downloadUri);
+      final response = await _client.send(http.Request('GET', uri));
+      if (response.statusCode != HttpStatus.ok) {
+        await response.stream.drain<void>();
+        throw HttpException(
+          'Model download failed with HTTP ${response.statusCode}.',
+          uri: uri,
+        );
       }
-      await sink.flush();
+
+      final total = response.contentLength;
+      var received = 0;
+      final sink = temporary.openWrite();
+      try {
+        await for (final chunk in response.stream) {
+          sink.add(chunk);
+          received += chunk.length;
+          onProgress?.call(received, total);
+        }
+        await sink.flush();
+      } finally {
+        await sink.close();
+      }
+
+      final actualLength = await temporary.length();
+      if (total != null && actualLength != total) {
+        throw const FormatException(
+          'Downloaded model size does not match the server response; please retry.',
+        );
+      }
+      if (actualLength < model.expectedBytesApprox * 0.95) {
+        throw const FormatException(
+          'Downloaded model is smaller than expected; please retry.',
+        );
+      }
+
+      // Keep any previous destination intact until the new download validates.
+      if (await destination.exists()) await destination.delete();
+      await temporary.rename(destination.path);
+      return destination;
     } catch (_) {
-      await sink.close();
       if (await temporary.exists()) await temporary.delete();
       rethrow;
     }
-    await sink.close();
-
-    final actualLength = await temporary.length();
-    if (total != null && actualLength != total) {
-      await temporary.delete();
-      throw const FormatException(
-        'Downloaded model size does not match the server response; please retry.',
-      );
-    }
-    if (actualLength < model.expectedBytesApprox * 0.95) {
-      await temporary.delete();
-      throw const FormatException(
-        'Downloaded model is smaller than expected; please retry.',
-      );
-    }
-
-    if (await destination.exists()) await destination.delete();
-    await temporary.rename(destination.path);
-    return destination;
   }
 
   Future<void> delete(LocalModelSpec model) async {
