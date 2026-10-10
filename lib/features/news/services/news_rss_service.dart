@@ -52,8 +52,14 @@ class NewsRssService {
         .map((value) => value.trim().toUpperCase())
         .firstWhere((value) => value.isNotEmpty, orElse: () => 'RU');
     final query = profile.topics
-        .map((topic) => _topicQueries[topic.toLowerCase()] ?? topic)
+        .map((topic) {
+          final normalized = topic.trim().toLowerCase();
+          return _topicQueries[normalized] ?? normalized;
+        })
+        .where((topic) => topic.isNotEmpty)
+        .toSet()
         .join(' OR ');
+    if (query.isEmpty) return const <NewsArticle>[];
     final uri = Uri.https('news.google.com', '/rss/search', {
       'q': query,
       'hl': language == 'ru' ? 'ru' : language,
