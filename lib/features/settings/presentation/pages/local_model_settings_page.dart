@@ -181,7 +181,11 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.memory, color: SystemCorePalette.green, size: 28),
+              const Icon(
+                Icons.memory,
+                color: SystemCorePalette.green,
+                size: 28,
+              ),
               const SizedBox(height: 12),
               Text(
                 _model.displayName,
@@ -193,7 +197,8 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Ориентировочный размер: ${_formatBytes(_model.expectedBytesApprox)}',
+                'Ориентировочный размер: '
+                '${_formatBytes(_model.expectedBytesApprox)}',
                 style: const TextStyle(
                   color: SystemCorePalette.muted,
                   fontSize: 11,
@@ -222,8 +227,13 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        _installed ? 'Файл модели найден' : 'Модель не загружена',
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        _installed
+                            ? 'Файл модели найден'
+                            : 'Модель не загружена',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -258,7 +268,10 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                 const SizedBox(height: 12),
                 Text(
                   _error!,
-                  style: const TextStyle(color: Colors.orangeAccent, fontSize: 11),
+                  style: const TextStyle(
+                    color: Colors.orangeAccent,
+                    fontSize: 11,
+                  ),
                 ),
               ],
               const SizedBox(height: 16),
