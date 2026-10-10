@@ -58,7 +58,9 @@ class StoredLocalLlamaProvider implements AIProvider {
   Future<LocalLlamaProvider> _initialize() async {
     LocalLlamaProvider? provider;
     try {
-      if (!await _storage.isDownloaded(_model)) {
+      final isDownloaded = await _storage.isDownloaded(_model);
+      _ensureNotDisposed();
+      if (!isDownloaded) {
         throw AIEngineException(
           AIError(
             code: AIErrorCode.invalidRequest,
@@ -68,6 +70,7 @@ class StoredLocalLlamaProvider implements AIProvider {
         );
       }
       final file = await _storage.modelFile(_model);
+      _ensureNotDisposed();
       provider = _providerFactory(file);
       await provider.loadModel();
       if (_disposed) {
