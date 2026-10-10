@@ -9,8 +9,8 @@ import 'russian_source_matcher.dart';
 /// it does not claim to perform web search or translation itself.
 class SmartTranslationService {
   const SmartTranslationService({
-    RussianSourceMatcher matcher = const RussianSourceMatcher(),
-  }) : _matcher = matcher;
+    this._matcher = const RussianSourceMatcher(),
+  });
 
   final RussianSourceMatcher _matcher;
 
