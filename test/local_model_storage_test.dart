@@ -80,10 +80,7 @@ void main() {
       supportDirectoryProvider: () async => temporaryDirectory,
     );
 
-    await expectLater(
-      storage.download(spec()),
-      throwsA(isA<HttpException>()),
-    );
+    await expectLater(storage.download(spec()), throwsA(isA<HttpException>()));
 
     final file = await storage.modelFile(spec());
     expect(await File('${file.path}.part').exists(), isFalse);
