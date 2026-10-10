@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:omni_ai/features/favorites/data/favorite_item.dart';
-import 'package:omni_ai/features/favorites/data/interest_feedback_repository.dart';
 import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
+import 'package:omni_ai/features/favorites/data/interest_feedback_repository.dart';
 import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
@@ -49,7 +49,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
   }
 
   Future<void> _removeFeedback(String topic) async {
-    final updated = await widget.feedbackRepository.removeLessInterested([topic]);
+    final updated = await widget.feedbackRepository.removeLessInterested([
+      topic,
+    ]);
     if (!mounted) return;
     setState(() => _lessInterested = updated);
     ScaffoldMessenger.of(context).showSnackBar(
