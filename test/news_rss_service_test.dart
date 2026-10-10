@@ -78,6 +78,30 @@ void main() {
     expect(articles.single.topics, contains('anime'));
   });
 
+  test('preserves the selected region so region filtering keeps RSS articles', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response.bytes(
+        utf8.encode('''<rss><channel><item>
+          <title>Анонсирован новый сезон аниме</title>
+          <link>https://publisher.example/region-anime</link>
+          <description>Новости аниме</description>
+          <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+          <source>Новости аниме</source>
+        </item></channel></rss>'''),
+        200,
+        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+      )),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: ['anime'], regions: ['ru']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.region, 'ru');
+  });
+
   test('does not make a network request when no interests are selected', () async {
     var requests = 0;
     final service = NewsRssService(
