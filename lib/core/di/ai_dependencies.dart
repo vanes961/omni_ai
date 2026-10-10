@@ -37,7 +37,7 @@ class AIDependencies {
       config: config,
       timeout: timeout,
       localModelStorage: storage,
-      _ownsLocalModelStorage: ownsLocalModelStorage,
+      ownsLocalModelStorage: ownsLocalModelStorage,
       localProvider: local,
       cloudProvider: cloud,
       router: router,
@@ -49,12 +49,12 @@ class AIDependencies {
     required this.config,
     required this.timeout,
     required this.localModelStorage,
-    required this._ownsLocalModelStorage,
+    required bool ownsLocalModelStorage,
     required this.localProvider,
     required this.cloudProvider,
     required this.router,
     required this.modeStore,
-  }) {
+  }) : _ownsLocalModelStorage = ownsLocalModelStorage {
     engine = AIEngine(
       provider: router,
       timeout: timeout,
