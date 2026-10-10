@@ -88,15 +88,16 @@ class LocalLlamaProvider implements AIProvider {
 
     var cancelled = false;
     var generationFinished = false;
-    final cancellationListener = cancellationToken.cancelled.then((_) async {
+    final cancellationListener = cancellationToken.cancelled.then(
+      (_) async {
       if (generationFinished) return;
       cancelled = true;
       try {
         await _controller.stop();
       } on Object {
         // Cancellation is best-effort; preserve the generation result/error.
-      }
-    });
+      },
+    );
 
     final prompt = <String>[
       if (request.systemInstruction?.trim().isNotEmpty ?? false)
