@@ -37,7 +37,13 @@ jobs:
         run: flutter pub get
 
       - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+        run: |
+          dart format --output=none --set-exit-if-changed lib test || {
+            echo "::group::Dart formatter output for model storage tests"
+            dart format --output=show test/local_model_storage_test.dart
+            echo "::endgroup::"
+            exit 1
+          }
 
       - name: Analyze Flutter code
         run: flutter analyze
@@ -61,4 +67,3 @@ jobs:
           path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
           retention-days: 7
-      
