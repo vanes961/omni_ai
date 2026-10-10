@@ -509,4 +509,39 @@ void main() {
     expect(requests, 0);
   });
 
+
+  test('keeps news from healthy editions when one international edition fails', () async {
+    var requests = 0;
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        requests++;
+        final region = request.url.queryParameters['gl'];
+        if (region == 'US') {
+          throw http.ClientException('Simulated unavailable edition');
+        }
+        return http.Response(
+          '''<rss><channel><item>
+            <title>Anime update from $region</title>
+            <link>https://publisher.example/anime-$region</link>
+            <description>Anime news update from the $region edition</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            <source>News source</source>
+          </item></channel></rss>''',
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetchInternational(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+
+    expect(requests, 3);
+    expect(articles, hasLength(2));
+    expect(articles.map((article) => article.region), containsAll(['ru', 'gb']));
+    expect(articles.map((article) => article.region), isNot(contains('us')));
+  });
+
 }
