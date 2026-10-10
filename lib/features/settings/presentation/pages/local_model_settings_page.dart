@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
@@ -27,7 +24,6 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
   int? _totalBytes;
   String? _error;
   String? _status;
-  Future<void>? _activeDownload;
 
   @override
   void initState() {
@@ -76,7 +72,6 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
         });
       },
     );
-    _activeDownload = task.then<void>((_) {});
     try {
       await task;
       if (!mounted) return;
@@ -91,7 +86,6 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
         _status = null;
       });
     } finally {
-      _activeDownload = null;
       if (mounted) setState(() => _downloading = false);
     }
   }
