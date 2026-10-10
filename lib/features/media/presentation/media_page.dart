@@ -103,7 +103,7 @@ class _MediaPageState extends State<MediaPage> {
               key: const ValueKey('open-favorites'),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => const FavoritesPage(),
+                  builder: (_) => FavoritesPage(),
                 ),
               ),
               icon: const Icon(Icons.favorite_border, size: 16),
