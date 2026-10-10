@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:omni_ai/core/ai_engine/models/ai_error.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_response.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
@@ -59,7 +60,13 @@ void main() {
 
         await expectLater(
           router.complete(_request, cancellationToken: token),
-          throwsA(isA<Exception>()),
+          throwsA(
+            isA<AIEngineException>().having(
+              (error) => error.error.code,
+              'error code',
+              AIErrorCode.cancelled,
+            ),
+          ),
         );
 
         expect(local.calls, 0);
