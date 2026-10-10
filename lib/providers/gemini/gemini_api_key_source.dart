@@ -15,3 +15,13 @@ class EnvironmentGeminiApiKeySource implements GeminiApiKeySource {
     return apiKey.isEmpty ? null : apiKey;
   }
 }
+
+/// Safe default for app builds: no cloud credential is bundled into the APK.
+/// Production cloud access should be supplied by a secure runtime/backend
+/// integration rather than a compile-time --dart-define value.
+class UnconfiguredGeminiApiKeySource implements GeminiApiKeySource {
+  const UnconfiguredGeminiApiKeySource();
+
+  @override
+  Future<String?> readApiKey() async => null;
+}
