@@ -7,20 +7,22 @@ import '../providers/ai_provider.dart';
 import 'local_llama_provider.dart';
 import 'local_model_storage.dart';
 
-/// Lazily initializes the installed GGUF model for local requests.
+/// Lazily initializes the bundled GGUF model for local requests.
 ///
-/// This provider never downloads a model and never forwards prompts to a
-/// remote service. The user must install the model from settings first.
+/// This provider never downloads a model or forwards prompts remotely. If the
+/// model is missing from app storage, it copies the packaged APK asset first.
 class StoredLocalLlamaProvider implements AIProvider {
   StoredLocalLlamaProvider({
     required this.storage,
     this.model = LocalModelCatalog.qwen3Small,
+    this.autoInstallBundledModel = true,
     LocalLlamaProvider Function(File modelFile)? providerFactory,
   }) : _providerFactory =
            providerFactory ?? ((file) => LocalLlamaProvider(modelFile: file));
 
   final LocalModelStorage storage;
   final LocalModelSpec model;
+  final bool autoInstallBundledModel;
   final LocalLlamaProvider Function(File modelFile) _providerFactory;
 
   LocalLlamaProvider? _provider;
@@ -56,14 +58,19 @@ class StoredLocalLlamaProvider implements AIProvider {
   Future<LocalLlamaProvider> _initialize() async {
     LocalLlamaProvider? provider;
     try {
-      final isDownloaded = await storage.isDownloaded(model);
+      var isInstalled = await storage.isDownloaded(model);
       _ensureNotDisposed();
-      if (!isDownloaded) {
+      if (!isInstalled && autoInstallBundledModel) {
+        await storage.installBundled(model);
+        _ensureNotDisposed();
+        isInstalled = await storage.isDownloaded(model);
+      }
+      if (!isInstalled) {
         throw AIEngineException(
           AIError(
             code: AIErrorCode.invalidRequest,
             message:
-                'Local model is not downloaded. Open Local AI settings and download ${model.displayName}.',
+                'Local model is not installed. Install the bundled model from Local AI settings.',
           ),
         );
       }
