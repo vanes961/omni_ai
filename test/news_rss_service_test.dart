@@ -237,4 +237,40 @@ void main() {
       throwsA(isA<http.ClientException>()),
     );
   });
+
+  test('ignores malformed RSS items and decodes escaped text safely', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response(
+        '''<rss><channel>
+          <item>
+            <title>Anime &amp; manga news</title>
+            <link>https://publisher.example/escaped</link>
+            <description>Anime &amp; manga &lt;updates&gt;</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+          </item>
+          <item>
+            <title>Anime with an invalid date</title>
+            <link>https://publisher.example/invalid-date</link>
+            <description>Anime news</description>
+            <pubDate>not-a-date</pubDate>
+          </item>
+          <item>
+            <title>Incomplete item without a closing tag
+          </item>
+        </channel></rss>''',
+        200,
+        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+      )),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.title, 'Anime & manga news');
+    expect(articles.single.summary, 'Anime & manga updates');
+    expect(articles.single.sourceName, 'publisher.example');
+  });
 }
