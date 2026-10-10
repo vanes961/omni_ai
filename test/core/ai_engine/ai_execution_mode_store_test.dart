@@ -29,8 +29,7 @@ void main() {
 }
 
 class _MemoryModeStore extends SharedPreferencesAIExecutionModeStore {
-  _MemoryModeStore()
-    : super(read: _readPlaceholder, write: _writePlaceholder);
+  _MemoryModeStore() : super(read: _readPlaceholder, write: _writePlaceholder);
 
   String? value;
   String? savedKey;
