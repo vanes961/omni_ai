@@ -30,6 +30,30 @@ void main() {
     expect(provider.requests, isEmpty);
   });
 
+  test('normalizes legacy topic aliases when selecting digest articles', () async {
+    final provider = _FakeProvider();
+    final service = NewsDigestService(engine: AIEngine(provider: provider));
+    final article = NewsArticle(
+      id: 'ai-1',
+      title: 'AI headline',
+      summary: 'A relevant AI story.',
+      sourceName: 'Test Source',
+      sourceUrl: 'https://example.com/ai',
+      publishedAt: DateTime.utc(2026, 10, 10),
+      topics: const ['artificial intelligence'],
+    );
+
+    final result = await service.createDigest(
+      profile: const NewsInterestProfile(topics: [' AI ', 'ии']),
+      articles: [article],
+    );
+
+    expect(result, 'Персональный дайджест');
+    expect(provider.requests, hasLength(1));
+    expect(provider.requests.single.prompt, contains('AI headline'));
+    expect(provider.requests.single.prompt, contains('artificial intelligence'));
+  });
+
   test('normalizes whitespace and case when matching selected topics', () async {
     final provider = _FakeProvider();
     final service = NewsDigestService(engine: AIEngine(provider: provider));
