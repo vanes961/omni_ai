@@ -37,7 +37,7 @@ class AIDependencies {
       config: config,
       timeout: timeout,
       localModelStorage: storage,
-      ownsLocalModelStorage: ownsLocalModelStorage,
+      _ownsLocalModelStorage: ownsLocalModelStorage,
       localProvider: local,
       cloudProvider: cloud,
       router: router,
