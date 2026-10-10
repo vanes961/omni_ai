@@ -75,7 +75,7 @@ class AIContextManager {
       final available = remaining - prefix.length;
       if (available <= 0) break;
       final boundedContent = content.length > available
-          ? content.substring(content.length - available)
+          ? content.substring(0, available)
           : content;
       selected.add('$prefix$boundedContent');
       remaining -= prefix.length + boundedContent.length;
