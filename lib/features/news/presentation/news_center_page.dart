@@ -318,7 +318,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (revisionAtStart != _interestRevision) return;
       await _newsCache.saveDigest(digest);
       if (revisionAtStart != _interestRevision) {
-        await _newsCache.clear();
+        // The selected topics may already have a fresh feed in the cache.
+        // A stale digest must not clear those newer articles.
+        await _newsCache.saveDigest(null);
         return;
       }
       if (!mounted) return;
