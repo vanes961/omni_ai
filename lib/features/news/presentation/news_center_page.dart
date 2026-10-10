@@ -192,7 +192,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
 
   Future<void> _refreshNews() async {
     final profile = _profile;
-    if (profile == null || _refreshingNews) return;
+    if (profile == null || _refreshingNews || _loadingNewsCache) return;
     final revisionAtStart = _interestRevision;
     if (profile.topics.isEmpty) {
       setState(() {
@@ -209,6 +209,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     try {
       final articles = await _newsService.fetch(profile);
       if (revisionAtStart != _interestRevision) return;
+      // A digest describes a specific set of articles. Never keep showing a
+      // digest generated from the previous feed after a successful refresh.
+      await _newsCache.saveDigest(null);
       await _newsCache.saveArticles(
         articles,
         selectedTopics: profile.topics,
@@ -216,6 +219,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (!mounted || revisionAtStart != _interestRevision) return;
       setState(() {
         _articles = articles;
+        _digest = null;
+        _digestError = null;
         _newsError = null;
       });
     } catch (_) {
@@ -231,7 +236,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   Future<void> _createDigest() async {
     final profile = _profile;
     final engine = widget.aiEngine;
-    if (profile == null || engine == null || _generatingDigest) return;
+    if (profile == null || engine == null || _generatingDigest || _loadingNewsCache || _refreshingNews) return;
     final revisionAtStart = _interestRevision;
     if (profile.topics.isEmpty || _articles.isEmpty) {
       setState(() => _digestError = 'Сначала выберите интересы и загрузите новости.');
@@ -475,7 +480,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               ),
               const SizedBox(height: 10),
               FilledButton.icon(
-                onPressed: _refreshingNews ? null : _refreshNews,
+                onPressed: (_refreshingNews || _loadingNewsCache) ? null : _refreshNews,
                 icon: _refreshingNews
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.refresh),
@@ -488,7 +493,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               if (widget.aiEngine != null) ...[
                 const SizedBox(height: 10),
                 FilledButton.icon(
-                  onPressed: _generatingDigest ? null : _createDigest,
+                  onPressed: (_generatingDigest || _loadingNewsCache || _refreshingNews) ? null : _createDigest,
                   icon: _generatingDigest
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.auto_awesome),
