@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
-import 'package:omni_ai/core/ai_engine/models/ai_response.dart';
-import 'package:omni_ai/core/ai_engine/providers/ai_execution_mode_store.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
@@ -67,7 +65,7 @@ class _AIChatPageState extends State<AIChatPage> {
       if (!mounted) return;
       setState(() {
         _messages.add(
-          _ChatMessage(text: response.text, isUser: false, response: response),
+          _ChatMessage(text: response.text, isUser: false),
         );
       });
     } on Object catch (error) {
@@ -194,9 +192,7 @@ class _AIChatPageState extends State<AIChatPage> {
                   child: Padding(
                     padding: EdgeInsets.all(28),
                     child: Text(
-                      'Задайте вопрос, чтобы начать.
-
-Локальный режим не переключается в облако автоматически.',
+                      'Задайте вопрос, чтобы начать.\n\nЛокальный режим не переключается в облако автоматически.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: SystemCorePalette.muted,
@@ -316,11 +312,9 @@ class _ChatMessage {
     required this.text,
     required this.isUser,
     this.isError = false,
-    this.response,
   });
 
   final String text;
   final bool isUser;
   final bool isError;
-  final AIResponse? response;
 }
