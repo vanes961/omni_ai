@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
