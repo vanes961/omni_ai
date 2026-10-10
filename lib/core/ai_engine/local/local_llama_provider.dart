@@ -6,6 +6,7 @@ import 'package:llama_flutter_android/llama_flutter_android.dart';
 import '../models/ai_error.dart';
 import '../models/ai_request.dart';
 import '../models/ai_response.dart';
+import 'qwen3_prompt_formatter.dart';
 import '../providers/ai_provider.dart';
 
 /// Local inference adapter for an already-downloaded GGUF model.
@@ -127,12 +128,10 @@ class LocalLlamaProvider implements AIProvider {
       },
     );
 
-    final prompt = <String>[
-      if (request.systemInstruction?.trim().isNotEmpty ?? false)
-        'System instruction:\n${request.systemInstruction!.trim()}',
-      'User:\n${request.prompt.trim()}',
-      'Assistant:',
-    ].join('\n\n');
+    final prompt = Qwen3PromptFormatter.format(
+      prompt: request.prompt,
+      systemInstruction: request.systemInstruction,
+    );
 
     final output = StringBuffer();
     try {
@@ -153,7 +152,7 @@ class LocalLlamaProvider implements AIProvider {
         );
       }
 
-      final text = output.toString().trim();
+      final text = Qwen3PromptFormatter.sanitize(output.toString());
       if (text.isEmpty) {
         throw const AIEngineException(
           AIError(
