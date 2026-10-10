@@ -52,9 +52,20 @@ class FavoritesRepository {
     final items = (await getAll()).toList();
     final index = items.indexWhere((saved) => saved.id == item.id);
     if (index >= 0) {
-      // Update metadata without creating a duplicate or moving categories
-      // implicitly: a category change must be an explicit user action.
-      items[index] = item;
+      // Refresh metadata but preserve the existing category. Moving an item
+      // between sections must go through the explicit move() operation.
+      final current = items[index];
+      items[index] = FavoriteItem(
+        id: item.id,
+        title: item.title,
+        category: current.category,
+        addedAt: current.addedAt,
+        description: item.description,
+        imageUrl: item.imageUrl,
+        sourceUrl: item.sourceUrl,
+        releaseDate: item.releaseDate,
+        releaseDateSourceUrl: item.releaseDateSourceUrl,
+      );
     } else {
       items.add(item);
     }
