@@ -77,6 +77,12 @@ class SharedPreferencesNewsCache {
           'region': article.region,
           'isCritical': article.isCritical,
           'isVerified': article.isVerified,
+          'contentType': article.contentType.name,
+          'videoUrl': article.videoUrl,
+          'thumbnailUrl': article.thumbnailUrl,
+          'channelName': article.channelName,
+          'releaseDate': article.releaseDate?.toIso8601String(),
+          'releaseDateSourceUrl': article.releaseDateSourceUrl,
         })
         .toList(growable: false);
     // Persist the topic marker first. If the article write fails, startup can
@@ -112,6 +118,13 @@ class SharedPreferencesNewsCache {
     }
   }
 
+  String? _safeHttpsUrl(Object? value) {
+    if (value is! String || value.trim().isEmpty) return null;
+    final uri = Uri.tryParse(value.trim());
+    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) return null;
+    return uri.toString();
+  }
+
   NewsArticle? _articleFromJson(Map<String, dynamic> json) {
     final id = json['id'];
     final title = json['title'];
@@ -141,6 +154,14 @@ class SharedPreferencesNewsCache {
     final topics = rawTopics is List
         ? rawTopics.whereType<String>().toList(growable: false)
         : const <String>[];
+    final videoUrl = _safeHttpsUrl(json['videoUrl']);
+    final thumbnailUrl = _safeHttpsUrl(json['thumbnailUrl']);
+    final releaseDateSourceUrl = _safeHttpsUrl(json['releaseDateSourceUrl']);
+    final releaseDateRaw = json['releaseDate'];
+    final parsedReleaseDate = releaseDateRaw is String
+        ? DateTime.tryParse(releaseDateRaw)
+        : null;
+
     return NewsArticle(
       id: id,
       title: title,
@@ -153,6 +174,16 @@ class SharedPreferencesNewsCache {
       region: json['region'] is String ? json['region'] as String : null,
       isCritical: json['isCritical'] == true,
       isVerified: json['isVerified'] == true,
+      contentType: NewsContentType.fromJson(json['contentType']),
+      videoUrl: videoUrl,
+      thumbnailUrl: thumbnailUrl,
+      channelName: json['channelName'] is String
+          ? (json['channelName'] as String).trim()
+          : null,
+      releaseDate: parsedReleaseDate != null && releaseDateSourceUrl != null
+          ? parsedReleaseDate
+          : null,
+      releaseDateSourceUrl: releaseDateSourceUrl,
     );
   }
 }
