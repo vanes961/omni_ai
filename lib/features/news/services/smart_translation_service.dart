@@ -1,4 +1,5 @@
 import '../models/news_article.dart';
+import 'russian_source_matcher.dart';
 
 /// Decides whether a foreign article needs translation or can reuse an
 /// already discovered Russian source.
@@ -7,11 +8,16 @@ import '../models/news_article.dart';
 /// validates the candidate language and chooses the next processing status;
 /// it does not claim to perform web search or translation itself.
 class SmartTranslationService {
-  const SmartTranslationService();
+  const SmartTranslationService({
+    RussianSourceMatcher matcher = const RussianSourceMatcher(),
+  }) : _matcher = matcher;
+
+  final RussianSourceMatcher _matcher;
 
   Future<LocalizedNewsResult> process(
     NewsArticle article, {
     NewsArticle? russianMatch,
+    Iterable<NewsArticle> russianCandidates = const <NewsArticle>[],
   }) async {
     if (article.language.toLowerCase() == 'ru') {
       return LocalizedNewsResult(
@@ -20,10 +26,13 @@ class SmartTranslationService {
       );
     }
 
-    if (russianMatch != null &&
-        russianMatch.language.toLowerCase() == 'ru') {
+    final matchedRussianArticle =
+        russianMatch != null && russianMatch.language.toLowerCase() == 'ru'
+        ? russianMatch
+        : _matcher.findBestMatch(article, russianCandidates)?.article;
+    if (matchedRussianArticle != null) {
       return LocalizedNewsResult(
-        article: russianMatch,
+        article: matchedRussianArticle,
         originalArticle: article,
         status: TranslationStatus.foundRussianSource,
       );
