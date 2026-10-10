@@ -85,9 +85,10 @@ class SharedPreferencesNewsCache {
           'releaseDateSourceUrl': article.releaseDateSourceUrl,
         })
         .toList(growable: false);
-    // Persist the topic marker first. If the article write fails, startup can
-    // detect the topic mismatch and discard the old feed rather than showing
-    // articles that belong to a previous selection.
+    // Remove the previous payload before changing its topic marker. Otherwise,
+    // if the new article write fails, the new marker could incorrectly make the
+    // previous feed look valid on the next launch.
+    await _store.remove(articlesKey);
     await _store.write(topicsKey, jsonEncode(_normalizeTopics(selectedTopics)));
     await _store.write(articlesKey, jsonEncode(encoded));
   }
