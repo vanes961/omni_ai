@@ -125,9 +125,7 @@ class _AIChatPageState extends State<AIChatPage> {
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
           decoration: const BoxDecoration(
             color: SystemCorePalette.panel,
-            border: Border(
-              bottom: BorderSide(color: Colors.white12),
-            ),
+            border: Border(bottom: BorderSide(color: Colors.white12)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,8 +163,8 @@ class _AIChatPageState extends State<AIChatPage> {
                     _modeLoading
                         ? 'ЗАГРУЗКА РЕЖИМА...'
                         : mode == AIExecutionMode.local
-                            ? 'LOCAL AI — ЗАПРОСЫ ОСТАЮТСЯ НА УСТРОЙСТВЕ'
-                            : 'CLOUD AI — ЯВНО ВЫБРАННЫЙ ОБЛАЧНЫЙ РЕЖИМ',
+                        ? 'LOCAL AI — ЗАПРОСЫ ОСТАЮТСЯ НА УСТРОЙСТВЕ'
+                        : 'CLOUD AI — ЯВНО ВЫБРАННЫЙ ОБЛАЧНЫЙ РЕЖИМ',
                     style: const TextStyle(
                       color: SystemCorePalette.green,
                       fontSize: 10,
@@ -246,8 +244,8 @@ class _AIChatPageState extends State<AIChatPage> {
                             color: message.isError
                                 ? Colors.orangeAccent.withValues(alpha: 0.6)
                                 : message.isUser
-                                    ? SystemCorePalette.green.withValues(alpha: 0.4)
-                                    : Colors.white12,
+                                ? SystemCorePalette.green.withValues(alpha: 0.4)
+                                : Colors.white12,
                           ),
                         ),
                         child: SelectableText(
@@ -285,9 +283,7 @@ class _AIChatPageState extends State<AIChatPage> {
                   decoration: const InputDecoration(
                     hintText: 'Напишите сообщение...',
                     isDense: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.zero),
                   ),
                 ),
               ),
