@@ -43,6 +43,28 @@ void main() {
   });
 
 
+  test('clearing a stale digest preserves the current article feed', () async {
+    final store = _MemoryStore();
+    final cache = SharedPreferencesNewsCache(store: store);
+    final article = NewsArticle(
+      id: 'current-1',
+      title: 'Current topic article',
+      summary: 'Fresh feed for the currently selected topics.',
+      sourceName: 'Example',
+      sourceUrl: 'https://example.com/current',
+      publishedAt: DateTime.utc(2026, 10, 10, 12),
+      topics: const ['technology'],
+    );
+    await cache.saveArticles([article], selectedTopics: const ['technology']);
+    await cache.saveDigest('Digest generated for a previous feed');
+
+    await cache.saveDigest(null);
+
+    expect(await cache.loadDigest(), isNull);
+    expect((await cache.loadArticles()).map((item) => item.id), ['current-1']);
+    expect(await cache.loadTopics(), ['technology']);
+  });
+
   test('clears a digest when replacing the cached article feed', () async {
     final store = _MemoryStore();
     final cache = SharedPreferencesNewsCache(store: store);
