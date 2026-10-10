@@ -7,7 +7,6 @@ import 'package:omni_ai/features/news/data/shared_preferences_news_interest_repo
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/models/news_article.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
-import 'package:omni_ai/features/news/services/news_relevance_filter.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class NewsCenterPage extends StatefulWidget {
