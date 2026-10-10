@@ -315,7 +315,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         addedAt: DateTime.now(),
         description: article.summary,
         imageUrl: article.thumbnailUrl,
-        sourceUrl: article.videoUrl.isNotEmpty
+        sourceUrl: (article.videoUrl?.isNotEmpty ?? false)
             ? article.videoUrl
             : article.sourceUrl,
         releaseDate: article.releaseDate,
