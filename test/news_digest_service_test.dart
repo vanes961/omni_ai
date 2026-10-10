@@ -30,6 +30,20 @@ void main() {
     expect(provider.requests, isEmpty);
   });
 
+  test('normalizes whitespace and case when matching selected topics', () async {
+    final provider = _FakeProvider();
+    final service = NewsDigestService(engine: AIEngine(provider: provider));
+
+    final result = await service.createDigest(
+      profile: const NewsInterestProfile(topics: [' Anime ']),
+      articles: [_article('anime')],
+    );
+
+    expect(result, 'Персональный дайджест');
+    expect(provider.requests, hasLength(1));
+    expect(provider.requests.single.prompt, contains('Anime headline'));
+  });
+
   test('does not call AI when the article list is empty', () async {
     final provider = _FakeProvider();
     final service = NewsDigestService(engine: AIEngine(provider: provider));
