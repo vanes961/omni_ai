@@ -87,9 +87,15 @@ class LocalLlamaProvider implements AIProvider {
     }
 
     var cancelled = false;
+    var generationFinished = false;
     final cancellationListener = cancellationToken.cancelled.then((_) async {
+      if (generationFinished) return;
       cancelled = true;
-      await _controller.stop();
+      try {
+        await _controller.stop();
+      } on Object {
+        // Cancellation is best-effort; preserve the generation result/error.
+      }
     });
 
     final prompt = <String>[
@@ -158,8 +164,8 @@ class LocalLlamaProvider implements AIProvider {
         ),
       );
     } finally {
-      // Do not await this future: it remains pending when no cancellation
-      // occurs.
+      generationFinished = true;
+      // This listener intentionally remains pending until cancellation.
       unawaited(cancellationListener);
     }
   }
