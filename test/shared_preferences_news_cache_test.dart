@@ -134,6 +134,40 @@ void main() {
     expect(restored.single.title, 'First copy');
   });
 
+  test('writes topic marker before articles to detect interrupted cache saves', () async {
+    final store = _MemoryStore();
+    final cache = SharedPreferencesNewsCache(store: store);
+    final oldArticle = NewsArticle(
+      id: 'old-1',
+      title: 'Old topic article',
+      summary: 'Old cached content.',
+      sourceName: 'Example',
+      sourceUrl: 'https://example.com/old',
+      publishedAt: DateTime.utc(2026, 10, 9, 12),
+      topics: const ['anime'],
+    );
+    await cache.saveArticles([oldArticle], selectedTopics: const ['anime']);
+    final oldPayload = store.values[SharedPreferencesNewsCache.articlesKey];
+    store.failWriteKey = SharedPreferencesNewsCache.articlesKey;
+    final newArticle = NewsArticle(
+      id: 'new-1',
+      title: 'New topic article',
+      summary: 'New content.',
+      sourceName: 'Example',
+      sourceUrl: 'https://example.com/new',
+      publishedAt: DateTime.utc(2026, 10, 10, 12),
+      topics: const ['technology'],
+    );
+
+    await expectLater(
+      cache.saveArticles([newArticle], selectedTopics: const ['technology']),
+      throwsStateError,
+    );
+
+    expect(store.values[SharedPreferencesNewsCache.articlesKey], oldPayload);
+    expect(await cache.loadTopics(), ['technology']);
+  });
+
   test('drops malformed cached interests', () async {
     final store = _MemoryStore()
       ..values[SharedPreferencesNewsCache.topicsKey] = '{"topic":"anime"}';
@@ -155,12 +189,14 @@ void main() {
 
 class _MemoryStore implements NewsCacheStringStore {
   final values = <String, String>{};
+  String? failWriteKey;
 
   @override
   Future<String?> read(String key) async => values[key];
 
   @override
   Future<void> write(String key, String value) async {
+    if (key == failWriteKey) throw StateError('Simulated storage failure.');
     values[key] = value;
   }
 
