@@ -8,8 +8,8 @@ import 'package:omni_ai/features/run_history/data/shared_preferences_run_history
 import 'package:omni_ai/features/run_history/repositories/run_history_repository.dart';
 import 'package:omni_ai/features/system_core/services/ai_process_orchestrator.dart';
 import 'package:omni_ai/features/system_core/services/system_core_process_service.dart';
-import 'package:omni_ai/providers/gemini/gemini_api_config.dart';
-import 'package:omni_ai/providers/gemini/gemini_api_key_source.dart';
+import 'package:omni_ai/providers/openrouter/openrouter_api_config.dart';
+import 'package:omni_ai/providers/openrouter/openrouter_api_key_source.dart';
 
 /// The application's manual dependency-composition root.
 ///
@@ -17,8 +17,8 @@ import 'package:omni_ai/providers/gemini/gemini_api_key_source.dart';
 /// in by callers remain caller-owned and are not disposed by this object.
 class AppDependencies {
   factory AppDependencies({
-    GeminiApiKeySource? apiKeySource,
-    GeminiApiConfig geminiConfig = const GeminiApiConfig(),
+    OpenRouterApiKeySource? apiKeySource,
+    OpenRouterApiConfig openRouterConfig = const OpenRouterApiConfig(),
     http.Client? httpClient,
     Duration aiTimeout = const Duration(seconds: 30),
     SystemCoreProcessService? processService,
@@ -36,7 +36,7 @@ class AppDependencies {
     final storage = localModelStorage ?? LocalModelStorage();
     final ai = AIDependencies(
       apiKeySource: apiKeySource,
-      config: geminiConfig,
+      config: openRouterConfig,
       httpClient: httpClient,
       timeout: aiTimeout,
       localModelStorage: storage,
