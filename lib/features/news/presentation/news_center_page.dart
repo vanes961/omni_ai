@@ -80,13 +80,22 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   Future<void> _loadNewsCache() async {
     final revisionAtStart = _interestRevision;
     try {
+      final profile = await _profileFuture;
       final cached = await Future.wait<Object?>([
         _newsCache.loadArticles(),
         _newsCache.loadDigest(),
+        _newsCache.loadTopics(),
       ]);
+      final savedTopics = cached[2] as List<String>?;
+      final selectedTopics = _normalizeTopics(profile.topics);
+      final cacheMatchesProfile = savedTopics != null &&
+          _sameTopics(savedTopics, selectedTopics);
+      if (!cacheMatchesProfile) {
+        await _newsCache.clear();
+      }
       if (!mounted) return;
       setState(() {
-        if (revisionAtStart == _interestRevision) {
+        if (revisionAtStart == _interestRevision && cacheMatchesProfile) {
           _articles = cached[0] as List<NewsArticle>;
           _digest = cached[1] as String?;
         }
@@ -95,6 +104,26 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     } catch (_) {
       if (mounted) setState(() => _loadingNewsCache = false);
     }
+  }
+
+  List<String> _normalizeTopics(List<String> topics) {
+    final normalized = topics
+        .map((topic) => topic.trim().toLowerCase())
+        .where((topic) => topic.isNotEmpty)
+        .toSet()
+        .toList();
+    normalized.sort();
+    return normalized;
+  }
+
+  bool _sameTopics(List<String> first, List<String> second) {
+    final normalizedFirst = _normalizeTopics(first);
+    final normalizedSecond = _normalizeTopics(second);
+    if (normalizedFirst.length != normalizedSecond.length) return false;
+    for (var i = 0; i < normalizedFirst.length; i++) {
+      if (normalizedFirst[i] != normalizedSecond[i]) return false;
+    }
+    return true;
   }
 
   Future<void> _loadReminderSettings() async {
@@ -180,7 +209,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     try {
       final articles = await _newsService.fetch(profile);
       if (revisionAtStart != _interestRevision) return;
-      await _newsCache.saveArticles(articles);
+      await _newsCache.saveArticles(
+        articles,
+        selectedTopics: profile.topics,
+      );
       if (!mounted || revisionAtStart != _interestRevision) return;
       setState(() {
         _articles = articles;
@@ -296,8 +328,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _digest = null;
       _digestError = null;
     });
-    unawaited(_newsCache.saveArticles(const []));
-    unawaited(_newsCache.saveDigest(null));
+    unawaited(_newsCache.clear());
   }
 
   @override
