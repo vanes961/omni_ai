@@ -39,6 +39,11 @@ void main() {
       );
     });
 
+    test('removes a role label when it starts the generated response', () {
+      expect(Qwen3PromptFormatter.sanitize('User: Это ответ'), 'Это ответ');
+      expect(Qwen3PromptFormatter.sanitize('assistant: Готово'), 'Готово');
+    });
+
     test('preserves ordinary multi-line response text', () {
       expect(
         Qwen3PromptFormatter.sanitize('Первая строка.\nВторая строка.'),
