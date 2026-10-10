@@ -110,29 +110,19 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
       _receivedBytes = 0;
       _totalBytes = null;
       _error = null;
-      _status = 'Загрузка модели… Не закрывайте приложение надолго.';
+      _status = 'Установка встроенной модели из APK… Интернет не нужен.';
     });
-    final task = widget.storage.download(
-      _model,
-      onProgress: (received, total) {
-        if (!mounted) return;
-        setState(() {
-          _receivedBytes = received;
-          _totalBytes = total;
-        });
-      },
-    );
     try {
-      await task;
+      await widget.storage.installBundled(_model);
       if (!mounted) return;
       setState(() {
         _installed = true;
-        _status = 'Модель загружена и проверена по размеру файла.';
+        _status = 'Встроенная модель скопирована и проверена. Интернет не нужен.';
       });
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = 'Загрузка не завершена: $error';
+        _error = 'Не удалось установить встроенную модель: $error';
         _status = null;
       });
     } finally {
@@ -148,7 +138,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
         title: const Text('Удалить локальную модель?'),
         content: const Text(
           'Файл модели будет удалён из хранилища приложения. '
-          'Его можно будет загрузить снова.',
+          'Его можно будет восстановить из встроенного файла APK без интернета.',
         ),
         actions: [
           TextButton(
@@ -214,9 +204,9 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
         ),
         const SizedBox(height: 8),
         const Text(
-          'Файл модели загружается отдельно от APK и хранится в закрытой '
-          'папке приложения. Само наличие файла ещё не означает, что '
-          'генерация уже подключена к основному чату.',
+          'Модель включена в APK и копируется в закрытую папку приложения при '
+          'установке. После этого её можно запускать без интернета; '
+          'само наличие файла ещё не гарантирует подключение генерации к чату.',
           style: TextStyle(color: SystemCorePalette.muted, fontSize: 12),
         ),
         if (widget.aiDependencies != null) ...[
@@ -321,7 +311,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
               ),
               const SizedBox(height: 4),
               const Text(
-                'Формат GGUF · Q4_K_M · требуется интернет для загрузки',
+                'Формат GGUF · Q4_K_M · модель встроена в APK · интернет не нужен',
                 style: TextStyle(color: SystemCorePalette.muted, fontSize: 11),
               ),
               const SizedBox(height: 16),
@@ -401,7 +391,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.download),
-                  label: Text(_downloading ? 'ЗАГРУЗКА…' : 'ЗАГРУЗИТЬ МОДЕЛЬ'),
+                  label: Text(_downloading ? 'УСТАНОВКА…' : 'УСТАНОВИТЬ МОДЕЛЬ ИЗ APK'),
                 ),
               ),
               const SizedBox(height: 8),
@@ -429,9 +419,8 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
         ),
         const SizedBox(height: 18),
         const Text(
-          'Важно: размер проверяется по данным сервера и ожидаемому объёму, '
-          'но криптографическая подпись модели пока не проверяется. '
-          'Загрузка не использует облачный AI API.',
+          'Модель в APK проверяется по ожидаемому размеру и SHA-256 при копировании. '
+          'Сетевой загрузки модели и облачного AI API для этого не требуется.',
           style: TextStyle(color: SystemCorePalette.muted, fontSize: 11),
         ),
       ],
