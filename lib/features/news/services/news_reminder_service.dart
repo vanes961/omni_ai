@@ -30,7 +30,7 @@ class NewsReminderService {
     _initialized = true;
   }
 
-  Future<(bool morning, bool evening)> loadSettings() async {
+  Future<({bool morning, bool evening})> loadSettings() async {
     final preferences = await SharedPreferences.getInstance();
     return (
       morning: preferences.getBool(_morningKey) ?? false,
