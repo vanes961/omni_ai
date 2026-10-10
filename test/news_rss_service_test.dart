@@ -136,6 +136,45 @@ void main() {
     expect(articles.single.region, 'ru');
   });
 
+  test('ignores RSS items with invalid links or missing publication dates', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response(
+        '''<rss><channel>
+          <item>
+            <title>Anime without a publication date</title>
+            <link>https://publisher.example/no-date</link>
+            <description>Anime news</description>
+            <source>Anime News</source>
+          </item>
+          <item>
+            <title>Anime with an unsafe link</title>
+            <link>javascript:alert(1)</link>
+            <description>Anime news</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            <source>Anime News</source>
+          </item>
+          <item>
+            <title>Valid anime publication</title>
+            <link>https://publisher.example/valid-anime</link>
+            <description>Anime news</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            <source>Anime News</source>
+          </item>
+        </channel></rss>''',
+        200,
+        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+      )),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.sourceUrl, 'https://publisher.example/valid-anime');
+  });
+
   test('does not make a network request when no interests are selected', () async {
     var requests = 0;
     final service = NewsRssService(
