@@ -2,6 +2,8 @@ abstract interface class GeminiApiKeySource {
   Future<String?> readApiKey();
 }
 
+/// Development/test only: values supplied via --dart-define are embedded
+/// in the compiled application and must not be used for production secrets.
 class EnvironmentGeminiApiKeySource implements GeminiApiKeySource {
   const EnvironmentGeminiApiKeySource({
     this._apiKey = const String.fromEnvironment('GEMINI_API_KEY'),
