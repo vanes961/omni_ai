@@ -9,6 +9,7 @@ import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/models/news_article.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
 import 'package:omni_ai/features/news/services/news_digest_service.dart';
+import 'package:omni_ai/features/news/services/news_reminder_service.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class NewsCenterPage extends StatefulWidget {
@@ -48,6 +49,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _generatingDigest = false;
   String? _digest;
   String? _digestError;
+  final NewsReminderService _reminderService = NewsReminderService();
+  bool _morningReminder = false;
+  bool _eveningReminder = false;
+  bool _loadingReminderSettings = true;
+  bool _updatingReminder = false;
 
   @override
   void initState() {
@@ -56,6 +62,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     _repository =
         widget.repository ?? SharedPreferencesNewsInterestRepository();
     _profileFuture = _repository.load();
+    unawaited(_loadReminderSettings());
   }
 
   @override
@@ -63,6 +70,51 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     if (_ownsRepository) unawaited(_repository.dispose());
     _newsService.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadReminderSettings() async {
+    try {
+      final settings = await _reminderService.loadSettings();
+      if (!mounted) return;
+      setState(() {
+        _morningReminder = settings.morning;
+        _eveningReminder = settings.evening;
+        _loadingReminderSettings = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingReminderSettings = false);
+    }
+  }
+
+  Future<void> _setReminder({required bool morning, required bool enabled}) async {
+    if (_updatingReminder) return;
+    setState(() => _updatingReminder = true);
+    try {
+      final saved = morning
+          ? await _reminderService.setMorningEnabled(enabled)
+          : await _reminderService.setEveningEnabled(enabled);
+      if (!mounted) return;
+      setState(() {
+        if (saved) {
+          if (morning) {
+            _morningReminder = enabled;
+          } else {
+            _eveningReminder = enabled;
+          }
+          _status = enabled
+              ? 'Напоминание включено. Время указано по часовому поясу устройства.'
+              : 'Напоминание отключено.';
+        } else {
+          _status = 'Разрешение на уведомления не выдано. Разреши уведомления в настройках Android.';
+        }
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _status = 'Не удалось настроить уведомление. Проверь разрешения Android.');
+      }
+    } finally {
+      if (mounted) setState(() => _updatingReminder = false);
+    }
   }
 
   Future<void> _save() async {
@@ -302,7 +354,49 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               const Divider(color: Colors.white12),
               const SizedBox(height: 12),
               const Text(
+                'РАСПИСАНИЕ ДАЙДЖЕСТА',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Напоминания по местному времени. По нажатию открой приложение, обнови ленту и создай дайджест. Само уведомление не запускает фоновую загрузку или генерацию ИИ.',
+                style: TextStyle(color: Colors.white70, height: 1.4),
+              ),
+              if (_loadingReminderSettings)
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: LinearProgressIndicator(),
+                )
+              else ...[
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Утреннее напоминание — 08:00'),
+                  subtitle: const Text('Персональные новости на начало дня'),
+                  value: _morningReminder,
+                  onChanged: _updatingReminder
+                      ? null
+                      : (value) => _setReminder(morning: true, enabled: value),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Вечернее напоминание — 18:00'),
+                  subtitle: const Text('Обновить новости ещё раз за день'),
+                  value: _eveningReminder,
+                  onChanged: _updatingReminder
+                      ? null
+                      : (value) => _setReminder(morning: false, enabled: value),
+                ),
+              ],
+              const SizedBox(height: 28),
+              const Divider(color: Colors.white12),
+              const SizedBox(height: 12),
+              const Text(
                 'ЛЕНТА НОВОСТЕЙ',
+
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
