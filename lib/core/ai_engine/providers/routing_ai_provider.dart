@@ -13,21 +13,19 @@ enum AIExecutionMode { local, cloud }
 /// device when local inference is unavailable.
 class RoutingAIProvider implements AIProvider {
   RoutingAIProvider({
-    required AIProvider localProvider,
-    required AIProvider cloudProvider,
+    required this.localProvider,
+    required this.cloudProvider,
     AIExecutionMode initialMode = AIExecutionMode.local,
-  }) : _localProvider = localProvider,
-       _cloudProvider = cloudProvider,
-       mode = initialMode;
+  }) : mode = initialMode;
 
-  final AIProvider _localProvider;
-  final AIProvider _cloudProvider;
+  final AIProvider localProvider;
+  final AIProvider cloudProvider;
   AIExecutionMode mode;
 
   @override
   String get id => switch (mode) {
-    AIExecutionMode.local => _localProvider.id,
-    AIExecutionMode.cloud => _cloudProvider.id,
+    AIExecutionMode.local => localProvider.id,
+    AIExecutionMode.cloud => cloudProvider.id,
   };
 
   @override
@@ -43,8 +41,8 @@ class RoutingAIProvider implements AIProvider {
 
     // Select once for this request; never fall back to the other provider.
     final selected = switch (mode) {
-      AIExecutionMode.local => _localProvider,
-      AIExecutionMode.cloud => _cloudProvider,
+      AIExecutionMode.local => localProvider,
+      AIExecutionMode.cloud => cloudProvider,
     };
     return selected.complete(request, cancellationToken: cancellationToken);
   }
