@@ -10,6 +10,7 @@ import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/models/news_article.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
 import 'package:omni_ai/features/news/services/news_digest_service.dart';
+import 'package:omni_ai/features/news/services/smart_translation_service.dart';
 import 'package:omni_ai/features/news/services/news_reminder_service.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
@@ -44,6 +45,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _saving = false;
   String? _status;
   final NewsRssService _newsService = NewsRssService();
+  final SmartTranslationService _smartTranslationService =
+      const SmartTranslationService();
   final SharedPreferencesNewsCache _newsCache = SharedPreferencesNewsCache();
   bool _loadingNewsCache = true;
   int _interestRevision = 0;
@@ -209,7 +212,25 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     try {
       // Search Russian and English editions, while keeping Russian as the
       // app's output language. Feed locale is not the article's geography.
-      final articles = await _newsService.fetchInternational(profile);
+      final fetchedArticles = await _newsService.fetchInternational(profile);
+      if (revisionAtStart != _interestRevision) return;
+      // Reuse a clearly matching Russian edition when both versions already
+      // exist in the collected RSS candidates. Unmatched foreign articles are
+      // retained; this step does not claim to translate or search the web.
+      final russianCandidates = fetchedArticles
+          .where((article) => article.language.toLowerCase() == 'ru')
+          .toList(growable: false);
+      final articles = <NewsArticle>[];
+      for (final article in fetchedArticles) {
+        final localized = await _smartTranslationService.process(
+          article,
+          russianCandidates: russianCandidates,
+        );
+        if (localized.status != TranslationStatus.foundRussianSource ||
+            article.language.toLowerCase() == 'ru') {
+          articles.add(article);
+        }
+      }
       if (revisionAtStart != _interestRevision) return;
       // A digest describes a specific set of articles. Never keep showing a
       // digest generated from the previous feed after a successful refresh.
