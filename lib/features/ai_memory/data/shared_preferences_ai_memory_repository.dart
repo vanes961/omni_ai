@@ -86,10 +86,10 @@ class SharedPreferencesAIMemoryRepository implements AIMemoryRepository {
     return _serialize(() async {
       if (_disposed) return;
       final records = await _readMemories();
-      if (!records.removeWhere((memory) => memory.id == id).isNegative) {
-        // The count is not needed; the collection is persisted below only when
-        // an item was actually removed.
-      }
+      final previousLength = records.length;
+      records.removeWhere((memory) => memory.id == id);
+      if (records.length == previousLength) return;
+      await _writeMemories(records);
     });
   }
 
