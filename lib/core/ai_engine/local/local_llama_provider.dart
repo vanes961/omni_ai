@@ -46,22 +46,27 @@ class LocalLlamaProvider implements AIProvider {
     if (_generating) {
       throw StateError('Cannot load a model while generation is running.');
     }
-    if (!await modelFile.exists()) {
-      throw FileSystemException(
-        'Local model file does not exist.',
-        modelFile.path,
-      );
-    }
 
+    // Set the lock before the first await so concurrent callers cannot both
+    // pass the guard while the filesystem check is in progress.
     _loading = true;
     try {
+      if (!await modelFile.exists()) {
+        throw FileSystemException(
+          'Local model file does not exist.',
+          modelFile.path,
+        );
+      }
+      _ensureNotDisposed();
       if (await _controller.isModelLoaded()) return;
+      _ensureNotDisposed();
       await _controller.loadModel(
         modelPath: modelFile.path,
         threads: threads,
         contextSize: contextSize,
         gpuLayers: gpuLayers,
       );
+      _ensureNotDisposed();
     } finally {
       _loading = false;
     }
@@ -93,13 +98,14 @@ class LocalLlamaProvider implements AIProvider {
         ),
       );
     }
+    _ensureNotDisposed();
     // Recheck after the await: another request may have entered while the
     // controller was checking its state.
-    if (_generating) {
+    if (_generating || _loading) {
       throw const AIEngineException(
         AIError(
           code: AIErrorCode.provider,
-          message: 'A local generation is already in progress.',
+          message: 'Local inference is already in progress.',
           retryable: true,
         ),
       );
