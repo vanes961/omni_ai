@@ -24,12 +24,12 @@ void main() {
   });
 
   LocalModelSpec spec({int expectedBytes = 10}) => LocalModelSpec(
-    id: 'test-model',
-    displayName: 'Test model',
-    fileName: 'test.gguf',
-    downloadUri: 'https://example.test/test.gguf',
-    expectedBytesApprox: expectedBytes,
-  );
+        id: 'test-model',
+        displayName: 'Test model',
+        fileName: 'test.gguf',
+        downloadUri: 'https://example.test/test.gguf',
+        expectedBytesApprox: expectedBytes,
+      );
 
   test('downloads and atomically installs a complete model', () async {
     final bytes = Uint8List.fromList(List<int>.generate(10, (i) => i));
