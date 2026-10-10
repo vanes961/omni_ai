@@ -100,7 +100,7 @@ class NewsRssService {
       final normalized = ' ${title.toLowerCase()} ${text.toLowerCase()} ';
       final topics = _topicKeywords.entries
           .where((entry) => entry.value.any(
-                (keyword) => normalized.contains(keyword.toLowerCase()),
+                (keyword) => _containsKeyword(normalized, keyword),
               ))
           .map((entry) => entry.key)
           .toList(growable: false);
@@ -118,6 +118,19 @@ class NewsRssService {
       ));
     }
     return result;
+  }
+
+  bool _containsKeyword(String text, String keyword) {
+    final normalizedKeyword = keyword.toLowerCase();
+    // Short Cyrillic abbreviations such as «ИИ» must match as whole words;
+    // substring matching would incorrectly classify «России» as AI news.
+    if (normalizedKeyword == 'ии') {
+      return RegExp(
+        r'(^|[\\s.,!?()\\[\\]{}:;"\'«»—-])ии([\\s.,!?()\\[\\]{}:;"\'«»—-]|$)',
+        caseSensitive: false,
+      ).hasMatch(text);
+    }
+    return text.contains(normalizedKeyword);
   }
 
   DateTime? _parseDate(String value) {
