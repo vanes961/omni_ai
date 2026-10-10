@@ -10,6 +10,7 @@ import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/models/news_article.dart';
 import 'package:omni_ai/features/favorites/data/favorite_item.dart';
 import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
+import 'package:omni_ai/features/favorites/data/interest_feedback_repository.dart';
 import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
 import 'package:omni_ai/features/news/services/news_digest_service.dart';
@@ -49,6 +50,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   String? _status;
   final NewsRssService _newsService = NewsRssService();
   final FavoritesRepository _favoritesRepository = FavoritesRepository();
+  final InterestFeedbackRepository _feedbackRepository = InterestFeedbackRepository();
+  Set<String> _lessInterested = <String>{};
   final FavoriteInterestAnalytics _favoriteAnalytics =
       const FavoriteInterestAnalytics();
   final NewsSourceLocalizationService _sourceLocalizationService =
@@ -97,10 +100,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       ]);
       final savedTopics = cached[2] as List<String>?;
       final favorites = await _favoritesRepository.getAll();
+      _lessInterested = await _feedbackRepository.loadLessInterested();
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
       final cachedArticles = _favoriteAnalytics.rankNews(
         (cached[0] as List<NewsArticle>),
         favoriteProfile,
+        lessInterested: _lessInterested,
       );
       final selectedTopics = _normalizeTopics(profile.topics);
       final cacheMatchesProfile = savedTopics != null &&
@@ -232,8 +237,13 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         fetchedArticles,
       );
       final favorites = await _favoritesRepository.getAll();
+      _lessInterested = await _feedbackRepository.loadLessInterested();
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
-      final rankedArticles = _favoriteAnalytics.rankNews(articles, favoriteProfile);
+      final rankedArticles = _favoriteAnalytics.rankNews(
+        articles,
+        favoriteProfile,
+        lessInterested: _lessInterested,
+      );
       if (revisionAtStart != _interestRevision) return;
       // A digest describes a specific set of articles. Never keep showing a
       // digest generated from the previous feed after a successful refresh.
@@ -316,6 +326,30 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     } finally {
       if (mounted) setState(() => _generatingDigest = false);
     }
+  }
+
+  Future<void> _seeLessOf(NewsArticle article) async {
+    final topics = article.topics
+        .map((topic) => topic.trim().toLowerCase())
+        .where((topic) => topic.length >= 2)
+        .toSet();
+    if (topics.isEmpty) {
+      topics.addAll(_favoriteAnalytics.feedbackTermsFor(article).take(3));
+    }
+    if (topics.isEmpty) return;
+    final updated = await _feedbackRepository.addLessInterested(topics);
+    final favorites = await _favoritesRepository.getAll();
+    final profile = _favoriteAnalytics.analyze(favorites);
+    if (!mounted) return;
+    setState(() {
+      _lessInterested = updated;
+      _articles = _favoriteAnalytics.rankNews(
+        _articles,
+        profile,
+        lessInterested: _lessInterested,
+      );
+      _status = 'Учтено: будем реже поднимать похожие материалы.';
+    });
   }
 
   Future<void> _saveTrailer(NewsArticle article) async {
@@ -639,6 +673,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                     fontSize: 12,
                                   ),
                                 ),
+                              ),
+                              IconButton(
+                                tooltip: 'Показывать меньше похожего',
+                                onPressed: () => _seeLessOf(article),
+                                icon: const Icon(Icons.thumb_down_alt_outlined, size: 19),
                               ),
                               if (article.contentType == NewsContentType.trailer)
                                 IconButton(
