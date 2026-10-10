@@ -26,6 +26,28 @@ void main() {
     expect(result.originalArticle, same(original));
   });
 
+  test('finds a Russian source from provided candidates', () async {
+    final original = _article(
+      language: 'en',
+      id: 'original',
+      title: 'Nintendo Switch 2 release date revealed',
+    );
+    final russian = _article(
+      language: 'ru',
+      id: 'russian',
+      title: 'Раскрыта дата выхода Nintendo Switch 2',
+    );
+
+    final result = await service.process(
+      original,
+      russianCandidates: [russian],
+    );
+
+    expect(result.status, TranslationStatus.foundRussianSource);
+    expect(result.article, same(russian));
+    expect(result.originalArticle, same(original));
+  });
+
   test('requests translation when no Russian match is available', () async {
     final original = _article(language: 'en');
 
@@ -54,10 +76,11 @@ void main() {
 NewsArticle _article({
   String id = 'news-1',
   required String language,
+  String title = 'Example headline',
 }) {
   return NewsArticle(
     id: id,
-    title: 'Example headline',
+    title: title,
     summary: 'Example summary',
     sourceName: 'Example source',
     sourceUrl: 'https://example.com/$id',
