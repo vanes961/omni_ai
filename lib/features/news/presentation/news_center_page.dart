@@ -151,8 +151,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // Cache restoration is best-effort. If storage is unavailable or the
       // cached payload cannot be read, still attempt a fresh feed rather than
       // leaving users with a blank screen until they manually tap Refresh.
-      if (((loadedProfile ?? _profile)?.topics.isNotEmpty ?? false ||
-              (loadedProfile ?? _profile)?.includeCriticalOutsideInterests == true) &&
+      final activeProfile = loadedProfile ?? _profile;
+      if (((activeProfile?.topics.isNotEmpty ?? false) ||
+              (activeProfile?.includeCriticalOutsideInterests ?? false)) &&
           _articles.isEmpty) {
         unawaited(_refreshNews());
       }
