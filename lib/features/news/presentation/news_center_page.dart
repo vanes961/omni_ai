@@ -52,6 +52,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _saving = false;
   String? _status;
   final NewsRssService _newsService = NewsRssService();
+  final TextEditingController _customTopicController = TextEditingController();
   final FavoritesRepository _favoritesRepository = FavoritesRepository();
   final InterestFeedbackRepository _feedbackRepository = InterestFeedbackRepository();
   Set<String> _lessInterested = <String>{};
@@ -93,6 +94,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   void dispose() {
     if (_ownsRepository) unawaited(_repository.dispose());
     _newsService.dispose();
+    _customTopicController.dispose();
     super.dispose();
   }
 
@@ -590,6 +592,24 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     );
   }
 
+  void _addCustomTopic() {
+    final topic = _customTopicController.text.trim();
+    final profile = _profile;
+    if (profile == null || topic.isEmpty) return;
+    final normalized = topic.toLowerCase();
+    if (profile.topics.any((existing) => existing.trim().toLowerCase() == normalized)) {
+      setState(() => _status = 'Эта тема уже добавлена.');
+      return;
+    }
+    if (normalized.length > 60) {
+      setState(() => _status = 'Сократи тему до 60 символов.');
+      return;
+    }
+    _customTopicController.clear();
+    _toggleTopic(normalized, true);
+    setState(() => _status = 'Тема добавлена. Сохрани интересы, чтобы применить её.');
+  }
+
   void _toggleTopic(String topic, bool selected) {
     final profile = _profile;
     if (profile == null) return;
@@ -650,6 +670,34 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               const Text(
                 'Выберите темы. В обычную ленту попадут только материалы по выбранным темам. Если ничего не выбрано, новости не показываются.',
                 style: TextStyle(color: Colors.white70, height: 1.4),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _customTopicController,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _addCustomTopic(),
+                      maxLength: 60,
+                      decoration: const InputDecoration(
+                        labelText: 'Своя тема',
+                        hintText: 'Например: робототехника, экология, Формула-1',
+                        counterText: '',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    tooltip: 'Добавить тему',
+                    onPressed: _addCustomTopic,
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Можно добавить собственные темы — лента будет искать материалы по ним.',
+                style: TextStyle(color: Colors.white60, fontSize: 12),
               ),
               const SizedBox(height: 18),
               Wrap(
