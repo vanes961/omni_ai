@@ -9,7 +9,8 @@ void main() {
         DiagnosticCheck(
           name: 'News',
           status: DiagnosticStatus.error,
-          details: 'api_key=super-secret request https://example.com/private?q=abc',
+          details:
+              'api_key=super-secret request https://example.com/private?q=abc',
         ),
         DiagnosticCheck(
           name: 'Network',
