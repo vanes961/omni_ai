@@ -33,46 +33,48 @@ void main() {
   test(
     'creates a critical-only digest only when explicitly enabled',
     () async {
-    final provider = _FakeProvider();
-    final service = NewsDigestService(engine: AIEngine(provider: provider));
-    final critical = NewsArticle(
-      id: 'critical-1',
-      title: 'Critical event headline',
-      summary: 'A verified urgent development.',
-      sourceName: 'Test Source',
-      sourceUrl: 'https://example.com/critical',
-      publishedAt: DateTime.utc(2026, 10, 10),
-      topics: const ['world'],
-      isCritical: true,
-    );
+      final provider = _FakeProvider();
+      final service = NewsDigestService(engine: AIEngine(provider: provider));
+      final critical = NewsArticle(
+        id: 'critical-1',
+        title: 'Critical event headline',
+        summary: 'A verified urgent development.',
+        sourceName: 'Test Source',
+        sourceUrl: 'https://example.com/critical',
+        publishedAt: DateTime.utc(2026, 10, 10),
+        topics: const ['world'],
+        isCritical: true,
+      );
 
-    final disabled = await service.createDigest(
-      profile: const NewsInterestProfile(),
-      articles: [critical],
-    );
-    expect(disabled, isNull);
-    expect(provider.requests, isEmpty);
+      final disabled = await service.createDigest(
+        profile: const NewsInterestProfile(),
+        articles: [critical],
+      );
+      expect(disabled, isNull);
+      expect(provider.requests, isEmpty);
 
-    final enabled = await service.createDigest(
-      profile: const NewsInterestProfile(
-        includeCriticalOutsideInterests: true,
-      ),
-      articles: [critical, _article('anime')],
-    );
-    expect(enabled, 'Персональный дайджест');
-    expect(provider.requests, hasLength(1));
-    expect(
-      provider.requests.single.prompt,
-      contains('Critical event headline'),
-    );
-    expect(
-      provider.requests.single.prompt,
-      isNot(contains('Anime headline')),
-    );
+      final enabled = await service.createDigest(
+        profile: const NewsInterestProfile(
+          includeCriticalOutsideInterests: true,
+        ),
+        articles: [critical, _article('anime')],
+      );
+      expect(enabled, 'Персональный дайджест');
+      expect(provider.requests, hasLength(1));
+      expect(
+        provider.requests.single.prompt,
+        contains('Critical event headline'),
+      );
+      expect(
+        provider.requests.single.prompt,
+        isNot(contains('Anime headline')),
+      );
     },
   );
 
-  test('normalizes legacy topic aliases when selecting digest articles', () async {
+  test(
+    'normalizes legacy topic aliases when selecting digest articles',
+    () async {
     final provider = _FakeProvider();
     final service = NewsDigestService(engine: AIEngine(provider: provider));
     final article = NewsArticle(
