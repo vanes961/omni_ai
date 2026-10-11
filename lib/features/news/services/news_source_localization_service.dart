@@ -11,10 +11,14 @@ import 'smart_translation_service.dart';
 class NewsSourceLocalizationService {
   const NewsSourceLocalizationService({
     this.aiEngine,
+    this.maxAiTranslationsPerBatch = 5,
     this._translationService = const SmartTranslationService(),
-  });
+  }) : assert(maxAiTranslationsPerBatch >= 0);
 
   final AIEngine? aiEngine;
+
+  /// Limits sequential cloud/local model calls during one feed refresh.
+  final int maxAiTranslationsPerBatch;
   final SmartTranslationService _translationService;
 
   Future<List<NewsArticle>> localizeCandidates(
@@ -25,6 +29,7 @@ class NewsSourceLocalizationService {
         .where((article) => article.language.toLowerCase() == 'ru')
         .toList(growable: false);
     final result = <NewsArticle>[];
+    var translationAttempts = 0;
 
     for (final article in articles) {
       final localized = await _translationService.process(
@@ -37,8 +42,14 @@ class NewsSourceLocalizationService {
         // Keep the Russian candidate already present in the input collection;
         // suppress only the foreign duplicate.
         continue;
-      } else {
+      } else if (aiEngine != null &&
+          translationAttempts < maxAiTranslationsPerBatch) {
+        translationAttempts++;
         result.add(await _translateIfAvailable(article));
+      } else {
+        // Keep the source visible when the per-refresh translation budget is
+        // exhausted; the next refresh can process newer candidates.
+        result.add(article);
       }
     }
 
