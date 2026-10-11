@@ -53,7 +53,8 @@ void main() {
 
     expect(find.byType(DashboardPage), findsOneWidget);
     expect(find.text('01 // СФЕРЫ ИНТЕРЕСОВ'), findsNothing);
-    expect(find.text('AI-GUARD ACTIVE'), findsOneWidget);
+    expect(find.text('PERSONAL AI SYSTEM'), findsOneWidget);
+    expect(find.text('AI-GUARD ACTIVE'), findsNothing);
     expect(
       tester
           .widget<DashboardPage>(find.byType(DashboardPage))
