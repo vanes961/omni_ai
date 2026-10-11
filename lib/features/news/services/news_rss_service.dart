@@ -320,6 +320,26 @@ class NewsRssService {
       r'<item(?:\s[^>]*)?>([\s\S]*?)</item>',
       caseSensitive: false,
     ).allMatches(xml);
+    // Only use the query-based fallback when none of the returned items
+    // can be matched to the selected interests. Otherwise an unrelated item
+    // in a mixed RSS response could inherit the selected topics.
+    final hasSelectedTopicMatch = items.any((match) {
+      final item = match.group(1) ?? '';
+      final title = _tag(item, 'title');
+      final description = _stripMarkup(
+        _tag(item, 'description', decodeEntities: false),
+      );
+      final normalized = ' ${title.toLowerCase()} ${description.toLowerCase()} ';
+      return selectedTopics.any((topic) {
+        final keywords = _topicKeywords[topic];
+        if (keywords != null) {
+          return keywords.any(
+            (keyword) => _containsKeyword(normalized, keyword),
+          );
+        }
+        return _containsKeyword(normalized, topic);
+      });
+    });
     final result = <NewsArticle>[];
     for (final match in items) {
       final item = match.group(1) ?? '';
@@ -355,11 +375,13 @@ class NewsRssService {
         }
       }
       final isCritical = _isCriticalNews('$title $text');
-      // Google News already searched the selected topic query. Some valid
-      // stories use names or wording that do not contain our keyword list;
-      // preserve those query-matched items instead of filtering the feed to
-      // empty. Known matches still keep their more precise topic labels.
-      if (detectedTopics.isEmpty && !isCritical) {
+      // Google News already searched the selected topic query. If the
+      // entire response lacks detectable selected-topic keywords, preserve
+      // the query-matched results. Do not apply this fallback item by item:
+      // that would also admit unrelated items from a mixed response.
+      if (!hasSelectedTopicMatch &&
+          detectedTopics.isEmpty &&
+          !isCritical) {
         detectedTopics.addAll(selectedTopics);
       }
       final topics = detectedTopics.toList(growable: false);
