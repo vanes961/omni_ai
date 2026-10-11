@@ -7,7 +7,7 @@ class NewsChatContextBuilder {
   const NewsChatContextBuilder();
 
   static const maxArticles = 5;
-  static const maxSummaryLength = 360;
+  static const maxSummaryLength = 240;
   static const maxContextLength = 3000;
 
   static final RegExp _newsIntent = RegExp(
