@@ -65,6 +65,23 @@ void main() {
     expect(await cache.loadTopics(), ['technology']);
   });
 
+  test('round-trips the critical-news cache setting', () async {
+    final store = _MemoryStore();
+    final cache = SharedPreferencesNewsCache(store: store);
+
+    await cache.saveArticles(
+      const [],
+      selectedTopics: const ['technology'],
+      includeCriticalOutsideInterests: true,
+    );
+
+    final restoredCache = SharedPreferencesNewsCache(store: store);
+    expect(await restoredCache.loadIncludeCriticalOutsideInterests(), isTrue);
+
+    await restoredCache.clear();
+    expect(await restoredCache.loadIncludeCriticalOutsideInterests(), isNull);
+  });
+
   test('clears a digest when replacing the cached article feed', () async {
     final store = _MemoryStore();
     final cache = SharedPreferencesNewsCache(store: store);
