@@ -633,7 +633,9 @@ void main() {
   });
 
 
-  test('supports user-defined interests outside built-in topic categories', () async {
+  test(
+    'supports user-defined interests outside built-in topic categories',
+    () async {
     final service = NewsRssService(
       client: MockClient((request) async {
         expect(request.url.queryParameters['q'], 'robotics');
@@ -667,6 +669,6 @@ void main() {
     expect(articles, hasLength(1));
     expect(articles.single.title, 'New robotics laboratory opens');
     expect(articles.single.topics, contains('robotics'));
-  });
-
+    },
+  );
 }
