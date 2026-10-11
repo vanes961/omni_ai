@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:omni_ai/features/dashboard/presentation/dashboard_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/run_history/data/in_memory_run_history_repository.dart';
@@ -39,6 +41,8 @@ void main() {
   testWidgets('restores a saved profile directly to dashboard on app launch', (
     WidgetTester tester,
   ) async {
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
     final savedPreferences = UserPreferences()..categories = ['Аниме'];
     final store = _MemoryUserPreferencesStore(savedPreferences);
 
