@@ -9,77 +9,87 @@ import 'package:omni_ai/features/news/services/news_source_localization_service.
 void main() {
   const service = NewsSourceLocalizationService();
 
-  test('keeps Russian match and suppresses the matching foreign duplicate', () async {
-    final foreign = _article(
-      id: 'foreign',
-      language: 'en',
-      title: 'Nintendo Switch 2 release date revealed',
-    );
-    final russian = _article(
-      id: 'russian',
-      language: 'ru',
-      title: 'Раскрыта дата выхода Nintendo Switch 2',
-    );
+  test(
+    'keeps Russian match and suppresses the matching foreign duplicate',
+    () async {
+      final foreign = _article(
+        id: 'foreign',
+        language: 'en',
+        title: 'Nintendo Switch 2 release date revealed',
+      );
+      final russian = _article(
+        id: 'russian',
+        language: 'ru',
+        title: 'Раскрыта дата выхода Nintendo Switch 2',
+      );
 
-    final result = await service.localizeCandidates([foreign, russian]);
+      final result = await service.localizeCandidates([foreign, russian]);
 
-    expect(result, hasLength(1));
-    expect(result.single, same(russian));
-  });
+      expect(result, hasLength(1));
+      expect(result.single, same(russian));
+    },
+  );
 
-  test('retains foreign articles without a reliable Russian match', () async {
-    final foreign = _article(
-      id: 'foreign',
-      language: 'en',
-      title: 'Nintendo announces a new console',
-    );
-    final russian = _article(
-      id: 'russian',
-      language: 'ru',
-      title: 'Valve reveals a handheld gaming device',
-    );
+  test(
+    'retains foreign articles without a reliable Russian match',
+    () async {
+      final foreign = _article(
+        id: 'foreign',
+        language: 'en',
+        title: 'Nintendo announces a new console',
+      );
+      final russian = _article(
+        id: 'russian',
+        language: 'ru',
+        title: 'Valve reveals a handheld gaming device',
+      );
 
-    final result = await service.localizeCandidates([foreign, russian]);
+      final result = await service.localizeCandidates([foreign, russian]);
 
-    expect(result, hasLength(2));
-    expect(result, contains(foreign));
-    expect(result, contains(russian));
-  });
+      expect(result, hasLength(2));
+      expect(result, contains(foreign));
+      expect(result, contains(russian));
+    },
+  );
 
   test(
     'translates unmatched foreign articles through the shared AI engine',
     () async {
-    final foreign = _article(
-      id: 'foreign',
-      language: 'en',
-      title: 'A new console is announced',
-    );
-    final service = NewsSourceLocalizationService(
-      aiEngine: AIEngine(provider: _TranslationProvider()),
-    );
+      final foreign = _article(
+        id: 'foreign',
+        language: 'en',
+        title: 'A new console is announced',
+      );
+      final translationService = NewsSourceLocalizationService(
+        aiEngine: AIEngine(provider: _TranslationProvider()),
+      );
 
-    final result = await service.localizeCandidates([foreign]);
+      final result = await translationService.localizeCandidates([foreign]);
 
-    expect(result, hasLength(1));
-    expect(result.single.title, 'Анонсирована новая консоль');
-    expect(result.single.summary, 'Описание на русском языке');
-    expect(result.single.language, 'ru');
-    expect(result.single.sourceUrl, foreign.sourceUrl);
-    expect(result.single.id, foreign.id);
-  });
+      expect(result, hasLength(1));
+      expect(result.single.title, 'Анонсирована новая консоль');
+      expect(result.single.summary, 'Описание на русском языке');
+      expect(result.single.language, 'ru');
+      expect(result.single.sourceUrl, foreign.sourceUrl);
+      expect(result.single.id, foreign.id);
+    },
+  );
 
-  test('does not suppress Russian articles during processing', () async {
-    final russian = _article(
-      id: 'russian',
-      language: 'ru',
-      title: 'Локальная новость без иностранного оригинала',
-    );
+  test(
+    'does not suppress Russian articles during processing',
+    () async {
+      final russian = _article(
+        id: 'russian',
+        language: 'ru',
+        title: 'Локальная новость без иностранного оригинала',
+      );
 
-    final result = await service.localizeCandidates([russian]);
+      final result = await service.localizeCandidates([russian]);
 
-    expect(result, hasLength(1));
-    expect(result.single, same(russian));
-  });
+      expect(result, hasLength(1));
+      expect(result.single, same(russian));
+    },
+  );
 }
 
 NewsArticle _article({
@@ -98,7 +108,6 @@ NewsArticle _article({
     language: language,
   );
 }
-
 
 class _TranslationProvider implements AIProvider {
   @override
