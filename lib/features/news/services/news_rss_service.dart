@@ -154,6 +154,7 @@ class NewsRssService {
       xml,
       language,
       region.toLowerCase(),
+      selectedTopics: canonicalTopics,
     );
     final unique = <String, NewsArticle>{};
     for (final article in articles) {
@@ -240,7 +241,12 @@ class NewsRssService {
     return candidate.isVerified && !current.isVerified;
   }
 
-  List<NewsArticle> _parseItems(String xml, String language, String? profileRegion) {
+  List<NewsArticle> _parseItems(
+    String xml,
+    String language,
+    String? profileRegion, {
+    List<String> selectedTopics = const <String>[],
+  }) {
     final items = RegExp(r'<item(?:\s[^>]*)?>([\s\S]*?)</item>',
       caseSensitive: false).allMatches(xml);
     final result = <NewsArticle>[];
@@ -259,12 +265,22 @@ class NewsRssService {
           : uri.host;
       final text = _stripMarkup(description);
       final normalized = ' ${title.toLowerCase()} ${text.toLowerCase()} ';
-      final topics = _topicKeywords.entries
+      final detectedTopics = _topicKeywords.entries
           .where((entry) => entry.value.any(
                 (keyword) => _containsKeyword(normalized, keyword),
               ))
           .map((entry) => entry.key)
-          .toList(growable: false);
+          .toSet();
+      // User-defined interests must remain usable even when they are not one
+      // of the built-in topic categories. Otherwise RSS can return relevant
+      // results that the strict relevance filter silently drops.
+      for (final topic in selectedTopics) {
+        if (!_topicKeywords.containsKey(topic) &&
+            _containsKeyword(normalized, topic)) {
+          detectedTopics.add(topic);
+        }
+      }
+      final topics = detectedTopics.toList(growable: false);
       result.add(NewsArticle(
         id: uri.toString(),
         title: title,
