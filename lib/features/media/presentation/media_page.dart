@@ -187,7 +187,7 @@ class _MediaPageState extends State<MediaPage> {
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
             border: _searchBorder(),
             enabledBorder: _searchBorder(),
-            focusedBorder: const OutlineInputBorder(
+            focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(color: SystemCorePalette.green),
             ),
