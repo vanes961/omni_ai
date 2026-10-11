@@ -140,7 +140,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       });
       // When no valid cached feed exists, load the selected topics on entry
       // instead of leaving a blank screen until the user discovers Refresh.
-      if (_profile?.topics.isNotEmpty == true && _articles.isEmpty) {
+      if (((_profile?.topics.isNotEmpty ?? false) ||
+              (_profile?.includeCriticalOutsideInterests ?? false)) &&
+          _articles.isEmpty) {
         unawaited(_refreshNews());
       }
     } catch (_) {
@@ -149,7 +151,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // Cache restoration is best-effort. If storage is unavailable or the
       // cached payload cannot be read, still attempt a fresh feed rather than
       // leaving users with a blank screen until they manually tap Refresh.
-      if ((loadedProfile ?? _profile)?.topics.isNotEmpty == true &&
+      if (((loadedProfile ?? _profile)?.topics.isNotEmpty ?? false ||
+              (loadedProfile ?? _profile)?.includeCriticalOutsideInterests == true) &&
           _articles.isEmpty) {
         unawaited(_refreshNews());
       }
@@ -410,12 +413,13 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     final profile = _profile;
     if (profile == null || _refreshingNews || _loadingNewsCache) return;
     final revisionAtStart = _interestRevision;
-    if (profile.topics.isEmpty) {
+    if (profile.topics.isEmpty &&
+        !profile.includeCriticalOutsideInterests) {
       setState(() {
         _articles = const [];
         _newsError = null;
         _status =
-            'Выберите хотя бы одну тему, чтобы получить персональные новости.';
+            'Выберите тему или включите критические новости вне интересов.';
       });
       return;
     }
@@ -493,7 +497,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       return;
     }
     final revisionAtStart = _interestRevision;
-    if (profile.topics.isEmpty || _articles.isEmpty) {
+    if ((profile.topics.isEmpty &&
+            !profile.includeCriticalOutsideInterests) ||
+        _articles.isEmpty) {
       setState(
         () => _digestError = 'Сначала выберите интересы и загрузите новости.',
       );
@@ -1007,8 +1013,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  profile.topics.isEmpty
-                      ? 'Выберите интересы выше — лента останется пустой, пока темы не выбраны.'
+                  profile.topics.isEmpty &&
+                          !profile.includeCriticalOutsideInterests
+                      ? 'Выберите интересы выше или включите критические новости вне интересов.'
                       : 'Нажмите «Обновить», чтобы загрузить свежие материалы по выбранным темам.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
