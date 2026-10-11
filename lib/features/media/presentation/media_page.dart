@@ -107,7 +107,7 @@ class _MediaPageState extends State<MediaPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          '02 // MEDIA INDEX',
+          'KAIROS  //  MEDIA DECK',
           style: TextStyle(
             color: SystemCorePalette.muted,
             fontSize: 10,
@@ -188,7 +188,7 @@ class _MediaPageState extends State<MediaPage> {
             border: _searchBorder(),
             enabledBorder: _searchBorder(),
             focusedBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.zero,
+              borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(color: SystemCorePalette.green),
             ),
           ),
