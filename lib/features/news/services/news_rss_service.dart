@@ -24,10 +24,30 @@ class NewsRssService {
     'movies': ['movie', 'movies', 'cinema', 'film', 'кино', 'фильм'],
     'series': ['series', 'tv series', 'streaming', 'сериал', 'сериалы'],
     'technology': ['technology', 'tech', 'технолог', 'техника'],
-    'artificial intelligence': ['artificial intelligence', ' ai ', 'ии', 'искусственн', 'нейросет'],
+    'artificial intelligence': [
+      'artificial intelligence',
+      ' ai ',
+      'ии',
+      'искусственн',
+      'нейросет',
+    ],
     'science': ['science', 'scientific', 'наук', 'исследован'],
-    'space': ['space', 'astronomy', 'spaceflight', 'космос', 'астроном', 'космич'],
-    'gadgets': ['gadget', 'electronics', 'smartphone', 'гаджет', 'смартфон', 'электроник'],
+    'space': [
+      'space',
+      'astronomy',
+      'spaceflight',
+      'космос',
+      'астроном',
+      'космич',
+    ],
+    'gadgets': [
+      'gadget',
+      'electronics',
+      'smartphone',
+      'гаджет',
+      'смартфон',
+      'электроник',
+    ],
   };
 
   // Only high-impact public-safety events bypass topic preferences, and only
@@ -78,7 +98,6 @@ class NewsRssService {
     'space': 'space exploration astronomy',
     'gadgets': 'gadgets consumer electronics',
   };
-
 
   /// Collects candidates from Russian and English Google News editions.
   /// Edition locale describes the feed, not the article's actual geography.
@@ -143,7 +162,10 @@ class NewsRssService {
     }
 
     final unrestrictedProfile = profile.copyWith(
-      topics: profile.topics.map(_canonicalTopic).toSet().toList(growable: false),
+      topics: profile.topics
+          .map(_canonicalTopic)
+          .toSet()
+          .toList(growable: false),
       languages: const <String>[],
       regions: const <String>[],
     );
@@ -221,7 +243,6 @@ class NewsRssService {
     return _filter.filter(unique.values, canonicalProfile);
   }
 
-
   /// Removes common tracking parameters without changing the URL shown to
   /// the user. This lets editions deduplicate the same story when publishers
   /// append campaign IDs or fragments to an otherwise identical link.
@@ -238,27 +259,27 @@ class NewsRssService {
       'ref_src',
       'source',
     };
-    final kept = uri.queryParametersAll.entries
-        .where((entry) {
+    final kept =
+        uri.queryParametersAll.entries.where((entry) {
           final key = entry.key.toLowerCase();
           return !key.startsWith('utm_') && !trackingKeys.contains(key);
-        })
-        .toList()
-      ..sort((a, b) {
-        final byKey = a.key.toLowerCase().compareTo(b.key.toLowerCase());
-        return byKey != 0
-            ? byKey
-            : a.value.join(',').compareTo(b.value.join(','));
-      });
+        }).toList()..sort((a, b) {
+          final byKey = a.key.toLowerCase().compareTo(b.key.toLowerCase());
+          return byKey != 0
+              ? byKey
+              : a.value.join(',').compareTo(b.value.join(','));
+        });
     final query = <String, dynamic>{
       for (final entry in kept) entry.key: entry.value,
     };
-    return uri.replace(
-      fragment: '',
-      query: query.isEmpty ? '' : null,
-      queryParameters: query.isEmpty ? null : query,
-      path: uri.path.isEmpty ? '/' : uri.path,
-    ).toString();
+    return uri
+        .replace(
+          fragment: '',
+          query: query.isEmpty ? '' : null,
+          queryParameters: query.isEmpty ? null : query,
+          path: uri.path.isEmpty ? '/' : uri.path,
+        )
+        .toString();
   }
 
   String _canonicalTopic(String topic) {
@@ -295,15 +316,18 @@ class NewsRssService {
     String? profileRegion, {
     List<String> selectedTopics = const <String>[],
   }) {
-    final items = RegExp(r'<item(?:\s[^>]*)?>([\s\S]*?)</item>',
-      caseSensitive: false).allMatches(xml);
+    final items = RegExp(
+      r'<item(?:\s[^>]*)?>([\s\S]*?)</item>',
+      caseSensitive: false,
+    ).allMatches(xml);
     final result = <NewsArticle>[];
     for (final match in items) {
       final item = match.group(1) ?? '';
       final title = _tag(item, 'title');
       final link = _tag(item, 'link');
       final description = _tag(item, 'description', decodeEntities: false);
-      final published = _parseDate(_tag(item, 'pubDate')) ??
+      final published =
+          _parseDate(_tag(item, 'pubDate')) ??
           _parseDate(_tag(item, 'dc:date'));
       if (title.isEmpty || link.isEmpty || published == null) continue;
       final uri = Uri.tryParse(link);
@@ -314,9 +338,11 @@ class NewsRssService {
       final text = _stripMarkup(description);
       final normalized = ' ${title.toLowerCase()} ${text.toLowerCase()} ';
       final detectedTopics = _topicKeywords.entries
-          .where((entry) => entry.value.any(
-                (keyword) => _containsKeyword(normalized, keyword),
-              ))
+          .where(
+            (entry) => entry.value.any(
+              (keyword) => _containsKeyword(normalized, keyword),
+            ),
+          )
           .map((entry) => entry.key)
           .toSet();
       // User-defined interests must remain usable even when they are not one
@@ -337,19 +363,21 @@ class NewsRssService {
         detectedTopics.addAll(selectedTopics);
       }
       final topics = detectedTopics.toList(growable: false);
-      result.add(NewsArticle(
-        id: uri.toString(),
-        title: title,
-        summary: text,
-        sourceName: sourceName,
-        sourceUrl: uri.toString(),
-        publishedAt: published.toUtc(),
-        topics: topics,
-        language: language,
-        isCritical: isCritical,
-        region: profileRegion,
-        isVerified: true,
-      ));
+      result.add(
+        NewsArticle(
+          id: uri.toString(),
+          title: title,
+          summary: text,
+          sourceName: sourceName,
+          sourceUrl: uri.toString(),
+          publishedAt: published.toUtc(),
+          topics: topics,
+          language: language,
+          isCritical: isCritical,
+          region: profileRegion,
+          isVerified: true,
+        ),
+      );
     }
     return result;
   }
@@ -398,9 +426,7 @@ class NewsRssService {
 
   String _stripMarkup(String value) {
     final decoded = _decodeEntities(
-      value
-          .replaceAll(RegExp(r'<[^>]*>'), ' ')
-          .replaceAll(RegExp(r'\s+'), ' '),
+      value.replaceAll(RegExp(r'<[^>]*>'), ' ').replaceAll(RegExp(r'\s+'), ' '),
     );
     // Encoded angle brackets are text, not markup. Remove the brackets while
     // retaining their contents so excerpts remain readable and predictable.
