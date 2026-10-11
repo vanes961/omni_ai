@@ -8,6 +8,7 @@ import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/services/news_digest_service.dart';
 
 void main() {
+
   test('does not call AI when no interests are selected', () async {
     final provider = _FakeProvider();
     final service = NewsDigestService(engine: AIEngine(provider: provider));
