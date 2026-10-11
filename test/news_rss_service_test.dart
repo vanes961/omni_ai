@@ -244,7 +244,17 @@ void main() {
 
     expect(
       service.fetchInternational(const NewsInterestProfile(topics: ['anime'])),
-      throwsA(isA<http.ClientException>()),
+      throwsA(
+        isA<http.ClientException>().having(
+          (error) => error.message,
+          'message',
+          allOf(
+            contains('ru-RU: ClientException'),
+            contains('en-US: ClientException'),
+            contains('en-GB: ClientException'),
+          ),
+        ),
+      ),
     );
   });
 
