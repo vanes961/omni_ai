@@ -542,6 +542,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   }
 
   Future<void> _openArticle(NewsArticle article) async {
+    unawaited(_reactToArticle(article, NewsReaction.opened));
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
