@@ -43,7 +43,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _selectedTab = widget.initialTab.clamp(0, 4);
+    _selectedTab = widget.initialTab.clamp(0, 4).toInt();
     final dependencies = widget.dependencies;
     _ownsDependencies = dependencies == null;
     if (dependencies == null) {
