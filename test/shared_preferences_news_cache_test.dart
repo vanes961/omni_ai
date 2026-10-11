@@ -180,7 +180,7 @@ void main() {
       expect(restored.single.releaseDate, isNull);
       expect(restored.single.releaseDateSourceUrl, isNull);
     },
-  );;
+  );
 
   test(
     'returns empty data for missing cache and removes empty digest',
@@ -193,7 +193,7 @@ void main() {
       await cache.saveDigest('  ');
       expect(await cache.loadDigest(), isNull);
     },
-  );;
+  );
 
   test('clears articles, digest and saved interests together', () async {
     final store = _MemoryStore();
@@ -248,7 +248,7 @@ void main() {
       expect(restored, hasLength(1));
       expect(restored.single.id, 'safe-1');
     },
-  );;
+  );
 
   test(
     'skips malformed records and duplicate article IDs during recovery',
@@ -285,7 +285,7 @@ void main() {
       expect(restored, hasLength(1));
       expect(restored.single.title, 'First copy');
     },
-  );;
+  );
 
   test(
     'writes topic marker before articles to detect interrupted cache saves',
@@ -327,7 +327,7 @@ void main() {
       expect(await cache.loadArticles(), isEmpty);
       expect(await cache.loadTopics(), ['technology']);
     },
-  );;
+  );
 
   test('invalidates the old digest when replacing articles fails', () async {
     final store = _MemoryStore();
