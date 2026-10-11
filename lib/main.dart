@@ -41,12 +41,58 @@ class _MyAppState extends State<MyApp> {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: SystemCorePalette.background,
         colorScheme: const ColorScheme.dark(
-          primary: SystemCorePalette.red,
-          secondary: SystemCorePalette.green,
+          primary: SystemCorePalette.green,
+          secondary: SystemCorePalette.mint,
           surface: SystemCorePalette.panel,
+          error: SystemCorePalette.red,
         ),
         fontFamily: 'monospace',
         useMaterial3: true,
+        splashFactory: InkSparkle.splashFactory,
+        dividerColor: SystemCorePalette.border,
+        cardTheme: CardThemeData(
+          color: SystemCorePalette.panel,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: const BorderSide(color: SystemCorePalette.border),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: SystemCorePalette.panel,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+          hintStyle: const TextStyle(color: SystemCorePalette.muted),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: SystemCorePalette.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: SystemCorePalette.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: SystemCorePalette.green,
+              width: 1.5,
+            ),
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: SystemCorePalette.green,
+            foregroundColor: SystemCorePalette.background,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+          ),
+        ),
       ),
       home: _AppStartupPage(
         preferencesStore: widget.preferencesStore,
