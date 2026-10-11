@@ -151,35 +151,36 @@ void main() {
   test(
     'loads legacy article cache and ignores unsafe optional video metadata',
     () async {
-    final store = _MemoryStore()
-      ..values[SharedPreferencesNewsCache.articlesKey] = jsonEncode([
-        {
-          'id': 'legacy-1',
-          'title': 'Old cached article',
-          'summary': 'Saved before video metadata existed.',
-          'sourceName': 'Example',
-          'sourceUrl': 'https://example.com/legacy',
-          'publishedAt': '2026-10-10T12:00:00.000Z',
-          'topics': ['anime'],
-          'language': 'ru',
-          'isVerified': true,
-          'videoUrl': 'javascript:alert(1)',
-          'thumbnailUrl': 'http://insecure.example/thumb.jpg',
-          'releaseDate': '2027-03-04T00:00:00.000Z',
-          'releaseDateSourceUrl': 'javascript:alert(1)',
-        },
-      ]);
-    final cache = SharedPreferencesNewsCache(store: store);
+      final store = _MemoryStore()
+        ..values[SharedPreferencesNewsCache.articlesKey] = jsonEncode([
+          {
+            'id': 'legacy-1',
+            'title': 'Old cached article',
+            'summary': 'Saved before video metadata existed.',
+            'sourceName': 'Example',
+            'sourceUrl': 'https://example.com/legacy',
+            'publishedAt': '2026-10-10T12:00:00.000Z',
+            'topics': ['anime'],
+            'language': 'ru',
+            'isVerified': true,
+            'videoUrl': 'javascript:alert(1)',
+            'thumbnailUrl': 'http://insecure.example/thumb.jpg',
+            'releaseDate': '2027-03-04T00:00:00.000Z',
+            'releaseDateSourceUrl': 'javascript:alert(1)',
+          },
+        ]);
+      final cache = SharedPreferencesNewsCache(store: store);
 
-    final restored = await cache.loadArticles();
+      final restored = await cache.loadArticles();
 
-    expect(restored, hasLength(1));
-    expect(restored.single.contentType, NewsContentType.article);
-    expect(restored.single.videoUrl, isNull);
-    expect(restored.single.thumbnailUrl, isNull);
-    expect(restored.single.releaseDate, isNull);
-    expect(restored.single.releaseDateSourceUrl, isNull);
-  });
+      expect(restored, hasLength(1));
+      expect(restored.single.contentType, NewsContentType.article);
+      expect(restored.single.videoUrl, isNull);
+      expect(restored.single.thumbnailUrl, isNull);
+      expect(restored.single.releaseDate, isNull);
+      expect(restored.single.releaseDateSourceUrl, isNull);
+    },
+  );;
 
   test(
     'returns empty data for missing cache and removes empty digest',
