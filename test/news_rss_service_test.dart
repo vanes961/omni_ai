@@ -98,6 +98,34 @@ void main() {
     expect(articles.single.summary, contains('A new anime series'));
   });
 
+  test('keeps query-matched stories when headlines omit topic keywords', () async {
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        expect(request.url.queryParameters['q'], 'video games gaming');
+        return http.Response(
+          '''<rss><channel><item>
+            <title>Nintendo announces a new console-exclusive adventure</title>
+            <link>https://publisher.example/nintendo-release</link>
+            <description>The company revealed its next release.</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            <source>Gaming News</source>
+          </item></channel></rss>''',
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: ['games']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.title, contains('Nintendo announces'));
+    expect(articles.single.topics, contains('games'));
+  });
+
   test('deduplicates tracking URL variants across international editions', () async {
     final service = NewsRssService(
       client: MockClient((request) async {
