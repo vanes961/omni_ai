@@ -32,8 +32,8 @@ class NewsDigestService {
     // Critical-only digests are allowed only when the user explicitly enabled
     // critical news outside their interests. Ordinary no-interest profiles
     // must never trigger a broad, unfiltered digest.
-    final criticalOnly = profile.topics.isEmpty &&
-        profile.includeCriticalOutsideInterests;
+    final criticalOnly =
+        profile.topics.isEmpty && profile.includeCriticalOutsideInterests;
     if (profile.topics.isEmpty && !criticalOnly) return null;
 
     // Keep digest matching consistent with RSS topic normalization. Profiles
@@ -45,13 +45,15 @@ class NewsDigestService {
         .toList(growable: false);
     if (!criticalOnly && topics.isEmpty) return null;
 
-    final selected = articles.where((article) {
-      if (criticalOnly) return article.isCritical;
-      if (article.topics.isEmpty) return false;
-      final articleTopics = article.topics.map(_canonicalTopic).toSet();
-      return articleTopics.any(topics.contains) ||
-          (profile.includeCriticalOutsideInterests && article.isCritical);
-    }).toList(growable: false);
+    final selected = articles
+        .where((article) {
+          if (criticalOnly) return article.isCritical;
+          if (article.topics.isEmpty) return false;
+          final articleTopics = article.topics.map(_canonicalTopic).toSet();
+          return articleTopics.any(topics.contains) ||
+              (profile.includeCriticalOutsideInterests && article.isCritical);
+        })
+        .toList(growable: false);
     if (selected.isEmpty) return null;
 
     final material = selected.take(20).map((article) {
