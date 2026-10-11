@@ -85,7 +85,9 @@ class NewsRssService {
   Future<List<NewsArticle>> fetchInternational(
     NewsInterestProfile profile,
   ) async {
-    if (profile.topics.isEmpty) return const <NewsArticle>[];
+    if (profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) {
+      return const <NewsArticle>[];
+    }
 
     const locales = <List<String>>[
       ['ru', 'RU'],
@@ -164,9 +166,17 @@ class NewsRssService {
         .where((topic) => topic.isNotEmpty)
         .toSet()
         .toList(growable: false);
-    final query = canonicalTopics
+    final topicQuery = canonicalTopics
         .map((topic) => _topicQueries[topic] ?? topic)
         .join(' OR ');
+    final criticalQuery = profile.includeCriticalOutsideInterests
+        ? _criticalNewsKeywords.map((keyword) => '"$keyword"').join(' OR ')
+        : '';
+    final query = topicQuery.isEmpty
+        ? criticalQuery
+        : criticalQuery.isEmpty
+        ? topicQuery
+        : '($topicQuery) OR ($criticalQuery)';
     final canonicalProfile = profile.copyWith(topics: canonicalTopics);
     if (query.isEmpty) return const <NewsArticle>[];
     final uri = Uri.https('news.google.com', '/rss/search', {
