@@ -240,7 +240,8 @@ void main() {
           'id': 'undated-1',
           'publishedAt': 'not-a-date',
         });
-      store.values[SharedPreferencesNewsCache.articlesKey] = jsonEncode(payload);
+      store.values[SharedPreferencesNewsCache.articlesKey] =
+          jsonEncode(payload);
 
       final restored = await cache.loadArticles();
 
@@ -276,7 +277,8 @@ void main() {
           'title': 'Duplicate copy',
           'sourceUrl': 'https://example.com/second',
         });
-      store.values[SharedPreferencesNewsCache.articlesKey] = jsonEncode(payload);
+      store.values[SharedPreferencesNewsCache.articlesKey] =
+          jsonEncode(payload);
 
       final restored = await cache.loadArticles();
 
