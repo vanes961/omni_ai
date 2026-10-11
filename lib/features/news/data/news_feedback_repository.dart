@@ -49,15 +49,20 @@ class NewsReactionRecord {
 }
 
 /// Persists explicit reactions locally. No article text, account data or URLs are stored.
+abstract interface class NewsFeedbackStore {
+  Future<String?> read(String key);
+  Future<void> write(String key, String value);
+}
+
 class NewsFeedbackRepository {
-  NewsFeedbackRepository({SharedPreferencesAsync? preferences})
-      : _preferences = preferences ?? SharedPreferencesAsync();
+  NewsFeedbackRepository({NewsFeedbackStore? store})
+      : _store = store ?? _SharedPreferencesNewsFeedbackStore();
 
   static const storageKey = 'omni_ai.news_reactions.v1';
-  final SharedPreferencesAsync _preferences;
+  final NewsFeedbackStore _store;
 
   Future<List<NewsReactionRecord>> load() async {
-    final raw = await _preferences.getString(storageKey);
+    final raw = await _store.read(storageKey);
     if (raw == null || raw.isEmpty) return const [];
     try {
       final decoded = jsonDecode(raw);
@@ -89,7 +94,7 @@ class NewsFeedbackRepository {
     // Bound local storage so a long-running feed cannot grow indefinitely.
     records.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     final bounded = records.take(500).map((record) => record.toJson()).toList();
-    await _preferences.setString(storageKey, jsonEncode(bounded));
+    await _store.write(storageKey, jsonEncode(bounded));
   }
 
   Future<Map<String, double>> interestWeights({DateTime? now}) async {
@@ -110,4 +115,14 @@ class NewsFeedbackRepository {
     }
     return Map.unmodifiable(weights);
   }
+}
+
+class _SharedPreferencesNewsFeedbackStore implements NewsFeedbackStore {
+  final SharedPreferencesAsync _preferences = SharedPreferencesAsync();
+
+  @override
+  Future<String?> read(String key) => _preferences.getString(key);
+
+  @override
+  Future<void> write(String key, String value) => _preferences.setString(key, value);
 }
