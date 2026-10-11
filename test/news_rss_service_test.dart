@@ -670,8 +670,12 @@ void main() {
   test('marks high-impact public-safety events as critical for opt-in feed',
       () async {
     final service = NewsRssService(
-      client: MockClient(
-        (_) async => http.Response(
+      client: MockClient((request) async {
+        expect(
+          request.url.queryParameters['q'],
+          contains('"emergency declared"'),
+        );
+        return http.Response(
           '''<rss><channel><item>
           <title>Emergency declared after major earthquake</title>
           <link>https://publisher.example/earthquake-alert</link>
@@ -680,8 +684,8 @@ void main() {
           <source>Public Safety News</source>
         </item></channel></rss>''',
           200,
-        ),
-      ),
+        );
+      }),
     );
     addTearDown(service.dispose);
 
