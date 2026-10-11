@@ -5,6 +5,7 @@ import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:omni_ai/features/news/data/news_interest_repository.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_cache.dart';
+import 'package:omni_ai/features/news/data/news_feedback_repository.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_interest_repository.dart';
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/models/news_article.dart';
@@ -57,6 +58,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   final NewsSourceLocalizationService _sourceLocalizationService =
       const NewsSourceLocalizationService();
   final SharedPreferencesNewsCache _newsCache = SharedPreferencesNewsCache();
+  final NewsFeedbackRepository _newsFeedback = NewsFeedbackRepository();
+  Map<String, double> _reactionWeights = const <String, double>{};
   bool _loadingNewsCache = true;
   int _interestRevision = 0;
   List<NewsArticle> _articles = const [];
@@ -79,6 +82,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     _repository =
         widget.repository ?? SharedPreferencesNewsInterestRepository();
     _profileFuture = _repository.load();
+    unawaited(_loadReactionWeights());
     unawaited(_loadReminderSettings());
     unawaited(_loadNewsCache());
   }
@@ -163,6 +167,58 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (normalizedFirst[i] != normalizedSecond[i]) return false;
     }
     return true;
+  }
+
+  Future<void> _loadReactionWeights() async {
+    try {
+      final weights = await _newsFeedback.interestWeights();
+      if (!mounted) return;
+      setState(() {
+        _reactionWeights = weights;
+        _articles = _rankByReaction(_articles);
+      });
+    } catch (_) {
+      // Personalization is optional; the feed must still work without storage.
+    }
+  }
+
+  List<NewsArticle> _rankByReaction(List<NewsArticle> articles) {
+    if (_reactionWeights.isEmpty || articles.length < 2) return articles;
+    final indexed = articles.indexed.toList();
+    double score(NewsArticle article) => article.topics.fold<double>(
+      0,
+      (total, topic) => total + (_reactionWeights[topic.trim().toLowerCase()] ?? 0),
+    );
+    indexed.sort((a, b) {
+      final byScore = score(b.$2).compareTo(score(a.$2));
+      return byScore != 0 ? byScore : a.$1.compareTo(b.$1);
+    });
+    return List<NewsArticle>.unmodifiable(indexed.map((entry) => entry.$2));
+  }
+
+  Future<void> _reactToArticle(NewsArticle article, NewsReaction reaction) async {
+    try {
+      await _newsFeedback.record(
+        articleId: article.id,
+        reaction: reaction,
+        topics: article.topics,
+      );
+      final weights = await _newsFeedback.interestWeights();
+      if (!mounted) return;
+      setState(() {
+        _reactionWeights = weights;
+        _articles = _rankByReaction(_articles);
+        _status = switch (reaction) {
+          NewsReaction.like => 'Лайк сохранён: интересы будут учтены в рекомендациях.',
+          NewsReaction.dislike => 'Учтено: похожие материалы будут показываться реже.',
+          NewsReaction.opened => 'Просмотр учтён как слабый сигнал интереса.',
+        };
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _status = 'Не удалось сохранить реакцию. Лента продолжит работать.');
+      }
+    }
   }
 
   Future<void> _loadReminderSettings() async {
@@ -699,9 +755,19 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                 ),
                               ),
                               IconButton(
+                                tooltip: 'Нравится — учитывать в интересах',
+                                onPressed: () => _reactToArticle(article, NewsReaction.like),
+                                icon: const Icon(Icons.thumb_up_alt_outlined, size: 19),
+                              ),
+                              IconButton(
+                                tooltip: 'Не нравится — учитывать в интересах',
+                                onPressed: () => _reactToArticle(article, NewsReaction.dislike),
+                                icon: const Icon(Icons.thumb_down_alt_outlined, size: 19),
+                              ),
+                              IconButton(
                                 tooltip: 'Показывать меньше похожего',
                                 onPressed: () => _seeLessOf(article),
-                                icon: const Icon(Icons.thumb_down_alt_outlined, size: 19),
+                                icon: const Icon(Icons.remove_circle_outline, size: 19),
                               ),
                               if (article.contentType == NewsContentType.trailer)
                                 IconButton(
