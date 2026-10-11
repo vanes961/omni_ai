@@ -18,6 +18,7 @@ class SharedPreferencesNewsCache {
   static const articlesKey = 'omni_ai.news_cache.articles.v1';
   static const digestKey = 'omni_ai.news_cache.digest.v1';
   static const topicsKey = 'omni_ai.news_cache.topics.v1';
+  static const criticalSettingKey = 'omni_ai.news_cache.critical_setting.v1';
 
   final NewsCacheStringStore _store;
 
@@ -72,9 +73,18 @@ class SharedPreferencesNewsCache {
     }
   }
 
+  Future<bool?> loadIncludeCriticalOutsideInterests() async {
+    final encoded = await _store.read(criticalSettingKey);
+    if (encoded == 'true') return true;
+    if (encoded == 'false') return false;
+    if (encoded != null) await _store.remove(criticalSettingKey);
+    return null;
+  }
+
   Future<void> saveArticles(
     List<NewsArticle> articles, {
     List<String> selectedTopics = const <String>[],
+    bool includeCriticalOutsideInterests = false,
   }) => _serializeMutation(() async {
     final encoded = articles
         .map((article) => <String, Object?>{
@@ -105,6 +115,10 @@ class SharedPreferencesNewsCache {
     // previous feed look valid on the next launch.
     await _store.remove(articlesKey);
     await _store.write(topicsKey, jsonEncode(_normalizeTopics(selectedTopics)));
+    await _store.write(
+      criticalSettingKey,
+      includeCriticalOutsideInterests.toString(),
+    );
     await _store.write(articlesKey, jsonEncode(encoded));
   });
 
@@ -118,6 +132,7 @@ class SharedPreferencesNewsCache {
     await _store.remove(articlesKey);
     await _store.remove(digestKey);
     await _store.remove(topicsKey);
+    await _store.remove(criticalSettingKey);
   });
 
   List<String> _normalizeTopics(List<String> topics) => topics
