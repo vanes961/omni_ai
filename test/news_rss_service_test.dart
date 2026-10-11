@@ -133,7 +133,7 @@ void main() {
 
       expect(articles, hasLength(1));
       expect(articles.single.title, contains('Nintendo announces'));
-      expect(articles.single.topics, contains('games'));
+      expect(articles.single.topics, ['games']);
     },
   );
 
