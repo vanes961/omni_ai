@@ -113,10 +113,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       final favorites = await _favoritesRepository.getAll();
       _lessInterested = await _feedbackRepository.loadLessInterested();
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
-      final cachedArticles = _favoriteAnalytics.rankNews(
-        (cached[0] as List<NewsArticle>),
-        favoriteProfile,
-        lessInterested: _lessInterested,
+      final cachedArticles = _rankByReaction(
+        _favoriteAnalytics.rankNews(
+          (cached[0] as List<NewsArticle>),
+          favoriteProfile,
+          lessInterested: _lessInterested,
+        ),
       );
       final selectedTopics = _normalizeTopics(profile.topics);
       final cacheMatchesProfile = savedTopics != null &&
@@ -398,10 +400,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       final favorites = await _favoritesRepository.getAll();
       _lessInterested = await _feedbackRepository.loadLessInterested();
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
-      final rankedArticles = _favoriteAnalytics.rankNews(
-        articles,
-        favoriteProfile,
-        lessInterested: _lessInterested,
+      final rankedArticles = _rankByReaction(
+        _favoriteAnalytics.rankNews(
+          articles,
+          favoriteProfile,
+          lessInterested: _lessInterested,
+        ),
       );
       if (revisionAtStart != _interestRevision) return;
       // A digest describes a specific set of articles. Never keep showing a
