@@ -40,11 +40,17 @@ void main() {
     expect(prompt, contains('https://example.com/news/1'));
     expect(prompt, contains('https://example.com/news/5'));
     expect(prompt, isNot(contains('https://example.com/news/6')));
-    expect(prompt.length, lessThanOrEqualTo(NewsChatContextBuilder.maxContextLength));
+    expect(
+      prompt.length,
+      lessThanOrEqualTo(NewsChatContextBuilder.maxContextLength),
+    );
   });
 }
 
-NewsArticle _article(int number, {String summary = 'Краткое описание новости.'}) {
+NewsArticle _article(
+  int number, {
+  String summary = 'Краткое описание новости.',
+}) {
   return NewsArticle(
     id: 'news-$number',
     title: 'Новость $number',
