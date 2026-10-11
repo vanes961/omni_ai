@@ -26,7 +26,23 @@ class SharedPreferencesNewsInterestRepository
       throw StateError('News interest repository has been disposed.');
     }
     final encoded = await _store.read(storageKey);
-    if (encoded == null || encoded.isEmpty) return const NewsInterestProfile();
+    if (encoded == null || encoded.isEmpty) {
+      // First launch starts with a useful live feed; users can personalize it
+      // later in the news center without a mandatory onboarding wizard.
+      return const NewsInterestProfile(
+        topics: <String>[
+          'technology',
+          'artificial intelligence',
+          'science',
+          'space',
+          'gadgets',
+          'games',
+          'movies',
+          'series',
+          'anime',
+        ],
+      );
+    }
 
     try {
       final decoded = jsonDecode(encoded);
