@@ -30,6 +30,42 @@ class NewsRssService {
     'gadgets': ['gadget', 'electronics', 'smartphone', 'гаджет', 'смартфон', 'электроник'],
   };
 
+  // Only high-impact public-safety events bypass topic preferences, and only
+  // when the user explicitly enables critical news in their profile.
+  static const _criticalNewsKeywords = <String>[
+    'state of emergency',
+    'emergency declared',
+    'major earthquake',
+    'earthquake of magnitude',
+    'tsunami warning',
+    'evacuation order',
+    'mass casualty',
+    'critical infrastructure outage',
+    'national emergency',
+    'terrorist attack',
+    'major wildfire',
+    'severe flooding',
+    'чрезвычайное положение',
+    'режим чс',
+    'объявлена эвакуация',
+    'угроза цунами',
+    'землетрясение магнитудой',
+    'крупное землетрясение',
+    'массовая гибель',
+    'теракт',
+    'крупный пожар',
+    'масштабное наводнение',
+    'авария на атомной станции',
+    'радиационная авария',
+  ];
+
+  bool _isCriticalNews(String text) {
+    final normalized = ' ${text.toLowerCase()} ';
+    return _criticalNewsKeywords.any(
+      (keyword) => _containsKeyword(normalized, keyword),
+    );
+  }
+
   static const _topicQueries = <String, String>{
     'games': 'video games gaming',
     'anime': 'anime',
@@ -290,6 +326,7 @@ class NewsRssService {
         publishedAt: published.toUtc(),
         topics: topics,
         language: language,
+        isCritical: _isCriticalNews('${title} ${text}'),
         region: profileRegion,
         isVerified: true,
       ));
