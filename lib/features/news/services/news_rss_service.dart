@@ -114,6 +114,7 @@ class NewsRssService {
       ['en', 'GB'],
     ];
     var successfulEditions = 0;
+    final failedEditions = <String>[];
     final batches = await Future.wait(
       locales.map((locale) async {
         try {
@@ -126,15 +127,19 @@ class NewsRssService {
           );
           successfulEditions++;
           return articles;
-        } catch (_) {
+        } catch (error) {
           // One unavailable edition should not block the remaining sources.
+          // Keep only locale and error type so diagnostics remain useful
+          // without exposing response bodies or arbitrary network payloads.
+          failedEditions.add('${locale[0]}-${locale[1]}: ${error.runtimeType}');
           return const <NewsArticle>[];
         }
       }),
     );
     if (successfulEditions == 0) {
       throw http.ClientException(
-        'All international news editions are unavailable.',
+        'All international news editions are unavailable '
+        '(${failedEditions.join(', ')}).',
       );
     }
 
