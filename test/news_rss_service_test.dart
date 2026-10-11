@@ -670,7 +670,10 @@ void main() {
   test('searches critical events when no topics are selected', () async {
     final service = NewsRssService(
       client: MockClient((request) async {
-        expect(request.url.queryParameters['q'], contains('"tsunami warning"'));
+        expect(
+          request.url.queryParameters['q'],
+          contains('"tsunami warning"'),
+        );
         expect(request.url.queryParameters['q'], isNot(contains('anime')));
         return http.Response(
           '''<rss><channel><item>
