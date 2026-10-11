@@ -144,45 +144,27 @@ void main() {
     expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsNothing);
   });
 
-  testWidgets(
-    'filters the catalog and opens the selected title in the player',
-    (tester) async {
-      final playerSources = <Uri>[];
-      final preferences = UserPreferences()..voiceDubbing = ['Anilibria'];
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MediaPage(
-            preferences: preferences,
-            playerFactory: (source) {
-              playerSources.add(source);
-              return _FakePlaybackController();
-            },
-          ),
-        ),
-      );
+  testWidgets('shows an honest empty state instead of demo media', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(home: MediaPage(preferences: UserPreferences())),
+    );
 
-      await tester.enterText(
-        find.byKey(const ValueKey('media-search')),
-        'Cyberpunk',
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Cyberpunk: Edgerunners'), findsOneWidget);
-      expect(find.text('Интерстеллар'), findsNothing);
+    expect(find.text('МЕДИАКАТАЛОГ НЕ ПОДКЛЮЧЁН'), findsOneWidget);
+    expect(find.text('Cyberpunk: Edgerunners'), findsNothing);
+    expect(find.text('Интерстеллар'), findsNothing);
 
-      await tester.tap(find.text('Cyberpunk: Edgerunners'));
-      await tester.pumpAndSettle();
-      expect(find.byType(PlayerPage), findsOneWidget);
-      await tester.scrollUntilVisible(
-        find.byKey(const ValueKey('episode-selector')),
-        160,
-        scrollable: find.byType(Scrollable).last,
-      );
-      expect(find.text('Anilibria'), findsOneWidget);
-      expect(playerSources, [
-        Uri.parse(MediaSearchService().catalog.first.videoUrl),
-      ]);
-    },
-  );
+    await tester.enterText(
+      find.byKey(const ValueKey('media-search')),
+      'Cyberpunk',
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cyberpunk: Edgerunners'), findsNothing);
+    expect(find.text('Интерстеллар'), findsNothing);
+    expect(find.byType(PlayerPage), findsNothing);
+  });
 
   testWidgets('player changes episode source and selects preferred voiceover', (
     tester,
