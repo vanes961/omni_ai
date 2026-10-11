@@ -631,42 +631,39 @@ void main() {
     expect(articles.map((article) => article.region), isNot(contains('us')));
   });
 
-  test(
-    'supports user-defined interests outside built-in topic categories',
-    () async {
-      final service = NewsRssService(
-        client: MockClient((request) async {
-          expect(request.url.queryParameters['q'], 'robotics');
-          return http.Response(
-            '''<rss><channel>
-              <item>
-                <title>New robotics laboratory opens</title>
-                <link>https://publisher.example/robotics</link>
-                <description>Researchers introduce a robotics project.</description>
-                <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-                <source>Research News</source>
-              </item>
-              <item>
-                <title>Local football club wins</title>
-                <link>https://publisher.example/football</link>
-                <description>A football match report.</description>
-                <pubDate>Sat, 10 Oct 2026 11:00:00 GMT</pubDate>
-                <source>Sports News</source>
-              </item>
-            </channel></rss>''',
-            200,
-          );
-        }),
-      );
-      addTearDown(service.dispose);
+  test('supports user-defined interests outside built-in topic categories', () async {
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        expect(request.url.queryParameters['q'], 'robotics');
+        return http.Response(
+          '''<rss><channel>
+            <item>
+              <title>New robotics laboratory opens</title>
+              <link>https://publisher.example/robotics</link>
+              <description>Researchers introduce a robotics project.</description>
+              <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+              <source>Research News</source>
+            </item>
+            <item>
+              <title>Local football club wins</title>
+              <link>https://publisher.example/football</link>
+              <description>A football match report.</description>
+              <pubDate>Sat, 10 Oct 2026 11:00:00 GMT</pubDate>
+              <source>Sports News</source>
+            </item>
+          </channel></rss>''',
+          200,
+        );
+      }),
+    );
+    addTearDown(service.dispose);
 
-      final articles = await service.fetch(
-        const NewsInterestProfile(topics: ['robotics']),
-      );
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: ['robotics']),
+    );
 
-      expect(articles, hasLength(1));
-      expect(articles.single.title, 'New robotics laboratory opens');
-      expect(articles.single.topics, contains('robotics'));
-    },
-  );
+    expect(articles, hasLength(1));
+    expect(articles.single.title, 'New robotics laboratory opens');
+    expect(articles.single.topics, contains('robotics'));
+  });
 }
