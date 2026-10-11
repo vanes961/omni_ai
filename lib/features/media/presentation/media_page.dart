@@ -87,6 +87,29 @@ class _MediaPageState extends State<MediaPage> {
           ),
           if (isFiltering)
             _buildSearchResults(results)
+          else if (widget.searchService.trending.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(24, 44, 24, 24),
+                child: Column(
+                  children: [
+                    Icon(Icons.travel_explore, size: 42, color: SystemCorePalette.green),
+                    SizedBox(height: 14),
+                    Text(
+                      'МЕДИАКАТАЛОГ НЕ ПОДКЛЮЧЁН',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Демо-фильмы и фиктивные озвучки удалены. Для реальных результатов нужен подключённый источник каталога.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: SystemCorePalette.muted, height: 1.45),
+                    ),
+                  ],
+                ),
+              ),
+            )
           else ...[
             _buildCarouselSection('ТРЕНДЫ', widget.searchService.trending),
             _buildCarouselSection(
@@ -254,7 +277,7 @@ class _MediaPageState extends State<MediaPage> {
               padding: EdgeInsets.all(24),
               child: Center(
                 child: Text(
-                  'НЕТ СОВПАДЕНИЙ',
+                  'НЕТ РЕАЛЬНЫХ РЕЗУЛЬТАТОВ. ПРОВЕРЬТЕ ПОДКЛЮЧЕНИЕ КАТАЛОГА.',
                   style: TextStyle(
                     color: SystemCorePalette.muted,
                     fontSize: 12,
