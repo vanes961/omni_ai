@@ -183,19 +183,6 @@ class _AppStartupPageState extends State<_AppStartupPage>
 
         final preferences = snapshot.data;
         if (preferences != null) {
-          // Remove legacy onboarding selections that used to pin demo channels,
-          // fixed titles and voiceover providers into the first-run experience.
-          if (preferences.categories.isNotEmpty ||
-              preferences.favoriteTitles.isNotEmpty ||
-              preferences.voiceDubbing.isNotEmpty ||
-              preferences.tgChannels.isNotEmpty) {
-            preferences
-              ..categories = <String>[]
-              ..favoriteTitles = <String>[]
-              ..voiceDubbing = <String>[]
-              ..tgChannels = <String>[];
-            unawaited(_preferencesStore.save(preferences));
-          }
           return DashboardPage(
             preferences: preferences,
             preferencesStore: _preferencesStore,
