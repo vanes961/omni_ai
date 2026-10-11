@@ -97,6 +97,27 @@ void main() {
     },
   );
 
+  test('keeps the original article when AI translation times out', () async {
+    final foreign = _article(
+      id: 'slow',
+      language: 'en',
+      title: 'Slow foreign headline',
+    );
+    final translationService = NewsSourceLocalizationService(
+      aiEngine: AIEngine(
+        provider: _TranslationProvider(
+          delay: const Duration(milliseconds: 50),
+        ),
+      ),
+      translationTimeout: const Duration(milliseconds: 1),
+    );
+
+    final result = await translationService.localizeCandidates([foreign]);
+
+    expect(result, hasLength(1));
+    expect(result.single, same(foreign));
+  });
+
   test('keeps Russian articles', () async {
     final russian = _article(
       id: 'russian',
@@ -129,6 +150,9 @@ NewsArticle _article({
 }
 
 class _TranslationProvider implements AIProvider {
+  _TranslationProvider({this.delay = Duration.zero});
+
+  final Duration delay;
   int calls = 0;
 
   @override
@@ -140,6 +164,7 @@ class _TranslationProvider implements AIProvider {
     required AICancellationToken cancellationToken,
   }) async {
     calls++;
+    await Future<void>.delayed(delay);
     return AIResponse(
       requestId: request.id,
       text: '{"title":"Консоль","summary":"Описание"}',
