@@ -60,8 +60,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   Set<String> _lessInterested = <String>{};
   final FavoriteInterestAnalytics _favoriteAnalytics =
       const FavoriteInterestAnalytics();
-  final NewsSourceLocalizationService _sourceLocalizationService =
-      const NewsSourceLocalizationService();
+  NewsSourceLocalizationService get _sourceLocalizationService =>
+      NewsSourceLocalizationService(aiEngine: widget.aiEngine);
   final SharedPreferencesNewsCache _newsCache = SharedPreferencesNewsCache();
   final NewsFeedbackRepository _newsFeedback = NewsFeedbackRepository();
   Map<String, double> _reactionWeights = const <String, double>{};
