@@ -107,7 +107,9 @@ void main() {
       );
       final translationService = NewsSourceLocalizationService(
         aiEngine: AIEngine(
-          provider: _TranslationProvider(delay: const Duration(milliseconds: 50)),
+          provider: _TranslationProvider(
+            delay: const Duration(milliseconds: 50),
+          ),
         ),
         translationTimeout: const Duration(milliseconds: 1),
       );
