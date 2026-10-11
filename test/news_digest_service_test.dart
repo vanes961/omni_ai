@@ -165,7 +165,7 @@ void main() {
   test(
     'returns null when the configured AI provider returns blank text',
     () async {
-      final provider = _FakeProvider(responseText: '  \\n ');
+      final provider = _FakeProvider(responseText: '  \n ');
       final service = NewsDigestService(engine: AIEngine(provider: provider));
 
       final result = await service.createDigest(
