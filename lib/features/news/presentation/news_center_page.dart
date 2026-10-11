@@ -754,10 +754,34 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: _runDiagnostics,
-                icon: const Icon(Icons.troubleshoot),
-                label: const Text('ДИАГНОСТИКА И ОТЧЁТ'),
+              Container(
+                decoration: BoxDecoration(
+                  color: SystemCorePalette.panel,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: SystemCorePalette.border),
+                ),
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.health_and_safety_outlined,
+                    color: SystemCorePalette.green,
+                  ),
+                  title: const Text(
+                    'Диагностика системы',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: const Text(
+                    'Проверить ленту и сформировать отчёт для поиска ошибок',
+                    style: TextStyle(color: SystemCorePalette.muted, fontSize: 12),
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: SystemCorePalette.green,
+                  ),
+                  onTap: _runDiagnostics,
+                ),
               ),
               const SizedBox(height: 8),
               FilledButton.icon(
@@ -849,15 +873,20 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                   ),
                                 ),
                               ),
-                              IconButton(
+                              _ReactionButton(
                                 tooltip: 'Нравится — учитывать в интересах',
-                                onPressed: () => _reactToArticle(article, NewsReaction.like),
-                                icon: const Icon(Icons.thumb_up_alt_outlined, size: 19),
+                                icon: Icons.thumb_up_alt_outlined,
+                                color: SystemCorePalette.green,
+                                onPressed: () =>
+                                    _reactToArticle(article, NewsReaction.like),
                               ),
-                              IconButton(
+                              const SizedBox(width: 6),
+                              _ReactionButton(
                                 tooltip: 'Не нравится — учитывать в интересах',
-                                onPressed: () => _reactToArticle(article, NewsReaction.dislike),
-                                icon: const Icon(Icons.thumb_down_alt_outlined, size: 19),
+                                icon: Icons.thumb_down_alt_outlined,
+                                color: SystemCorePalette.mint,
+                                onPressed: () =>
+                                    _reactToArticle(article, NewsReaction.dislike),
                               ),
                               IconButton(
                                 tooltip: 'Показывать меньше похожего',
@@ -894,6 +923,45 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+
+class _ReactionButton extends StatelessWidget {
+  const _ReactionButton({
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: SystemCorePalette.panelElevated,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            width: 36,
+            height: 34,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: SystemCorePalette.border),
+            ),
+            child: Icon(icon, size: 17, color: color),
+          ),
+        ),
       ),
     );
   }
