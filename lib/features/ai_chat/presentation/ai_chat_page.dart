@@ -25,7 +25,8 @@ class _AIChatPageState extends State<AIChatPage> {
   final ScrollController _scroll = ScrollController();
   final List<_ChatMessage> _messages = <_ChatMessage>[];
   final SharedPreferencesNewsCache _newsCache = SharedPreferencesNewsCache();
-  const NewsChatContextBuilder _newsContextBuilder = NewsChatContextBuilder();
+  final NewsChatContextBuilder _newsContextBuilder =
+      const NewsChatContextBuilder();
   AICancellationToken? _activeToken;
   bool _sending = false;
   bool _modeLoading = true;
