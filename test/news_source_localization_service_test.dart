@@ -66,7 +66,9 @@ void main() {
     expect(result.single.id, foreign.id);
   });
 
-  test('limits AI translations per refresh and keeps remaining sources', () async {
+  test(
+    'limits AI translations per refresh and keeps remaining sources',
+    () async {
     final provider = _TranslationProvider();
     final translationService = NewsSourceLocalizationService(
       aiEngine: AIEngine(provider: provider),
@@ -83,13 +85,17 @@ void main() {
       title: 'Second foreign headline',
     );
 
-    final result = await translationService.localizeCandidates([first, second]);
+      final result = await translationService.localizeCandidates([
+        first,
+        second,
+      ]);
 
-    expect(provider.calls, 1);
-    expect(result, hasLength(2));
-    expect(result.first.language, 'ru');
-    expect(result.last, same(second));
-  });
+      expect(provider.calls, 1);
+      expect(result, hasLength(2));
+      expect(result.first.language, 'ru');
+      expect(result.last, same(second));
+    },
+  );
 
   test('keeps Russian articles', () async {
     final russian = _article(
