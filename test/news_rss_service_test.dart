@@ -670,35 +670,36 @@ void main() {
   test(
     'marks high-impact public-safety events as critical for opt-in feed',
     () async {
-    final service = NewsRssService(
-      client: MockClient((request) async {
-        expect(
-          request.url.queryParameters['q'],
-          contains('"emergency declared"'),
-        );
-        return http.Response(
-          '''<rss><channel><item>
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          expect(
+            request.url.queryParameters['q'],
+            contains('"emergency declared"'),
+          );
+          return http.Response(
+            '''<rss><channel><item>
           <title>Emergency declared after major earthquake</title>
           <link>https://publisher.example/earthquake-alert</link>
           <description>Authorities issue evacuation order after earthquake of magnitude 7.</description>
           <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
           <source>Public Safety News</source>
         </item></channel></rss>''',
-          200,
-        );
-      }),
-    );
-    addTearDown(service.dispose);
+            200,
+          );
+        }),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetch(
-      const NewsInterestProfile(
-        topics: ['anime'],
-        includeCriticalOutsideInterests: true,
-      ),
-    );
+      final articles = await service.fetch(
+        const NewsInterestProfile(
+          topics: ['anime'],
+          includeCriticalOutsideInterests: true,
+        ),
+      );
 
-    expect(articles, hasLength(1));
-    expect(articles.single.isCritical, isTrue);
-    expect(articles.single.topics, isEmpty);
-  });
+      expect(articles, hasLength(1));
+      expect(articles.single.isCritical, isTrue);
+      expect(articles.single.topics, isEmpty);
+    },
+  );
 }
