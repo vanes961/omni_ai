@@ -380,9 +380,7 @@ class NewsRssService {
       // entire response lacks detectable selected-topic keywords, preserve
       // the query-matched results. Do not apply this fallback item by item:
       // that would also admit unrelated items from a mixed response.
-      if (!hasSelectedTopicMatch &&
-          detectedTopics.isEmpty &&
-          !isCritical) {
+      if (!hasSelectedTopicMatch && detectedTopics.isEmpty && !isCritical) {
         detectedTopics.addAll(selectedTopics);
       }
       final topics = detectedTopics.toList(growable: false);
