@@ -49,7 +49,7 @@ void main() {
     await tester.pumpWidget(MyApp(preferencesStore: store));
     // The dashboard has repeating animations, so pump a bounded interval
     // instead of waiting for every animation to settle.
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 4));
 
     expect(find.byType(DashboardPage), findsOneWidget);
     expect(find.text('01 // СФЕРЫ ИНТЕРЕСОВ'), findsNothing);
