@@ -667,8 +667,9 @@ void main() {
     expect(articles.single.topics, contains('robotics'));
   });
 
-  test('marks high-impact public-safety events as critical for opt-in feed',
-      () async {
+  test(
+    'marks high-impact public-safety events as critical for opt-in feed',
+    () async {
     final service = NewsRssService(
       client: MockClient((request) async {
         expect(
