@@ -7,6 +7,8 @@ import 'package:omni_ai/core/ai_engine/services/ai_context_manager.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/ai_memory/presentation/ai_memory_manager_dialog.dart';
+import 'package:omni_ai/features/news/data/shared_preferences_news_cache.dart';
+import 'package:omni_ai/features/news/services/news_chat_context_builder.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class AIChatPage extends StatefulWidget {
@@ -22,6 +24,8 @@ class _AIChatPageState extends State<AIChatPage> {
   final TextEditingController _input = TextEditingController();
   final ScrollController _scroll = ScrollController();
   final List<_ChatMessage> _messages = <_ChatMessage>[];
+  final SharedPreferencesNewsCache _newsCache = SharedPreferencesNewsCache();
+  const NewsChatContextBuilder _newsContextBuilder = NewsChatContextBuilder();
   AICancellationToken? _activeToken;
   bool _sending = false;
   bool _modeLoading = true;
@@ -71,10 +75,23 @@ class _AIChatPageState extends State<AIChatPage> {
       await widget.dependencies.ai.restoreExecutionMode();
       final savedMemories = await widget.dependencies.aiMemoryRepository
           .getAll();
+      var requestPrompt = prompt;
+      if (_newsContextBuilder.isNewsRequest(prompt)) {
+        try {
+          final cachedArticles = await _newsCache.loadArticles();
+          requestPrompt = _newsContextBuilder.buildPrompt(
+            prompt,
+            cachedArticles,
+          );
+        } on Object catch (_) {
+          // A cache/storage problem must not prevent ordinary chat from working.
+          requestPrompt = _newsContextBuilder.buildPrompt(prompt, const []);
+        }
+      }
       final response = await widget.dependencies.orchestrator.execute(
         AIRequest(
           id: DateTime.now().microsecondsSinceEpoch.toString(),
-          prompt: prompt,
+          prompt: requestPrompt,
         ),
         cancellationToken: token,
         conversationHistory: conversationHistory,
