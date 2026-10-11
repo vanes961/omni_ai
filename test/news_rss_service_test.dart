@@ -259,6 +259,31 @@ void main() {
   });
 
   test(
+    'reports an empty feed when every healthy edition returns no usable articles',
+    () async {
+      final service = NewsRssService(
+        client: MockClient(
+          (_) async => http.Response('<rss><channel></channel></rss>', 200),
+        ),
+      );
+      addTearDown(service.dispose);
+
+      expect(
+        service.fetchInternational(
+          const NewsInterestProfile(topics: ['anime']),
+        ),
+        throwsA(
+          isA<http.ClientException>().having(
+            (error) => error.message,
+            'message',
+            contains('returned no usable articles'),
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
     'reports partial edition failures when successful editions return no articles',
     () async {
       final service = NewsRssService(
