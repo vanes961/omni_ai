@@ -66,6 +66,31 @@ void main() {
     expect(result.single.id, foreign.id);
   });
 
+  test('limits AI translations per refresh and keeps remaining sources', () async {
+    final provider = _TranslationProvider();
+    final translationService = NewsSourceLocalizationService(
+      aiEngine: AIEngine(provider: provider),
+      maxAiTranslationsPerBatch: 1,
+    );
+    final first = _article(
+      id: 'first',
+      language: 'en',
+      title: 'First foreign headline',
+    );
+    final second = _article(
+      id: 'second',
+      language: 'en',
+      title: 'Second foreign headline',
+    );
+
+    final result = await translationService.localizeCandidates([first, second]);
+
+    expect(provider.calls, 1);
+    expect(result, hasLength(2));
+    expect(result.first.language, 'ru');
+    expect(result.last, same(second));
+  });
+
   test('keeps Russian articles', () async {
     final russian = _article(
       id: 'russian',
@@ -98,6 +123,8 @@ NewsArticle _article({
 }
 
 class _TranslationProvider implements AIProvider {
+  int calls = 0;
+
   @override
   String get id => 'test-translation';
 
@@ -106,6 +133,7 @@ class _TranslationProvider implements AIProvider {
     AIRequest request, {
     required AICancellationToken cancellationToken,
   }) async {
+    calls++;
     return AIResponse(
       requestId: request.id,
       text: '{"title":"Консоль","summary":"Описание"}',
