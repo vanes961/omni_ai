@@ -79,6 +79,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _eveningReminder = false;
   bool _loadingReminderSettings = true;
   bool _updatingReminder = false;
+  final GlobalKey _interestsSectionKey = GlobalKey();
 
   @override
   void initState() {
@@ -774,6 +775,55 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 decoration: BoxDecoration(
                   color: SystemCorePalette.panel,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: profile.topics.isEmpty
+                        ? SystemCorePalette.green
+                        : SystemCorePalette.border,
+                  ),
+                ),
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.tune,
+                    color: SystemCorePalette.green,
+                  ),
+                  title: const Text(
+                    'Настроить интересы новостей',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    profile.topics.isEmpty
+                        ? 'Темы не выбраны — обычная лента будет пустой'
+                        : 'Выбрано тем: ${profile.topics.length}',
+                    style: const TextStyle(
+                      color: SystemCorePalette.muted,
+                      fontSize: 12,
+                    ),
+                  ),
+                  trailing: const Icon(
+                    Icons.arrow_downward,
+                    color: SystemCorePalette.green,
+                  ),
+                  onTap: () {
+                    final target = _interestsSectionKey.currentContext;
+                    if (target != null) {
+                      Scrollable.ensureVisible(
+                        target,
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeInOut,
+                        alignment: 0.05,
+                      );
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: SystemCorePalette.panel,
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: SystemCorePalette.border),
                 ),
                 child: ListTile(
@@ -1008,8 +1058,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               ],
 
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'ВАШИ ИНТЕРЕСЫ',
+                key: _interestsSectionKey,
                 style: TextStyle(
                   color: SystemCorePalette.green,
                   fontWeight: FontWeight.bold,
