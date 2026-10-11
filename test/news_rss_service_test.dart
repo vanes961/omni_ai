@@ -597,7 +597,6 @@ void main() {
     expect(requests, 0);
   });
 
-
   test('keeps news from healthy editions when one international edition fails', () async {
     var requests = 0;
     final service = NewsRssService(
@@ -631,8 +630,6 @@ void main() {
     expect(articles.map((article) => article.region), containsAll(['ru', 'gb']));
     expect(articles.map((article) => article.region), isNot(contains('us')));
   });
-
-
 
   test(
     'supports user-defined interests outside built-in topic categories',
