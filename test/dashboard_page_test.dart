@@ -18,7 +18,9 @@ void main() {
       ..voiceDubbing = <String>['Legacy dubbing provider'];
 
     await tester.pumpWidget(
-      MaterialApp(home: DashboardPage(preferences: preferences)),
+      MaterialApp(
+        home: DashboardPage(preferences: preferences, initialTab: 2),
+      ),
     );
     await tester.pump();
 
