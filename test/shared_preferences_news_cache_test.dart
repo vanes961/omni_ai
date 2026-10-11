@@ -185,14 +185,15 @@ void main() {
   test(
     'returns empty data for missing cache and removes empty digest',
     () async {
-    final store = _MemoryStore();
-    final cache = SharedPreferencesNewsCache(store: store);
+      final store = _MemoryStore();
+      final cache = SharedPreferencesNewsCache(store: store);
 
-    expect(await cache.loadArticles(), isEmpty);
-    expect(await cache.loadDigest(), isNull);
-    await cache.saveDigest('  ');
-    expect(await cache.loadDigest(), isNull);
-  });
+      expect(await cache.loadArticles(), isEmpty);
+      expect(await cache.loadDigest(), isNull);
+      await cache.saveDigest('  ');
+      expect(await cache.loadDigest(), isNull);
+    },
+  );;
 
   test('clears articles, digest and saved interests together', () async {
     final store = _MemoryStore();
@@ -211,117 +212,120 @@ void main() {
   test(
     'skips cached articles with unsafe links or invalid publication dates',
     () async {
-    final store = _MemoryStore();
-    final cache = SharedPreferencesNewsCache(store: store);
-    final article = NewsArticle(
-      id: 'safe-1',
-      title: 'Safe article',
-      summary: 'A valid cached article.',
-      sourceName: 'Example',
-      sourceUrl: 'https://example.com/safe',
-      publishedAt: DateTime.utc(2026, 10, 10, 12),
-      topics: const ['technology'],
-    );
+      final store = _MemoryStore();
+      final cache = SharedPreferencesNewsCache(store: store);
+      final article = NewsArticle(
+        id: 'safe-1',
+        title: 'Safe article',
+        summary: 'A valid cached article.',
+        sourceName: 'Example',
+        sourceUrl: 'https://example.com/safe',
+        publishedAt: DateTime.utc(2026, 10, 10, 12),
+        topics: const ['technology'],
+      );
 
-    await cache.saveArticles([article], selectedTopics: const ['technology']);
-    final payload = jsonDecode(
-      store.values[SharedPreferencesNewsCache.articlesKey]!,
-    ) as List<dynamic>;
-    final valid = payload.single as Map<String, dynamic>;
-    payload
-      ..add({
-        ...valid,
-        'id': 'unsafe-1',
-        'sourceUrl': 'javascript:alert(1)',
-      })
-      ..add({
-        ...valid,
-        'id': 'undated-1',
-        'publishedAt': 'not-a-date',
-      });
-    store.values[SharedPreferencesNewsCache.articlesKey] = jsonEncode(payload);
+      await cache.saveArticles([article], selectedTopics: const ['technology']);
+      final payload = jsonDecode(
+        store.values[SharedPreferencesNewsCache.articlesKey]!,
+      ) as List<dynamic>;
+      final valid = payload.single as Map<String, dynamic>;
+      payload
+        ..add({
+          ...valid,
+          'id': 'unsafe-1',
+          'sourceUrl': 'javascript:alert(1)',
+        })
+        ..add({
+          ...valid,
+          'id': 'undated-1',
+          'publishedAt': 'not-a-date',
+        });
+      store.values[SharedPreferencesNewsCache.articlesKey] = jsonEncode(payload);
 
-    final restored = await cache.loadArticles();
+      final restored = await cache.loadArticles();
 
-    expect(restored, hasLength(1));
-    expect(restored.single.id, 'safe-1');
-  });
+      expect(restored, hasLength(1));
+      expect(restored.single.id, 'safe-1');
+    },
+  );;
 
   test(
     'skips malformed records and duplicate article IDs during recovery',
     () async {
-    final store = _MemoryStore();
-    final cache = SharedPreferencesNewsCache(store: store);
-    final article = NewsArticle(
-      id: 'duplicate-1',
-      title: 'First copy',
-      summary: 'A valid cached article.',
-      sourceName: 'Example',
-      sourceUrl: 'https://example.com/first',
-      publishedAt: DateTime.utc(2026, 10, 10, 12),
-      topics: const ['technology'],
-    );
-    await cache.saveArticles([article], selectedTopics: const ['technology']);
-    final payload = jsonDecode(
-      store.values[SharedPreferencesNewsCache.articlesKey]!,
-    ) as List<dynamic>;
-    final valid = payload.single as Map<String, dynamic>;
-    payload
-      ..add('not-an-article')
-      ..add({...valid, 'id': '   '})
-      ..add({
-        ...valid,
-        'title': 'Duplicate copy',
-        'sourceUrl': 'https://example.com/second',
-      });
-    store.values[SharedPreferencesNewsCache.articlesKey] = jsonEncode(payload);
+      final store = _MemoryStore();
+      final cache = SharedPreferencesNewsCache(store: store);
+      final article = NewsArticle(
+        id: 'duplicate-1',
+        title: 'First copy',
+        summary: 'A valid cached article.',
+        sourceName: 'Example',
+        sourceUrl: 'https://example.com/first',
+        publishedAt: DateTime.utc(2026, 10, 10, 12),
+        topics: const ['technology'],
+      );
+      await cache.saveArticles([article], selectedTopics: const ['technology']);
+      final payload = jsonDecode(
+        store.values[SharedPreferencesNewsCache.articlesKey]!,
+      ) as List<dynamic>;
+      final valid = payload.single as Map<String, dynamic>;
+      payload
+        ..add('not-an-article')
+        ..add({...valid, 'id': '   '})
+        ..add({
+          ...valid,
+          'title': 'Duplicate copy',
+          'sourceUrl': 'https://example.com/second',
+        });
+      store.values[SharedPreferencesNewsCache.articlesKey] = jsonEncode(payload);
 
-    final restored = await cache.loadArticles();
+      final restored = await cache.loadArticles();
 
-    expect(restored, hasLength(1));
-    expect(restored.single.title, 'First copy');
-  });
+      expect(restored, hasLength(1));
+      expect(restored.single.title, 'First copy');
+    },
+  );;
 
   test(
     'writes topic marker before articles to detect interrupted cache saves',
     () async {
-    final store = _MemoryStore();
-    final cache = SharedPreferencesNewsCache(store: store);
-    final oldArticle = NewsArticle(
-      id: 'old-1',
-      title: 'Old topic article',
-      summary: 'Old cached content.',
-      sourceName: 'Example',
-      sourceUrl: 'https://example.com/old',
-      publishedAt: DateTime.utc(2026, 10, 9, 12),
-      topics: const ['anime'],
-    );
-    await cache.saveArticles([oldArticle], selectedTopics: const ['anime']);
-    final oldPayload = store.values[SharedPreferencesNewsCache.articlesKey];
-    store.failWriteKey = SharedPreferencesNewsCache.articlesKey;
-    final newArticle = NewsArticle(
-      id: 'new-1',
-      title: 'New topic article',
-      summary: 'New content.',
-      sourceName: 'Example',
-      sourceUrl: 'https://example.com/new',
-      publishedAt: DateTime.utc(2026, 10, 10, 12),
-      topics: const ['technology'],
-    );
+      final store = _MemoryStore();
+      final cache = SharedPreferencesNewsCache(store: store);
+      final oldArticle = NewsArticle(
+        id: 'old-1',
+        title: 'Old topic article',
+        summary: 'Old cached content.',
+        sourceName: 'Example',
+        sourceUrl: 'https://example.com/old',
+        publishedAt: DateTime.utc(2026, 10, 9, 12),
+        topics: const ['anime'],
+      );
+      await cache.saveArticles([oldArticle], selectedTopics: const ['anime']);
+      final oldPayload = store.values[SharedPreferencesNewsCache.articlesKey];
+      store.failWriteKey = SharedPreferencesNewsCache.articlesKey;
+      final newArticle = NewsArticle(
+        id: 'new-1',
+        title: 'New topic article',
+        summary: 'New content.',
+        sourceName: 'Example',
+        sourceUrl: 'https://example.com/new',
+        publishedAt: DateTime.utc(2026, 10, 10, 12),
+        topics: const ['technology'],
+      );
 
-    await expectLater(
-      cache.saveArticles([newArticle], selectedTopics: const ['technology']),
-      throwsStateError,
-    );
+      await expectLater(
+        cache.saveArticles([newArticle], selectedTopics: const ['technology']),
+        throwsStateError,
+      );
 
-    expect(oldPayload, isNotNull);
-    expect(
-      store.values.containsKey(SharedPreferencesNewsCache.articlesKey),
-      isFalse,
-    );
-    expect(await cache.loadArticles(), isEmpty);
-    expect(await cache.loadTopics(), ['technology']);
-  });
+      expect(oldPayload, isNotNull);
+      expect(
+        store.values.containsKey(SharedPreferencesNewsCache.articlesKey),
+        isFalse,
+      );
+      expect(await cache.loadArticles(), isEmpty);
+      expect(await cache.loadTopics(), ['technology']);
+    },
+  );;
 
   test('invalidates the old digest when replacing articles fails', () async {
     final store = _MemoryStore();
