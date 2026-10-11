@@ -27,21 +27,9 @@ class SharedPreferencesNewsInterestRepository
     }
     final encoded = await _store.read(storageKey);
     if (encoded == null || encoded.isEmpty) {
-      // First launch starts with a useful live feed; users can personalize it
-      // later in the news center without a mandatory onboarding wizard.
-      return const NewsInterestProfile(
-        topics: <String>[
-          'technology',
-          'artificial intelligence',
-          'science',
-          'space',
-          'gadgets',
-          'games',
-          'movies',
-          'series',
-          'anime',
-        ],
-      );
+      // Do not silently impose interests on a new profile. The news center
+      // asks the user to choose topics before it loads a personalized feed.
+      return const NewsInterestProfile();
     }
 
     try {
