@@ -7,10 +7,13 @@ import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
 
 void main() {
-  test('deduplicates tracking URL variants and keeps the newest story', () async {
-    final service = NewsRssService(
-      client: MockClient((_) async => http.Response(
-        '''<rss><channel>
+  test(
+    'deduplicates tracking URL variants and keeps the newest story',
+    () async {
+      final service = NewsRssService(
+        client: MockClient(
+          (_) async => http.Response(
+            '''<rss><channel>
           <item>
             <title>Anime: New season!</title>
             <link>https://publisher.example/story?utm_source=ru#top</link>
@@ -26,37 +29,41 @@ void main() {
             <source>Publisher</source>
           </item>
         </channel></rss>''',
-        200,
-        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-      )),
-    );
-    addTearDown(service.dispose);
+            200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          ),
+        ),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetch(
-      const NewsInterestProfile(topics: ['anime']),
-    );
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: ['anime']),
+      );
 
-    expect(articles, hasLength(1));
-    expect(articles.single.title, 'Anime — New season');
-    expect(articles.single.summary, 'The latest summary from the publisher.');
-    // Keep the publisher's original link for the user; only the dedupe key is
-    // canonicalized, so attribution and navigation remain unchanged.
-    expect(
-      articles.single.sourceUrl,
-      'https://publisher.example/story?utm_source=en&fbclid=tracking',
-    );
-  });
+      expect(articles, hasLength(1));
+      expect(articles.single.title, 'Anime — New season');
+      expect(articles.single.summary, 'The latest summary from the publisher.');
+      // Keep the publisher's original link for the user; only the dedupe key is
+      // canonicalized, so attribution and navigation remain unchanged.
+      expect(
+        articles.single.sourceUrl,
+        'https://publisher.example/story?utm_source=en&fbclid=tracking',
+      );
+    },
+  );
 
-  test('returns only selected-topic RSS articles and removes duplicates', () async {
-    final client = MockClient((request) async {
-      expect(request.url.host, 'news.google.com');
-      expect(request.url.path, '/rss/search');
-      expect(request.url.queryParameters['q'], 'anime');
-      expect(request.url.queryParameters['hl'], 'ru');
-      expect(request.url.queryParameters['gl'], 'RU');
-      expect(request.url.queryParameters['ceid'], 'RU:ru');
-      return http.Response(
-        '''
+  test(
+    'returns only selected-topic RSS articles and removes duplicates',
+    () async {
+      final client = MockClient((request) async {
+        expect(request.url.host, 'news.google.com');
+        expect(request.url.path, '/rss/search');
+        expect(request.url.queryParameters['q'], 'anime');
+        expect(request.url.queryParameters['hl'], 'ru');
+        expect(request.url.queryParameters['gl'], 'RU');
+        expect(request.url.queryParameters['ceid'], 'RU:ru');
+        return http.Response(
+          '''
         <rss><channel>
           <item>
             <title>New anime season announced</title>
@@ -81,104 +88,114 @@ void main() {
           </item>
         </channel></rss>
         ''',
-        200,
-        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      });
+      final service = NewsRssService(client: client);
+      addTearDown(service.dispose);
+
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: ['anime']),
       );
-    });
-    final service = NewsRssService(client: client);
-    addTearDown(service.dispose);
 
-    final articles = await service.fetch(
-      const NewsInterestProfile(topics: ['anime']),
-    );
+      expect(articles, hasLength(1));
+      expect(articles.single.title, 'New anime season announced');
+      expect(articles.single.sourceName, 'Anime News');
+      expect(articles.single.summary, contains('A new anime series'));
+    },
+  );
 
-    expect(articles, hasLength(1));
-    expect(articles.single.title, 'New anime season announced');
-    expect(articles.single.sourceName, 'Anime News');
-    expect(articles.single.summary, contains('A new anime series'));
-  });
-
-  test('keeps query-matched stories when headlines omit topic keywords', () async {
-    final service = NewsRssService(
-      client: MockClient((request) async {
-        expect(request.url.queryParameters['q'], 'video games gaming');
-        return http.Response(
-          '''<rss><channel><item>
+  test(
+    'keeps query-matched stories when headlines omit topic keywords',
+    () async {
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          expect(request.url.queryParameters['q'], 'video games gaming');
+          return http.Response(
+            '''<rss><channel><item>
             <title>Nintendo announces a new console-exclusive adventure</title>
             <link>https://publisher.example/nintendo-release</link>
             <description>The company revealed its next release.</description>
             <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
             <source>Gaming News</source>
           </item></channel></rss>''',
-          200,
-          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-        );
-      }),
-    );
-    addTearDown(service.dispose);
+            200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          );
+        }),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetch(
-      const NewsInterestProfile(topics: ['games']),
-    );
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: ['games']),
+      );
 
-    expect(articles, hasLength(1));
-    expect(articles.single.title, contains('Nintendo announces'));
-    expect(articles.single.topics, contains('games'));
-  });
+      expect(articles, hasLength(1));
+      expect(articles.single.title, contains('Nintendo announces'));
+      expect(articles.single.topics, contains('games'));
+    },
+  );
 
-  test('deduplicates tracking URL variants across international editions', () async {
-    final service = NewsRssService(
-      client: MockClient((request) async {
-        final language = request.url.queryParameters['hl'];
-        final region = request.url.queryParameters['gl'];
-        final isRussian = language == 'ru';
-        final isUs = region == 'US';
-        final title = isRussian
-            ? 'Анонсирован новый сезон аниме'
-            : 'New anime season announced';
-        final link = isRussian
-            ? 'https://publisher.example/story?utm_source=ru#top'
-            : 'https://publisher.example/story?utm_source=$region&amp;fbclid=tracking';
-        final date = isRussian
-            ? 'Sat, 10 Oct 2026 10:00:00 GMT'
-            : isUs
-                ? 'Sat, 10 Oct 2026 12:00:00 GMT'
-                : 'Sat, 10 Oct 2026 11:00:00 GMT';
-        return http.Response(
-          '''<rss><channel><item>
+  test(
+    'deduplicates tracking URL variants across international editions',
+    () async {
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          final language = request.url.queryParameters['hl'];
+          final region = request.url.queryParameters['gl'];
+          final isRussian = language == 'ru';
+          final isUs = region == 'US';
+          final title = isRussian
+              ? 'Анонсирован новый сезон аниме'
+              : 'New anime season announced';
+          final link = isRussian
+              ? 'https://publisher.example/story?utm_source=ru#top'
+              : 'https://publisher.example/story?utm_source=$region&amp;fbclid=tracking';
+          final date = isRussian
+              ? 'Sat, 10 Oct 2026 10:00:00 GMT'
+              : isUs
+              ? 'Sat, 10 Oct 2026 12:00:00 GMT'
+              : 'Sat, 10 Oct 2026 11:00:00 GMT';
+          return http.Response(
+            '''<rss><channel><item>
             <title>$title</title>
             <link>$link</link>
             <description>Anime news update from the $region edition</description>
             <pubDate>$date</pubDate>
             <source>News source</source>
           </item></channel></rss>''',
-          200,
-          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-        );
-      }),
-    );
-    addTearDown(service.dispose);
+            200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          );
+        }),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetchInternational(
-      const NewsInterestProfile(topics: ['anime']),
-    );
+      final articles = await service.fetchInternational(
+        const NewsInterestProfile(topics: ['anime']),
+      );
 
-    expect(articles, hasLength(1));
-    expect(articles.single.title, 'New anime season announced');
-    expect(articles.single.language, 'en');
-    expect(articles.single.region, 'us');
-    expect(articles.single.publishedAt, DateTime.utc(2026, 10, 10, 12));
-    // The comparison URL is normalized, but navigation keeps the source URL.
-    expect(
-      articles.single.sourceUrl,
-      'https://publisher.example/story?utm_source=US&fbclid=tracking',
-    );
-  });
+      expect(articles, hasLength(1));
+      expect(articles.single.title, 'New anime season announced');
+      expect(articles.single.language, 'en');
+      expect(articles.single.region, 'us');
+      expect(articles.single.publishedAt, DateTime.utc(2026, 10, 10, 12));
+      // The comparison URL is normalized, but navigation keeps the source URL.
+      expect(
+        articles.single.sourceUrl,
+        'https://publisher.example/story?utm_source=US&fbclid=tracking',
+      );
+    },
+  );
 
-  test('keeps repeated URL query values distinct during deduplication', () async {
-    final service = NewsRssService(
-      client: MockClient((_) async => http.Response(
-        '''<rss><channel>
+  test(
+    'keeps repeated URL query values distinct during deduplication',
+    () async {
+      final service = NewsRssService(
+        client: MockClient(
+          (_) async => http.Response(
+            '''<rss><channel>
           <item>
             <title>Anime story with comma tag</title>
             <link>https://publisher.example/story?tag=a%2Cb&amp;tag=c</link>
@@ -194,25 +211,27 @@ void main() {
             <source>Anime News</source>
           </item>
         </channel></rss>''',
-        200,
-        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-      )),
-    );
-    addTearDown(service.dispose);
+            200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          ),
+        ),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetch(
-      const NewsInterestProfile(topics: ['anime']),
-    );
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: ['anime']),
+      );
 
-    expect(articles, hasLength(2));
-    expect(
-      articles.map((article) => article.sourceUrl),
-      containsAll([
-        'https://publisher.example/story?tag=a%2Cb&tag=c',
-        'https://publisher.example/story?tag=a&tag=b%2Cc',
-      ]),
-    );
-  });
+      expect(articles, hasLength(2));
+      expect(
+        articles.map((article) => article.sourceUrl),
+        containsAll([
+          'https://publisher.example/story?tag=a%2Cb&tag=c',
+          'https://publisher.example/story?tag=a&tag=b%2Cc',
+        ]),
+      );
+    },
+  );
 
   test('reports an error when all international news editions fail', () async {
     final service = NewsRssService(
@@ -224,130 +243,140 @@ void main() {
     addTearDown(service.dispose);
 
     expect(
-      service.fetchInternational(
-        const NewsInterestProfile(topics: ['anime']),
-      ),
+      service.fetchInternational(const NewsInterestProfile(topics: ['anime'])),
       throwsA(isA<http.ClientException>()),
     );
   });
 
-  test('keeps other editions when one international RSS source fails', () async {
-    final service = NewsRssService(
-      client: MockClient((request) async {
-        final language = request.url.queryParameters['hl'];
-        final region = request.url.queryParameters['gl'];
-        if (region == 'US') {
-          throw Exception('US edition unavailable');
-        }
-        final isRussian = language == 'ru';
-        return http.Response(
-          '''<rss><channel><item>
+  test(
+    'keeps other editions when one international RSS source fails',
+    () async {
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          final language = request.url.queryParameters['hl'];
+          final region = request.url.queryParameters['gl'];
+          if (region == 'US') {
+            throw Exception('US edition unavailable');
+          }
+          final isRussian = language == 'ru';
+          return http.Response(
+            '''<rss><channel><item>
             <title>${isRussian ? 'Новый сезон аниме' : 'New anime season announced'}</title>
             <link>https://publisher.example/anime-$region</link>
             <description>Anime news update</description>
             <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
             <source>News source</source>
           </item></channel></rss>''',
-          200,
-          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-        );
-      }),
-    );
-    addTearDown(service.dispose);
+            200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          );
+        }),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetchInternational(
-      const NewsInterestProfile(topics: ['anime']),
-    );
+      final articles = await service.fetchInternational(
+        const NewsInterestProfile(topics: ['anime']),
+      );
 
-    expect(articles, hasLength(2));
-    expect(articles.map((article) => article.region), containsAll(['ru', 'gb']));
-  });
+      expect(articles, hasLength(2));
+      expect(
+        articles.map((article) => article.region),
+        containsAll(['ru', 'gb']),
+      );
+    },
+  );
 
-  test('fetches international editions and filters topics without locale lock', () async {
-    var requests = 0;
-    final service = NewsRssService(
-      client: MockClient((request) async {
-        requests++;
-        final language = request.url.queryParameters['hl'];
-        final region = request.url.queryParameters['gl'];
-        expect(
-          <String>{'ru:RU', 'en:US', 'en:GB'},
-          contains('$language:$region'),
-        );
-        final isRussian = language == 'ru';
-        final title = isRussian
-            ? 'Новый сезон аниме объявлен'
-            : 'New anime season announced';
-        final link = isRussian
-            ? 'https://publisher.example/ru-anime'
-            : 'https://publisher.example/en-anime-$region';
-        return http.Response(
-          '''<rss><channel><item>
+  test(
+    'fetches international editions and filters topics without locale lock',
+    () async {
+      var requests = 0;
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          requests++;
+          final language = request.url.queryParameters['hl'];
+          final region = request.url.queryParameters['gl'];
+          expect(<String>{
+            'ru:RU',
+            'en:US',
+            'en:GB',
+          }, contains('$language:$region'));
+          final isRussian = language == 'ru';
+          final title = isRussian
+              ? 'Новый сезон аниме объявлен'
+              : 'New anime season announced';
+          final link = isRussian
+              ? 'https://publisher.example/ru-anime'
+              : 'https://publisher.example/en-anime-$region';
+          return http.Response(
+            '''<rss><channel><item>
             <title>$title</title>
             <link>$link</link>
             <description>Anime news update</description>
             <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
             <source>News source</source>
           </item></channel></rss>''',
-          200,
-          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-        );
-      }),
-    );
-    addTearDown(service.dispose);
+            200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          );
+        }),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetchInternational(
-      const NewsInterestProfile(topics: ['anime']),
-    );
+      final articles = await service.fetchInternational(
+        const NewsInterestProfile(topics: ['anime']),
+      );
 
-    expect(requests, 3);
-    expect(articles.map((article) => article.language), contains('ru'));
-    expect(articles.map((article) => article.language), contains('en'));
-    expect(articles, hasLength(2));
-  });
+      expect(requests, 3);
+      expect(articles.map((article) => article.language), contains('ru'));
+      expect(articles.map((article) => article.language), contains('en'));
+      expect(articles, hasLength(2));
+    },
+  );
 
-  test('normalizes common topic aliases before querying and filtering', () async {
-    final service = NewsRssService(
-      client: MockClient((request) async {
-        expect(
-          request.url.queryParameters['q'],
-          'artificial intelligence AI',
-        );
-        return http.Response(
-          '''<rss><channel><item>
+  test(
+    'normalizes common topic aliases before querying and filtering',
+    () async {
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          expect(
+            request.url.queryParameters['q'],
+            'artificial intelligence AI',
+          );
+          return http.Response('''<rss><channel><item>
             <title>New artificial intelligence model announced</title>
             <link>https://publisher.example/ai-alias</link>
             <description>AI and neural network research update</description>
             <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
             <source>Technology News</source>
-          </item></channel></rss>''',
-          200,
-        );
-      }),
-    );
-    addTearDown(service.dispose);
+          </item></channel></rss>''', 200);
+        }),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetch(
-      const NewsInterestProfile(topics: [' AI ']),
-    );
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: [' AI ']),
+      );
 
-    expect(articles, hasLength(1));
-    expect(articles.single.topics, contains('artificial intelligence'));
-  });
+      expect(articles, hasLength(1));
+      expect(articles.single.topics, contains('artificial intelligence'));
+    },
+  );
 
   test('recognizes Russian-language headlines for selected topics', () async {
     final service = NewsRssService(
-      client: MockClient((_) async => http.Response.bytes(
-        utf8.encode('''<rss><channel><item>
+      client: MockClient(
+        (_) async => http.Response.bytes(
+          utf8.encode('''<rss><channel><item>
           <title>Анонсирован новый сезон аниме</title>
           <link>https://publisher.example/ru-anime</link>
           <description>Новости японской анимации</description>
           <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
           <source>Новости аниме</source>
         </item></channel></rss>'''),
-        200,
-        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-      )),
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        ),
+      ),
     );
     addTearDown(service.dispose);
 
@@ -361,8 +390,9 @@ void main() {
 
   test('matches the Russian AI abbreviation only as a whole word', () async {
     final service = NewsRssService(
-      client: MockClient((_) async => http.Response(
-        '''<rss><channel>
+      client: MockClient(
+        (_) async => http.Response(
+          '''<rss><channel>
           <item>
             <title>Новости России за сегодня</title>
             <link>https://publisher.example/russia</link>
@@ -378,9 +408,10 @@ void main() {
             <source>Новости технологий</source>
           </item>
         </channel></rss>''',
-        200,
-        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-      )),
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        ),
+      ),
     );
     addTearDown(service.dispose);
 
@@ -393,29 +424,34 @@ void main() {
     expect(articles.single.topics, contains('artificial intelligence'));
   });
 
-  test('preserves the selected region so region filtering keeps RSS articles', () async {
-    final service = NewsRssService(
-      client: MockClient((_) async => http.Response.bytes(
-        utf8.encode('''<rss><channel><item>
+  test(
+    'preserves the selected region so region filtering keeps RSS articles',
+    () async {
+      final service = NewsRssService(
+        client: MockClient(
+          (_) async => http.Response.bytes(
+            utf8.encode('''<rss><channel><item>
           <title>Анонсирован новый сезон аниме</title>
           <link>https://publisher.example/region-anime</link>
           <description>Новости аниме</description>
           <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
           <source>Новости аниме</source>
         </item></channel></rss>'''),
-        200,
-        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-      )),
-    );
-    addTearDown(service.dispose);
+            200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          ),
+        ),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetch(
-      const NewsInterestProfile(topics: ['anime'], regions: ['ru']),
-    );
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: ['anime'], regions: ['ru']),
+      );
 
-    expect(articles, hasLength(1));
-    expect(articles.single.region, 'ru');
-  });
+      expect(articles, hasLength(1));
+      expect(articles.single.region, 'ru');
+    },
+  );
 
   test('uses the selected language and region in the RSS request', () async {
     final client = MockClient((request) async {
@@ -423,16 +459,13 @@ void main() {
       expect(request.url.queryParameters['hl'], 'en');
       expect(request.url.queryParameters['gl'], 'US');
       expect(request.url.queryParameters['ceid'], 'US:en');
-      return http.Response(
-        '''<rss><channel><item>
+      return http.Response('''<rss><channel><item>
           <title>New anime season announced</title>
           <link>https://publisher.example/en-anime</link>
           <description>A new anime series is coming.</description>
           <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
           <source>Anime News</source>
-        </item></channel></rss>''',
-        200,
-      );
+        </item></channel></rss>''', 200);
     });
     final service = NewsRssService(client: client);
     addTearDown(service.dispose);
@@ -450,10 +483,13 @@ void main() {
     expect(articles.single.region, 'us');
   });
 
-  test('ignores RSS items with invalid links or missing publication dates', () async {
-    final service = NewsRssService(
-      client: MockClient((_) async => http.Response(
-        '''<rss><channel>
+  test(
+    'ignores RSS items with invalid links or missing publication dates',
+    () async {
+      final service = NewsRssService(
+        client: MockClient(
+          (_) async => http.Response(
+            '''<rss><channel>
           <item>
             <title>Anime without a publication date</title>
             <link>https://publisher.example/no-date</link>
@@ -475,33 +511,41 @@ void main() {
             <source>Anime News</source>
           </item>
         </channel></rss>''',
-        200,
-        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-      )),
-    );
-    addTearDown(service.dispose);
+            200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          ),
+        ),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetch(
-      const NewsInterestProfile(topics: ['anime']),
-    );
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: ['anime']),
+      );
 
-    expect(articles, hasLength(1));
-    expect(articles.single.sourceUrl, 'https://publisher.example/valid-anime');
-  });
+      expect(articles, hasLength(1));
+      expect(
+        articles.single.sourceUrl,
+        'https://publisher.example/valid-anime',
+      );
+    },
+  );
 
-  test('does not make a network request when no interests are selected', () async {
-    var requests = 0;
-    final service = NewsRssService(
-      client: MockClient((_) async {
-        requests++;
-        return http.Response('', 200);
-      }),
-    );
-    addTearDown(service.dispose);
+  test(
+    'does not make a network request when no interests are selected',
+    () async {
+      var requests = 0;
+      final service = NewsRssService(
+        client: MockClient((_) async {
+          requests++;
+          return http.Response('', 200);
+        }),
+      );
+      addTearDown(service.dispose);
 
-    expect(await service.fetch(const NewsInterestProfile()), isEmpty);
-    expect(requests, 0);
-  });
+      expect(await service.fetch(const NewsInterestProfile()), isEmpty);
+      expect(requests, 0);
+    },
+  );
 
   test('surfaces source errors instead of inventing news', () async {
     final service = NewsRssService(
@@ -515,67 +559,68 @@ void main() {
     );
   });
 
-  test('normalizes selected topic names before building the RSS query', () async {
-    final client = MockClient((request) async {
-      expect(request.url.queryParameters['q'], 'anime OR technology');
-      return http.Response(
-        '''<rss><channel><item>
+  test(
+    'normalizes selected topic names before building the RSS query',
+    () async {
+      final client = MockClient((request) async {
+        expect(request.url.queryParameters['q'], 'anime OR technology');
+        return http.Response('''<rss><channel><item>
           <title>New anime season announced</title>
           <link>https://publisher.example/normalized-topic</link>
           <description>A new anime series is coming.</description>
           <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
           <source>Anime News</source>
-        </item></channel></rss>''',
-        200,
+        </item></channel></rss>''', 200);
+      });
+      final service = NewsRssService(client: client);
+      addTearDown(service.dispose);
+
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: [' Anime ', 'technology', 'ANIME']),
       );
-    });
-    final service = NewsRssService(client: client);
-    addTearDown(service.dispose);
 
-    final articles = await service.fetch(
-      const NewsInterestProfile(topics: [' Anime ', 'technology', 'ANIME']),
-    );
+      expect(articles, hasLength(1));
+      expect(articles.single.topics, contains('anime'));
+    },
+  );
 
-    expect(articles, hasLength(1));
-    expect(articles.single.topics, contains('anime'));
-  });
-
-  test('normalizes whitespace and case in selected locale parameters', () async {
-    final client = MockClient((request) async {
-      expect(request.url.queryParameters['hl'], 'en');
-      expect(request.url.queryParameters['gl'], 'US');
-      expect(request.url.queryParameters['ceid'], 'US:en');
-      return http.Response(
-        '''<rss><channel><item>
+  test(
+    'normalizes whitespace and case in selected locale parameters',
+    () async {
+      final client = MockClient((request) async {
+        expect(request.url.queryParameters['hl'], 'en');
+        expect(request.url.queryParameters['gl'], 'US');
+        expect(request.url.queryParameters['ceid'], 'US:en');
+        return http.Response('''<rss><channel><item>
           <title>New anime season announced</title>
           <link>https://publisher.example/normalized-locale</link>
           <description>A new anime series is coming.</description>
           <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
           <source>Anime News</source>
-        </item></channel></rss>''',
-        200,
+        </item></channel></rss>''', 200);
+      });
+      final service = NewsRssService(client: client);
+      addTearDown(service.dispose);
+
+      final articles = await service.fetch(
+        const NewsInterestProfile(
+          topics: ['anime'],
+          languages: ['  ', ' EN '],
+          regions: [' ', ' us '],
+        ),
       );
-    });
-    final service = NewsRssService(client: client);
-    addTearDown(service.dispose);
 
-    final articles = await service.fetch(
-      const NewsInterestProfile(
-        topics: ['anime'],
-        languages: ['  ', ' EN '],
-        regions: [' ', ' us '],
-      ),
-    );
-
-    expect(articles, hasLength(1));
-    expect(articles.single.language, 'en');
-    expect(articles.single.region, 'us');
-  });
+      expect(articles, hasLength(1));
+      expect(articles.single.language, 'en');
+      expect(articles.single.region, 'us');
+    },
+  );
 
   test('ignores malformed RSS items and decodes escaped text safely', () async {
     final service = NewsRssService(
-      client: MockClient((_) async => http.Response(
-        '''<rss><channel>
+      client: MockClient(
+        (_) async => http.Response(
+          '''<rss><channel>
           <item>
             <title>Anime &#38; manga &#x1F3AE; news</title>
             <link>https://publisher.example/escaped</link>
@@ -592,9 +637,10 @@ void main() {
             <title>Incomplete item without a closing tag
           </item>
         </channel></rss>''',
-        200,
-        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-      )),
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        ),
+      ),
     );
     addTearDown(service.dispose);
 
@@ -608,63 +654,73 @@ void main() {
     expect(articles.single.sourceName, 'publisher.example');
   });
 
-  test('does not make a network request when selected topics are blank', () async {
-    var requests = 0;
-    final service = NewsRssService(
-      client: MockClient((_) async {
-        requests++;
-        return http.Response('', 200);
-      }),
-    );
-    addTearDown(service.dispose);
+  test(
+    'does not make a network request when selected topics are blank',
+    () async {
+      var requests = 0;
+      final service = NewsRssService(
+        client: MockClient((_) async {
+          requests++;
+          return http.Response('', 200);
+        }),
+      );
+      addTearDown(service.dispose);
 
-    expect(
-      await service.fetch(const NewsInterestProfile(topics: [' ', '  '])),
-      isEmpty,
-    );
-    expect(requests, 0);
-  });
+      expect(
+        await service.fetch(const NewsInterestProfile(topics: [' ', '  '])),
+        isEmpty,
+      );
+      expect(requests, 0);
+    },
+  );
 
-  test('keeps news from healthy editions when one international edition fails', () async {
-    var requests = 0;
-    final service = NewsRssService(
-      client: MockClient((request) async {
-        requests++;
-        final region = request.url.queryParameters['gl'];
-        if (region == 'US') {
-          throw http.ClientException('Simulated unavailable edition');
-        }
-        return http.Response(
-          '''<rss><channel><item>
+  test(
+    'keeps news from healthy editions when one international edition fails',
+    () async {
+      var requests = 0;
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          requests++;
+          final region = request.url.queryParameters['gl'];
+          if (region == 'US') {
+            throw http.ClientException('Simulated unavailable edition');
+          }
+          return http.Response(
+            '''<rss><channel><item>
             <title>Anime update from $region</title>
             <link>https://publisher.example/anime-$region</link>
             <description>Anime news update from the $region edition</description>
             <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
             <source>News source</source>
           </item></channel></rss>''',
-          200,
-          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-        );
-      }),
-    );
-    addTearDown(service.dispose);
+            200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          );
+        }),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetchInternational(
-      const NewsInterestProfile(topics: ['anime']),
-    );
+      final articles = await service.fetchInternational(
+        const NewsInterestProfile(topics: ['anime']),
+      );
 
-    expect(requests, 3);
-    expect(articles, hasLength(2));
-    expect(articles.map((article) => article.region), containsAll(['ru', 'gb']));
-    expect(articles.map((article) => article.region), isNot(contains('us')));
-  });
+      expect(requests, 3);
+      expect(articles, hasLength(2));
+      expect(
+        articles.map((article) => article.region),
+        containsAll(['ru', 'gb']),
+      );
+      expect(articles.map((article) => article.region), isNot(contains('us')));
+    },
+  );
 
-  test('supports user-defined interests outside built-in topic categories', () async {
-    final service = NewsRssService(
-      client: MockClient((request) async {
-        expect(request.url.queryParameters['q'], 'robotics');
-        return http.Response(
-          '''<rss><channel>
+  test(
+    'supports user-defined interests outside built-in topic categories',
+    () async {
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          expect(request.url.queryParameters['q'], 'robotics');
+          return http.Response('''<rss><channel>
             <item>
               <title>New robotics laboratory opens</title>
               <link>https://publisher.example/robotics</link>
@@ -679,40 +735,33 @@ void main() {
               <pubDate>Sat, 10 Oct 2026 11:00:00 GMT</pubDate>
               <source>Sports News</source>
             </item>
-          </channel></rss>''',
-          200,
-        );
-      }),
-    );
-    addTearDown(service.dispose);
+          </channel></rss>''', 200);
+        }),
+      );
+      addTearDown(service.dispose);
 
-    final articles = await service.fetch(
-      const NewsInterestProfile(topics: ['robotics']),
-    );
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: ['robotics']),
+      );
 
-    expect(articles, hasLength(1));
-    expect(articles.single.title, 'New robotics laboratory opens');
-    expect(articles.single.topics, contains('robotics'));
-  });
+      expect(articles, hasLength(1));
+      expect(articles.single.title, 'New robotics laboratory opens');
+      expect(articles.single.topics, contains('robotics'));
+    },
+  );
 
   test('searches critical events when no topics are selected', () async {
     final service = NewsRssService(
       client: MockClient((request) async {
-        expect(
-          request.url.queryParameters['q'],
-          contains('"tsunami warning"'),
-        );
+        expect(request.url.queryParameters['q'], contains('"tsunami warning"'));
         expect(request.url.queryParameters['q'], isNot(contains('anime')));
-        return http.Response(
-          '''<rss><channel><item>
+        return http.Response('''<rss><channel><item>
             <title>Tsunami warning issued for coastal areas</title>
             <link>https://publisher.example/tsunami-warning</link>
             <description>Authorities issue a tsunami warning.</description>
             <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
             <source>Public Safety News</source>
-          </item></channel></rss>''',
-          200,
-        );
+          </item></channel></rss>''', 200);
       }),
     );
     addTearDown(service.dispose);
@@ -734,16 +783,13 @@ void main() {
             request.url.queryParameters['q'],
             contains('"emergency declared"'),
           );
-          return http.Response(
-            '''<rss><channel><item>
+          return http.Response('''<rss><channel><item>
           <title>Emergency declared after major earthquake</title>
           <link>https://publisher.example/earthquake-alert</link>
           <description>Authorities issue evacuation order after earthquake of magnitude 7.</description>
           <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
           <source>Public Safety News</source>
-        </item></channel></rss>''',
-            200,
-          );
+        </item></channel></rss>''', 200);
         }),
       );
       addTearDown(service.dispose);
