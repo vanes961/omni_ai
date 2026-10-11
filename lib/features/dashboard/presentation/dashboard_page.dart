@@ -6,6 +6,7 @@ import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
+import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
 import 'package:omni_ai/features/news/presentation/news_center_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/settings/presentation/pages/local_model_settings_page.dart';
@@ -117,7 +118,7 @@ class _DashboardPageState extends State<DashboardPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite_border),
             activeIcon: Icon(Icons.favorite),
-            label: 'Семья & Здоровье',
+            label: 'Избранное',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
@@ -134,11 +135,7 @@ class _DashboardPageState extends State<DashboardPage> {
       0 => NewsCenterPage(aiEngine: _aiDependencies.engine),
       1 => AIChatPage(dependencies: _chatDependencies),
       2 => MediaPage(preferences: widget.preferences),
-      3 => const _ModulePlaceholder(
-        eyebrow: '03 // FAMILY & HEALTH',
-        title: 'СЕМЬЯ & ЗДОРОВЬЕ',
-        icon: Icons.favorite_border,
-      ),
+      3 => FavoritesPage(),
       _ => _buildSettings(),
     };
   }
@@ -227,7 +224,7 @@ class _GuardHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'KAIROS HUB',
+                  'OMNI AI',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 14,
@@ -237,7 +234,7 @@ class _GuardHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 3),
                 Text(
-                  'AI-GUARD ACTIVE',
+                  'PERSONAL AI SYSTEM',
                   style: TextStyle(
                     color: SystemCorePalette.green,
                     fontSize: 9,
