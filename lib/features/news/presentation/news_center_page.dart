@@ -111,8 +111,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _newsCache.loadArticles(),
         _newsCache.loadDigest(),
         _newsCache.loadTopics(),
+        _newsCache.loadIncludeCriticalOutsideInterests(),
       ]);
       final savedTopics = cached[2] as List<String>?;
+      final savedCriticalSetting = cached[3] as bool?;
       final favorites = await _favoritesRepository.getAll();
       _lessInterested = await _feedbackRepository.loadLessInterested();
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
@@ -125,7 +127,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       );
       final selectedTopics = _normalizeTopics(profile.topics);
       final cacheMatchesProfile =
-          savedTopics != null && _sameTopics(savedTopics, selectedTopics);
+          savedTopics != null &&
+          savedCriticalSetting == profile.includeCriticalOutsideInterests &&
+          _sameTopics(savedTopics, selectedTopics);
       if (!cacheMatchesProfile) {
         await _newsCache.clear();
       }
@@ -461,6 +465,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       await _newsCache.saveArticles(
         rankedArticles,
         selectedTopics: profile.topics,
+        includeCriticalOutsideInterests: profile.includeCriticalOutsideInterests,
       );
       if (revisionAtStart != _interestRevision) {
         // Topic changes clear the cache too, but an in-flight write may finish
