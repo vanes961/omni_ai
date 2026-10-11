@@ -114,9 +114,13 @@ class _AppStartupPage extends StatefulWidget {
   State<_AppStartupPage> createState() => _AppStartupPageState();
 }
 
-class _AppStartupPageState extends State<_AppStartupPage> {
+class _AppStartupPageState extends State<_AppStartupPage>
+    with SingleTickerProviderStateMixin {
   late final UserPreferencesStore _preferencesStore;
   late Future<UserPreferences?> _preferences;
+
+  late final AnimationController _progress;
+  bool _splashElapsed = false;
 
   @override
   void initState() {
@@ -124,10 +128,30 @@ class _AppStartupPageState extends State<_AppStartupPage> {
     _preferencesStore =
         widget.preferencesStore ?? SharedPreferencesUserPreferencesStore();
     _preferences = _preferencesStore.load();
+    _progress = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3000),
+    )..forward();
+    _progress.addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted) {
+        setState(() => _splashElapsed = true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _progress.dispose();
+    super.dispose();
   }
 
   void _retryLoading() {
-    setState(() => _preferences = _preferencesStore.load());
+    setState(() {
+      _preferences = _preferencesStore.load();
+      _splashElapsed = false;
+    });
+    _progress.reset();
+    _progress.forward();
   }
 
   @override
@@ -135,12 +159,9 @@ class _AppStartupPageState extends State<_AppStartupPage> {
     return FutureBuilder<UserPreferences?>(
       future: _preferences,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(color: SystemCorePalette.green),
-            ),
-          );
+        if (snapshot.connectionState != ConnectionState.done ||
+            !_splashElapsed) {
+          return _OmniLoadingScreen(progress: _progress);
         }
         if (snapshot.hasError) {
           return Scaffold(
@@ -188,6 +209,136 @@ class _AppStartupPageState extends State<_AppStartupPage> {
           dependencies: widget.dependencies,
         );
       },
+    );
+  }
+}
+
+
+class _OmniLoadingScreen extends StatelessWidget {
+  const _OmniLoadingScreen({required this.progress});
+
+  final Animation<double> progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF05070B),
+      body: AnimatedBuilder(
+        animation: progress,
+        builder: (context, _) {
+          final amount = progress.value.clamp(0.0, 1.0);
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment(0, -0.15),
+                radius: 1.2,
+                colors: [Color(0xFF17313A), Color(0xFF080B12), Color(0xFF030407)],
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 30),
+                child: Column(
+                  children: [
+                    const Spacer(flex: 2),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                      decoration: BoxDecoration(
+                        color: const Color(0xB5081017),
+                        border: Border.all(color: const Color(0xFF31F5B0)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF22F0B0).withValues(alpha: 0.2),
+                            blurRadius: 28,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'OMNI',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 44,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 8,
+                              shadows: [
+                                Shadow(
+                                  color: const Color(0xFF2DF8B1).withValues(alpha: 0.8),
+                                  blurRadius: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'AI  //  INTELLIGENCE HUB',
+                            style: TextStyle(
+                              color: Color(0xFF4BFFD0),
+                              fontSize: 10,
+                              letterSpacing: 3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(flex: 3),
+                    const Text(
+                      'СИСТЕМА ИНИЦИАЛИЗИРУЕТСЯ',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: 11, letterSpacing: 2),
+                    ),
+                    const Spacer(flex: 2),
+                    Row(
+                      children: [
+                        const Text('ЗАГРУЗКА...', style: TextStyle(color: Color(0xFF57FFD0), fontSize: 11, letterSpacing: 1.5)),
+                        const Spacer(),
+                        Text(
+                          '${(amount * 100).round()}%',
+                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 9),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: SizedBox(
+                        height: 7,
+                        child: Stack(
+                          children: [
+                            const ColoredBox(color: Color(0xFF18252B), child: SizedBox.expand()),
+                            FractionallySizedBox(
+                              widthFactor: amount,
+                              child: const DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [Color(0xFF7B2CFF), Color(0xFF20FFD0), Color(0xFFB8FF49)],
+                                  ),
+                                ),
+                                child: SizedBox.expand(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 13),
+                    const Text(
+                      'ПОДГОТОВКА МОДУЛЕЙ  •  ЗАГРУЗКА ПРОФИЛЯ',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Color(0xFF8797A2), fontSize: 9, letterSpacing: 1),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text('Версия 1.0.0', style: TextStyle(color: Color(0xFF53616C), fontSize: 10)),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
