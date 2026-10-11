@@ -44,23 +44,23 @@ void main() {
   test(
     'persists selected English language and UK region across reloads',
     () async {
-    final store = _Store();
-    final repository = SharedPreferencesNewsInterestRepository(store: store);
+      final store = _Store();
+      final repository = SharedPreferencesNewsInterestRepository(store: store);
 
-    await repository.save(
-      const NewsInterestProfile(
-        topics: ['anime'],
-        languages: [' EN '],
-        regions: [' GB '],
-      ),
-    );
+      await repository.save(
+        const NewsInterestProfile(
+          topics: ['anime'],
+          languages: [' EN '],
+          regions: [' GB '],
+        ),
+      );
 
-    final restored = await SharedPreferencesNewsInterestRepository(
-      store: store,
-    ).load();
+      final restored = await SharedPreferencesNewsInterestRepository(
+        store: store,
+      ).load();
 
-    expect(restored.languages, ['en']);
-    expect(restored.regions, ['gb']);
+      expect(restored.languages, ['en']);
+      expect(restored.regions, ['gb']);
       await repository.dispose();
     },
   );
