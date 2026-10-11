@@ -143,12 +143,17 @@ class NewsRssService {
       );
     }
     // A nominally successful HTTP response can still contain no usable RSS
-    // items. If every edition is empty and another edition failed, surface the
-    // partial outage instead of making the feed look silently empty.
-    if (batches.every((batch) => batch.isEmpty) && failedEditions.isNotEmpty) {
+    // items. Never turn an all-empty result into a silent blank feed: report
+    // whether the likely cause is a partial outage or empty source responses.
+    if (batches.every((batch) => batch.isEmpty)) {
+      if (failedEditions.isNotEmpty) {
+        throw http.ClientException(
+          'No articles were returned and some international news editions '
+          'failed (${failedEditions.join(', ')}).',
+        );
+      }
       throw http.ClientException(
-        'No articles were returned and some international news editions '
-        'failed (${failedEditions.join(', ')}).',
+        'International news sources returned no usable articles.',
       );
     }
 
