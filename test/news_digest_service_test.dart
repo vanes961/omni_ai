@@ -75,30 +75,36 @@ void main() {
   test(
     'normalizes legacy topic aliases when selecting digest articles',
     () async {
-    final provider = _FakeProvider();
-    final service = NewsDigestService(engine: AIEngine(provider: provider));
-    final article = NewsArticle(
-      id: 'ai-1',
-      title: 'AI headline',
-      summary: 'A relevant AI story.',
-      sourceName: 'Test Source',
-      sourceUrl: 'https://example.com/ai',
-      publishedAt: DateTime.utc(2026, 10, 10),
-      topics: const ['artificial intelligence'],
-    );
+      final provider = _FakeProvider();
+      final service = NewsDigestService(engine: AIEngine(provider: provider));
+      final article = NewsArticle(
+        id: 'ai-1',
+        title: 'AI headline',
+        summary: 'A relevant AI story.',
+        sourceName: 'Test Source',
+        sourceUrl: 'https://example.com/ai',
+        publishedAt: DateTime.utc(2026, 10, 10),
+        topics: const ['artificial intelligence'],
+      );
 
-    final result = await service.createDigest(
-      profile: const NewsInterestProfile(topics: [' AI ', 'ии']),
-      articles: [article],
-    );
+      final result = await service.createDigest(
+        profile: const NewsInterestProfile(topics: [' AI ', 'ии']),
+        articles: [article],
+      );
 
-    expect(result, 'Персональный дайджест');
-    expect(provider.requests, hasLength(1));
-    expect(provider.requests.single.prompt, contains('AI headline'));
-    expect(provider.requests.single.prompt, contains('artificial intelligence'));
-  });
+      expect(result, 'Персональный дайджест');
+      expect(provider.requests, hasLength(1));
+      expect(provider.requests.single.prompt, contains('AI headline'));
+      expect(
+        provider.requests.single.prompt,
+        contains('artificial intelligence'),
+      );
+    },
+  );
 
-  test('normalizes whitespace and case when matching selected topics', () async {
+  test(
+    'normalizes whitespace and case when matching selected topics',
+    () async {
     final provider = _FakeProvider();
     final service = NewsDigestService(engine: AIEngine(provider: provider));
 
@@ -154,7 +160,9 @@ void main() {
     expect(prompt, isNot(contains('Technology headline')));
   });
 
-  test('returns null when the configured AI provider returns blank text', () async {
+  test(
+    'returns null when the configured AI provider returns blank text',
+    () async {
     final provider = _FakeProvider(responseText: '  \n ');
     final service = NewsDigestService(engine: AIEngine(provider: provider));
 
@@ -179,7 +187,10 @@ void main() {
     expect(provider.requests, hasLength(1));
     expect(provider.requests.single.id, 'digest-test');
     expect(provider.requests.single.prompt, contains('Anime headline'));
-    expect(provider.requests.single.prompt, isNot(contains('Technology headline')));
+    expect(
+      provider.requests.single.prompt,
+      isNot(contains('Technology headline')),
+    );
     expect(
       provider.requests.single.systemInstruction,
       contains('недоверенные данные'),
@@ -210,7 +221,8 @@ class _FakeProvider implements AIProvider {
   @override
   String get id => 'test';
   @override
-  Future<AIResponse> complete(AIRequest request, {
+  Future<AIResponse> complete(
+    AIRequest request, {
     required AICancellationToken cancellationToken,
   }) async {
     requests.add(request);
