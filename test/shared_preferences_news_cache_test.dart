@@ -200,6 +200,7 @@ void main() {
     expect(await cache.loadArticles(), isEmpty);
     expect(await cache.loadDigest(), isNull);
     expect(await cache.loadTopics(), isNull);
+    expect(await cache.loadIncludeCriticalOutsideInterests(), isNull);
   });
 
   test('skips cached articles with unsafe links or invalid publication dates', () async {
