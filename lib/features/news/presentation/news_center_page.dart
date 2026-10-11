@@ -815,11 +815,20 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 ),
                 value: profile.includeCriticalOutsideInterests,
                 activeThumbColor: SystemCorePalette.green,
-                onChanged: (value) => setState(
-                  () => _profile = profile.copyWith(
-                    includeCriticalOutsideInterests: value,
-                  ),
-                ),
+                onChanged: (value) {
+                  _interestRevision++;
+                  setState(() {
+                    _profile = profile.copyWith(
+                      includeCriticalOutsideInterests: value,
+                    );
+                    _articles = const [];
+                    _showingCachedNews = false;
+                    _digest = null;
+                    _digestError = null;
+                    _newsError = null;
+                  });
+                  unawaited(_newsCache.clear());
+                },
               ),
               const SizedBox(height: 12),
               FilledButton.icon(
