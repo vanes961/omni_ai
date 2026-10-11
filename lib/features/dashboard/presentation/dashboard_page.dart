@@ -11,25 +11,18 @@ import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/settings/presentation/pages/local_model_settings_page.dart';
 import 'package:omni_ai/features/settings/presentation/pages/network_settings_page.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
-import 'package:omni_ai/features/telegram/data/telegram_post.dart';
-import 'package:omni_ai/features/telegram/presentation/widgets/telegram_post_card.dart';
-import 'package:omni_ai/features/telegram/services/telegram_parser_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({
     required this.preferences,
     this.preferencesStore,
     this.dependencies,
-    this.telegramService = const TelegramParserService(),
-    this.sourceLauncher,
     super.key,
   });
 
   final UserPreferences preferences;
   final UserPreferencesStore? preferencesStore;
   final AppDependencies? dependencies;
-  final TelegramParserService telegramService;
-  final TelegramSourceLauncher? sourceLauncher;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -44,9 +37,6 @@ class _DashboardPageState extends State<DashboardPage> {
   late final AppDependencies _chatDependencies;
   late final UserPreferencesStore _preferencesStore;
   final TextEditingController _feedSearchController = TextEditingController();
-  late Future<List<TelegramPost>> _feedFuture;
-  String _feedQuery = '';
-  String? _selectedFeedChannel;
 
   @override
   void initState() {
@@ -64,7 +54,6 @@ class _DashboardPageState extends State<DashboardPage> {
     }
     _preferencesStore =
         widget.preferencesStore ?? SharedPreferencesUserPreferencesStore();
-    _feedFuture = widget.telegramService.fetchPosts(widget.preferences);
   }
 
   @override
@@ -140,7 +129,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildTab() {
     return switch (_selectedTab) {
-      0 => _buildFeed(),
+      0 => NewsCenterPage(aiEngine: _aiDependencies.engine),
       1 => AIChatPage(dependencies: _chatDependencies),
       2 => MediaPage(preferences: widget.preferences),
       3 => const _ModulePlaceholder(
