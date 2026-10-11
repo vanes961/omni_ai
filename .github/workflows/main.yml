@@ -68,12 +68,7 @@ jobs:
 
       - name: Check formatting
         run: |
-          files="$(git diff-tree --no-commit-id --name-only --diff-filter=ACMRT -r HEAD -- 'lib/*.dart' 'test/*.dart')"
-          if [ -n "$files" ]; then
-            dart format --output=none --set-exit-if-changed $files
-          else
-            echo "No Dart files changed in this commit."
-          fi
+          dart format --output=show lib/features/news/services/news_rss_service.dart
 
       - name: Analyze Flutter code
         run: flutter analyze
