@@ -105,12 +105,12 @@ void main() {
         language: 'en',
         title: 'Slow foreign headline',
       );
+      final provider = _TranslationProvider(
+        delay: const Duration(milliseconds: 50),
+      );
+      final engine = AIEngine(provider: provider);
       final translationService = NewsSourceLocalizationService(
-        aiEngine: AIEngine(
-          provider: _TranslationProvider(
-            delay: const Duration(milliseconds: 50),
-          ),
-        ),
+        aiEngine: engine,
         translationTimeout: const Duration(milliseconds: 1),
       );
 
