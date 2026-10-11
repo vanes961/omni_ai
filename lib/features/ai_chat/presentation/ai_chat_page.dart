@@ -154,13 +154,13 @@ class _AIChatPageState extends State<AIChatPage> {
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
           decoration: const BoxDecoration(
             color: SystemCorePalette.panel,
-            border: Border(bottom: BorderSide(color: Colors.white12)),
+            border: Border(bottom: BorderSide(color: SystemCorePalette.border)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'OMNI // AI CHAT',
+                'KAIROS // NEURAL LINK',
                 style: TextStyle(
                   color: SystemCorePalette.muted,
                   fontSize: 10,
@@ -173,7 +173,7 @@ class _AIChatPageState extends State<AIChatPage> {
                 children: [
                   const Expanded(
                     child: Text(
-                      'ЕДИНЫЙ AI-ПОМОЩНИК',
+                      'AI-КУРАТОР',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 19,
@@ -279,7 +279,8 @@ class _AIChatPageState extends State<AIChatPage> {
                         decoration: BoxDecoration(
                           color: message.isUser
                               ? SystemCorePalette.green.withValues(alpha: 0.10)
-                              : SystemCorePalette.panel,
+                              : SystemCorePalette.panelElevated,
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: message.isError
                                 ? Colors.orangeAccent.withValues(alpha: 0.6)
@@ -307,7 +308,7 @@ class _AIChatPageState extends State<AIChatPage> {
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
           decoration: const BoxDecoration(
             color: SystemCorePalette.panel,
-            border: Border(top: BorderSide(color: Colors.white12)),
+            border: Border(top: BorderSide(color: SystemCorePalette.border)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
