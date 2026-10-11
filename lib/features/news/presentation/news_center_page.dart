@@ -435,8 +435,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     final profile = _profile;
     if (profile == null || _refreshingNews || _loadingNewsCache) return;
     final revisionAtStart = _interestRevision;
-    if (profile.topics.isEmpty &&
-        !profile.includeCriticalOutsideInterests) {
+    if (profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) {
       setState(() {
         _articles = const [];
         _newsError = null;
@@ -480,7 +479,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       await _newsCache.saveArticles(
         rankedArticles,
         selectedTopics: profile.topics,
-        includeCriticalOutsideInterests: profile.includeCriticalOutsideInterests,
+        includeCriticalOutsideInterests:
+            profile.includeCriticalOutsideInterests,
       );
       if (revisionAtStart != _interestRevision) {
         // Topic changes clear the cache too, but an in-flight write may finish
@@ -520,8 +520,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       return;
     }
     final revisionAtStart = _interestRevision;
-    if ((profile.topics.isEmpty &&
-            !profile.includeCriticalOutsideInterests) ||
+    if ((profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) ||
         _articles.isEmpty) {
       setState(
         () => _digestError = 'Сначала выберите интересы и загрузите новости.',
