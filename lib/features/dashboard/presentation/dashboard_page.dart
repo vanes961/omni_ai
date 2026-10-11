@@ -36,7 +36,6 @@ class _DashboardPageState extends State<DashboardPage> {
   late final AIDependencies _aiDependencies;
   late final AppDependencies _chatDependencies;
   late final UserPreferencesStore _preferencesStore;
-  final TextEditingController _feedSearchController = TextEditingController();
 
   @override
   void initState() {
@@ -58,7 +57,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   void dispose() {
-    _feedSearchController.dispose();
     if (_ownsDependencies) unawaited(_disposeOwnedAI());
     super.dispose();
   }
@@ -252,73 +250,6 @@ class _GuardHeader extends StatelessWidget {
             icon: const Icon(Icons.tune_rounded),
             color: SystemCorePalette.muted,
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeedChannelFilter extends StatelessWidget {
-  const _FeedChannelFilter({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: selected,
-        onSelected: (_) => onTap(),
-        showCheckmark: false,
-        selectedColor: SystemCorePalette.green.withValues(alpha: 0.16),
-        labelStyle: TextStyle(
-          color: selected ? SystemCorePalette.green : Colors.white70,
-          fontSize: 9,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
-          side: BorderSide(
-            color: selected ? SystemCorePalette.green : Colors.white24,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FeedMessage extends StatelessWidget {
-  const _FeedMessage({required this.message, this.actionLabel, this.onAction});
-
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 12),
-      child: Column(
-        children: [
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: SystemCorePalette.muted,
-              fontSize: 11,
-            ),
-          ),
-          if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 8),
-            TextButton(onPressed: onAction, child: Text(actionLabel!)),
-          ],
         ],
       ),
     );
