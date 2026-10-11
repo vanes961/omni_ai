@@ -39,7 +39,10 @@ class DiagnosticReport {
   static String _sanitize(String value) {
     // Reports should contain technical summaries, never request URLs or credentials.
     return value
-        .replaceAll(RegExp(r'(api[_-]?key|token|password|secret)\s*[:=]\s*\S+', caseSensitive: false), r'$1=[REDACTED]')
+        .replaceAllMapped(
+          RegExp(r'(api[_-]?key|token|password|secret)\s*[:=]\s*\S+', caseSensitive: false),
+          (match) => '${match.group(1)}=[REDACTED]',
+        )
         .replaceAll(RegExp(r'https?://\S+'), '[URL]')
         .replaceAll(RegExp(r'[\r\n]+'), ' ')
         .trim();
