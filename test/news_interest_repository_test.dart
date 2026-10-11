@@ -41,7 +41,9 @@ void main() {
     await repository.dispose();
   });
 
-  test('persists selected English language and UK region across reloads', () async {
+  test(
+    'persists selected English language and UK region across reloads',
+    () async {
     final store = _Store();
     final repository = SharedPreferencesNewsInterestRepository(store: store);
 
@@ -59,8 +61,9 @@ void main() {
 
     expect(restored.languages, ['en']);
     expect(restored.regions, ['gb']);
-    await repository.dispose();
-  });
+      await repository.dispose();
+    },
+  );
 
   test('corrupt settings safely reset to no selected topics', () async {
     final store = _Store()
