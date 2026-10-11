@@ -69,21 +69,21 @@ void main() {
   test(
     'limits AI translations per refresh and keeps remaining sources',
     () async {
-    final provider = _TranslationProvider();
-    final translationService = NewsSourceLocalizationService(
-      aiEngine: AIEngine(provider: provider),
-      maxAiTranslationsPerBatch: 1,
-    );
-    final first = _article(
-      id: 'first',
-      language: 'en',
-      title: 'First foreign headline',
-    );
-    final second = _article(
-      id: 'second',
-      language: 'en',
-      title: 'Second foreign headline',
-    );
+      final provider = _TranslationProvider();
+      final translationService = NewsSourceLocalizationService(
+        aiEngine: AIEngine(provider: provider),
+        maxAiTranslationsPerBatch: 1,
+      );
+      final first = _article(
+        id: 'first',
+        language: 'en',
+        title: 'First foreign headline',
+      );
+      final second = _article(
+        id: 'second',
+        language: 'en',
+        title: 'Second foreign headline',
+      );
 
       final result = await translationService.localizeCandidates([
         first,
