@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
+import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 
 import '../models/news_article.dart';
@@ -11,14 +13,17 @@ import 'smart_translation_service.dart';
 class NewsSourceLocalizationService {
   const NewsSourceLocalizationService({
     this.aiEngine,
-    this.maxAiTranslationsPerBatch = 5,
+    this.maxAiTranslationsPerBatch = 2,
+    this.translationTimeout = const Duration(seconds: 8),
     this._translationService = const SmartTranslationService(),
-  }) : assert(maxAiTranslationsPerBatch >= 0);
+  }) : assert(maxAiTranslationsPerBatch >= 0),
+       assert(translationTimeout > Duration.zero);
 
   final AIEngine? aiEngine;
 
   /// Limits sequential cloud/local model calls during one feed refresh.
   final int maxAiTranslationsPerBatch;
+  final Duration translationTimeout;
   final SmartTranslationService _translationService;
 
   Future<List<NewsArticle>> localizeCandidates(
@@ -59,6 +64,7 @@ class NewsSourceLocalizationService {
   Future<NewsArticle> _translateIfAvailable(NewsArticle article) async {
     final engine = aiEngine;
     if (engine == null) return article;
+    final cancellationToken = AICancellationToken();
     try {
       final response = await engine.execute(
         AIRequest(
@@ -74,6 +80,13 @@ class NewsSourceLocalizationService {
           }),
           metadata: const {'feature': 'news_translation'},
         ),
+        cancellationToken: cancellationToken,
+      ).timeout(
+        translationTimeout,
+        onTimeout: () {
+          cancellationToken.cancel();
+          throw TimeoutException('News translation timed out.');
+        },
       );
       final decoded = jsonDecode(response.text);
       if (decoded is! Map<String, dynamic>) return article;
