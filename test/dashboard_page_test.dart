@@ -28,11 +28,13 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('KAIROS HUB'), findsOneWidget);
+    expect(find.text('OMNI AI'), findsOneWidget);
+    expect(find.text('PERSONAL AI SYSTEM'), findsOneWidget);
     expect(find.text('Лента'), findsOneWidget);
     expect(find.text('AI'), findsOneWidget);
     expect(find.text('Медиа'), findsOneWidget);
-    expect(find.text('Семья & Здоровье'), findsOneWidget);
+    expect(find.text('Избранное'), findsOneWidget);
+    expect(find.text('Семья & Здоровье'), findsNothing);
     expect(find.text('Настройки'), findsOneWidget);
     expect(find.text('Legacy Telegram channel'), findsNothing);
     expect(find.text('Life Free Hub'), findsNothing);
