@@ -45,15 +45,12 @@ jobs:
 
       - name: Check formatting
         run: |
-          base="${{ github.event.before }}"
-          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
-            base="$(git rev-parse HEAD^ 2>/dev/null || git rev-parse HEAD)"
-          fi
+          base="$(git merge-base origin/main HEAD)"
           files="$(git diff --name-only --diff-filter=ACMRT "$base" HEAD -- 'lib/*.dart' 'test/*.dart')"
           if [ -n "$files" ]; then
             dart format --output=none --set-exit-if-changed $files
           else
-            echo "No Dart files changed in this commit."
+            echo "No Dart files changed from main."
           fi
 
       - name: Analyze Flutter code
