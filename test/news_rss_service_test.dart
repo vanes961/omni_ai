@@ -259,6 +259,39 @@ void main() {
   });
 
   test(
+    'reports partial edition failures when successful editions return no articles',
+    () async {
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          final region = request.url.queryParameters['gl'];
+          if (region == 'RU') {
+            return http.Response('<rss><channel></channel></rss>', 200);
+          }
+          throw http.ClientException('Edition $region unavailable');
+        }),
+      );
+      addTearDown(service.dispose);
+
+      expect(
+        service.fetchInternational(
+          const NewsInterestProfile(topics: ['anime']),
+        ),
+        throwsA(
+          isA<http.ClientException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('No articles were returned'),
+              contains('en-US: ClientException'),
+              contains('en-GB: ClientException'),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
     'keeps other editions when one international RSS source fails',
     () async {
       final service = NewsRssService(
