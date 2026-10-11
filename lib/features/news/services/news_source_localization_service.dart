@@ -16,8 +16,7 @@ class NewsSourceLocalizationService {
     this.maxAiTranslationsPerBatch = 2,
     this.translationTimeout = const Duration(seconds: 8),
     this._translationService = const SmartTranslationService(),
-  }) : assert(maxAiTranslationsPerBatch >= 0),
-       assert(translationTimeout > Duration.zero);
+  }) : assert(maxAiTranslationsPerBatch >= 0);
 
   final AIEngine? aiEngine;
 
