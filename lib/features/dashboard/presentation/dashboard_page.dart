@@ -427,6 +427,7 @@ class _GuardHeader extends StatelessWidget {
         ],
       ),
     );
+  }
 }
 
 class _FeedChannelFilter extends StatelessWidget {
