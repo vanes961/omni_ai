@@ -96,6 +96,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        elevation: 0,
         currentIndex: _selectedTab,
         onTap: _selectTab,
         type: BottomNavigationBarType.fixed,
@@ -104,6 +105,8 @@ class _DashboardPageState extends State<DashboardPage> {
         unselectedItemColor: SystemCorePalette.muted,
         selectedFontSize: 10,
         unselectedFontSize: 10,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.dynamic_feed_outlined),
@@ -225,7 +228,7 @@ class _DashboardPageState extends State<DashboardPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'OMNI // TELEGRAM FEED',
+          'KAIROS HUB  //  PERSONAL FEED',
           style: TextStyle(
             color: SystemCorePalette.muted,
             fontSize: 10,
@@ -234,7 +237,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         const SizedBox(height: 7),
         const Text(
-          'ВАША ЛЕНТА',
+          'ТВОЙ ЦИФРОВОЙ МИР',
           style: TextStyle(
             color: Colors.white,
             fontSize: 22,
@@ -252,7 +255,7 @@ class _DashboardPageState extends State<DashboardPage> {
               );
             },
             icon: const Icon(Icons.rss_feed, size: 17),
-            label: const Text('ПЕРСОНАЛЬНЫЕ НОВОСТИ'),
+            label: const Text('ОТКРЫТЬ ЦЕНТР НОВОСТЕЙ'),
           ),
         ),
         const SizedBox(height: 14),
@@ -363,31 +366,67 @@ class _GuardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 12, 14, 12),
+      padding: const EdgeInsets.fromLTRB(18, 12, 14, 12),
       child: Row(
         children: [
-          const Icon(Icons.shield_outlined, color: SystemCorePalette.green),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'AI-GUARD ACTIVE',
-              style: TextStyle(
-                color: SystemCorePalette.green,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: SystemCorePalette.green.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: SystemCorePalette.green.withValues(alpha: 0.65),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: SystemCorePalette.green.withValues(alpha: 0.10),
+                  blurRadius: 16,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.hub_rounded,
+              color: SystemCorePalette.green,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 11),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'KAIROS HUB',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'NEON SYSTEM  //  ONLINE',
+                  style: TextStyle(
+                    color: SystemCorePalette.green,
+                    fontSize: 9,
+                    letterSpacing: 1.1,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
           IconButton(
-            tooltip: 'Профиль',
+            tooltip: 'Профиль и настройки',
             onPressed: onProfilePressed,
-            icon: const Icon(Icons.account_circle_outlined),
-            color: Colors.white70,
+            icon: const Icon(Icons.tune_rounded),
+            color: SystemCorePalette.muted,
           ),
         ],
       ),
     );
-  }
 }
 
 class _FeedChannelFilter extends StatelessWidget {
