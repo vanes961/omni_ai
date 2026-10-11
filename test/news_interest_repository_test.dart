@@ -5,6 +5,16 @@ import 'package:omni_ai/features/news/data/shared_preferences_news_interest_repo
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 
 void main() {
+  test('starts with no imposed interests on a fresh profile', () async {
+    final repository = SharedPreferencesNewsInterestRepository(store: _Store());
+
+    final profile = await repository.load();
+
+    expect(profile.topics, isEmpty);
+    expect(profile.includeCriticalOutsideInterests, isFalse);
+    await repository.dispose();
+  });
+
   test('persists and restores user-selected interests', () async {
     final store = _Store();
     final repository = SharedPreferencesNewsInterestRepository(store: store);
