@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
 import 'package:omni_ai/core/diagnostics/diagnostic_report.dart';
@@ -496,13 +497,15 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _digestError = null;
         _newsError = null;
       });
-    } catch (_) {
+    } catch (error) {
       // A failed request for an old topic selection must not surface an error
       // in the newly selected feed.
       if (!mounted || revisionAtStart != _interestRevision) return;
+      final details = error is http.ClientException ? error.message : null;
       setState(() {
-        _newsError =
-            'Не удалось загрузить новости. Проверьте соединение и попробуйте снова.';
+        _newsError = details == null || details.isEmpty
+            ? 'Не удалось загрузить новости. Проверьте соединение и попробуйте снова.'
+            : 'Не удалось загрузить новости: $details';
       });
     } finally {
       if (mounted) setState(() => _refreshingNews = false);
