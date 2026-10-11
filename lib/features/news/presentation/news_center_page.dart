@@ -54,7 +54,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   final NewsRssService _newsService = NewsRssService();
   final TextEditingController _customTopicController = TextEditingController();
   final FavoritesRepository _favoritesRepository = FavoritesRepository();
-  final InterestFeedbackRepository _feedbackRepository = InterestFeedbackRepository();
+  final InterestFeedbackRepository _feedbackRepository =
+      InterestFeedbackRepository();
   Set<String> _lessInterested = <String>{};
   final FavoriteInterestAnalytics _favoriteAnalytics =
       const FavoriteInterestAnalytics();
@@ -123,8 +124,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         ),
       );
       final selectedTopics = _normalizeTopics(profile.topics);
-      final cacheMatchesProfile = savedTopics != null &&
-          _sameTopics(savedTopics, selectedTopics);
+      final cacheMatchesProfile =
+          savedTopics != null && _sameTopics(savedTopics, selectedTopics);
       if (!cacheMatchesProfile) {
         await _newsCache.clear();
       }
@@ -183,7 +184,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           name: 'Профиль интересов',
           status: _profile == null
               ? DiagnosticStatus.warning
-              : (_profile!.topics.isEmpty ? DiagnosticStatus.warning : DiagnosticStatus.ok),
+              : (_profile!.topics.isEmpty
+                    ? DiagnosticStatus.warning
+                    : DiagnosticStatus.ok),
           details: _profile == null
               ? 'Профиль ещё не загружен'
               : 'Выбрано тем: ${_profile!.topics.length}',
@@ -192,25 +195,37 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           name: 'Новостная лента',
           status: _newsError != null
               ? DiagnosticStatus.error
-              : (_refreshingNews ? DiagnosticStatus.warning : (_articles.isEmpty ? DiagnosticStatus.warning : DiagnosticStatus.ok)),
-          details: _newsError ?? (_refreshingNews
-              ? 'Загрузка ещё выполняется'
-              : 'Материалов в ленте: ${_articles.length}'),
+              : (_refreshingNews
+                    ? DiagnosticStatus.warning
+                    : (_articles.isEmpty
+                          ? DiagnosticStatus.warning
+                          : DiagnosticStatus.ok)),
+          details:
+              _newsError ??
+              (_refreshingNews
+                  ? 'Загрузка ещё выполняется'
+                  : 'Материалов в ленте: ${_articles.length}'),
         ),
         DiagnosticCheck(
           name: 'Локальный кэш',
-          status: _loadingNewsCache ? DiagnosticStatus.warning : DiagnosticStatus.ok,
-          details: _loadingNewsCache ? 'Восстановление кэша ещё выполняется' : 'Загрузка кэша завершена',
+          status: _loadingNewsCache
+              ? DiagnosticStatus.warning
+              : DiagnosticStatus.ok,
+          details: _loadingNewsCache
+              ? 'Восстановление кэша ещё выполняется'
+              : 'Загрузка кэша завершена',
         ),
         DiagnosticCheck(
           name: 'Реакции и интересы',
           status: DiagnosticStatus.ok,
-          details: 'Сигналов интереса: ${_reactionWeights.length}; значения хранятся локально',
+          details:
+              'Сигналов интереса: ${_reactionWeights.length}; значения хранятся локально',
         ),
         const DiagnosticCheck(
           name: 'Сетевая доступность',
           status: DiagnosticStatus.notChecked,
-          details: 'Проверяется только по результату загрузки ленты; отдельный сетевой тест не запускался',
+          details:
+              'Проверяется только по результату загрузки ленты; отдельный сетевой тест не запускался',
         ),
       ],
     );
@@ -223,13 +238,15 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           AIRequest(
             id: 'diagnostic-${DateTime.now().microsecondsSinceEpoch}',
             systemInstruction: diagnosticAnalysisInstruction,
-            prompt: 'Проанализируй отчёт OMNI AI. Укажи факты, гипотезы и следующие проверки.\n\n$reportText',
+            prompt:
+                'Проанализируй отчёт OMNI AI. Укажи факты, гипотезы и следующие проверки.\n\n$reportText',
             metadata: const {'feature': 'diagnostics'},
           ),
         );
         aiAnalysis = response.text;
       } catch (_) {
-        aiAnalysis = 'ИИ-анализ недоступен. Сам диагностический отчёт сформирован локально.';
+        aiAnalysis =
+            'ИИ-анализ недоступен. Сам диагностический отчёт сформирован локально.';
       }
     }
     if (!mounted) return;
@@ -275,7 +292,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     final indexed = articles.indexed.toList();
     double score(NewsArticle article) => article.topics.fold<double>(
       0,
-      (total, topic) => total + (_reactionWeights[topic.trim().toLowerCase()] ?? 0),
+      (total, topic) =>
+          total + (_reactionWeights[topic.trim().toLowerCase()] ?? 0),
     );
     indexed.sort((a, b) {
       final byScore = score(b.$2).compareTo(score(a.$2));
@@ -284,7 +302,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     return List<NewsArticle>.unmodifiable(indexed.map((entry) => entry.$2));
   }
 
-  Future<void> _reactToArticle(NewsArticle article, NewsReaction reaction) async {
+  Future<void> _reactToArticle(
+    NewsArticle article,
+    NewsReaction reaction,
+  ) async {
     try {
       await _newsFeedback.record(
         articleId: article.id,
@@ -297,14 +318,19 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _reactionWeights = weights;
         _articles = _rankByReaction(_articles);
         _status = switch (reaction) {
-          NewsReaction.like => 'Лайк сохранён: интересы будут учтены в рекомендациях.',
-          NewsReaction.dislike => 'Учтено: похожие материалы будут показываться реже.',
+          NewsReaction.like =>
+            'Лайк сохранён: интересы будут учтены в рекомендациях.',
+          NewsReaction.dislike =>
+            'Учтено: похожие материалы будут показываться реже.',
           NewsReaction.opened => 'Просмотр учтён как слабый сигнал интереса.',
         };
       });
     } catch (_) {
       if (mounted) {
-        setState(() => _status = 'Не удалось сохранить реакцию. Лента продолжит работать.');
+        setState(
+          () => _status =
+              'Не удалось сохранить реакцию. Лента продолжит работать.',
+        );
       }
     }
   }
@@ -323,7 +349,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     }
   }
 
-  Future<void> _setReminder({required bool morning, required bool enabled}) async {
+  Future<void> _setReminder({
+    required bool morning,
+    required bool enabled,
+  }) async {
     if (_updatingReminder) return;
     setState(() => _updatingReminder = true);
     try {
@@ -342,12 +371,16 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               ? 'Напоминание включено. Время указано по часовому поясу устройства.'
               : 'Напоминание отключено.';
         } else {
-          _status = 'Разрешение на уведомления не выдано. Разреши уведомления в настройках Android.';
+          _status =
+              'Разрешение на уведомления не выдано. Разреши уведомления в настройках Android.';
         }
       });
     } catch (_) {
       if (mounted) {
-        setState(() => _status = 'Не удалось настроить уведомление. Проверь разрешения Android.');
+        setState(
+          () => _status =
+              'Не удалось настроить уведомление. Проверь разрешения Android.',
+        );
       }
     } finally {
       if (mounted) setState(() => _updatingReminder = false);
@@ -381,7 +414,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       setState(() {
         _articles = const [];
         _newsError = null;
-        _status = 'Выберите хотя бы одну тему, чтобы получить персональные новости.';
+        _status =
+            'Выберите хотя бы одну тему, чтобы получить персональные новости.';
       });
       return;
     }
@@ -440,7 +474,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // in the newly selected feed.
       if (!mounted || revisionAtStart != _interestRevision) return;
       setState(() {
-        _newsError = 'Не удалось загрузить новости. Проверьте соединение и попробуйте снова.';
+        _newsError =
+            'Не удалось загрузить новости. Проверьте соединение и попробуйте снова.';
       });
     } finally {
       if (mounted) setState(() => _refreshingNews = false);
@@ -459,7 +494,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     }
     final revisionAtStart = _interestRevision;
     if (profile.topics.isEmpty || _articles.isEmpty) {
-      setState(() => _digestError = 'Сначала выберите интересы и загрузите новости.');
+      setState(
+        () => _digestError = 'Сначала выберите интересы и загрузите новости.',
+      );
       return;
     }
     setState(() {
@@ -468,10 +505,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _digest = null;
     });
     try {
-      final digest = await NewsDigestService(engine: engine).createDigest(
-        profile: profile,
-        articles: _articles,
-      );
+      final digest = await NewsDigestService(
+        engine: engine,
+      ).createDigest(profile: profile, articles: _articles);
       if (revisionAtStart != _interestRevision) return;
       await _newsCache.saveDigest(digest);
       if (revisionAtStart != _interestRevision) {
@@ -490,7 +526,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     } catch (_) {
       // Ignore errors from digest requests started before interests changed.
       if (!mounted || revisionAtStart != _interestRevision) return;
-      setState(() => _digestError = 'Не удалось создать дайджест. Проверьте выбранный режим ИИ и попробуйте снова.');
+      setState(
+        () => _digestError =
+            'Не удалось создать дайджест. Проверьте выбранный режим ИИ и попробуйте снова.',
+      );
     } finally {
       if (mounted) setState(() => _generatingDigest = false);
     }
@@ -539,7 +578,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Трейлер «${article.title}» сохранён в избранном')),
+      SnackBar(
+        content: Text('Трейлер «${article.title}» сохранён в избранном'),
+      ),
     );
   }
 
@@ -557,33 +598,59 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(article.sourceName.toUpperCase(),
-                    style: const TextStyle(color: SystemCorePalette.green, fontSize: 12)),
+                Text(
+                  article.sourceName.toUpperCase(),
+                  style: const TextStyle(
+                    color: SystemCorePalette.green,
+                    fontSize: 12,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                Text(article.title,
-                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                Text(
+                  article.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 12),
-                Text(article.summary.isEmpty
-                    ? 'Источник не предоставил краткое описание. Откройте оригинальную публикацию.'
-                    : article.summary,
-                    style: const TextStyle(color: Colors.white70, height: 1.5)),
+                Text(
+                  article.summary.isEmpty
+                      ? 'Источник не предоставил краткое описание. Откройте оригинальную публикацию.'
+                      : article.summary,
+                  style: const TextStyle(color: Colors.white70, height: 1.5),
+                ),
                 const SizedBox(height: 12),
-                Text('Опубликовано: ${article.publishedAt.toLocal()}',
-                    style: const TextStyle(color: SystemCorePalette.muted, fontSize: 12)),
+                Text(
+                  'Опубликовано: ${article.publishedAt.toLocal()}',
+                  style: const TextStyle(
+                    color: SystemCorePalette.muted,
+                    fontSize: 12,
+                  ),
+                ),
                 const SizedBox(height: 18),
                 FilledButton.icon(
                   onPressed: () async {
                     final uri = Uri.tryParse(article.sourceUrl);
                     if (uri != null && uri.scheme == 'https') {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
                     }
                   },
                   icon: const Icon(Icons.open_in_new),
                   label: const Text('ОТКРЫТЬ ИСТОЧНИК'),
                 ),
                 const SizedBox(height: 8),
-                const Text('В приложении показан RSS-фрагмент и краткое описание. Полный материал принадлежит издателю.',
-                    style: TextStyle(color: SystemCorePalette.muted, fontSize: 12)),
+                const Text(
+                  'В приложении показан RSS-фрагмент и краткое описание. Полный материал принадлежит издателю.',
+                  style: TextStyle(
+                    color: SystemCorePalette.muted,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
@@ -597,7 +664,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     final profile = _profile;
     if (profile == null || topic.isEmpty) return;
     final normalized = topic.toLowerCase();
-    if (profile.topics.any((existing) => existing.trim().toLowerCase() == normalized)) {
+    if (profile.topics.any(
+      (existing) => existing.trim().toLowerCase() == normalized,
+    )) {
       setState(() => _status = 'Эта тема уже добавлена.');
       return;
     }
@@ -607,7 +676,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     }
     _customTopicController.clear();
     _toggleTopic(normalized, true);
-    setState(() => _status = 'Тема добавлена. Сохрани интересы, чтобы применить её.');
+    setState(
+      () => _status = 'Тема добавлена. Сохрани интересы, чтобы применить её.',
+    );
   }
 
   void _toggleTopic(String topic, bool selected) {
@@ -681,7 +752,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                       maxLength: 60,
                       decoration: const InputDecoration(
                         labelText: 'Своя тема',
-                        hintText: 'Например: робототехника, экология, Формула-1',
+                        hintText:
+                            'Например: робототехника, экология, Формула-1',
                         counterText: '',
                       ),
                     ),
@@ -822,7 +894,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   ),
                   subtitle: const Text(
                     'Проверить ленту и сформировать отчёт для поиска ошибок',
-                    style: TextStyle(color: SystemCorePalette.muted, fontSize: 12),
+                    style: TextStyle(
+                      color: SystemCorePalette.muted,
+                      fontSize: 12,
+                    ),
                   ),
                   trailing: const Icon(
                     Icons.chevron_right,
@@ -833,28 +908,55 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               ),
               const SizedBox(height: 8),
               FilledButton.icon(
-                onPressed: (_refreshingNews || _loadingNewsCache) ? null : _refreshNews,
+                onPressed: (_refreshingNews || _loadingNewsCache)
+                    ? null
+                    : _refreshNews,
                 icon: _refreshingNews
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.refresh),
-                label: Text(_refreshingNews ? 'ЗАГРУЗКА…' : 'ОБНОВИТЬ ПЕРСОНАЛЬНУЮ ЛЕНТУ'),
+                label: Text(
+                  _refreshingNews ? 'ЗАГРУЗКА…' : 'ОБНОВИТЬ ПЕРСОНАЛЬНУЮ ЛЕНТУ',
+                ),
               ),
               if (_newsError != null) ...[
                 const SizedBox(height: 12),
-                Text(_newsError!, style: const TextStyle(color: Colors.orangeAccent)),
+                Text(
+                  _newsError!,
+                  style: const TextStyle(color: Colors.orangeAccent),
+                ),
               ],
               if (widget.aiEngine != null) ...[
                 const SizedBox(height: 10),
                 FilledButton.icon(
-                  onPressed: (_generatingDigest || _loadingNewsCache || _refreshingNews) ? null : _createDigest,
+                  onPressed:
+                      (_generatingDigest ||
+                          _loadingNewsCache ||
+                          _refreshingNews)
+                      ? null
+                      : _createDigest,
                   icon: _generatingDigest
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Icon(Icons.auto_awesome),
-                  label: Text(_generatingDigest ? 'СОЗДАЮ ДАЙДЖЕСТ…' : 'СОЗДАТЬ AI-ДАЙДЖЕСТ'),
+                  label: Text(
+                    _generatingDigest
+                        ? 'СОЗДАЮ ДАЙДЖЕСТ…'
+                        : 'СОЗДАТЬ AI-ДАЙДЖЕСТ',
+                  ),
                 ),
                 if (_digestError != null) ...[
                   const SizedBox(height: 8),
-                  Text(_digestError!, style: const TextStyle(color: Colors.orangeAccent)),
+                  Text(
+                    _digestError!,
+                    style: const TextStyle(color: Colors.orangeAccent),
+                  ),
                 ],
                 if (_digest != null) ...[
                   const SizedBox(height: 12),
@@ -864,7 +966,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                       padding: const EdgeInsets.all(16),
                       child: SelectableText(
                         _digest!,
-                        style: const TextStyle(color: Colors.white, height: 1.5),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   ),
@@ -876,26 +981,40 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   child: LinearProgressIndicator(),
                 ),
               ],
-              if (_showingCachedNews && !_loadingNewsCache && _articles.isNotEmpty && !_refreshingNews) ...[
+              if (_showingCachedNews &&
+                  !_loadingNewsCache &&
+                  _articles.isNotEmpty &&
+                  !_refreshingNews) ...[
                 const Padding(
                   padding: EdgeInsets.only(bottom: 6),
-                  child: Text('Показана последняя сохранённая лента; обнови её, чтобы проверить новые публикации.', style: TextStyle(color: SystemCorePalette.muted, fontSize: 12)),
+                  child: Text(
+                    'Показана последняя сохранённая лента; обнови её, чтобы проверить новые публикации.',
+                    style: TextStyle(
+                      color: SystemCorePalette.muted,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ],
-              if (!_refreshingNews && _newsError == null && _articles.isEmpty) ...[
+              if (!_refreshingNews &&
+                  _newsError == null &&
+                  _articles.isEmpty) ...[
                 const SizedBox(height: 12),
                 const Icon(
-                Icons.rss_feed,
-                size: 34,
-                color: SystemCorePalette.muted,
-              ),
-              const SizedBox(height: 8),
+                  Icons.rss_feed,
+                  size: 34,
+                  color: SystemCorePalette.muted,
+                ),
+                const SizedBox(height: 8),
                 Text(
                   profile.topics.isEmpty
                       ? 'Выберите интересы выше — лента останется пустой, пока темы не выбраны.'
                       : 'Нажмите «Обновить», чтобы загрузить свежие материалы по выбранным темам.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: SystemCorePalette.muted, height: 1.4),
+                  style: const TextStyle(
+                    color: SystemCorePalette.muted,
+                    height: 1.4,
+                  ),
                 ),
               ],
               for (final article in _articles) ...[
@@ -933,15 +1052,21 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                 tooltip: 'Не нравится — учитывать в интересах',
                                 icon: Icons.thumb_down_alt_outlined,
                                 color: SystemCorePalette.mint,
-                                onPressed: () =>
-                                    _reactToArticle(article, NewsReaction.dislike),
+                                onPressed: () => _reactToArticle(
+                                  article,
+                                  NewsReaction.dislike,
+                                ),
                               ),
                               IconButton(
                                 tooltip: 'Показывать меньше похожего',
                                 onPressed: () => _seeLessOf(article),
-                                icon: const Icon(Icons.remove_circle_outline, size: 19),
+                                icon: const Icon(
+                                  Icons.remove_circle_outline,
+                                  size: 19,
+                                ),
                               ),
-                              if (article.contentType == NewsContentType.trailer)
+                              if (article.contentType ==
+                                  NewsContentType.trailer)
                                 IconButton(
                                   tooltip: 'Сохранить трейлер в избранное',
                                   onPressed: () => _saveTrailer(article),
@@ -950,18 +1075,34 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                             ],
                           ),
                           const SizedBox(height: 6),
-                          Text(article.title,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text(
+                            article.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                           if (article.summary.isNotEmpty) ...[
                             const SizedBox(height: 6),
-                            Text(article.summary,
-                                maxLines: 4,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: Colors.white70, height: 1.35)),
+                            Text(
+                              article.summary,
+                              maxLines: 4,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                height: 1.35,
+                              ),
+                            ),
                           ],
                           const SizedBox(height: 8),
-                          Text(article.publishedAt.toLocal().toString(),
-                              style: const TextStyle(color: SystemCorePalette.muted, fontSize: 11)),
+                          Text(
+                            article.publishedAt.toLocal().toString(),
+                            style: const TextStyle(
+                              color: SystemCorePalette.muted,
+                              fontSize: 11,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -975,7 +1116,6 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     );
   }
 }
-
 
 class _ReactionButton extends StatelessWidget {
   const _ReactionButton({
