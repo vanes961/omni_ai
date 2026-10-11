@@ -30,7 +30,9 @@ void main() {
     expect(provider.requests, isEmpty);
   });
 
-  test('creates a critical-only digest only when explicitly enabled', () async {
+  test(
+    'creates a critical-only digest only when explicitly enabled',
+    () async {
     final provider = _FakeProvider();
     final service = NewsDigestService(engine: AIEngine(provider: provider));
     final critical = NewsArticle(
@@ -59,9 +61,16 @@ void main() {
     );
     expect(enabled, 'Персональный дайджест');
     expect(provider.requests, hasLength(1));
-    expect(provider.requests.single.prompt, contains('Critical event headline'));
-    expect(provider.requests.single.prompt, isNot(contains('Anime headline')));
-  });
+    expect(
+      provider.requests.single.prompt,
+      contains('Critical event headline'),
+    );
+    expect(
+      provider.requests.single.prompt,
+      isNot(contains('Anime headline')),
+    );
+    },
+  );
 
   test('normalizes legacy topic aliases when selecting digest articles', () async {
     final provider = _FakeProvider();
