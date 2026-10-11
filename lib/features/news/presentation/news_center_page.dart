@@ -141,7 +141,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // When no valid cached feed exists, load the selected topics on entry
       // instead of leaving a blank screen until the user discovers Refresh.
       if (((_profile?.topics.isNotEmpty ?? false) ||
-          (_profile?.includeCriticalOutsideInterests ?? false)) &&
+              (_profile?.includeCriticalOutsideInterests ?? false)) &&
           _articles.isEmpty) {
         unawaited(_refreshNews());
       }
@@ -153,7 +153,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // leaving users with a blank screen until they manually tap Refresh.
       final activeProfile = loadedProfile ?? _profile;
       if (((activeProfile?.topics.isNotEmpty ?? false) ||
-          (activeProfile?.includeCriticalOutsideInterests ?? false)) &&
+              (activeProfile?.includeCriticalOutsideInterests ?? false)) &&
           _articles.isEmpty) {
         unawaited(_refreshNews());
       }
