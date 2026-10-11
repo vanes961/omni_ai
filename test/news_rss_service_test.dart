@@ -667,19 +667,21 @@ void main() {
     expect(articles.single.topics, contains('robotics'));
   });
 
-
-  test('marks high-impact public-safety events as critical for opt-in feed', () async {
+  test('marks high-impact public-safety events as critical for opt-in feed',
+      () async {
     final service = NewsRssService(
-      client: MockClient((_) async => http.Response(
-        '''<rss><channel><item>
+      client: MockClient(
+        (_) async => http.Response(
+          '''<rss><channel><item>
           <title>Emergency declared after major earthquake</title>
           <link>https://publisher.example/earthquake-alert</link>
           <description>Authorities issue evacuation order after earthquake of magnitude 7.</description>
           <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
           <source>Public Safety News</source>
         </item></channel></rss>''',
-        200,
-      )),
+          200,
+        ),
+      ),
     );
     addTearDown(service.dispose);
 
