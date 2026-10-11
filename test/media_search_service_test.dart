@@ -8,46 +8,37 @@ import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 void main() {
   const service = MediaSearchService();
 
-  test(
-    'search filters immediately by title, type, category, and voiceover',
-    () {
-      expect(
-        service.search('cyberpunk').single.title,
-        'Cyberpunk: Edgerunners',
-      );
-      expect(service.search('', type: 'Фильм'), hasLength(2));
-      expect(service.search('fantasy'), isEmpty);
-      expect(service.search('Anilibria'), hasLength(2));
-    },
-  );
+  test('does not expose fabricated demo titles in the local catalog', () {
+    expect(service.catalog, isEmpty);
+    expect(service.trending, isEmpty);
+    expect(service.search('cyberpunk'), isEmpty);
+    expect(service.search('', type: 'Фильм'), isEmpty);
+    expect(service.search('Anilibria'), isEmpty);
+  });
 
-  test(
-    'recommendations follow selected onboarding categories and favorites',
-    () {
-      final preferences = UserPreferences()
-        ..categories = ['Аниме']
-        ..favoriteTitles = ['Атака Титанов'];
+  test('recommendations stay empty until a real catalog is connected', () {
+    final preferences = UserPreferences()
+      ..categories = ['Аниме']
+      ..favoriteTitles = ['Атака Титанов'];
 
-      final recommendations = service.recommendedFor(preferences);
+    expect(service.recommendedFor(preferences), isEmpty);
+  });
 
-      expect(recommendations, hasLength(2));
-      expect(recommendations.first.title, 'Атака Титанов');
-      expect(recommendations.every((item) => item.type == 'Аниме'), isTrue);
-    },
-  );
+  test('does not invent voiceovers for an unavailable catalog item', () {
+    final preferences = UserPreferences()
+      ..voiceDubbing = ['RHS', 'Anilibria'];
+    const item = MediaItem(
+      id: 'online-item',
+      title: 'Online result',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 0,
+      voiceovers: [],
+      videoUrl: '',
+    );
 
-  test(
-    'preferred voiceover picks the first available onboarding preference',
-    () {
-      final preferences = UserPreferences()
-        ..voiceDubbing = ['RHS', 'Anilibria'];
-      final anime = service.catalog.first;
-      final series = service.catalog.singleWhere((item) => item.id == 'arcane');
-
-      expect(service.preferredVoiceover(anime, preferences), 'Anilibria');
-      expect(service.preferredVoiceover(series, preferences), 'RHS');
-    },
-  );
+    expect(service.preferredVoiceover(item, preferences), isNull);
+  });
 
   test('online search maps Kinopoisk metadata and sends the API key', () async {
     http.Request? request;
