@@ -130,7 +130,7 @@ class _MediaPageState extends State<MediaPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'KAIROS  //  MEDIA DECK',
+          'OMNI AI  //  MEDIA',
           style: TextStyle(
             color: SystemCorePalette.muted,
             fontSize: 10,
@@ -302,10 +302,6 @@ class _MediaPageState extends State<MediaPage> {
                   final item = rankedCombined[index];
                   return _MediaResultTile(
                     item: item,
-                    preferredVoiceover: widget.searchService.preferredVoiceover(
-                      item,
-                      widget.preferences,
-                    ),
                     onTap: item.videoUrl.isEmpty
                         ? null
                         : () => _openPlayer(item),
@@ -533,13 +529,11 @@ class _MediaPosterCard extends StatelessWidget {
 class _MediaResultTile extends StatelessWidget {
   const _MediaResultTile({
     required this.item,
-    required this.preferredVoiceover,
     required this.onTap,
     required this.onFavorite,
   });
 
   final MediaItem item;
-  final String? preferredVoiceover;
   final VoidCallback? onTap;
   final VoidCallback onFavorite;
 
@@ -596,23 +590,7 @@ class _MediaResultTile extends StatelessWidget {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 7),
-                    Wrap(
-                      spacing: 5,
-                      runSpacing: 4,
-                      children: item.voiceovers.map((voiceover) {
-                        final selected = voiceover == preferredVoiceover;
-                        return Text(
-                          voiceover,
-                          style: TextStyle(
-                            color: selected
-                                ? SystemCorePalette.green
-                                : Colors.white54,
-                            fontSize: 9,
-                          ),
-                        );
-                      }).toList(),
-                    ),
+
                   ],
                 ),
               ),
