@@ -400,6 +400,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   Future<void> _save() async {
     final profile = _profile;
     if (profile == null || _saving) return;
+    var saved = false;
     setState(() {
       _saving = true;
       _status = null;
@@ -407,12 +408,26 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     try {
       await _repository.save(profile);
       if (!mounted) return;
+      saved = true;
       setState(() => _status = 'Настройки интересов сохранены');
     } catch (_) {
       if (!mounted) return;
       setState(() => _status = 'Не удалось сохранить настройки');
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+
+    // Applying interests should also populate the feed. Previously saving
+    // cleared the old cache but left the news list empty until Refresh was
+    // tapped manually.
+    final activeProfile = _profile;
+    if (saved &&
+        mounted &&
+        !_loadingNewsCache &&
+        activeProfile != null &&
+        (activeProfile.topics.isNotEmpty ||
+            activeProfile.includeCriticalOutsideInterests)) {
+      unawaited(_refreshNews());
     }
   }
 
