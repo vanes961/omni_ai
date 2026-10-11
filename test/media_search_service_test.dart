@@ -3,6 +3,7 @@ import 'package:http/testing.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/core/network/network_service.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
+import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 void main() {
