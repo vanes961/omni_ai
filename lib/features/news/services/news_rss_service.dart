@@ -328,6 +328,14 @@ class NewsRssService {
           detectedTopics.add(topic);
         }
       }
+      final isCritical = _isCriticalNews('$title $text');
+      // Google News already searched the selected topic query. Some valid
+      // stories use names or wording that do not contain our keyword list;
+      // preserve those query-matched items instead of filtering the feed to
+      // empty. Known matches still keep their more precise topic labels.
+      if (detectedTopics.isEmpty && !isCritical) {
+        detectedTopics.addAll(selectedTopics);
+      }
       final topics = detectedTopics.toList(growable: false);
       result.add(NewsArticle(
         id: uri.toString(),
@@ -338,7 +346,7 @@ class NewsRssService {
         publishedAt: published.toUtc(),
         topics: topics,
         language: language,
-        isCritical: _isCriticalNews('$title $text'),
+        isCritical: isCritical,
         region: profileRegion,
         isVerified: true,
       ));
