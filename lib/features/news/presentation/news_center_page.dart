@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
+import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
+import 'package:omni_ai/core/diagnostics/diagnostic_report.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:omni_ai/features/news/data/news_interest_repository.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_cache.dart';
@@ -167,6 +169,88 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (normalizedFirst[i] != normalizedSecond[i]) return false;
     }
     return true;
+  }
+
+  Future<void> _runDiagnostics() async {
+    final report = DiagnosticReport(
+      createdAt: DateTime.now(),
+      checks: [
+        DiagnosticCheck(
+          name: 'Профиль интересов',
+          status: _profile == null
+              ? DiagnosticStatus.warning
+              : (_profile!.topics.isEmpty ? DiagnosticStatus.warning : DiagnosticStatus.ok),
+          details: _profile == null
+              ? 'Профиль ещё не загружен'
+              : 'Выбрано тем: ${_profile!.topics.length}',
+        ),
+        DiagnosticCheck(
+          name: 'Новостная лента',
+          status: _newsError != null
+              ? DiagnosticStatus.error
+              : (_refreshingNews ? DiagnosticStatus.warning : (_articles.isEmpty ? DiagnosticStatus.warning : DiagnosticStatus.ok)),
+          details: _newsError ?? (_refreshingNews
+              ? 'Загрузка ещё выполняется'
+              : 'Материалов в ленте: ${_articles.length}'),
+        ),
+        DiagnosticCheck(
+          name: 'Локальный кэш',
+          status: _loadingNewsCache ? DiagnosticStatus.warning : DiagnosticStatus.ok,
+          details: _loadingNewsCache ? 'Восстановление кэша ещё выполняется' : 'Загрузка кэша завершена',
+        ),
+        DiagnosticCheck(
+          name: 'Реакции и интересы',
+          status: DiagnosticStatus.ok,
+          details: 'Сигналов интереса: ${_reactionWeights.length}; значения хранятся локально',
+        ),
+        const DiagnosticCheck(
+          name: 'Сетевая доступность',
+          status: DiagnosticStatus.notChecked,
+          details: 'Проверяется только по результату загрузки ленты; отдельный сетевой тест не запускался',
+        ),
+      ],
+    );
+    final reportText = report.toPlainText();
+    String? aiAnalysis;
+    final engine = widget.aiEngine;
+    if (engine != null) {
+      try {
+        final response = await engine.execute(
+          AIRequest(
+            id: 'diagnostic-${DateTime.now().microsecondsSinceEpoch}',
+            systemInstruction: diagnosticAnalysisInstruction,
+            prompt: 'Проанализируй отчёт OMNI AI. Укажи факты, гипотезы и следующие проверки.\n\n$reportText',
+            metadata: const {'feature': 'diagnostics'},
+          ),
+        );
+        aiAnalysis = response.text;
+      } catch (_) {
+        aiAnalysis = 'ИИ-анализ недоступен. Сам диагностический отчёт сформирован локально.';
+      }
+    }
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: SystemCorePalette.panel,
+        title: const Text('Диагностика OMNI AI'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              '$reportText${aiAnalysis == null ? '' : '\n\nАНАЛИЗ ИИ\n$aiAnalysis'}',
+              style: const TextStyle(color: Colors.white70, height: 1.45),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('ЗАКРЫТЬ'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadReactionWeights() async {
@@ -665,6 +749,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 ),
               ),
               const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: _runDiagnostics,
+                icon: const Icon(Icons.troubleshoot),
+                label: const Text('ДИАГНОСТИКА И ОТЧЁТ'),
+              ),
+              const SizedBox(height: 8),
               FilledButton.icon(
                 onPressed: (_refreshingNews || _loadingNewsCache) ? null : _refreshNews,
                 icon: _refreshingNews
