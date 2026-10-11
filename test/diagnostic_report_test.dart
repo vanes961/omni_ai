@@ -3,7 +3,7 @@ import 'package:omni_ai/core/diagnostics/diagnostic_report.dart';
 
 void main() {
   test('summarizes checks and redacts secrets and URLs', () {
-    const report = DiagnosticReport(
+    final report = DiagnosticReport(
       createdAt: DateTime.utc(2026, 10, 11),
       checks: [
         DiagnosticCheck(
