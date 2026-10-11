@@ -329,7 +329,8 @@ class NewsRssService {
       final description = _stripMarkup(
         _tag(item, 'description', decodeEntities: false),
       );
-      final normalized = ' ${title.toLowerCase()} ${description.toLowerCase()} ';
+      final normalized =
+          ' ${title.toLowerCase()} ${description.toLowerCase()} ';
       return selectedTopics.any((topic) {
         final keywords = _topicKeywords[topic];
         if (keywords != null) {
