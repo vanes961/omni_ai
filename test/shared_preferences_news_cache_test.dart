@@ -42,7 +42,6 @@ void main() {
     expect(await restoredCache.loadDigest(), 'Персональный дайджест');
   });
 
-
   test('clearing a stale digest preserves the current article feed', () async {
     final store = _MemoryStore();
     final cache = SharedPreferencesNewsCache(store: store);
@@ -386,6 +385,7 @@ void main() {
       isFalse,
     );
   });
+
   test('serializes a cache clear after an in-flight feed save', () async {
     final store = _MemoryStore()
       ..writeStarted = Completer<void>()
@@ -420,7 +420,6 @@ void main() {
     expect(await cache.loadDigest(), isNull);
     expect(await cache.loadTopics(), isNull);
   });
-
 }
 
 class _MemoryStore implements NewsCacheStringStore {
