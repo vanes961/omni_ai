@@ -17,19 +17,22 @@ class DashboardPage extends StatefulWidget {
     required this.preferences,
     this.preferencesStore,
     this.dependencies,
+    this.initialTab = 0,
     super.key,
   });
 
   final UserPreferences preferences;
   final UserPreferencesStore? preferencesStore;
   final AppDependencies? dependencies;
+  final int initialTab;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  int _selectedTab = 0;
+  late int _selectedTab;
+
   int _selectedSettingsTab = 0;
   late final bool _ownsDependencies;
   late final LocalModelStorage _localModelStorage;
@@ -40,6 +43,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    _selectedTab = widget.initialTab.clamp(0, 4);
     final dependencies = widget.dependencies;
     _ownsDependencies = dependencies == null;
     if (dependencies == null) {
