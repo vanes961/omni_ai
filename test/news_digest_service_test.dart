@@ -164,17 +164,18 @@ void main() {
   test(
     'returns null when the configured AI provider returns blank text',
     () async {
-    final provider = _FakeProvider(responseText: '  \n ');
-    final service = NewsDigestService(engine: AIEngine(provider: provider));
+      final provider = _FakeProvider(responseText: '  \\n ');
+      final service = NewsDigestService(engine: AIEngine(provider: provider));
 
-    final result = await service.createDigest(
-      profile: const NewsInterestProfile(topics: ['anime']),
-      articles: [_article('anime')],
-    );
+      final result = await service.createDigest(
+        profile: const NewsInterestProfile(topics: ['anime']),
+        articles: [_article('anime')],
+      );
 
-    expect(result, isNull);
-    expect(provider.requests, hasLength(1));
-  });
+      expect(result, isNull);
+      expect(provider.requests, hasLength(1));
+    },
+  );
 
   test('summarizes only selected topic articles', () async {
     final provider = _FakeProvider();
