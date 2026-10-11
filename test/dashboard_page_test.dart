@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:omni_ai/features/dashboard/presentation/dashboard_page.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/news/presentation/news_center_page.dart';
@@ -10,6 +11,7 @@ void main() {
   testWidgets('shows current dashboard destinations without legacy feed UI', (
     tester,
   ) async {
+    SharedPreferences.setMockInitialValues({});
     final preferences = UserPreferences()
       ..tgChannels = <String>['Legacy Telegram channel']
       ..favoriteTitles = <String>['Legacy demo title']
