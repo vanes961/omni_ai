@@ -669,5 +669,4 @@ void main() {
       expect(articles.single.topics, contains('robotics'));
     },
   );
-
 }
