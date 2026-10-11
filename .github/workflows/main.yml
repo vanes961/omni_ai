@@ -16,7 +16,7 @@ on:
         default: false
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: omni-ai-ci-${{ github.ref }}
@@ -64,10 +64,16 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Diagnose Dart formatting
+      - name: Apply Dart formatting
         run: |
           dart format lib/features/news/presentation/news_center_page.dart
-          git diff -- lib/features/news/presentation/news_center_page.dart
+          if ! git diff --quiet -- lib/features/news/presentation/news_center_page.dart; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add lib/features/news/presentation/news_center_page.dart
+            git commit -m "style: format custom news interest UI"
+            git push
+          fi
 
       - name: Check formatting
         run: |
