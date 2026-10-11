@@ -419,7 +419,7 @@ class _GuardHeader extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Профиль и настройки',
+            tooltip: 'Профиль',
             onPressed: onProfilePressed,
             icon: const Icon(Icons.tune_rounded),
             color: SystemCorePalette.muted,
