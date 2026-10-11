@@ -142,6 +142,15 @@ class NewsRssService {
         '(${failedEditions.join(', ')}).',
       );
     }
+    // A nominally successful HTTP response can still contain no usable RSS
+    // items. If every edition is empty and another edition failed, surface the
+    // partial outage instead of making the feed look silently empty.
+    if (batches.every((batch) => batch.isEmpty) && failedEditions.isNotEmpty) {
+      throw http.ClientException(
+        'No articles were returned and some international news editions '
+        'failed (${failedEditions.join(', ')}).',
+      );
+    }
 
     final byUrl = <String, NewsArticle>{};
     for (final article in batches.expand((batch) => batch)) {
