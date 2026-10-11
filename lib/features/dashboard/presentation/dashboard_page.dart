@@ -407,7 +407,7 @@ class _GuardHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 3),
                 Text(
-                  'NEON SYSTEM  //  ONLINE',
+                  'AI-GUARD ACTIVE',
                   style: TextStyle(
                     color: SystemCorePalette.green,
                     fontSize: 9,
