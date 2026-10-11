@@ -67,7 +67,7 @@ class NewsFeedbackRepository {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! List) return const [];
-      return decoded.map(NewsReactionRecord.fromJson).whereType<NewsReactionRecord>().toList(growable: false);
+      return decoded.map(NewsReactionRecord.fromJson).whereType<NewsReactionRecord>().toList();
     } on FormatException {
       return const [];
     }
