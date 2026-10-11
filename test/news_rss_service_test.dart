@@ -667,6 +667,33 @@ void main() {
     expect(articles.single.topics, contains('robotics'));
   });
 
+  test('searches critical events when no topics are selected', () async {
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        expect(request.url.queryParameters['q'], contains('"tsunami warning"'));
+        expect(request.url.queryParameters['q'], isNot(contains('anime')));
+        return http.Response(
+          '''<rss><channel><item>
+            <title>Tsunami warning issued for coastal areas</title>
+            <link>https://publisher.example/tsunami-warning</link>
+            <description>Authorities issue a tsunami warning.</description>
+            <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            <source>Public Safety News</source>
+          </item></channel></rss>''',
+          200,
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(includeCriticalOutsideInterests: true),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.isCritical, isTrue);
+  });
+
   test(
     'marks high-impact public-safety events as critical for opt-in feed',
     () async {
