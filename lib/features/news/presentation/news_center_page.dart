@@ -758,150 +758,6 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             padding: const EdgeInsets.all(20),
             children: [
               const Text(
-                'ВАШИ ИНТЕРЕСЫ',
-                style: TextStyle(
-                  color: SystemCorePalette.green,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Выберите темы. В обычную ленту попадут только материалы по выбранным темам. Если ничего не выбрано, новости не показываются.',
-                style: TextStyle(color: Colors.white70, height: 1.4),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _customTopicController,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _addCustomTopic(),
-                      maxLength: 60,
-                      decoration: const InputDecoration(
-                        labelText: 'Своя тема',
-                        hintText:
-                            'Например: робототехника, экология, Формула-1',
-                        counterText: '',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filled(
-                    tooltip: 'Добавить тему',
-                    onPressed: _addCustomTopic,
-                    icon: const Icon(Icons.add),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Можно добавить собственные темы — лента будет искать материалы по ним.',
-                style: TextStyle(color: Colors.white60, fontSize: 12),
-              ),
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  for (final entry in _topicOptions.entries)
-                    FilterChip(
-                      label: Text(entry.value),
-                      selected: profile.topics.contains(entry.key),
-                      onSelected: (selected) =>
-                          _toggleTopic(entry.key, selected),
-                      selectedColor: SystemCorePalette.green.withValues(
-                        alpha: 0.18,
-                      ),
-                      showCheckmark: false,
-                      checkmarkColor: SystemCorePalette.green,
-                    ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              const Divider(color: Colors.white12),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Критические новости вне интересов'),
-                subtitle: const Text(
-                  'Отдельное исключение. По умолчанию выключено.',
-                  style: TextStyle(color: SystemCorePalette.muted),
-                ),
-                value: profile.includeCriticalOutsideInterests,
-                activeThumbColor: SystemCorePalette.green,
-                onChanged: (value) {
-                  _interestRevision++;
-                  setState(() {
-                    _profile = profile.copyWith(
-                      includeCriticalOutsideInterests: value,
-                    );
-                    _articles = const [];
-                    _showingCachedNews = false;
-                    _digest = null;
-                    _digestError = null;
-                    _newsError = null;
-                  });
-                  unawaited(_newsCache.clear());
-                },
-              ),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: _saving ? null : _save,
-                icon: const Icon(Icons.save_outlined),
-                label: Text(_saving ? 'СОХРАНЕНИЕ…' : 'СОХРАНИТЬ ИНТЕРЕСЫ'),
-              ),
-              if (_status != null) ...[
-                const SizedBox(height: 10),
-                Text(
-                  _status!,
-                  style: const TextStyle(color: SystemCorePalette.green),
-                ),
-              ],
-              const SizedBox(height: 28),
-              const Divider(color: Colors.white12),
-              const SizedBox(height: 12),
-              const Text(
-                'РАСПИСАНИЕ ДАЙДЖЕСТА',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Напоминания по местному времени. По нажатию открой приложение, обнови ленту и создай дайджест. Само уведомление не запускает фоновую загрузку или генерацию ИИ.',
-                style: TextStyle(color: Colors.white70, height: 1.4),
-              ),
-              if (_loadingReminderSettings)
-                const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: LinearProgressIndicator(),
-                )
-              else ...[
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Утреннее напоминание — 08:00'),
-                  subtitle: const Text('Персональные новости на начало дня'),
-                  value: _morningReminder,
-                  onChanged: _updatingReminder
-                      ? null
-                      : (value) => _setReminder(morning: true, enabled: value),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Вечернее напоминание — 18:00'),
-                  subtitle: const Text('Обновить новости ещё раз за день'),
-                  value: _eveningReminder,
-                  onChanged: _updatingReminder
-                      ? null
-                      : (value) => _setReminder(morning: false, enabled: value),
-                ),
-              ],
-              const SizedBox(height: 28),
-              const Divider(color: Colors.white12),
-              const SizedBox(height: 12),
-              const Text(
                 'ЛЕНТА НОВОСТЕЙ',
 
                 style: TextStyle(
@@ -1147,6 +1003,152 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   ),
                 ),
               ],
+
+              const SizedBox(height: 24),
+              const Text(
+                'ВАШИ ИНТЕРЕСЫ',
+                style: TextStyle(
+                  color: SystemCorePalette.green,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Выберите темы. В обычную ленту попадут только материалы по выбранным темам. Если ничего не выбрано, новости не показываются.',
+                style: TextStyle(color: Colors.white70, height: 1.4),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _customTopicController,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _addCustomTopic(),
+                      maxLength: 60,
+                      decoration: const InputDecoration(
+                        labelText: 'Своя тема',
+                        hintText:
+                            'Например: робототехника, экология, Формула-1',
+                        counterText: '',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    tooltip: 'Добавить тему',
+                    onPressed: _addCustomTopic,
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Можно добавить собственные темы — лента будет искать материалы по ним.',
+                style: TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final entry in _topicOptions.entries)
+                    FilterChip(
+                      label: Text(entry.value),
+                      selected: profile.topics.contains(entry.key),
+                      onSelected: (selected) =>
+                          _toggleTopic(entry.key, selected),
+                      selectedColor: SystemCorePalette.green.withValues(
+                        alpha: 0.18,
+                      ),
+                      showCheckmark: false,
+                      checkmarkColor: SystemCorePalette.green,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              const Divider(color: Colors.white12),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Критические новости вне интересов'),
+                subtitle: const Text(
+                  'Отдельное исключение. По умолчанию выключено.',
+                  style: TextStyle(color: SystemCorePalette.muted),
+                ),
+                value: profile.includeCriticalOutsideInterests,
+                activeThumbColor: SystemCorePalette.green,
+                onChanged: (value) {
+                  _interestRevision++;
+                  setState(() {
+                    _profile = profile.copyWith(
+                      includeCriticalOutsideInterests: value,
+                    );
+                    _articles = const [];
+                    _showingCachedNews = false;
+                    _digest = null;
+                    _digestError = null;
+                    _newsError = null;
+                  });
+                  unawaited(_newsCache.clear());
+                },
+              ),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: _saving ? null : _save,
+                icon: const Icon(Icons.save_outlined),
+                label: Text(_saving ? 'СОХРАНЕНИЕ…' : 'СОХРАНИТЬ ИНТЕРЕСЫ'),
+              ),
+              if (_status != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _status!,
+                  style: const TextStyle(color: SystemCorePalette.green),
+                ),
+              ],
+              const SizedBox(height: 28),
+              const Divider(color: Colors.white12),
+              const SizedBox(height: 12),
+              const Text(
+                'РАСПИСАНИЕ ДАЙДЖЕСТА',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Напоминания по местному времени. По нажатию открой приложение, обнови ленту и создай дайджест. Само уведомление не запускает фоновую загрузку или генерацию ИИ.',
+                style: TextStyle(color: Colors.white70, height: 1.4),
+              ),
+              if (_loadingReminderSettings)
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: LinearProgressIndicator(),
+                )
+              else ...[
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Утреннее напоминание — 08:00'),
+                  subtitle: const Text('Персональные новости на начало дня'),
+                  value: _morningReminder,
+                  onChanged: _updatingReminder
+                      ? null
+                      : (value) => _setReminder(morning: true, enabled: value),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Вечернее напоминание — 18:00'),
+                  subtitle: const Text('Обновить новости ещё раз за день'),
+                  value: _eveningReminder,
+                  onChanged: _updatingReminder
+                      ? null
+                      : (value) => _setReminder(morning: false, enabled: value),
+                ),
+              ],
+              const SizedBox(height: 28),
+              const Divider(color: Colors.white12),
+              const SizedBox(height: 12),
             ],
           );
         },
