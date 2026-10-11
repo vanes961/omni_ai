@@ -46,7 +46,9 @@ void main() {
     expect(result, contains(russian));
   });
 
-  test('translates unmatched foreign articles through the shared AI engine', () async {
+  test(
+    'translates unmatched foreign articles through the shared AI engine',
+    () async {
     final foreign = _article(
       id: 'foreign',
       language: 'en',
@@ -109,7 +111,8 @@ class _TranslationProvider implements AIProvider {
   }) async {
     return AIResponse(
       requestId: request.id,
-      text: '{"title":"Анонсирована новая консоль","summary":"Описание на русском языке"}',
+      text:
+          '{"title":"Анонсирована новая консоль","summary":"Описание на русском языке"}',
       providerId: id,
       generatedAt: DateTime.utc(2026, 10, 12),
     );
