@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:omni_ai/features/onboarding/presentation/onboarding_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/run_history/data/shared_preferences_run_history_repository.dart';
 import 'package:omni_ai/features/run_history/presentation/run_history_page.dart';
@@ -56,15 +55,7 @@ class _SystemCorePageState extends State<SystemCorePage> {
   }
 
   void _handleProcessAction() {
-    if (_process.status == SystemCoreProcessStatus.completed ||
-        _process.status == SystemCoreProcessStatus.cancelled) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(
-          builder: (context) =>
-              OnboardingPage(preferencesStore: widget.preferencesStore),
-        ),
-      );
-    } else if (_process.isActive) {
+    if (_process.isActive) {
       _service.cancel();
     } else {
       unawaited(_service.start());
