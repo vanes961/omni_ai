@@ -224,23 +224,16 @@ void main() {
       );
 
       await cache.saveArticles([article], selectedTopics: const ['technology']);
-      final payload = jsonDecode(
-        store.values[SharedPreferencesNewsCache.articlesKey]!,
-      ) as List<dynamic>;
+      final payload =
+          jsonDecode(store.values[SharedPreferencesNewsCache.articlesKey]!)
+              as List<dynamic>;
       final valid = payload.single as Map<String, dynamic>;
       payload
-        ..add({
-          ...valid,
-          'id': 'unsafe-1',
-          'sourceUrl': 'javascript:alert(1)',
-        })
-        ..add({
-          ...valid,
-          'id': 'undated-1',
-          'publishedAt': 'not-a-date',
-        });
-      store.values[SharedPreferencesNewsCache.articlesKey] =
-          jsonEncode(payload);
+        ..add({...valid, 'id': 'unsafe-1', 'sourceUrl': 'javascript:alert(1)'})
+        ..add({...valid, 'id': 'undated-1', 'publishedAt': 'not-a-date'});
+      store.values[SharedPreferencesNewsCache.articlesKey] = jsonEncode(
+        payload,
+      );
 
       final restored = await cache.loadArticles();
 
@@ -264,9 +257,9 @@ void main() {
         topics: const ['technology'],
       );
       await cache.saveArticles([article], selectedTopics: const ['technology']);
-      final payload = jsonDecode(
-        store.values[SharedPreferencesNewsCache.articlesKey]!,
-      ) as List<dynamic>;
+      final payload =
+          jsonDecode(store.values[SharedPreferencesNewsCache.articlesKey]!)
+              as List<dynamic>;
       final valid = payload.single as Map<String, dynamic>;
       payload
         ..add('not-an-article')
@@ -276,8 +269,9 @@ void main() {
           'title': 'Duplicate copy',
           'sourceUrl': 'https://example.com/second',
         });
-      store.values[SharedPreferencesNewsCache.articlesKey] =
-          jsonEncode(payload);
+      store.values[SharedPreferencesNewsCache.articlesKey] = jsonEncode(
+        payload,
+      );
 
       final restored = await cache.loadArticles();
 
