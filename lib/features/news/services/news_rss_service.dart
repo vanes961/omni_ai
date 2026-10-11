@@ -154,7 +154,9 @@ class NewsRssService {
     NewsInterestProfile profile, {
     bool applyRelevanceFilter = true,
   }) async {
-    if (profile.topics.isEmpty) return const <NewsArticle>[];
+    if (profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) {
+      return const <NewsArticle>[];
+    }
     final language = profile.languages
         .map((value) => value.trim().toLowerCase())
         .firstWhere((value) => value.isNotEmpty, orElse: () => 'ru');
