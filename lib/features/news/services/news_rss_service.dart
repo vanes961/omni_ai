@@ -336,7 +336,7 @@ class NewsRssService {
         publishedAt: published.toUtc(),
         topics: topics,
         language: language,
-        isCritical: _isCriticalNews('${title} ${text}'),
+        isCritical: _isCriticalNews('$title $text'),
         region: profileRegion,
         isVerified: true,
       ));
