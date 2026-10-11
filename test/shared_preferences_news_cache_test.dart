@@ -148,7 +148,9 @@ void main() {
     expect(restored.single.releaseDateSourceUrl, trailer.releaseDateSourceUrl);
   });
 
-  test('loads legacy article cache and ignores unsafe optional video metadata', () async {
+  test(
+    'loads legacy article cache and ignores unsafe optional video metadata',
+    () async {
     final store = _MemoryStore()
       ..values[SharedPreferencesNewsCache.articlesKey] = jsonEncode([
         {
@@ -179,7 +181,9 @@ void main() {
     expect(restored.single.releaseDateSourceUrl, isNull);
   });
 
-  test('returns empty data for missing cache and removes empty digest', () async {
+  test(
+    'returns empty data for missing cache and removes empty digest',
+    () async {
     final store = _MemoryStore();
     final cache = SharedPreferencesNewsCache(store: store);
 
@@ -203,7 +207,9 @@ void main() {
     expect(await cache.loadIncludeCriticalOutsideInterests(), isNull);
   });
 
-  test('skips cached articles with unsafe links or invalid publication dates', () async {
+  test(
+    'skips cached articles with unsafe links or invalid publication dates',
+    () async {
     final store = _MemoryStore();
     final cache = SharedPreferencesNewsCache(store: store);
     final article = NewsArticle(
@@ -240,7 +246,9 @@ void main() {
     expect(restored.single.id, 'safe-1');
   });
 
-  test('skips malformed records and duplicate article IDs during recovery', () async {
+  test(
+    'skips malformed records and duplicate article IDs during recovery',
+    () async {
     final store = _MemoryStore();
     final cache = SharedPreferencesNewsCache(store: store);
     final article = NewsArticle(
@@ -273,7 +281,9 @@ void main() {
     expect(restored.single.title, 'First copy');
   });
 
-  test('writes topic marker before articles to detect interrupted cache saves', () async {
+  test(
+    'writes topic marker before articles to detect interrupted cache saves',
+    () async {
     final store = _MemoryStore();
     final cache = SharedPreferencesNewsCache(store: store);
     final oldArticle = NewsArticle(
@@ -352,7 +362,10 @@ void main() {
     final cache = SharedPreferencesNewsCache(store: store);
 
     expect(await cache.loadTopics(), isNull);
-    expect(store.values.containsKey(SharedPreferencesNewsCache.topicsKey), isFalse);
+    expect(
+      store.values.containsKey(SharedPreferencesNewsCache.topicsKey),
+      isFalse,
+    );
   });
 
   test('drops malformed cached article payload', () async {
@@ -361,7 +374,10 @@ void main() {
     final cache = SharedPreferencesNewsCache(store: store);
 
     expect(await cache.loadArticles(), isEmpty);
-    expect(store.values.containsKey(SharedPreferencesNewsCache.articlesKey), isFalse);
+    expect(
+      store.values.containsKey(SharedPreferencesNewsCache.articlesKey),
+      isFalse,
+    );
   });
   test('serializes a cache clear after an in-flight feed save', () async {
     final store = _MemoryStore()
@@ -379,7 +395,10 @@ void main() {
     );
 
     // Pause the save during its final write, then simulate a topic change.
-    final saving = cache.saveArticles([article], selectedTopics: const ['anime']);
+    final saving = cache.saveArticles(
+      [article],
+      selectedTopics: const ['anime'],
+    );
     await store.writeStarted!.future;
     var clearCompleted = false;
     final clearing = cache.clear().whenComplete(() => clearCompleted = true);
