@@ -63,13 +63,13 @@ class NewsFeedbackRepository {
 
   Future<List<NewsReactionRecord>> load() async {
     final raw = await _store.read(storageKey);
-    if (raw == null || raw.isEmpty) return const [];
+    if (raw == null || raw.isEmpty) return <NewsReactionRecord>[];
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is! List) return const [];
+      if (decoded is! List) return <NewsReactionRecord>[];
       return decoded.map(NewsReactionRecord.fromJson).whereType<NewsReactionRecord>().toList();
     } on FormatException {
-      return const [];
+      return <NewsReactionRecord>[];
     }
   }
 
