@@ -107,7 +107,7 @@ class _SystemCorePageState extends State<SystemCorePage> {
                       fontWeight: FontWeight.w800,
                       letterSpacing: -1.2,
                       shadows: [
-                        Shadow(color: SystemCorePalette.red, blurRadius: 18),
+                        Shadow(color: SystemCorePalette.green, blurRadius: 18),
                       ],
                     ),
                   ),
@@ -117,7 +117,7 @@ class _SystemCorePageState extends State<SystemCorePage> {
                   const _SectionHeading(
                     index: '01',
                     title: 'EXECUTION LOG',
-                    accent: SystemCorePalette.red,
+                    accent: SystemCorePalette.green,
                   ),
                   const SizedBox(height: 14),
                   SystemCoreTerminalWindow(entries: _process.logEntries),
