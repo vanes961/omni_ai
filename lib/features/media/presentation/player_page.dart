@@ -193,9 +193,10 @@ class _PlayerPageState extends State<PlayerPage> {
             ),
             const SizedBox(height: 18),
           ],
-          const _PlayerSectionLabel('ОЗВУЧКА'),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
+          if (widget.item.voiceovers.isNotEmpty) ...[
+            const _PlayerSectionLabel('ОЗВУЧКА'),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
             key: const ValueKey('voiceover-selector'),
             initialValue: _selectedVoiceover,
             isExpanded: true,
@@ -217,7 +218,8 @@ class _PlayerPageState extends State<PlayerPage> {
                 setState(() => _selectedVoiceover = voiceover);
               }
             },
-          ),
+            ),
+          ],
         ],
       ),
     );
