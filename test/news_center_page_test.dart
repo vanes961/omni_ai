@@ -20,22 +20,20 @@ void main() {
       );
       var requestCount = 0;
       final service = NewsRssService(
-        client: MockClient(
-          (_) async {
-            requestCount++;
-            return http.Response(
-              '<rss><channel><item>'
-              '<title>Anime: New season announced</title>'
-              '<link>https://publisher.example/anime-season</link>'
-              '<description>A publisher announced the next anime season.</description>'
-              '<pubDate>Mon, 12 Oct 2026 09:00:00 GMT</pubDate>'
-              '<source>Anime News</source>'
-              '</item></channel></rss>',
-              200,
-              headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-            );
-          },
-        ),
+        client: MockClient((_) async {
+          requestCount++;
+          return http.Response(
+            '<rss><channel><item>'
+            '<title>Anime: New season announced</title>'
+            '<link>https://publisher.example/anime-season</link>'
+            '<description>A publisher announced the next anime season.</description>'
+            '<pubDate>Mon, 12 Oct 2026 09:00:00 GMT</pubDate>'
+            '<source>Anime News</source>'
+            '</item></channel></rss>',
+            200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          );
+        }),
       );
 
       await tester.pumpWidget(
