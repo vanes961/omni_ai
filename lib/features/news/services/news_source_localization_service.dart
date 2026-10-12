@@ -36,6 +36,14 @@ class NewsSourceLocalizationService {
     var translationAttempts = 0;
 
     for (final article in articles) {
+      // Video and trailer cards are metadata previews, not article bodies.
+      // Keep their original title, description and outbound link without
+      // duplicate matching or an AI translation request.
+      if (article.contentType != NewsContentType.article) {
+        result.add(article);
+        continue;
+      }
+
       final localized = await _translationService.process(
         article,
         russianCandidates: russianCandidates,
