@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_execution_mode_store.dart';
+import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
 import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/features/ai_memory/data/shared_preferences_ai_memory_repository.dart';
 import 'package:omni_ai/features/ai_memory/repositories/ai_memory_repository.dart';
@@ -26,6 +27,7 @@ class AppDependencies {
     LocalModelStorage? localModelStorage,
     AIExecutionModeStore? aiExecutionModeStore,
     AIMemoryRepository? aiMemoryRepository,
+    AIProvider? localAIProvider,
   }) {
     final ownsProcessService = processService == null;
     final ownsHistoryRepository = runHistoryRepository == null;
@@ -41,6 +43,7 @@ class AppDependencies {
       timeout: aiTimeout,
       localModelStorage: storage,
       modeStore: aiExecutionModeStore,
+      localProvider: localAIProvider,
     );
     return AppDependencies._(
       ai: ai,
