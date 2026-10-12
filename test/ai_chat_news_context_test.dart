@@ -101,6 +101,7 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     }),
   );
 
+  print('NEWS_TEST checkpoint: before mount');
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(body: AIChatPage(dependencies: dependencies)),
@@ -109,12 +110,14 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
+  print('NEWS_TEST checkpoint: mounted');
   await tester.enterText(find.byType(TextField), prompt);
   await tester.tap(find.byTooltip('Отправить'));
   for (var i = 0; i < 30; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
+  print('NEWS_TEST checkpoint: request pumps completed');
   expect(submittedPrompt, isNotNull);
   expect(
     submittedPrompt,
@@ -123,18 +126,23 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   );
   expect(tester.takeException(), isNull);
 
+  print('NEWS_TEST checkpoint: assertions passed');
   await tester.pumpWidget(const SizedBox.shrink());
   // Drain widget teardown before disposing the injected dependencies.
   await tester.pump();
+  print('NEWS_TEST checkpoint: widget unmounted');
   await dependencies.orchestrator.dispose().timeout(
     const Duration(seconds: 5),
     onTimeout: () => throw TimeoutException('Orchestrator disposal timed out.'),
   );
+  print('NEWS_TEST checkpoint: orchestrator disposed');
   await dependencies.ai.dispose().timeout(
     const Duration(seconds: 5),
     onTimeout: () => throw TimeoutException('AI dependencies disposal timed out.'),
   );
+  print('NEWS_TEST checkpoint: AI disposed');
   await dependencies.aiMemoryRepository.dispose();
+  print('NEWS_TEST checkpoint: memory disposed');
   return submittedPrompt!;
 }
 
