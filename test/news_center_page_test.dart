@@ -62,7 +62,7 @@ void main() {
   });
 
 
-  testWidgets('restores the saved personalized feed without refetching', (
+  testWidgets('restores the saved personalized articles without refetching', (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -78,7 +78,6 @@ void main() {
       '"language":"ru","region":"ru","isCritical":false,'
       '"isVerified":true,"contentType":"article"}]',
     );
-    await preferences.setString('omni_ai.news_cache.digest.v1', 'Saved digest');
     await preferences.setString('omni_ai.news_cache.topics.v1', '["anime"]');
     await preferences.setString(
       'omni_ai.news_cache.critical_setting.v1',
@@ -105,7 +104,6 @@ void main() {
     }
 
     expect(find.text('Saved anime announcement'), findsOneWidget);
-    expect(find.text('Saved digest'), findsOneWidget);
     expect(requestCount, 0);
     expect(tester.takeException(), isNull);
 
