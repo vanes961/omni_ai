@@ -57,6 +57,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   List<NewsArticle> _articles = const [];
   bool _showingCachedNews = false;
   bool _refreshingNews = false;
+  bool _refreshPendingAfterCurrent = false;
   String? _newsError;
   bool _generatingDigest = false;
   String? _digest;
@@ -416,7 +417,13 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         activeProfile != null &&
         (activeProfile.topics.isNotEmpty ||
             activeProfile.includeCriticalOutsideInterests)) {
-      unawaited(_refreshNews());
+      if (_refreshingNews) {
+        // A request for the previous topic selection may still be unwinding.
+        // Queue one refresh so saving the new profile cannot leave the feed blank.
+        _refreshPendingAfterCurrent = true;
+      } else {
+        unawaited(_refreshNews());
+      }
     }
   }
 
@@ -496,7 +503,13 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             : 'Не удалось загрузить новости: $details';
       });
     } finally {
-      if (mounted) setState(() => _refreshingNews = false);
+      if (mounted) {
+        setState(() => _refreshingNews = false);
+        if (_refreshPendingAfterCurrent) {
+          _refreshPendingAfterCurrent = false;
+          unawaited(_refreshNews());
+        }
+      }
     }
   }
 
