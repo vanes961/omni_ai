@@ -32,7 +32,8 @@ class MediaPage extends StatefulWidget {
 class _MediaPageState extends State<MediaPage> {
   final TextEditingController _searchController = TextEditingController();
   final FavoritesRepository _favoritesRepository = FavoritesRepository();
-  final FavoriteInterestAnalytics _interestAnalytics = const FavoriteInterestAnalytics();
+  final FavoriteInterestAnalytics _interestAnalytics =
+      const FavoriteInterestAnalytics();
   List<FavoriteItem> _favoriteItems = const <FavoriteItem>[];
   String _query = '';
   String? _selectedType;
@@ -120,10 +121,14 @@ class _MediaPageState extends State<MediaPage> {
                         width: 68,
                         height: 68,
                         decoration: BoxDecoration(
-                          color: SystemCorePalette.green.withValues(alpha: 0.08),
+                          color: SystemCorePalette.green.withValues(
+                            alpha: 0.08,
+                          ),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: SystemCorePalette.green.withValues(alpha: 0.4),
+                            color: SystemCorePalette.green.withValues(
+                              alpha: 0.4,
+                            ),
                           ),
                         ),
                         child: const Icon(
@@ -200,10 +205,7 @@ class _MediaPageState extends State<MediaPage> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            SystemCorePalette.panelElevated,
-            SystemCorePalette.panel,
-          ],
+          colors: [SystemCorePalette.panelElevated, SystemCorePalette.panel],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
@@ -213,112 +215,110 @@ class _MediaPageState extends State<MediaPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        const Text(
-          'OMNI AI  //  MEDIA',
-          style: TextStyle(
-            color: SystemCorePalette.muted,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'МЕДИА-ХАБ',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 21,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            OutlinedButton.icon(
-              key: const ValueKey('open-favorites'),
-              onPressed: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => FavoritesPage(),
-                  ),
-                );
-                await _loadFavoriteInterests();
-              },
-              icon: const Icon(Icons.favorite_border, size: 16),
-              label: const Text('ИЗБРАННОЕ'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-        TextField(
-          key: const ValueKey('media-search'),
-          controller: _searchController,
-          onChanged: (value) {
-            _searchDebounce?.cancel();
-            setState(() {
-              _query = value;
-              _onlineSearch = null;
-            });
-            _searchDebounce = Timer(const Duration(milliseconds: 350), () {
-              if (mounted) {
-                setState(() {
-                  _onlineSearch = widget.searchService.searchOnline(value);
-                });
-              }
-            });
-          },
-          style: const TextStyle(color: Colors.white, fontSize: 14),
-          decoration: InputDecoration(
-            hintText: 'Найти фильм, сериал или аниме',
-            hintStyle: const TextStyle(color: SystemCorePalette.muted),
-            prefixIcon: const Icon(
-              Icons.search,
-              color: SystemCorePalette.green,
-            ),
-            suffixIcon: _query.isEmpty
-                ? null
-                : IconButton(
-                    tooltip: 'Очистить поиск',
-                    onPressed: () {
-                      _searchDebounce?.cancel();
-                      _searchController.clear();
-                      setState(() {
-                        _query = '';
-                        _onlineSearch = null;
-                      });
-                    },
-                    icon: const Icon(Icons.close),
-                  ),
-            filled: true,
-            fillColor: SystemCorePalette.panel,
-            contentPadding: const EdgeInsets.symmetric(vertical: 12),
-            border: _searchBorder(),
-            enabledBorder: _searchBorder(),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: SystemCorePalette.green),
+          const Text(
+            'OMNI AI  //  MEDIA',
+            style: TextStyle(
+              color: SystemCorePalette.muted,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
             ),
           ),
-        ),
-        const SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
+          const SizedBox(height: 6),
+          Row(
             children: [
-              _TypeFilter(
-                label: 'Все',
-                selected: _selectedType == null,
-                onTap: () => setState(() => _selectedType = null),
-              ),
-              for (final type in _types)
-                _TypeFilter(
-                  label: type,
-                  selected: _selectedType == type,
-                  onTap: () => setState(() => _selectedType = type),
+              const Expanded(
+                child: Text(
+                  'МЕДИА-ХАБ',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
+              ),
+              OutlinedButton.icon(
+                key: const ValueKey('open-favorites'),
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => FavoritesPage()),
+                  );
+                  await _loadFavoriteInterests();
+                },
+                icon: const Icon(Icons.favorite_border, size: 16),
+                label: const Text('ИЗБРАННОЕ'),
+              ),
             ],
           ),
-        ),
+          const SizedBox(height: 14),
+          TextField(
+            key: const ValueKey('media-search'),
+            controller: _searchController,
+            onChanged: (value) {
+              _searchDebounce?.cancel();
+              setState(() {
+                _query = value;
+                _onlineSearch = null;
+              });
+              _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+                if (mounted) {
+                  setState(() {
+                    _onlineSearch = widget.searchService.searchOnline(value);
+                  });
+                }
+              });
+            },
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Найти фильм, сериал или аниме',
+              hintStyle: const TextStyle(color: SystemCorePalette.muted),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: SystemCorePalette.green,
+              ),
+              suffixIcon: _query.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: 'Очистить поиск',
+                      onPressed: () {
+                        _searchDebounce?.cancel();
+                        _searchController.clear();
+                        setState(() {
+                          _query = '';
+                          _onlineSearch = null;
+                        });
+                      },
+                      icon: const Icon(Icons.close),
+                    ),
+              filled: true,
+              fillColor: SystemCorePalette.panel,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              border: _searchBorder(),
+              enabledBorder: _searchBorder(),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(color: SystemCorePalette.green),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _TypeFilter(
+                  label: 'Все',
+                  selected: _selectedType == null,
+                  onTap: () => setState(() => _selectedType = null),
+                ),
+                for (final type in _types)
+                  _TypeFilter(
+                    label: type,
+                    selected: _selectedType == type,
+                    onTap: () => setState(() => _selectedType = type),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -469,7 +469,9 @@ class _MediaPageState extends State<MediaPage> {
     await _loadFavoriteInterests();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('«${item.title}» добавлено в «${category.label}»')),
+      SnackBar(
+        content: Text('«${item.title}» добавлено в «${category.label}»'),
+      ),
     );
   }
 
@@ -675,7 +677,6 @@ class _MediaResultTile extends StatelessWidget {
                         ),
                       ),
                     ],
-
                   ],
                 ),
               ),
