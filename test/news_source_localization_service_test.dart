@@ -121,6 +121,36 @@ void main() {
     },
   );
 
+  test('does not send video or trailer previews to AI localization', () async {
+    final provider = _TranslationProvider();
+    final translationService = NewsSourceLocalizationService(
+      aiEngine: AIEngine(provider: provider),
+    );
+    final video = _article(
+      id: 'video',
+      language: 'en',
+      title: 'New video announcement',
+      contentType: NewsContentType.video,
+      videoUrl: 'https://youtube.com/watch?v=video',
+    );
+    final trailer = _article(
+      id: 'trailer',
+      language: 'en',
+      title: 'New film trailer',
+      contentType: NewsContentType.trailer,
+      videoUrl: 'https://youtube.com/watch?v=trailer',
+    );
+
+    final result = await translationService.localizeCandidates([video, trailer]);
+
+    expect(provider.calls, 0);
+    expect(result, hasLength(2));
+    expect(result[0], same(video));
+    expect(result[1], same(trailer));
+    expect(result[0].videoUrl, 'https://youtube.com/watch?v=video');
+    expect(result[1].videoUrl, 'https://youtube.com/watch?v=trailer');
+  });
+
   test('keeps Russian articles', () async {
     final russian = _article(
       id: 'russian',
@@ -139,6 +169,8 @@ NewsArticle _article({
   required String id,
   required String language,
   required String title,
+  NewsContentType contentType = NewsContentType.article,
+  String? videoUrl,
 }) {
   return NewsArticle(
     id: id,
@@ -149,6 +181,8 @@ NewsArticle _article({
     publishedAt: DateTime.utc(2026, 10, 10, 12),
     topics: const ['games'],
     language: language,
+    contentType: contentType,
+    videoUrl: videoUrl,
   );
 }
 
