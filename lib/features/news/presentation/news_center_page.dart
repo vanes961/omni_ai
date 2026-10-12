@@ -836,18 +836,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               const SizedBox(height: 14),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  14,
-                  16,
-                  14,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                 decoration: BoxDecoration(
                   color: SystemCorePalette.panelElevated,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: SystemCorePalette.border,
-                  ),
+                  border: Border.all(color: SystemCorePalette.border),
                   boxShadow: [
                     BoxShadow(
                       color: SystemCorePalette.green.withValues(alpha: 0.05),
@@ -909,9 +902,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 decoration: BoxDecoration(
                   color: SystemCorePalette.panel,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: SystemCorePalette.border,
-                  ),
+                  border: Border.all(color: SystemCorePalette.border),
                 ),
                 child: Wrap(
                   spacing: 8,
@@ -925,7 +916,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: SystemCorePalette.green.withValues(alpha: 0.08),
+                          color: SystemCorePalette.green.withValues(
+                            alpha: 0.08,
+                          ),
                           borderRadius: BorderRadius.circular(9),
                           border: Border.all(
                             color: SystemCorePalette.green.withValues(
@@ -1033,9 +1026,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 decoration: BoxDecoration(
                   color: SystemCorePalette.panel,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: SystemCorePalette.border,
-                  ),
+                  border: Border.all(color: SystemCorePalette.border),
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -1201,10 +1192,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Container(
-                            width: 3,
-                            color: SystemCorePalette.green,
-                          ),
+                          Container(width: 3, color: SystemCorePalette.green),
                           Expanded(
                             child: Material(
                               color: Colors.transparent,
@@ -1218,7 +1206,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                     12,
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
@@ -1235,7 +1224,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                               ),
                                             ),
                                           ),
-                                          if (article.contentType == NewsContentType.trailer)
+                                          if (article.contentType ==
+                                              NewsContentType.trailer)
                                             const Icon(
                                               Icons.play_circle_outline,
                                               size: 17,
@@ -1272,7 +1262,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                       Wrap(
                                         spacing: 5,
                                         runSpacing: 6,
-                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
                                         children: [
                                           const Padding(
                                             padding: EdgeInsets.only(right: 3),
@@ -1282,7 +1273,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                                 Text(
                                                   'ЧИТАТЬ',
                                                   style: TextStyle(
-                                                    color: SystemCorePalette.mint,
+                                                    color:
+                                                        SystemCorePalette.mint,
                                                     fontSize: 8,
                                                     fontWeight: FontWeight.w700,
                                                     letterSpacing: 0.8,
@@ -1298,7 +1290,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                             ),
                                           ),
                                           _ReactionButton(
-                                            tooltip: 'Нравится — учитывать в интересах',
+                                            tooltip:
+                                                'Нравится — учитывать в интересах',
                                             icon: Icons.thumb_up_alt_outlined,
                                             color: SystemCorePalette.green,
                                             onPressed: () => _reactToArticle(
@@ -1307,7 +1300,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                             ),
                                           ),
                                           _ReactionButton(
-                                            tooltip: 'Не нравится — учитывать в интересах',
+                                            tooltip:
+                                                'Не нравится — учитывать в интересах',
                                             icon: Icons.thumb_down_alt_outlined,
                                             color: SystemCorePalette.mint,
                                             onPressed: () => _reactToArticle(
@@ -1316,17 +1310,22 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                             ),
                                           ),
                                           _ReactionButton(
-                                            tooltip: 'Показывать меньше похожего',
+                                            tooltip:
+                                                'Показывать меньше похожего',
                                             icon: Icons.remove_circle_outline,
                                             color: SystemCorePalette.muted,
-                                            onPressed: () => _seeLessOf(article),
+                                            onPressed: () =>
+                                                _seeLessOf(article),
                                           ),
-                                          if (article.contentType == NewsContentType.trailer)
+                                          if (article.contentType ==
+                                              NewsContentType.trailer)
                                             _ReactionButton(
-                                              tooltip: 'Сохранить трейлер в избранное',
+                                              tooltip:
+                                                  'Сохранить трейлер в избранное',
                                               icon: Icons.favorite_border,
                                               color: SystemCorePalette.mint,
-                                              onPressed: () => _saveTrailer(article),
+                                              onPressed: () =>
+                                                  _saveTrailer(article),
                                             ),
                                         ],
                                       ),
@@ -1488,8 +1487,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   value: _eveningReminder,
                   onChanged: _updatingReminder
                       ? null
-                      : (value) =>
-                          _setReminder(morning: false, enabled: value),
+                      : (value) => _setReminder(morning: false, enabled: value),
                 ),
               ],
               const SizedBox(height: 28),
