@@ -76,8 +76,8 @@ jobs:
       - name: Analyze Flutter code
         run: flutter analyze
 
-      - name: Run tests
-        run: flutter test
+      - name: Run tests with per-test timeout and expanded diagnostics
+        run: flutter test --reporter expanded --timeout=2m
 
   build-apk:
     name: Build Android APK (manual / requested)
