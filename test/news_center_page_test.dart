@@ -41,6 +41,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.byType(NewsCenterPage), findsOneWidget);
       expect(find.text('Anime: New season announced'), findsOneWidget);
       expect(find.text('Anime News'), findsOneWidget);
       expect(find.text('Не удалось загрузить новости.'), findsNothing);
