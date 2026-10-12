@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:omni_ai/features/run_history/models/process_run_record.dart';
 import 'package:omni_ai/features/run_history/repositories/run_history_repository.dart';
 import 'package:omni_ai/features/system_core/models/system_core_process_state.dart';
@@ -70,9 +72,13 @@ class RunHistoryRecorder {
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
+    debugPrint('RUN_HISTORY_DISPOSE: cancelling subscription');
     await _subscription.cancel();
+    debugPrint('RUN_HISTORY_DISPOSE: subscription cancelled');
     final pendingWrites = _pendingWrites;
+    debugPrint('RUN_HISTORY_DISPOSE: awaiting pending writes');
     await pendingWrites;
+    debugPrint('RUN_HISTORY_DISPOSE: pending writes complete');
   }
 
   void _save(ProcessRunRecord record) {
