@@ -188,8 +188,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   }
 
   String _emptyFeedMessage(NewsInterestProfile profile) {
-    if (profile.topics.isEmpty &&
-        !profile.includeCriticalOutsideInterests) {
+    final hasNoTopics = profile.topics.isEmpty;
+    final criticalNewsDisabled = !profile.includeCriticalOutsideInterests;
+    if (hasNoTopics && criticalNewsDisabled) {
       return 'Лента не загружает новости без выбранных тем. Настройте интересы в разделе ниже или включите критические новости вне интересов.';
     }
     if (_hasCompletedNewsFetch) {
