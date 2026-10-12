@@ -83,7 +83,9 @@ class RunHistoryRecorder {
 
   void _save(ProcessRunRecord record) {
     _pendingWrites = _pendingWrites.then((_) async {
+      debugPrint('RUN_HISTORY_SAVE: begin ${record.id}');
       await _repository.save(record);
+      debugPrint('RUN_HISTORY_SAVE: complete ${record.id}');
     });
   }
 
