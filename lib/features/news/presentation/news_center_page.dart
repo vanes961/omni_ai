@@ -63,6 +63,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   List<NewsArticle> _articles = const [];
   bool _showingCachedNews = false;
   bool _refreshingNews = false;
+  bool _hasCompletedNewsFetch = false;
   bool _refreshPendingAfterCurrent = false;
   int? _lastRssCandidateCount;
   int? _lastLocalizedCandidateCount;
@@ -509,6 +510,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (!mounted) return;
       setState(() {
         _articles = rankedArticles;
+        _hasCompletedNewsFetch = true;
         _showingCachedNews = false;
         _digest = null;
         _digestError = null;
@@ -749,6 +751,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _profile = profile.copyWith(topics: topics.toList());
       _articles = const [];
       _showingCachedNews = false;
+      _hasCompletedNewsFetch = false;
       _digest = null;
       _digestError = null;
     });
@@ -1155,7 +1158,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   profile.topics.isEmpty &&
                           !profile.includeCriticalOutsideInterests
                       ? 'Лента не загружает новости без выбранных тем. Настройте интересы в разделе ниже или включите критические новости вне интересов.'
-                      : 'Нажмите «Обновить», чтобы загрузить свежие материалы по выбранным темам.',
+                      : (_hasCompletedNewsFetch
+                            ? 'По выбранным темам сейчас не найдено подходящих публикаций. Попробуйте добавить более широкую тему или обновить ленту позже.'
+                            : 'Нажмите «Обновить», чтобы загрузить свежие материалы по выбранным темам.'),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: SystemCorePalette.muted,
@@ -1417,6 +1422,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     );
                     _articles = const [];
                     _showingCachedNews = false;
+                    _hasCompletedNewsFetch = false;
                     _digest = null;
                     _digestError = null;
                     _newsError = null;
