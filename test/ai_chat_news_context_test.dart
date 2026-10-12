@@ -50,6 +50,8 @@ void main() {
 }
 
 Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: setup start');
   SharedPreferences.setMockInitialValues({});
   SharedPreferencesAsyncPlatform.instance =
       InMemorySharedPreferencesAsync.empty();
@@ -65,6 +67,8 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     '"isVerified":true,"contentType":"article"}]',
   );
 
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: cache ready');
   String? submittedPrompt;
   final dependencies = AppDependencies(
     apiKeySource: const _TestApiKeySource(),
@@ -96,20 +100,32 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     }),
   );
 
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: dependencies ready');
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(body: AIChatPage(dependencies: dependencies)),
     ),
   );
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: widget mounted');
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: mode pumps done');
   await tester.enterText(find.byType(TextField), prompt);
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: text entered');
   await tester.tap(find.byTooltip('Отправить'));
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: send tapped');
   for (var i = 0; i < 30; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: response pumps done');
   expect(submittedPrompt, isNotNull);
   expect(
     submittedPrompt,
@@ -118,8 +134,16 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   );
   expect(tester.takeException(), isNull);
 
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: assertions done');
   await tester.pumpWidget(const SizedBox.shrink());
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: widget unmounted');
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: disposing dependencies');
   await dependencies.dispose();
+  // ignore: avoid_print
+  print('NEWS_TEST checkpoint: dependencies disposed');
   return submittedPrompt!;
 }
 
