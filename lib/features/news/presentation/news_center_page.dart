@@ -770,11 +770,6 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SystemCorePalette.background,
-      appBar: AppBar(
-        title: const Text('НОВОСТНОЙ ЦЕНТР'),
-        backgroundColor: SystemCorePalette.panel,
-        foregroundColor: Colors.white,
-      ),
       body: FutureBuilder<NewsInterestProfile>(
         future: _profileFuture,
         builder: (context, snapshot) {
