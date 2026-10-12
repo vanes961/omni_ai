@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:omni_ai/core/ai_engine/providers/ai_execution_mode_store.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
