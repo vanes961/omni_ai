@@ -113,7 +113,7 @@ void main() {
     }
 
     expect(find.text('Stale anime story'), findsNothing);
-    expect(find.textContaining('без выбранных тем'), findsOneWidget);
+    expect(find.byType(InputChip), findsNothing);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
