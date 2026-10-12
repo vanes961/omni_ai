@@ -112,21 +112,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _newsCache.loadDigest(),
         _newsCache.loadTopics(),
         _newsCache.loadIncludeCriticalOutsideInterests(),
-      ]).timeout(const Duration(seconds: 1));
+      ]);
       final savedTopics = cached[2] as List<String>?;
       final savedCriticalSetting = cached[3] as bool?;
-      // Cache restoration and optional personalization must not indefinitely
-      // block the first live feed request if a preference store stalls.
-      final favorites = await _favoritesRepository
-          .getAll()
-          .timeout(
-            const Duration(seconds: 1),
-            onTimeout: () => const <FavoriteItem>[],
-          );
-      _lessInterested = await _feedbackRepository.loadLessInterested().timeout(
-        const Duration(seconds: 1),
-        onTimeout: () => <String>{},
-      );
+      final favorites = await _favoritesRepository.getAll();
+      _lessInterested = await _feedbackRepository.loadLessInterested();
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
       final cachedArticles = _rankByReaction(
         _favoriteAnalytics.rankNews(
