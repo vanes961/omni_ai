@@ -821,11 +821,18 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               const SizedBox(height: 14),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                padding: const EdgeInsets.fromLTRB(
+                16,
+                14,
+                16,
+                14,
+              ),
                 decoration: BoxDecoration(
                   color: SystemCorePalette.panelElevated,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: SystemCorePalette.border),
+                  border: Border.all(
+                    color: SystemCorePalette.border,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: SystemCorePalette.green.withValues(alpha: 0.05),
@@ -880,11 +887,16 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               const SizedBox(height: 9),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 9,
+              ),
                 decoration: BoxDecoration(
                   color: SystemCorePalette.panel,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: SystemCorePalette.border),
+                  border: Border.all(
+                  color: SystemCorePalette.border,
+                ),
                 ),
                 child: Wrap(
                   spacing: 8,
@@ -893,11 +905,18 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   children: [
                     for (final topic in profile.topics.take(4))
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: 6,
+                ),
                         decoration: BoxDecoration(
                           color: SystemCorePalette.green.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(9),
-                          border: Border.all(color: SystemCorePalette.green.withValues(alpha: 0.28)),
+                          border: Border.all(
+                            color: SystemCorePalette.green.withValues(
+                              alpha: 0.28,
+                            ),
+                          ),
                         ),
                         child: Text(
                           topic.toUpperCase(),
@@ -999,7 +1018,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 decoration: BoxDecoration(
                   color: SystemCorePalette.panel,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: SystemCorePalette.border),
+                  border: Border.all(
+                color: SystemCorePalette.border,
+              ),
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -1178,7 +1199,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                               child: InkWell(
                                 onTap: () => _openArticle(article),
                                 child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(14, 13, 12, 12),
+                                  padding: const EdgeInsets.fromLTRB(
+                  14,
+                  13,
+                  12,
+                  12,
+                ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
