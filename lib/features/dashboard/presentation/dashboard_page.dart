@@ -87,19 +87,39 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        elevation: 0,
-        currentIndex: _selectedTab,
-        onTap: _selectTab,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: SystemCorePalette.panel,
-        selectedItemColor: SystemCorePalette.green,
-        unselectedItemColor: SystemCorePalette.muted,
-        selectedFontSize: 10,
-        unselectedFontSize: 10,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        items: const [
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        decoration: BoxDecoration(
+          color: SystemCorePalette.panel,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: SystemCorePalette.green.withValues(alpha: 0.22),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: SystemCorePalette.green.withValues(alpha: 0.06),
+              blurRadius: 24,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BottomNavigationBar(
+            elevation: 0,
+            currentIndex: _selectedTab,
+            onTap: _selectTab,
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.transparent,
+            selectedItemColor: SystemCorePalette.green,
+            unselectedItemColor: SystemCorePalette.muted,
+            selectedIconTheme: const IconThemeData(size: 22),
+            unselectedIconTheme: const IconThemeData(size: 20),
+            selectedFontSize: 10,
+            unselectedFontSize: 10,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
+            items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.dynamic_feed_outlined),
             activeIcon: Icon(Icons.dynamic_feed),
@@ -125,7 +145,9 @@ class _DashboardPageState extends State<DashboardPage> {
             activeIcon: Icon(Icons.settings),
             label: 'Настройки',
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -192,9 +214,32 @@ class _GuardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 12, 14, 12),
-      child: Row(
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            SystemCorePalette.panelElevated,
+            SystemCorePalette.panel,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: SystemCorePalette.green.withValues(alpha: 0.24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: SystemCorePalette.green.withValues(alpha: 0.06),
+            blurRadius: 24,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+        child: Row(
         children: [
           Container(
             width: 38,
@@ -251,7 +296,8 @@ class _GuardHeader extends StatelessWidget {
             icon: const Icon(Icons.tune_rounded),
             color: SystemCorePalette.muted,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
