@@ -7,7 +7,10 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
+import 'package:omni_ai/core/ai_engine/models/ai_response.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_execution_mode_store.dart';
+import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
@@ -76,6 +79,7 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     processService: SystemCoreProcessService(),
     runHistoryRepository: InMemoryRunHistoryRepository(),
     aiExecutionModeStore: _TestExecutionModeStore(),
+    localAIProvider: _TestLocalAIProvider(),
     aiMemoryRepository: _TestMemoryRepository(),
     httpClient: MockClient((request) async {
       final payload = jsonDecode(request.body) as Map<String, dynamic>;
@@ -145,6 +149,22 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   // ignore: avoid_print
   print('NEWS_TEST checkpoint: dependencies disposed');
   return submittedPrompt!;
+}
+
+class _TestLocalAIProvider implements AIProvider {
+  @override
+  String get id => 'test-local';
+
+  @override
+  Future<AIResponse> complete(
+    AIRequest request, {
+    required AICancellationToken cancellationToken,
+  }) async => AIResponse(
+    requestId: request.id,
+    text: 'Ответ тестового локального AI.',
+    providerId: id,
+    generatedAt: DateTime.now(),
+  );
 }
 
 class _TestApiKeySource implements OpenRouterApiKeySource {
