@@ -1,0 +1,40 @@
+name: Temporary Dart formatter repair
+
+on:
+  push:
+    branches:
+      - feat/ai-engine-foundation
+    paths:
+      - ".github/workflows/temporary-dart-format.yml"
+      - "lib/main.dart"
+      - "lib/features/news/presentation/news_center_page.dart"
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/ai-engine-foundation
+          persist-credentials: true
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.7"
+      - name: Format files with the CI formatter
+        run: dart format lib/main.dart lib/features/news/presentation/news_center_page.dart
+      - name: Commit formatter output
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add lib/main.dart lib/features/news/presentation/news_center_page.dart
+            git commit -m "style: apply CI Dart formatter to startup and news screens"
+            git push origin feat/ai-engine-foundation
+          else
+            echo "Dart files already formatted."
+          fi
