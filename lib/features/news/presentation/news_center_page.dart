@@ -203,7 +203,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     : (_articles.isEmpty
                           ? DiagnosticStatus.warning
                           : DiagnosticStatus.ok)),
-          details: _newsError ??
+          details:
+              _newsError ??
               'RSS-кандидатов: ${_lastRssCandidateCount ?? 'нет данных'}; '
               'после локализации: ${_lastLocalizedCandidateCount ?? 'нет данных'}; '
               'после персонализации: ${_lastRankedCandidateCount ?? 'нет данных'}; '
