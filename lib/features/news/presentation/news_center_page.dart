@@ -236,7 +236,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         const DiagnosticCheck(
           name: 'Сетевая доступность',
           status: DiagnosticStatus.notChecked,
-          details: 'Проверяется только по результату загрузки ленты; отдельный сетевой тест не запускался',
+          details:
+              'Проверяется только по результату загрузки ленты; отдельный сетевой тест не запускался',
         ),
       ],
     );
@@ -256,7 +257,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         );
         aiAnalysis = response.text;
       } catch (_) {
-        aiAnalysis = 'ИИ-анализ недоступен. Сам диагностический отчёт сформирован локально.';
+        aiAnalysis =
+            'ИИ-анализ недоступен. Сам диагностический отчёт сформирован локально.';
       }
     }
     if (!mounted) return;
@@ -381,7 +383,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               ? 'Напоминание включено. Время указано по часовому поясу устройства.'
               : 'Напоминание отключено.';
         } else {
-          _status = 'Разрешение на уведомления не выдано. Разреши уведомления в настройках Android.';
+          _status =
+              'Разрешение на уведомления не выдано. Разреши уведомления в настройках Android.';
         }
       });
     } catch (_) {
@@ -556,8 +559,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _digest = null;
     });
     try {
-      final digest = await NewsDigestService(engine: engine)
-          .createDigest(profile: profile, articles: _articles);
+      final digest = await NewsDigestService(
+        engine: engine,
+      ).createDigest(profile: profile, articles: _articles);
       if (revisionAtStart != _interestRevision) return;
       await _newsCache.saveDigest(digest);
       if (revisionAtStart != _interestRevision) {
@@ -577,7 +581,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // Ignore errors from digest requests started before interests changed.
       if (!mounted || revisionAtStart != _interestRevision) return;
       setState(
-        () => _digestError = 'Не удалось создать дайджест. Проверьте выбранный режим ИИ и попробуйте снова.',
+        () => _digestError =
+            'Не удалось создать дайджест. Проверьте выбранный режим ИИ и попробуйте снова.',
       );
     } finally {
       if (mounted) setState(() => _generatingDigest = false);
