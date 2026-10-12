@@ -18,9 +18,11 @@ void main() {
       final repository = _MemoryNewsInterestRepository(
         const NewsInterestProfile(topics: ['anime']),
       );
+      var requestCount = 0;
       final service = NewsRssService(
-        client: MockClient(
-          (_) async => http.Response(
+        client: MockClient((_) async {
+          requestCount++;
+          return http.Response(
             '<rss><channel><item>'
             '<title>Anime: New season announced</title>'
             '<link>https://publisher.example/anime-season</link>'
@@ -30,8 +32,8 @@ void main() {
             '</item></channel></rss>',
             200,
             headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-          ),
-        ),
+          );
+        }),
       );
 
       await tester.pumpWidget(
@@ -45,6 +47,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
 
+      expect(requestCount, greaterThan(0));
       expect(find.byType(NewsCenterPage), findsOneWidget);
       expect(find.text('Anime: New season announced'), findsOneWidget);
       expect(find.text('Anime News'), findsOneWidget);
