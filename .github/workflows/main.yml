@@ -76,8 +76,17 @@ jobs:
       - name: Analyze Flutter code
         run: flutter analyze
 
-      - name: Run tests with per-test timeout and expanded diagnostics
-        run: flutter test --reporter expanded --timeout=2m
+      - name: Isolate news-context chat tests (diagnostic)
+        timeout-minutes: 4
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 210s flutter test test/ai_chat_news_context_test.dart --reporter expanded --timeout=30s
+
+      - name: Run full test suite with per-test timeout and expanded diagnostics
+        timeout-minutes: 22
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=10s 20m flutter test --reporter expanded --timeout=2m
 
   build-apk:
     name: Build Android APK (manual / requested)
