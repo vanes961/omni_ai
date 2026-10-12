@@ -831,8 +831,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   color: SystemCorePalette.panelElevated,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: SystemCorePalette.border,
-                  ),
+                color: SystemCorePalette.border,
+              ),
                   boxShadow: [
                     BoxShadow(
                       color: SystemCorePalette.green.withValues(alpha: 0.05),
@@ -1200,11 +1200,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                 onTap: () => _openArticle(article),
                                 child: Padding(
                                   padding: const EdgeInsets.fromLTRB(
-                  14,
-                  13,
-                  12,
-                  12,
-                ),
+                                    14,
+                                    13,
+                                    12,
+                                    12,
+                                  ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
