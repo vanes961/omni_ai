@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -125,7 +126,15 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   await tester.pumpWidget(const SizedBox.shrink());
   // Drain widget teardown before disposing the injected dependencies.
   await tester.pump();
-  await dependencies.dispose();
+  await dependencies.orchestrator.dispose().timeout(
+    const Duration(seconds: 5),
+    onTimeout: () => throw TimeoutException('Orchestrator disposal timed out.'),
+  );
+  await dependencies.ai.dispose().timeout(
+    const Duration(seconds: 5),
+    onTimeout: () => throw TimeoutException('AI dependencies disposal timed out.'),
+  );
+  await dependencies.aiMemoryRepository.dispose();
   return submittedPrompt!;
 }
 
