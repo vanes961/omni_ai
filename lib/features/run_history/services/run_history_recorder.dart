@@ -75,9 +75,12 @@ class RunHistoryRecorder {
     await _subscription.cancel();
     // ignore: avoid_print
     print('RUN_HISTORY_DISPOSE: subscription cancel done');
-    await flush();
+    final pendingWrites = _pendingWrites;
     // ignore: avoid_print
-    print('RUN_HISTORY_DISPOSE: flush done');
+    print('RUN_HISTORY_DISPOSE: flush wait start');
+    await pendingWrites;
+    // ignore: avoid_print
+    print('RUN_HISTORY_DISPOSE: flush wait done');
   }
 
   void _save(ProcessRunRecord record) {
