@@ -220,10 +220,7 @@ class _GuardHeader extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            SystemCorePalette.panelElevated,
-            SystemCorePalette.panel,
-          ],
+          colors: [SystemCorePalette.panelElevated, SystemCorePalette.panel],
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
