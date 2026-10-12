@@ -23,7 +23,9 @@ class RunHistoryRecorder {
 
   ProcessRunRecord? _activeRecord;
   int _observedLogCount = 0;
+  final List<ProcessRunRecord> _writeQueue = [];
   Future<void> _pendingWrites = Future<void>.value();
+  bool _isDrainingWrites = false;
   bool _disposed = false;
 
   void _recordState(SystemCoreProcessState state) {
@@ -82,11 +84,30 @@ class RunHistoryRecorder {
   }
 
   void _save(ProcessRunRecord record) {
-    _pendingWrites = _pendingWrites.then((_) async {
-      debugPrint('RUN_HISTORY_SAVE: begin ${record.id}');
-      await _repository.save(record);
-      debugPrint('RUN_HISTORY_SAVE: complete ${record.id}');
-    });
+    _writeQueue.add(record);
+    if (_isDrainingWrites) return;
+
+    _isDrainingWrites = true;
+    _pendingWrites = _drainWriteQueue();
+  }
+
+  Future<void> _drainWriteQueue() async {
+    try {
+      while (_writeQueue.isNotEmpty) {
+        final record = _writeQueue.removeAt(0);
+        debugPrint('RUN_HISTORY_SAVE: begin ${record.id}');
+        await _repository.save(record);
+        debugPrint('RUN_HISTORY_SAVE: complete ${record.id}');
+      }
+    } finally {
+      _isDrainingWrites = false;
+      // A synchronous repository notification can enqueue another record while
+      // save() is running. Drain anything queued before this worker completed.
+      if (_writeQueue.isNotEmpty) {
+        _isDrainingWrites = true;
+        _pendingWrites = _drainWriteQueue();
+      }
+    }
   }
 
   static bool _isFinished(SystemCoreProcessStatus status) =>
