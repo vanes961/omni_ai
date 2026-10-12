@@ -39,7 +39,11 @@ void main() {
           home: NewsCenterPage(repository: repository, newsService: service),
         ),
       );
-      await tester.pumpAndSettle();
+      // The news screen contains indeterminate progress indicators, so
+      // pump a bounded interval instead of waiting for every animation.
+      for (var i = 0; i < 20; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
 
       expect(find.byType(NewsCenterPage), findsOneWidget);
       expect(find.text('Anime: New season announced'), findsOneWidget);
