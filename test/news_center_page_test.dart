@@ -60,6 +60,78 @@ void main() {
   });
 }
 
+
+  testWidgets('shows a visible error when every news edition fails', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+    var requestCount = 0;
+    final service = NewsRssService(
+      client: MockClient((_) async {
+        requestCount++;
+        throw http.ClientException('offline');
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(repository: repository, newsService: service),
+      ),
+    );
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(requestCount, 3);
+    expect(find.textContaining('Не удалось загрузить новости:'), findsOneWidget);
+    expect(find.text('ЗАГРУЗКА…'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('explains why the feed is empty when no interests are selected', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(),
+    );
+    var requestCount = 0;
+    final service = NewsRssService(
+      client: MockClient((_) async {
+        requestCount++;
+        return http.Response('<rss><channel /></rss>', 200);
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(repository: repository, newsService: service),
+      ),
+    );
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(requestCount, 0);
+    expect(
+      find.textContaining('без выбранных тем'),
+      findsOneWidget,
+    );
+    expect(find.text('НАСТРОИТЬ ИНТЕРЕСЫ'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
 class _MemoryNewsInterestRepository implements NewsInterestRepository {
   _MemoryNewsInterestRepository(this.profile);
 
