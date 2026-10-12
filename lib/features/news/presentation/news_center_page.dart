@@ -906,9 +906,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     for (final topic in profile.topics.take(4))
                       Container(
                         padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 6,
-                ),
+                          horizontal: 9,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: SystemCorePalette.green.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(9),
