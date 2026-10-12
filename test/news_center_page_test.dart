@@ -89,7 +89,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
     }
     expect(requestCount, greaterThan(0));
-    expect(find.text('anime'), findsOneWidget);
+    expect(find.byType(InputChip), findsOneWidget);
 
     await tester.ensureVisible(find.byType(InputChip));
     await tester.tap(find.byIcon(Icons.cancel).first);
