@@ -36,10 +36,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: NewsCenterPage(
-            repository: repository,
-            newsService: service,
-          ),
+          home: NewsCenterPage(repository: repository, newsService: service),
         ),
       );
       await tester.pumpAndSettle();
