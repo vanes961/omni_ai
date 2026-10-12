@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:omni_ai/features/run_history/models/process_run_record.dart';
 import 'package:omni_ai/features/run_history/repositories/run_history_repository.dart';
 import 'package:omni_ai/features/system_core/models/system_core_process_state.dart';
@@ -66,13 +68,19 @@ class RunHistoryRecorder {
     _save(updatedRecord);
   }
 
-  Future<void> flush() => _drainCompleter?.future ?? Future<void>.value();
+  Future<void> flush() {
+    debugPrint('RUN_HISTORY_FLUSH: pending=${_drainCompleter != null}, queued=${_writeQueue.length}');
+    return _drainCompleter?.future ?? Future<void>.value();
+  }
 
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
+    debugPrint('RUN_HISTORY_DISPOSE: before subscription cancel');
     await _subscription.cancel();
+    debugPrint('RUN_HISTORY_DISPOSE: after subscription cancel');
     await flush();
+    debugPrint('RUN_HISTORY_DISPOSE: after flush');
   }
 
   void _save(ProcessRunRecord record) {
@@ -85,21 +93,24 @@ class RunHistoryRecorder {
   }
 
   Future<void> _drainWriteQueue(Completer<void> completer) async {
+    debugPrint('RUN_HISTORY_DRAIN: started');
     try {
       while (_writeQueue.isNotEmpty) {
         final record = _writeQueue.removeAt(0);
+        debugPrint('RUN_HISTORY_DRAIN: saving ${record.id}, remaining=${_writeQueue.length}');
         await _repository.save(record);
+        debugPrint('RUN_HISTORY_DRAIN: saved ${record.id}');
       }
+      debugPrint('RUN_HISTORY_DRAIN: queue empty, completing');
       completer.complete();
+      debugPrint('RUN_HISTORY_DRAIN: completer completed');
     } on Object catch (error, stackTrace) {
+      debugPrint('RUN_HISTORY_DRAIN: failed $error');
       completer.completeError(error, stackTrace);
     } finally {
+      debugPrint('RUN_HISTORY_DRAIN: finally, queued=${_writeQueue.length}');
       if (identical(_drainCompleter, completer)) {
         _drainCompleter = null;
-      }
-      // A synchronous repository notification may enqueue another record.
-      if (_writeQueue.isNotEmpty && !_disposed) {
-        _save(_writeQueue.removeAt(0));
       }
     }
   }
