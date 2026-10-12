@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -54,6 +56,64 @@ void main() {
     expect(find.text('Anime: New season announced'), findsOneWidget);
     expect(find.textContaining('ANIME NEWS'), findsOneWidget);
     expect(find.text('Не удалось загрузить новости.'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+
+  testWidgets('discards an RSS response after interests change mid-request', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+    final response = Completer<http.Response>();
+    var requestCount = 0;
+    final service = NewsRssService(
+      client: MockClient((_) {
+        requestCount++;
+        return response.future;
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(repository: repository, newsService: service),
+      ),
+    );
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(requestCount, greaterThan(0));
+    expect(find.text('anime'), findsOneWidget);
+
+    await tester.ensureVisible(find.byType(InputChip));
+    await tester.tap(find.byIcon(Icons.cancel).first);
+    await tester.pump();
+
+    response.complete(
+      http.Response(
+        '<rss><channel><item>'
+        '<title>Stale anime story</title>'
+        '<link>https://publisher.example/stale-anime</link>'
+        '<description>This belongs to the previous interest selection.</description>'
+        '<pubDate>Mon, 12 Oct 2026 09:00:00 GMT</pubDate>'
+        '<source>Anime News</source>'
+        '</item></channel></rss>',
+        200,
+        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+      ),
+    );
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('Stale anime story'), findsNothing);
+    expect(find.textContaining('без выбранных тем'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
