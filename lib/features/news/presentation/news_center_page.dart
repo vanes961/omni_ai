@@ -1066,14 +1066,21 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               for (final article in _articles) ...[
                 const SizedBox(height: 10),
                 Container(
-                  decoration: BoxDecoration(color: SystemCorePalette.panel, borderRadius: BorderRadius.circular(16), border: Border.all(color: SystemCorePalette.border)),
+                  decoration: BoxDecoration(
+                    color: SystemCorePalette.panel,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: SystemCorePalette.border),
+                  ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(15),
                     child: IntrinsicHeight(
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Container(width: 3, color: SystemCorePalette.green),
+                          Container(
+                            width: 3,
+                            color: SystemCorePalette.green,
+                          ),
                           Expanded(
                             child: Material(
                               color: Colors.transparent,
@@ -1091,18 +1098,46 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                               '${article.sourceName.toUpperCase()}  •  ${article.publishedAt.toLocal().day.toString().padLeft(2, '0')}.${article.publishedAt.toLocal().month.toString().padLeft(2, '0')}',
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(color: SystemCorePalette.green, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                                              style: const TextStyle(
+                                                color: SystemCorePalette.green,
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: 0.5,
+                                              ),
                                             ),
                                           ),
                                           if (article.contentType == NewsContentType.trailer)
-                                            const Icon(Icons.play_circle_outline, size: 17, color: SystemCorePalette.mint),
+                                            const Icon(
+                                              Icons.play_circle_outline,
+                                              size: 17,
+                                              color: SystemCorePalette.mint,
+                                            ),
                                         ],
                                       ),
                                       const SizedBox(height: 10),
-                                      Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFE8F5F5), fontWeight: FontWeight.w700, fontSize: 15, height: 1.25)),
+                                      Text(
+                                        article.title,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Color(0xFFE8F5F5),
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                          height: 1.25,
+                                        ),
+                                      ),
                                       if (article.summary.isNotEmpty) ...[
                                         const SizedBox(height: 8),
-                                        Text(article.summary, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: SystemCorePalette.muted, fontSize: 10, height: 1.4)),
+                                        Text(
+                                          article.summary,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: SystemCorePalette.muted,
+                                            fontSize: 10,
+                                            height: 1.4,
+                                          ),
+                                        ),
                                       ],
                                       const SizedBox(height: 10),
                                       Wrap(
@@ -1112,17 +1147,57 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                         children: [
                                           const Padding(
                                             padding: EdgeInsets.only(right: 3),
-                                            child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                              Text('ЧИТАТЬ', style: TextStyle(color: SystemCorePalette.mint, fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                              Text(
+                                                'ЧИТАТЬ',
+                                                style: TextStyle(
+                                                  color: SystemCorePalette.mint,
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.8,
+                                                ),
+                                              ),
                                               SizedBox(width: 4),
-                                              Icon(Icons.north_east, size: 11, color: SystemCorePalette.mint),
+                                              Icon(
+                                                Icons.north_east,
+                                                size: 11,
+                                                color: SystemCorePalette.mint,
+                                              ),
                                             ]),
                                           ),
-                                          _ReactionButton(tooltip: 'Нравится — учитывать в интересах', icon: Icons.thumb_up_alt_outlined, color: SystemCorePalette.green, onPressed: () => _reactToArticle(article, NewsReaction.like)),
-                                          _ReactionButton(tooltip: 'Не нравится — учитывать в интересах', icon: Icons.thumb_down_alt_outlined, color: SystemCorePalette.mint, onPressed: () => _reactToArticle(article, NewsReaction.dislike)),
-                                          _ReactionButton(tooltip: 'Показывать меньше похожего', icon: Icons.remove_circle_outline, color: SystemCorePalette.muted, onPressed: () => _seeLessOf(article)),
+                                          _ReactionButton(
+                                            tooltip: 'Нравится — учитывать в интересах',
+                                            icon: Icons.thumb_up_alt_outlined,
+                                            color: SystemCorePalette.green,
+                                            onPressed: () => _reactToArticle(
+                                              article,
+                                              NewsReaction.like,
+                                            ),
+                                          ),
+                                          _ReactionButton(
+                                            tooltip: 'Не нравится — учитывать в интересах',
+                                            icon: Icons.thumb_down_alt_outlined,
+                                            color: SystemCorePalette.mint,
+                                            onPressed: () => _reactToArticle(
+                                              article,
+                                              NewsReaction.dislike,
+                                            ),
+                                          ),
+                                          _ReactionButton(
+                                            tooltip: 'Показывать меньше похожего',
+                                            icon: Icons.remove_circle_outline,
+                                            color: SystemCorePalette.muted,
+                                            onPressed: () => _seeLessOf(article),
+                                          ),
                                           if (article.contentType == NewsContentType.trailer)
-                                            _ReactionButton(tooltip: 'Сохранить трейлер в избранное', icon: Icons.favorite_border, color: SystemCorePalette.mint, onPressed: () => _saveTrailer(article)),
+                                            _ReactionButton(
+                                              tooltip: 'Сохранить трейлер в избранное',
+                                              icon: Icons.favorite_border,
+                                              color: SystemCorePalette.mint,
+                                              onPressed: () => _saveTrailer(article),
+                                            ),
                                         ],
                                       ),
                                     ],
