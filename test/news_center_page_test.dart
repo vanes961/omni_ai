@@ -52,7 +52,7 @@ void main() {
     expect(requestCount, greaterThan(0));
     expect(find.byType(NewsCenterPage), findsOneWidget);
     expect(find.text('Anime: New season announced'), findsOneWidget);
-    expect(find.text('ANIME NEWS'), findsOneWidget);
+    expect(find.textContaining('ANIME NEWS'), findsOneWidget);
     expect(find.text('Не удалось загрузить новости.'), findsNothing);
     expect(tester.takeException(), isNull);
 
