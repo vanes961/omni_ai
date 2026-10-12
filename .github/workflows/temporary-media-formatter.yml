@@ -1,0 +1,37 @@
+name: Temporary media formatter
+
+on:
+  push:
+    branches:
+      - feat/ai-engine-foundation
+    paths:
+      - ".github/workflows/temporary-media-formatter.yml"
+      - "lib/features/media/presentation/media_page.dart"
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/ai-engine-foundation
+          persist-credentials: true
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.7"
+      - name: Format media page
+        run: dart format lib/features/media/presentation/media_page.dart
+      - name: Commit formatter output
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add lib/features/media/presentation/media_page.dart
+            git commit -m "style: format media hub layout"
+            git push origin feat/ai-engine-foundation
+          else
+            echo "Media page already formatted."
+          fi
