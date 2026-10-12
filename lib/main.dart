@@ -387,7 +387,7 @@ class _OmniLoadingProgress extends StatelessWidget {
               ),
             ),
             Text(
-              '\${(amount * 100).round()}%',
+              '${(amount * 100).round()}%',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
