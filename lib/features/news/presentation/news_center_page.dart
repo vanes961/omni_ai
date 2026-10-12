@@ -187,6 +187,17 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     return true;
   }
 
+  String _emptyFeedMessage(NewsInterestProfile profile) {
+    if (profile.topics.isEmpty &&
+        !profile.includeCriticalOutsideInterests) {
+      return 'Лента не загружает новости без выбранных тем. Настройте интересы в разделе ниже или включите критические новости вне интересов.';
+    }
+    if (_hasCompletedNewsFetch) {
+      return 'По выбранным темам сейчас не найдено подходящих публикаций. Попробуйте добавить более широкую тему или обновить ленту позже.';
+    }
+    return 'Нажмите «Обновить», чтобы загрузить свежие материалы по выбранным темам.';
+  }
+
   Future<void> _runDiagnostics() async {
     final report = DiagnosticReport(
       createdAt: DateTime.now(),
@@ -1155,12 +1166,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  profile.topics.isEmpty &&
-                          !profile.includeCriticalOutsideInterests
-                      ? 'Лента не загружает новости без выбранных тем. Настройте интересы в разделе ниже или включите критические новости вне интересов.'
-                      : (_hasCompletedNewsFetch
-                          ? 'По выбранным темам сейчас не найдено подходящих публикаций. Попробуйте добавить более широкую тему или обновить ленту позже.'
-                          : 'Нажмите «Обновить», чтобы загрузить свежие материалы по выбранным темам.'),
+                  _emptyFeedMessage(profile),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: SystemCorePalette.muted,
