@@ -733,6 +733,17 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     unawaited(_newsCache.clear());
   }
 
+  Future<void> _scrollToInterests() async {
+    final target = _interestsSectionKey.currentContext;
+    if (target == null) return;
+    await Scrollable.ensureVisible(
+      target,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+      alignment: 0.08,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -955,13 +966,25 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 Text(
                   profile.topics.isEmpty &&
                           !profile.includeCriticalOutsideInterests
-                      ? 'Выберите интересы выше или включите критические новости вне интересов.'
+                      ? 'Лента не загружает новости без выбранных тем. Настройте интересы в разделе ниже или включите критические новости вне интересов.'
                       : 'Нажмите «Обновить», чтобы загрузить свежие материалы по выбранным темам.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: SystemCorePalette.muted,
                     height: 1.4,
                   ),
+                ),
+              ],
+              if (profile.topics.isEmpty &&
+                  !profile.includeCriticalOutsideInterests &&
+                  !_loadingNewsCache &&
+                  !_refreshingNews &&
+                  _newsError == null) ...[
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: _scrollToInterests,
+                  icon: const Icon(Icons.tune),
+                  label: const Text('НАСТРОИТЬ ИНТЕРЕСЫ'),
                 ),
               ],
               for (final article in _articles) ...[
