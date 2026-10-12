@@ -11,6 +11,8 @@ import 'package:omni_ai/core/ai_engine/providers/ai_execution_mode_store.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
+import 'package:omni_ai/features/run_history/data/in_memory_run_history_repository.dart';
+import 'package:omni_ai/features/system_core/services/system_core_process_service.dart';
 import 'package:omni_ai/providers/openrouter/openrouter_api_key_source.dart';
 
 void main() {
@@ -64,6 +66,8 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   String? submittedPrompt;
   final dependencies = AppDependencies(
     apiKeySource: const _TestApiKeySource(),
+    processService: SystemCoreProcessService(),
+    runHistoryRepository: InMemoryRunHistoryRepository(),
     aiExecutionModeStore: _TestExecutionModeStore(),
     httpClient: MockClient((request) async {
       final payload = jsonDecode(request.body) as Map<String, dynamic>;
