@@ -66,6 +66,7 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   String? submittedPrompt;
   final dependencies = AppDependencies(
     apiKeySource: const _TestApiKeySource(),
+    aiTimeout: const Duration(seconds: 1),
     processService: SystemCoreProcessService(),
     runHistoryRepository: InMemoryRunHistoryRepository(),
     aiExecutionModeStore: _TestExecutionModeStore(),
