@@ -23,10 +23,16 @@ import 'package:omni_ai/features/news/services/news_reminder_service.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class NewsCenterPage extends StatefulWidget {
-  const NewsCenterPage({super.key, this.repository, this.aiEngine});
+  const NewsCenterPage({
+    super.key,
+    this.repository,
+    this.aiEngine,
+    this.newsService,
+  });
 
   final NewsInterestRepository? repository;
   final AIEngine? aiEngine;
+  final NewsRssService? newsService;
 
   @override
   State<NewsCenterPage> createState() => _NewsCenterPageState();
@@ -39,7 +45,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   NewsInterestProfile? _profile;
   bool _saving = false;
   String? _status;
-  final NewsRssService _newsService = NewsRssService();
+  late final NewsRssService _newsService;
   final TextEditingController _customTopicController = TextEditingController();
   final FavoritesRepository _favoritesRepository = FavoritesRepository();
   final InterestFeedbackRepository _feedbackRepository =
@@ -78,6 +84,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     _ownsRepository = widget.repository == null;
     _repository =
         widget.repository ?? SharedPreferencesNewsInterestRepository();
+    _newsService = widget.newsService ?? NewsRssService();
     _profileFuture = _repository.load();
     unawaited(_loadReactionWeights());
     unawaited(_loadReminderSettings());
