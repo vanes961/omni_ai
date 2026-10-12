@@ -101,12 +101,8 @@ class RunHistoryRecorder {
       }
     } finally {
       _isDrainingWrites = false;
-      // A synchronous repository notification can enqueue another record while
-      // save() is running. Drain anything queued before this worker completed.
-      if (_writeQueue.isNotEmpty) {
-        _isDrainingWrites = true;
-        _pendingWrites = _drainWriteQueue();
-      }
+      // No await occurs between the empty-queue check and this assignment, so
+      // stream callbacks cannot enqueue work in that interval.
     }
   }
 
