@@ -45,7 +45,8 @@ class NewsChatContextBuilder {
       final excerpt = summary.length > maxSummaryLength
           ? '${summary.substring(0, maxSummaryLength)}…'
           : summary;
-      final entry =\n          '\n- ${article.title.trim()}\n'
+      final entry =
+          '\n- ${article.title.trim()}\n'
           '  Источник: ${article.sourceName.trim()}\n'
           '  Дата: ${article.publishedAt.toUtc().toIso8601String()}\n'
           '  Ссылка: ${article.sourceUrl}\n'
