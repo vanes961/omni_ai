@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:omni_ai/features/news/data/news_interest_repository.dart';
@@ -13,6 +14,7 @@ void main() {
   testWidgets('renders real RSS candidates on first visit with saved interests', (
     WidgetTester tester,
   ) async {
+    SharedPreferences.setMockInitialValues({});
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
     final repository = _MemoryNewsInterestRepository(
