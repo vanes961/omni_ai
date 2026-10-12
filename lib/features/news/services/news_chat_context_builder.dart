@@ -13,9 +13,8 @@ class NewsChatContextBuilder {
   static final RegExp _newsIntent = RegExp(
     r'(новост|сводк|дайджест|что происходит|'
     r'что (там )?нового|последн(ие|их) события|'
-    r'в мире сегодня|новое в мире|news|headlines|'
-    r'current events|latest events|today in the world|'
-    r'what is new|whats new)',
+    r'в мире сегодня|новое в мире|news|headlines|current events|'
+    r'latest events|today in the world|what is new|whats new)',
     caseSensitive: false,
   );
 
