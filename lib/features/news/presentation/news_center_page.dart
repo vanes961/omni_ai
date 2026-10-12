@@ -822,17 +822,17 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(
-                16,
-                14,
-                16,
-                14,
-              ),
+                  16,
+                  14,
+                  16,
+                  14,
+                ),
                 decoration: BoxDecoration(
                   color: SystemCorePalette.panelElevated,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                color: SystemCorePalette.border,
-              ),
+                    color: SystemCorePalette.border,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: SystemCorePalette.green.withValues(alpha: 0.05),
