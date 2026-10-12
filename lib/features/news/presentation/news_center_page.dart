@@ -1267,22 +1267,23 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                              Text(
-                                                'ЧИТАТЬ',
-                                                style: TextStyle(
-                                                  color: SystemCorePalette.mint,
-                                                  fontSize: 8,
-                                                  fontWeight: FontWeight.w700,
-                                                  letterSpacing: 0.8,
+                                                Text(
+                                                  'ЧИТАТЬ',
+                                                  style: TextStyle(
+                                                    color: SystemCorePalette.mint,
+                                                    fontSize: 8,
+                                                    fontWeight: FontWeight.w700,
+                                                    letterSpacing: 0.8,
+                                                  ),
                                                 ),
-                                              ),
-                                              SizedBox(width: 4),
-                                              Icon(
-                                                Icons.north_east,
-                                                size: 11,
-                                                color: SystemCorePalette.mint,
-                                              ),
-                                            ]),
+                                                SizedBox(width: 4),
+                                                Icon(
+                                                  Icons.north_east,
+                                                  size: 11,
+                                                  color: SystemCorePalette.mint,
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                           _ReactionButton(
                                             tooltip: 'Нравится — учитывать в интересах',
