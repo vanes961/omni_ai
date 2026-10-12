@@ -1019,8 +1019,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   color: SystemCorePalette.panel,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                color: SystemCorePalette.border,
-              ),
+                    color: SystemCorePalette.border,
+                  ),
                 ),
                 child: Material(
                   color: Colors.transparent,
