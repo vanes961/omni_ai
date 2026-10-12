@@ -11,6 +11,15 @@ void main() {
     expect(builder.buildPrompt(prompt, [_article(1)]), prompt);
   });
 
+  test('recognizes natural-language requests for what is new', () {
+    const prompt = 'Что нового по аниме?';
+    expect(builder.isNewsRequest(prompt), isTrue);
+    expect(
+      builder.buildPrompt(prompt, [_article(1)]),
+      contains('Контекст персональной новостной ленты'),
+    );
+  });
+
   test('adds source-attributed cached articles for news requests', () {
     final prompt = builder.buildPrompt('Какие последние новости?', [
       _article(1),

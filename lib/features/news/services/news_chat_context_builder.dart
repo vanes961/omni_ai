@@ -11,9 +11,10 @@ class NewsChatContextBuilder {
   static const maxContextLength = 3000;
 
   static final RegExp _newsIntent = RegExp(
-    r'(новост|сводк|дайджест|что происходит|последн(ие|их) события|'
-    r'в мире сегодня|новое в мире|news|headlines|current events|'
-    r'latest events|today in the world)',
+    r'(новост|сводк|дайджест|что происходит|что (там )?нового|'
+    r'последн(ие|их) события|в мире сегодня|новое в мире|'
+    r'news|headlines|current events|latest events|today in the world|'
+    r'what is new|whats new)',
     caseSensitive: false,
   );
 
