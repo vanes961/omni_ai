@@ -120,31 +120,31 @@ class _DashboardPageState extends State<DashboardPage> {
             showSelectedLabels: true,
             showUnselectedLabels: true,
             items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dynamic_feed_outlined),
-            activeIcon: Icon(Icons.dynamic_feed),
-            label: 'Лента',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            activeIcon: Icon(Icons.chat_bubble),
-            label: 'AI',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.movie_outlined),
-            activeIcon: Icon(Icons.movie),
-            label: 'Медиа',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_border),
-            activeIcon: Icon(Icons.favorite),
-            label: 'Избранное',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Настройки',
-          ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.dynamic_feed_outlined),
+                activeIcon: Icon(Icons.dynamic_feed),
+                label: 'Лента',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.chat_bubble_outline),
+                activeIcon: Icon(Icons.chat_bubble),
+                label: 'AI',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.movie_outlined),
+                activeIcon: Icon(Icons.movie),
+                label: 'Медиа',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.favorite_border),
+                activeIcon: Icon(Icons.favorite),
+                label: 'Избранное',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings_outlined),
+                activeIcon: Icon(Icons.settings),
+                label: 'Настройки',
+              ),
             ],
           ),
         ),
@@ -240,63 +240,63 @@ class _GuardHeader extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
         child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: SystemCorePalette.green.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: SystemCorePalette.green.withValues(alpha: 0.65),
+          children: [
+              Container(
+                width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: SystemCorePalette.green.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: SystemCorePalette.green.withValues(alpha: 0.65),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: SystemCorePalette.green.withValues(alpha: 0.10),
+                    blurRadius: 16,
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: SystemCorePalette.green.withValues(alpha: 0.10),
-                  blurRadius: 16,
-                ),
-              ],
+              child: const Icon(
+                Icons.hub_rounded,
+                color: SystemCorePalette.green,
+                size: 22,
+              ),
             ),
-            child: const Icon(
-              Icons.hub_rounded,
-              color: SystemCorePalette.green,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 11),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'OMNI AI',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w900,
+            const SizedBox(width: 11),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'OMNI AI',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  'PERSONAL AI SYSTEM',
-                  style: TextStyle(
-                    color: SystemCorePalette.green,
-                    fontSize: 9,
-                    letterSpacing: 1.1,
-                    fontWeight: FontWeight.bold,
+                  SizedBox(height: 3),
+                  Text(
+                    'PERSONAL AI SYSTEM',
+                    style: TextStyle(
+                      color: SystemCorePalette.green,
+                      fontSize: 9,
+                      letterSpacing: 1.1,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            tooltip: 'Профиль',
-            onPressed: onProfilePressed,
-            icon: const Icon(Icons.tune_rounded),
-            color: SystemCorePalette.muted,
-          ),
-          ],
+            IconButton(
+              tooltip: 'Профиль',
+              onPressed: onProfilePressed,
+              icon: const Icon(Icons.tune_rounded),
+              color: SystemCorePalette.muted,
+            ),
+            ],
         ),
       ),
     );
