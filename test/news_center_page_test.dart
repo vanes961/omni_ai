@@ -89,6 +89,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
     }
     expect(requestCount, greaterThan(0));
+    await tester.ensureVisible(find.text('ВАШИ ИНТЕРЕСЫ'));
+    await tester.pumpAndSettle(const Duration(milliseconds: 50));
     expect(find.byType(InputChip), findsOneWidget);
 
     await tester.ensureVisible(find.byType(InputChip));
