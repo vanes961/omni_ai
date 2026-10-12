@@ -139,7 +139,7 @@ class _MediaPageState extends State<MediaPage> {
                       ),
                       const SizedBox(height: 18),
                       const Text(
-                        'МЕДИА-КАТАЛОГ НЕ ПОДКЛЮЧЁН',
+                        'МЕДИАКАТАЛОГ НЕ ПОДКЛЮЧЁН',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
