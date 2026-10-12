@@ -791,11 +791,31 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             children: [
               Row(
                 children: [
-                  const Text('OMNI_AI', style: TextStyle(color: Color(0xFFE8F5F5), fontSize: 23, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
+                  const Text(
+                    'OMNI_AI',
+                    style: TextStyle(
+                      color: Color(0xFFE8F5F5),
+                      fontSize: 23,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
                   const Spacer(),
-                  const Icon(Icons.circle, size: 7, color: SystemCorePalette.green),
+                  const Icon(
+                    Icons.circle,
+                    size: 7,
+                    color: SystemCorePalette.green,
+                  ),
                   const SizedBox(width: 6),
-                  const Text('SYSTEM ONLINE', style: TextStyle(color: SystemCorePalette.green, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.8)),
+                  const Text(
+                    'SYSTEM ONLINE',
+                    style: TextStyle(
+                      color: SystemCorePalette.green,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -806,26 +826,66 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   color: SystemCorePalette.panelElevated,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: SystemCorePalette.border),
-                  boxShadow: [BoxShadow(color: SystemCorePalette.green.withValues(alpha: 0.05), blurRadius: 22, spreadRadius: 1)],
+                  boxShadow: [
+                    BoxShadow(
+                      color: SystemCorePalette.green.withValues(alpha: 0.05),
+                      blurRadius: 22,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
                 child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('PERSONAL INTELLIGENCE', style: TextStyle(color: SystemCorePalette.mint, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 1.1)),
+                    Text(
+                      'PERSONAL INTELLIGENCE',
+                      style: TextStyle(
+                        color: SystemCorePalette.mint,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
                     SizedBox(height: 9),
-                    Text('ТВОЯ ЛЕНТА', style: TextStyle(color: Color(0xFFE8F5F5), fontSize: 22, fontWeight: FontWeight.w800, height: 1.05)),
+                    Text(
+                      'ТВОЯ ЛЕНТА',
+                      style: TextStyle(
+                        color: Color(0xFFE8F5F5),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        height: 1.05,
+                      ),
+                    ),
                     SizedBox(height: 7),
-                    Text('Новости по твоим интересам', style: TextStyle(color: SystemCorePalette.muted, fontSize: 11)),
+                    Text(
+                      'Новости по твоим интересам',
+                      style: TextStyle(
+                        color: SystemCorePalette.muted,
+                        fontSize: 11,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 18),
-              const Text('СЕГОДНЯ  /  ПОДОБРАНО ДЛЯ ТЕБЯ', style: TextStyle(color: SystemCorePalette.muted, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.9)),
+              const Text(
+                'СЕГОДНЯ  /  ПОДОБРАНО ДЛЯ ТЕБЯ',
+                style: TextStyle(
+                  color: SystemCorePalette.muted,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.9,
+                ),
+              ),
               const SizedBox(height: 9),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-                decoration: BoxDecoration(color: SystemCorePalette.panel, borderRadius: BorderRadius.circular(14), border: Border.all(color: SystemCorePalette.border)),
+                decoration: BoxDecoration(
+                  color: SystemCorePalette.panel,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: SystemCorePalette.border),
+                ),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 6,
@@ -839,14 +899,45 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                           borderRadius: BorderRadius.circular(9),
                           border: Border.all(color: SystemCorePalette.green.withValues(alpha: 0.28)),
                         ),
-                        child: Text(topic.toUpperCase(), style: const TextStyle(color: SystemCorePalette.green, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
+                        child: Text(
+                          topic.toUpperCase(),
+                          style: const TextStyle(
+                            color: SystemCorePalette.green,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
                       ),
                     if (profile.topics.length > 4)
-                      Text('+${profile.topics.length - 4} ЕЩЁ', style: const TextStyle(color: SystemCorePalette.muted, fontSize: 9, fontWeight: FontWeight.w600)),
+                      Text(
+                        '+${profile.topics.length - 4} ЕЩЁ',
+                        style: const TextStyle(
+                          color: SystemCorePalette.muted,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     TextButton(
                       onPressed: _scrollToInterests,
-                      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                      child: Text(profile.topics.isEmpty ? '+ ДОБАВИТЬ ИНТЕРЕСЫ' : '+ ИНТЕРЕСЫ', style: const TextStyle(color: SystemCorePalette.mint, fontSize: 9, fontWeight: FontWeight.w600)),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        profile.topics.isEmpty
+                            ? '+ ДОБАВИТЬ ИНТЕРЕСЫ'
+                            : '+ ИНТЕРЕСЫ',
+                        style: const TextStyle(
+                          color: SystemCorePalette.mint,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
