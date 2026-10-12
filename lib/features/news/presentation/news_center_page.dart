@@ -847,7 +847,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                         child: Text(topic.toUpperCase(), style: const TextStyle(color: SystemCorePalette.green, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
                       ),
                     if (profile.topics.length > 4)
-                      Text('+\${profile.topics.length - 4} ЕЩЁ', style: const TextStyle(color: SystemCorePalette.muted, fontSize: 9, fontWeight: FontWeight.w600)),
+                      Text('+${profile.topics.length - 4} ЕЩЁ', style: const TextStyle(color: SystemCorePalette.muted, fontSize: 9, fontWeight: FontWeight.w600)),
                     TextButton(
                       onPressed: _scrollToInterests,
                       style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
@@ -857,7 +857,6 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              const SizedBox(height: 10),
               Container(
                 decoration: BoxDecoration(
                   color: SystemCorePalette.panel,
@@ -1094,7 +1093,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              '\${article.sourceName.toUpperCase()}  •  \${article.publishedAt.toLocal().day.toString().padLeft(2, '0')}.\${article.publishedAt.toLocal().month.toString().padLeft(2, '0')}',
+                                              '${article.sourceName.toUpperCase()}  •  ${article.publishedAt.toLocal().day.toString().padLeft(2, '0')}.${article.publishedAt.toLocal().month.toString().padLeft(2, '0')}',
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(color: SystemCorePalette.green, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.5),
