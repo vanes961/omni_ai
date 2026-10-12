@@ -116,6 +116,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
+    final preferences = SharedPreferencesAsync();
     final repository = _MemoryNewsInterestRepository(
       const NewsInterestProfile(topics: ['anime']),
     );
@@ -164,6 +165,24 @@ void main() {
 
     expect(find.text('Stale anime story'), findsNothing);
     expect(find.byType(InputChip), findsNothing);
+    // A response for the removed topic must not repopulate the persistent
+    // cache after the interest-change handler has cleared it.
+    expect(
+      await preferences.getString('omni_ai.news_cache.articles.v1'),
+      isNull,
+    );
+    expect(
+      await preferences.getString('omni_ai.news_cache.digest.v1'),
+      isNull,
+    );
+    expect(
+      await preferences.getString('omni_ai.news_cache.topics.v1'),
+      isNull,
+    );
+    expect(
+      await preferences.getString('omni_ai.news_cache.critical_setting.v1'),
+      isNull,
+    );
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
