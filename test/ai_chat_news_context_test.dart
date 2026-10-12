@@ -123,6 +123,8 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   expect(tester.takeException(), isNull);
 
   await tester.pumpWidget(const SizedBox.shrink());
+  // Drain widget teardown and its scheduled microtasks before leaving FakeAsync.
+  await tester.pump();
   await tester.runAsync(dependencies.dispose);
   return submittedPrompt!;
 }
