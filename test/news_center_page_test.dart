@@ -94,7 +94,7 @@ void main() {
     expect(find.byType(InputChip), findsOneWidget);
 
     await tester.ensureVisible(find.byType(InputChip));
-    await tester.tap(find.byIcon(Icons.cancel).first);
+    tester.widget<InputChip>(find.byType(InputChip)).onDeleted!();
     await tester.pump();
 
     response.complete(
