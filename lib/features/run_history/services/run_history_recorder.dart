@@ -81,8 +81,11 @@ class RunHistoryRecorder {
     debugPrint('RUN_HISTORY_DISPOSE: before subscription cancel');
     await _subscription.cancel();
     debugPrint('RUN_HISTORY_DISPOSE: after subscription cancel');
-    await flush();
-    debugPrint('RUN_HISTORY_DISPOSE: after flush');
+    final pendingWrites = _drainCompleter;
+    if (pendingWrites != null) {
+      await pendingWrites.future;
+    }
+    debugPrint('RUN_HISTORY_DISPOSE: after pending writes');
   }
 
   void _save(ProcessRunRecord record) {
