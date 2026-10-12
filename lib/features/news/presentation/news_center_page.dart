@@ -794,15 +794,69 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              const Text(
-                'ЛЕНТА НОВОСТЕЙ',
-
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              Row(
+                children: [
+                  const Text('OMNI_AI', style: TextStyle(color: Color(0xFFE8F5F5), fontSize: 23, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
+                  const Spacer(),
+                  const Icon(Icons.circle, size: 7, color: SystemCorePalette.green),
+                  const SizedBox(width: 6),
+                  const Text('SYSTEM ONLINE', style: TextStyle(color: SystemCorePalette.green, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.8)),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                decoration: BoxDecoration(
+                  color: SystemCorePalette.panelElevated,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: SystemCorePalette.border),
+                  boxShadow: [BoxShadow(color: SystemCorePalette.green.withValues(alpha: 0.05), blurRadius: 22, spreadRadius: 1)],
+                ),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('PERSONAL INTELLIGENCE', style: TextStyle(color: SystemCorePalette.mint, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 1.1)),
+                    SizedBox(height: 9),
+                    Text('ТВОЯ ЛЕНТА', style: TextStyle(color: Color(0xFFE8F5F5), fontSize: 22, fontWeight: FontWeight.w800, height: 1.05)),
+                    SizedBox(height: 7),
+                    Text('Новости по твоим интересам', style: TextStyle(color: SystemCorePalette.muted, fontSize: 11)),
+                  ],
                 ),
               ),
+              const SizedBox(height: 18),
+              const Text('СЕГОДНЯ  /  ПОДОБРАНО ДЛЯ ТЕБЯ', style: TextStyle(color: SystemCorePalette.muted, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.9)),
+              const SizedBox(height: 9),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                decoration: BoxDecoration(color: SystemCorePalette.panel, borderRadius: BorderRadius.circular(14), border: Border.all(color: SystemCorePalette.border)),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    for (final topic in profile.topics.take(4))
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: SystemCorePalette.green.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(9),
+                          border: Border.all(color: SystemCorePalette.green.withValues(alpha: 0.28)),
+                        ),
+                        child: Text(topic.toUpperCase(), style: const TextStyle(color: SystemCorePalette.green, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
+                      ),
+                    if (profile.topics.length > 4)
+                      Text('+\${profile.topics.length - 4} ЕЩЁ', style: const TextStyle(color: SystemCorePalette.muted, fontSize: 9, fontWeight: FontWeight.w600)),
+                    TextButton(
+                      onPressed: _scrollToInterests,
+                      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                      child: Text(profile.topics.isEmpty ? '+ ДОБАВИТЬ ИНТЕРЕСЫ' : '+ ИНТЕРЕСЫ', style: const TextStyle(color: SystemCorePalette.mint, fontSize: 9, fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               const SizedBox(height: 10),
               Container(
                 decoration: BoxDecoration(
@@ -1017,88 +1071,70 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               ],
               for (final article in _articles) ...[
                 const SizedBox(height: 10),
-                Card(
-                  color: SystemCorePalette.panel,
-                  child: InkWell(
-                    onTap: () => _openArticle(article),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                Container(
+                  decoration: BoxDecoration(color: SystemCorePalette.panel, borderRadius: BorderRadius.circular(16), border: Border.all(color: SystemCorePalette.border)),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  article.sourceName,
-                                  style: const TextStyle(
-                                    color: SystemCorePalette.green,
-                                    fontSize: 12,
+                          Container(width: 3, color: SystemCorePalette.green),
+                          Expanded(
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => _openArticle(article),
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(14, 13, 12, 12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              '\${article.sourceName.toUpperCase()}  •  \${article.publishedAt.toLocal().day.toString().padLeft(2, '0')}.\${article.publishedAt.toLocal().month.toString().padLeft(2, '0')}',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(color: SystemCorePalette.green, fontSize: 9, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                                            ),
+                                          ),
+                                          if (article.contentType == NewsContentType.trailer)
+                                            const Icon(Icons.play_circle_outline, size: 17, color: SystemCorePalette.mint),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFFE8F5F5), fontWeight: FontWeight.w700, fontSize: 15, height: 1.25)),
+                                      if (article.summary.isNotEmpty) ...[
+                                        const SizedBox(height: 8),
+                                        Text(article.summary, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: SystemCorePalette.muted, fontSize: 10, height: 1.4)),
+                                      ],
+                                      const SizedBox(height: 10),
+                                      Wrap(
+                                        spacing: 5,
+                                        runSpacing: 6,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        children: [
+                                          const Padding(
+                                            padding: EdgeInsets.only(right: 3),
+                                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                              Text('ЧИТАТЬ', style: TextStyle(color: SystemCorePalette.mint, fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                                              SizedBox(width: 4),
+                                              Icon(Icons.north_east, size: 11, color: SystemCorePalette.mint),
+                                            ]),
+                                          ),
+                                          _ReactionButton(tooltip: 'Нравится — учитывать в интересах', icon: Icons.thumb_up_alt_outlined, color: SystemCorePalette.green, onPressed: () => _reactToArticle(article, NewsReaction.like)),
+                                          _ReactionButton(tooltip: 'Не нравится — учитывать в интересах', icon: Icons.thumb_down_alt_outlined, color: SystemCorePalette.mint, onPressed: () => _reactToArticle(article, NewsReaction.dislike)),
+                                          _ReactionButton(tooltip: 'Показывать меньше похожего', icon: Icons.remove_circle_outline, color: SystemCorePalette.muted, onPressed: () => _seeLessOf(article)),
+                                          if (article.contentType == NewsContentType.trailer)
+                                            _ReactionButton(tooltip: 'Сохранить трейлер в избранное', icon: Icons.favorite_border, color: SystemCorePalette.mint, onPressed: () => _saveTrailer(article)),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                              _ReactionButton(
-                                tooltip: 'Нравится — учитывать в интересах',
-                                icon: Icons.thumb_up_alt_outlined,
-                                color: SystemCorePalette.green,
-                                onPressed: () =>
-                                    _reactToArticle(article, NewsReaction.like),
-                              ),
-                              const SizedBox(width: 6),
-                              _ReactionButton(
-                                tooltip: 'Не нравится — учитывать в интересах',
-                                icon: Icons.thumb_down_alt_outlined,
-                                color: SystemCorePalette.mint,
-                                onPressed: () => _reactToArticle(
-                                  article,
-                                  NewsReaction.dislike,
-                                ),
-                              ),
-                              IconButton(
-                                tooltip: 'Показывать меньше похожего',
-                                onPressed: () => _seeLessOf(article),
-                                icon: const Icon(
-                                  Icons.remove_circle_outline,
-                                  size: 19,
-                                ),
-                              ),
-                              if (article.contentType ==
-                                  NewsContentType.trailer)
-                                IconButton(
-                                  tooltip: 'Сохранить трейлер в избранное',
-                                  onPressed: () => _saveTrailer(article),
-                                  icon: const Icon(Icons.favorite_border),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            article.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          if (article.summary.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              article.summary,
-                              maxLines: 4,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 8),
-                          Text(
-                            article.publishedAt.toLocal().toString(),
-                            style: const TextStyle(
-                              color: SystemCorePalette.muted,
-                              fontSize: 11,
                             ),
                           ),
                         ],
