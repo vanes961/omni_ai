@@ -33,19 +33,6 @@ class NewsCenterPage extends StatefulWidget {
 }
 
 class _NewsCenterPageState extends State<NewsCenterPage> {
-  static const _topicOptions = <String, String>{
-    'games': 'Игры',
-    'anime': 'Аниме',
-    'manga': 'Манга',
-    'movies': 'Кино',
-    'series': 'Сериалы',
-    'technology': 'Технологии',
-    'artificial intelligence': 'Искусственный интеллект',
-    'science': 'Наука',
-    'space': 'Космос',
-    'gadgets': 'Гаджеты',
-  };
-
   late final NewsInterestRepository _repository;
   late final bool _ownsRepository;
   late Future<NewsInterestProfile> _profileFuture;
@@ -1125,24 +1112,28 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 style: TextStyle(color: Colors.white60, fontSize: 12),
               ),
               const SizedBox(height: 18),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  for (final entry in _topicOptions.entries)
-                    FilterChip(
-                      label: Text(entry.value),
-                      selected: profile.topics.contains(entry.key),
-                      onSelected: (selected) =>
-                          _toggleTopic(entry.key, selected),
-                      selectedColor: SystemCorePalette.green.withValues(
-                        alpha: 0.18,
+              if (profile.topics.isNotEmpty)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    for (final topic in profile.topics)
+                      InputChip(
+                        label: Text(topic),
+                        selected: true,
+                        selectedColor: SystemCorePalette.green.withValues(
+                          alpha: 0.18,
+                        ),
+                        onDeleted: () => _toggleTopic(topic, false),
+                        deleteIconColor: SystemCorePalette.green,
                       ),
-                      showCheckmark: false,
-                      checkmarkColor: SystemCorePalette.green,
-                    ),
-                ],
-              ),
+                  ],
+                )
+              else
+                const Text(
+                  'Пока нет тем. Добавьте любую тему выше — например, название игры, автора, команду или научное направление.',
+                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                ),
               const SizedBox(height: 18),
               const Divider(color: Colors.white12),
               SwitchListTile(
