@@ -241,8 +241,8 @@ class _GuardHeader extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
         child: Row(
           children: [
-              Container(
-                width: 38,
+            Container(
+              width: 38,
               height: 38,
               decoration: BoxDecoration(
                 color: SystemCorePalette.green.withValues(alpha: 0.08),
@@ -296,7 +296,7 @@ class _GuardHeader extends StatelessWidget {
               icon: const Icon(Icons.tune_rounded),
               color: SystemCorePalette.muted,
             ),
-            ],
+          ],
         ),
       ),
     );
