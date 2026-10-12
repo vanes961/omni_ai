@@ -888,15 +888,15 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 9,
-              ),
+                  horizontal: 10,
+                  vertical: 9,
+                ),
                 decoration: BoxDecoration(
                   color: SystemCorePalette.panel,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                  color: SystemCorePalette.border,
-                ),
+                    color: SystemCorePalette.border,
+                  ),
                 ),
                 child: Wrap(
                   spacing: 8,
