@@ -58,6 +58,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _showingCachedNews = false;
   bool _refreshingNews = false;
   bool _refreshPendingAfterCurrent = false;
+  int? _lastRssCandidateCount;
+  int? _lastLocalizedCandidateCount;
+  int? _lastRankedCandidateCount;
   String? _newsError;
   bool _generatingDigest = false;
   String? _digest;
@@ -200,11 +203,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     : (_articles.isEmpty
                           ? DiagnosticStatus.warning
                           : DiagnosticStatus.ok)),
-          details:
-              _newsError ??
-              (_refreshingNews
-                  ? 'Загрузка ещё выполняется'
-                  : 'Материалов в ленте: ${_articles.length}'),
+          details: _newsError ??
+              'RSS-кандидатов: ${_lastRssCandidateCount ?? 'нет данных'}; '
+              'после локализации: ${_lastLocalizedCandidateCount ?? 'нет данных'}; '
+              'после персонализации: ${_lastRankedCandidateCount ?? 'нет данных'}; '
+              'на экране: ${_articles.length}'
+              '${_refreshingNews ? '; загрузка ещё выполняется' : ''}',
         ),
         DiagnosticCheck(
           name: 'Локальный кэш',
@@ -449,11 +453,18 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // app's output language. Feed locale is not the article's geography.
       final fetchedArticles = await _newsService.fetchInternational(profile);
       if (revisionAtStart != _interestRevision) return;
+      if (mounted) {
+        setState(() => _lastRssCandidateCount = fetchedArticles.length);
+      }
       // Prefer an existing Russian edition when a conservative match is found.
       // Foreign articles without a match remain in the feed unchanged.
       final articles = await _sourceLocalizationService.localizeCandidates(
         fetchedArticles,
       );
+      if (revisionAtStart != _interestRevision) return;
+      if (mounted) {
+        setState(() => _lastLocalizedCandidateCount = articles.length);
+      }
       final favorites = await _favoritesRepository.getAll();
       _lessInterested = await _feedbackRepository.loadLessInterested();
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
@@ -465,6 +476,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         ),
       );
       if (revisionAtStart != _interestRevision) return;
+      if (mounted) {
+        setState(() => _lastRankedCandidateCount = rankedArticles.length);
+      }
       // A digest describes a specific set of articles. Never keep showing a
       // digest generated from the previous feed after a successful refresh.
       await _newsCache.saveDigest(null);
