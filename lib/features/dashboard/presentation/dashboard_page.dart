@@ -113,7 +113,7 @@ class _DashboardPageState extends State<DashboardPage> {
             backgroundColor: Colors.transparent,
             selectedItemColor: SystemCorePalette.green,
             unselectedItemColor: SystemCorePalette.muted,
-            selectedIconTheme: const IconThemeData(size: 22),
+            selectedIconTheme: const IconThemeData(size: 20),
             unselectedIconTheme: const IconThemeData(size: 20),
             selectedFontSize: 10,
             unselectedFontSize: 10,
@@ -121,28 +121,68 @@ class _DashboardPageState extends State<DashboardPage> {
             showUnselectedLabels: true,
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(Icons.dynamic_feed_outlined),
-                activeIcon: Icon(Icons.dynamic_feed),
+                icon: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Icon(Icons.dynamic_feed_outlined, size: 20),
+                ),
+                activeIcon: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Icon(Icons.dynamic_feed_outlined, size: 20),
+                ),
                 label: 'Лента',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.chat_bubble_outline),
-                activeIcon: Icon(Icons.chat_bubble),
+                icon: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Icon(Icons.auto_awesome, size: 20),
+                ),
+                activeIcon: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Icon(Icons.auto_awesome, size: 20),
+                ),
                 label: 'AI',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.movie_outlined),
-                activeIcon: Icon(Icons.movie),
+                icon: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Icon(Icons.movie_outlined, size: 20),
+                ),
+                activeIcon: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Icon(Icons.movie_outlined, size: 20),
+                ),
                 label: 'Медиа',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.favorite_border),
-                activeIcon: Icon(Icons.favorite),
+                icon: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Icon(Icons.favorite_border, size: 20),
+                ),
+                activeIcon: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Icon(Icons.favorite_border, size: 20),
+                ),
                 label: 'Избранное',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.settings_outlined),
-                activeIcon: Icon(Icons.settings),
+                icon: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Icon(Icons.settings_outlined, size: 20),
+                ),
+                activeIcon: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Icon(Icons.settings_outlined, size: 20),
+                ),
                 label: 'Настройки',
               ),
             ],
