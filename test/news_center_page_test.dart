@@ -62,6 +62,56 @@ void main() {
   });
 
 
+  testWidgets('restores the saved personalized feed without refetching', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final preferences = SharedPreferencesAsync();
+    await preferences.setString(
+      'omni_ai.news_cache.articles.v1',
+      '[{"id":"cached-anime-1","title":"Saved anime announcement",'
+      '"summary":"A previously loaded article.","sourceName":"Anime News",'
+      '"sourceUrl":"https://publisher.example/cached-anime",'
+      '"publishedAt":"2026-10-12T09:00:00.000Z","topics":["anime"],'
+      '"language":"ru","region":"ru","isCritical":false,'
+      '"isVerified":true,"contentType":"article"}]',
+    );
+    await preferences.setString('omni_ai.news_cache.digest.v1', 'Saved digest');
+    await preferences.setString('omni_ai.news_cache.topics.v1', '["anime"]');
+    await preferences.setString(
+      'omni_ai.news_cache.critical_setting.v1',
+      'false',
+    );
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+    var requestCount = 0;
+    final service = NewsRssService(
+      client: MockClient((_) async {
+        requestCount++;
+        return http.Response('<rss><channel /></rss>', 200);
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(repository: repository, newsService: service),
+      ),
+    );
+    for (var i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('Saved anime announcement'), findsOneWidget);
+    expect(find.text('Saved digest'), findsOneWidget);
+    expect(requestCount, 0);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('discards an RSS response after interests change mid-request', (
     WidgetTester tester,
   ) async {
