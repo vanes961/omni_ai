@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-
 import 'package:omni_ai/features/run_history/models/process_run_record.dart';
 import 'package:omni_ai/features/run_history/repositories/run_history_repository.dart';
 import 'package:omni_ai/features/system_core/models/system_core_process_state.dart';
@@ -69,7 +68,10 @@ class RunHistoryRecorder {
   }
 
   Future<void> flush() {
-    debugPrint('RUN_HISTORY_FLUSH: pending=${_drainCompleter != null}, queued=${_writeQueue.length}');
+    debugPrint(
+      'RUN_HISTORY_FLUSH: pending=${_drainCompleter != null}, '
+      'queued=${_writeQueue.length}',
+    );
     return _drainCompleter?.future ?? Future<void>.value();
   }
 
@@ -97,7 +99,10 @@ class RunHistoryRecorder {
     try {
       while (_writeQueue.isNotEmpty) {
         final record = _writeQueue.removeAt(0);
-        debugPrint('RUN_HISTORY_DRAIN: saving ${record.id}, remaining=${_writeQueue.length}');
+        debugPrint(
+          'RUN_HISTORY_DRAIN: saving ${record.id}, '
+          'remaining=${_writeQueue.length}',
+        );
         await _repository.save(record);
         debugPrint('RUN_HISTORY_DRAIN: saved ${record.id}');
       }
