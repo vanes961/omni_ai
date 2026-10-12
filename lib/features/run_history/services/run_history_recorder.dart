@@ -21,7 +21,8 @@ class RunHistoryRecorder {
 
   ProcessRunRecord? _activeRecord;
   int _observedLogCount = 0;
-  Future<void> _pendingWrites = Future<void>.value();
+  final List<ProcessRunRecord> _writeQueue = [];
+  Completer<void>? _drainCompleter;
   bool _disposed = false;
 
   void _recordState(SystemCoreProcessState state) {
@@ -65,18 +66,42 @@ class RunHistoryRecorder {
     _save(updatedRecord);
   }
 
-  Future<void> flush() => _pendingWrites;
+  Future<void> flush() => _drainCompleter?.future ?? Future<void>.value();
 
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
     await _subscription.cancel();
-    await _pendingWrites;
+    await flush();
   }
 
   void _save(ProcessRunRecord record) {
-    // Chain writes directly so flush/dispose await the exact serialized batch.
-    _pendingWrites = _pendingWrites.then((_) => _repository.save(record));
+    _writeQueue.add(record);
+    if (_drainCompleter != null) return;
+
+    final completer = Completer<void>();
+    _drainCompleter = completer;
+    unawaited(_drainWriteQueue(completer));
+  }
+
+  Future<void> _drainWriteQueue(Completer<void> completer) async {
+    try {
+      while (_writeQueue.isNotEmpty) {
+        final record = _writeQueue.removeAt(0);
+        await _repository.save(record);
+      }
+      completer.complete();
+    } on Object catch (error, stackTrace) {
+      completer.completeError(error, stackTrace);
+    } finally {
+      if (identical(_drainCompleter, completer)) {
+        _drainCompleter = null;
+      }
+      // A synchronous repository notification may enqueue another record.
+      if (_writeQueue.isNotEmpty && !_disposed) {
+        _save(_writeQueue.removeAt(0));
+      }
+    }
   }
 
   static bool _isFinished(SystemCoreProcessStatus status) =>
