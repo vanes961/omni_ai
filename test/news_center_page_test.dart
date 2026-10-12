@@ -58,8 +58,6 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
-}
-
 
   testWidgets('shows a visible error when every news edition fails', (
     WidgetTester tester,
@@ -131,6 +129,7 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
+}
 
 class _MemoryNewsInterestRepository implements NewsInterestRepository {
   _MemoryNewsInterestRepository(this.profile);
