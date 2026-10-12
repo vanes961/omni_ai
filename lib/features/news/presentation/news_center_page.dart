@@ -809,7 +809,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                         : SystemCorePalette.border,
                   ),
                 ),
-                child: ListTile(
+                child: Material(
+                  color: Colors.transparent,
+                  child: ListTile(
                   leading: const Icon(
                     Icons.tune,
                     color: SystemCorePalette.green,
@@ -845,6 +847,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                       );
                     }
                   },
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -854,7 +857,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: SystemCorePalette.border),
                 ),
-                child: ListTile(
+                child: Material(
+                  color: Colors.transparent,
+                  child: ListTile(
                   leading: const Icon(
                     Icons.health_and_safety_outlined,
                     color: SystemCorePalette.green,
@@ -878,6 +883,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     color: SystemCorePalette.green,
                   ),
                   onTap: _runDiagnostics,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
