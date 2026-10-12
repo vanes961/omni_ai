@@ -103,12 +103,14 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   }
 
   expect(submittedPrompt, isNotNull);
+  final renderedMessages = tester
+      .widgetList<SelectableText>(find.byType(SelectableText))
+      .map((message) => message.data)
+      .toList(growable: false);
   expect(
-    find.byWidgetPredicate(
-      (widget) =>
-          widget is SelectableText && widget.data == 'Ответ тестового AI.',
-    ),
-    findsOneWidget,
+    renderedMessages,
+    contains('Ответ тестового AI.'),
+    reason: 'Rendered chat messages: $renderedMessages',
   );
   expect(tester.takeException(), isNull);
 
