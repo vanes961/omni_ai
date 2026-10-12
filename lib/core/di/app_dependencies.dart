@@ -89,11 +89,25 @@ class AppDependencies {
   late final AIProcessOrchestrator orchestrator;
 
   Future<void> dispose() async {
+    // ignore: avoid_print
+    print('APP_DEPENDENCIES_DISPOSE: orchestrator start');
     await orchestrator.dispose();
+    // ignore: avoid_print
+    print('APP_DEPENDENCIES_DISPOSE: orchestrator done');
     if (_ownsProcessService) await processService.dispose();
+    // ignore: avoid_print
+    print('APP_DEPENDENCIES_DISPOSE: process service done');
     if (_ownsHistoryRepository) await historyRepository.dispose();
+    // ignore: avoid_print
+    print('APP_DEPENDENCIES_DISPOSE: history repository done');
     await ai.dispose();
+    // ignore: avoid_print
+    print('APP_DEPENDENCIES_DISPOSE: ai done');
     if (ownsAIMemoryRepository) await aiMemoryRepository.dispose();
+    // ignore: avoid_print
+    print('APP_DEPENDENCIES_DISPOSE: memory done');
     if (_ownsLocalModelStorage) localModelStorage.dispose();
+    // ignore: avoid_print
+    print('APP_DEPENDENCIES_DISPOSE: all done');
   }
 }
