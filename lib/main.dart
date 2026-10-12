@@ -206,126 +206,246 @@ class _OmniLoadingScreen extends StatelessWidget {
 
   final Animation<double> progress;
 
+  static const _background = Color(0xFF05070B);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF05070B),
-      body: AnimatedBuilder(
-        animation: progress,
-        builder: (context, _) {
-          final amount = progress.value.clamp(0.0, 1.0);
-          return Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment(0, -0.15),
-                radius: 1.2,
-                colors: [Color(0xFF17313A), Color(0xFF080B12), Color(0xFF030407)],
-              ),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 30),
-                child: Column(
-                  children: [
-                    const Spacer(flex: 2),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                      decoration: BoxDecoration(
-                        color: const Color(0xB5081017),
-                        border: Border.all(color: const Color(0xFF31F5B0)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF22F0B0).withValues(alpha: 0.2),
-                            blurRadius: 28,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'OMNI',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 44,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 8,
-                              shadows: [
-                                Shadow(
-                                  color: const Color(0xFF2DF8B1).withValues(alpha: 0.8),
-                                  blurRadius: 18,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'AI  //  INTELLIGENCE HUB',
-                            style: TextStyle(
-                              color: Color(0xFF4BFFD0),
-                              fontSize: 10,
-                              letterSpacing: 3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Spacer(flex: 3),
-                    const Text(
-                      'СИСТЕМА ИНИЦИАЛИЗИРУЕТСЯ',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white70, fontSize: 11, letterSpacing: 2),
-                    ),
-                    const Spacer(flex: 2),
-                    Row(
-                      children: [
-                        const Text('ЗАГРУЗКА...', style: TextStyle(color: Color(0xFF57FFD0), fontSize: 11, letterSpacing: 1.5)),
-                        const Spacer(),
-                        Text(
-                          '${(amount * 100).round()}%',
-                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
+      backgroundColor: _background,
+      body: SizedBox.expand(
+        child: AnimatedBuilder(
+          animation: progress,
+          builder: (context, _) {
+            final amount = progress.value.clamp(0.0, 1.0);
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isLandscape =
+                    constraints.maxWidth > constraints.maxHeight * 1.15;
+                return Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  decoration: const BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment(0, -0.15),
+                      radius: 1.25,
+                      colors: [
+                        Color(0xFF17313A),
+                        Color(0xFF080B12),
+                        Color(0xFF030407),
                       ],
                     ),
-                    const SizedBox(height: 9),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: SizedBox(
-                        height: 7,
-                        child: Stack(
-                          children: [
-                            const ColoredBox(color: Color(0xFF18252B), child: SizedBox.expand()),
-                            FractionallySizedBox(
-                              widthFactor: amount,
-                              child: const DecoratedBox(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [Color(0xFF7B2CFF), Color(0xFF20FFD0), Color(0xFFB8FF49)],
+                  ),
+                  child: SafeArea(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isLandscape ? 28 : 24,
+                        vertical: isLandscape ? 12 : 24,
+                      ),
+                      child: isLandscape
+                          ? Row(
+                              children: [
+                                Expanded(
+                                  flex: 5,
+                                  child: Center(
+                                    child: _OmniBrandMark(compact: true),
                                   ),
                                 ),
-                                child: SizedBox.expand(),
-                              ),
+                                const SizedBox(width: 28),
+                                Expanded(
+                                  flex: 6,
+                                  child: Center(
+                                    child: ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 480,
+                                      ),
+                                      child: _OmniLoadingProgress(
+                                        amount: amount,
+                                        compact: true,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Column(
+                              children: [
+                                const Spacer(flex: 2),
+                                const _OmniBrandMark(),
+                                const Spacer(flex: 3),
+                                _OmniLoadingProgress(amount: amount),
+                                const Spacer(flex: 2),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
                     ),
-                    const SizedBox(height: 13),
-                    const Text(
-                      'ПОДГОТОВКА МОДУЛЕЙ  •  ЗАГРУЗКА ПРОФИЛЯ',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Color(0xFF8797A2), fontSize: 9, letterSpacing: 1),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text('Версия 1.0.0', style: TextStyle(color: Color(0xFF53616C), fontSize: 10)),
-                  ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _OmniBrandMark extends StatelessWidget {
+  const _OmniBrandMark({this.compact = false});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 20 : 24,
+        vertical: compact ? 12 : 18,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xB5081017),
+        border: Border.all(color: const Color(0xFF31F5B0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF22F0B0).withValues(alpha: 0.2),
+            blurRadius: 28,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'OMNI',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: compact ? 38 : 44,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 8,
+                shadows: [
+                  Shadow(
+                    color: const Color(0xFF2DF8B1).withValues(alpha: 0.8),
+                    blurRadius: 18,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'AI  //  INTELLIGENCE HUB',
+              style: TextStyle(
+                color: Color(0xFF4BFFD0),
+                fontSize: 10,
+                letterSpacing: 3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OmniLoadingProgress extends StatelessWidget {
+  const _OmniLoadingProgress({
+    required this.amount,
+    this.compact = false,
+  });
+
+  final double amount;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'СИСТЕМА ИНИЦИАЛИЗИРУЕТСЯ',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 11,
+            letterSpacing: 2,
+          ),
+        ),
+        SizedBox(height: compact ? 18 : 28),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'ЗАГРУЗКА...',
+                style: TextStyle(
+                  color: Color(0xFF57FFD0),
+                  fontSize: 11,
+                  letterSpacing: 1.5,
                 ),
               ),
             ),
-          );
-        },
-      ),
+            Text(
+              '\${(amount * 100).round()}%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 9),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: SizedBox(
+            height: 7,
+            child: Stack(
+              children: [
+                const ColoredBox(
+                  color: Color(0xFF18252B),
+                  child: SizedBox.expand(),
+                ),
+                FractionallySizedBox(
+                  widthFactor: amount,
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(0xFF7B2CFF),
+                          Color(0xFF20FFD0),
+                          Color(0xFFB8FF49),
+                        ],
+                      ),
+                    ),
+                    child: SizedBox.expand(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 13),
+        const Text(
+          'ПОДГОТОВКА МОДУЛЕЙ  •  ЗАГРУЗКА ПРОФИЛЯ',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Color(0xFF8797A2),
+            fontSize: 9,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Версия 1.0.0',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Color(0xFF53616C),
+            fontSize: 10,
+          ),
+        ),
+      ],
     );
   }
 }
