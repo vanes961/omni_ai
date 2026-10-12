@@ -23,9 +23,7 @@ class RunHistoryRecorder {
 
   ProcessRunRecord? _activeRecord;
   int _observedLogCount = 0;
-  final List<ProcessRunRecord> _writeQueue = [];
   Future<void> _pendingWrites = Future<void>.value();
-  bool _isDrainingWrites = false;
   bool _disposed = false;
 
   void _recordState(SystemCoreProcessState state) {
@@ -74,36 +72,13 @@ class RunHistoryRecorder {
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
-    debugPrint('RUN_HISTORY_DISPOSE: cancelling subscription');
     await _subscription.cancel();
-    debugPrint('RUN_HISTORY_DISPOSE: subscription cancelled');
-    final pendingWrites = _pendingWrites;
-    debugPrint('RUN_HISTORY_DISPOSE: awaiting pending writes');
-    await pendingWrites;
-    debugPrint('RUN_HISTORY_DISPOSE: pending writes complete');
+    await _pendingWrites;
   }
 
   void _save(ProcessRunRecord record) {
-    _writeQueue.add(record);
-    if (_isDrainingWrites) return;
-
-    _isDrainingWrites = true;
-    _pendingWrites = _drainWriteQueue();
-  }
-
-  Future<void> _drainWriteQueue() async {
-    try {
-      while (_writeQueue.isNotEmpty) {
-        final record = _writeQueue.removeAt(0);
-        debugPrint('RUN_HISTORY_SAVE: begin ${record.id}');
-        await _repository.save(record);
-        debugPrint('RUN_HISTORY_SAVE: complete ${record.id}');
-      }
-    } finally {
-      _isDrainingWrites = false;
-      // No await occurs between the empty-queue check and this assignment, so
-      // stream callbacks cannot enqueue work in that interval.
-    }
+    // Chain writes directly so flush/dispose await the exact serialized batch.
+    _pendingWrites = _pendingWrites.then((_) => _repository.save(record));
   }
 
   static bool _isFinished(SystemCoreProcessStatus status) =>
