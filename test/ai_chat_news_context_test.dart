@@ -11,6 +11,8 @@ import 'package:omni_ai/core/ai_engine/providers/ai_execution_mode_store.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
+import 'package:omni_ai/features/ai_memory/models/ai_memory.dart';
+import 'package:omni_ai/features/ai_memory/repositories/ai_memory_repository.dart';
 import 'package:omni_ai/features/run_history/data/in_memory_run_history_repository.dart';
 import 'package:omni_ai/features/system_core/services/system_core_process_service.dart';
 import 'package:omni_ai/providers/openrouter/openrouter_api_key_source.dart';
@@ -70,6 +72,7 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     processService: SystemCoreProcessService(),
     runHistoryRepository: InMemoryRunHistoryRepository(),
     aiExecutionModeStore: _TestExecutionModeStore(),
+    aiMemoryRepository: _TestMemoryRepository(),
     httpClient: MockClient((request) async {
       final payload = jsonDecode(request.body) as Map<String, dynamic>;
       final messages = payload['messages'] as List<dynamic>;
@@ -133,4 +136,18 @@ class _TestExecutionModeStore implements AIExecutionModeStore {
 
   @override
   Future<void> save(AIExecutionMode mode) async {}
+}
+
+class _TestMemoryRepository implements AIMemoryRepository {
+  @override
+  Future<List<AIMemory>> getAll() async => const [];
+
+  @override
+  Future<void> save(AIMemory memory) async {}
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<void> dispose() async {}
 }
