@@ -1488,7 +1488,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   value: _eveningReminder,
                   onChanged: _updatingReminder
                       ? null
-                      : (value) => _setReminder(morning: false, enabled: value),
+                      : (value) =>
+                          _setReminder(morning: false, enabled: value),
                 ),
               ],
               const SizedBox(height: 28),
