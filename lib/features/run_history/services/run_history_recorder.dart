@@ -70,12 +70,24 @@ class RunHistoryRecorder {
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
+    // ignore: avoid_print
+    print('RUN_HISTORY_DISPOSE: subscription cancel start');
     await _subscription.cancel();
+    // ignore: avoid_print
+    print('RUN_HISTORY_DISPOSE: subscription cancel done');
     await flush();
+    // ignore: avoid_print
+    print('RUN_HISTORY_DISPOSE: flush done');
   }
 
   void _save(ProcessRunRecord record) {
-    _pendingWrites = _pendingWrites.then((_) => _repository.save(record));
+    _pendingWrites = _pendingWrites.then((_) async {
+      // ignore: avoid_print
+      print('RUN_HISTORY_SAVE: start ${record.id}');
+      await _repository.save(record);
+      // ignore: avoid_print
+      print('RUN_HISTORY_SAVE: done ${record.id}');
+    });
   }
 
   static bool _isFinished(SystemCoreProcessStatus status) =>
