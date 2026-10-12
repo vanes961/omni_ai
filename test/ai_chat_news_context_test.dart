@@ -103,7 +103,13 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   }
 
   expect(submittedPrompt, isNotNull);
-  expect(find.text('Ответ тестового AI.'), findsOneWidget);
+  expect(
+    find.byWidgetPredicate(
+      (widget) =>
+          widget is SelectableText && widget.data == 'Ответ тестового AI.',
+    ),
+    findsOneWidget,
+  );
   expect(tester.takeException(), isNull);
 
   await tester.pumpWidget(const SizedBox.shrink());
