@@ -66,35 +66,36 @@ void main() {
     );
   });
 
-  testWidgets('startup screen adapts to portrait and landscape without overflow', (
-    WidgetTester tester,
-  ) async {
-    SharedPreferencesAsyncPlatform.instance =
-        InMemorySharedPreferencesAsync.empty();
-    final store = _PendingUserPreferencesStore();
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(400, 800);
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'startup screen adapts to portrait and landscape without overflow',
+    (WidgetTester tester) async {
+      SharedPreferencesAsyncPlatform.instance =
+          InMemorySharedPreferencesAsync.empty();
+      final store = _PendingUserPreferencesStore();
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(400, 800);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(MyApp(preferencesStore: store));
-    await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpWidget(MyApp(preferencesStore: store));
+      await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('СИСТЕМА ИНИЦИАЛИЗИРУЕТСЯ'), findsOneWidget);
-    expect(tester.takeException(), isNull);
+      expect(find.text('СИСТЕМА ИНИЦИАЛИЗИРУЕТСЯ'), findsOneWidget);
+      expect(tester.takeException(), isNull);
 
-    tester.view.physicalSize = const Size(800, 400);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+      tester.view.physicalSize = const Size(800, 400);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('СИСТЕМА ИНИЦИАЛИЗИРУЕТСЯ'), findsOneWidget);
-    expect(tester.takeException(), isNull);
+      expect(find.text('СИСТЕМА ИНИЦИАЛИЗИРУЕТСЯ'), findsOneWidget);
+      expect(tester.takeException(), isNull);
 
-    store.complete(null);
-    await tester.pump(const Duration(seconds: 4));
-    expect(find.byType(DashboardPage), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+      store.complete(null);
+      await tester.pump(const Duration(seconds: 4));
+      expect(find.byType(DashboardPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 class _PendingUserPreferencesStore implements UserPreferencesStore {
@@ -106,7 +107,8 @@ class _PendingUserPreferencesStore implements UserPreferencesStore {
   @override
   Future<void> save(UserPreferences preferences) async {}
 
-  void complete(UserPreferences? preferences) => _completer.complete(preferences);
+  void complete(UserPreferences? preferences) =>
+      _completer.complete(preferences);
 }
 
 class _MemoryUserPreferencesStore implements UserPreferencesStore {
