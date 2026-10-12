@@ -88,25 +88,93 @@ class _MediaPageState extends State<MediaPage> {
           if (isFiltering)
             _buildSearchResults(results)
           else if (widget.searchService.trending.isEmpty)
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(24, 44, 24, 24),
-                child: Column(
-                  children: [
-                    Icon(Icons.travel_explore, size: 42, color: SystemCorePalette.green),
-                    SizedBox(height: 14),
-                    Text(
-                      'МЕДИАКАТАЛОГ НЕ ПОДКЛЮЧЁН',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(22, 28, 22, 28),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        SystemCorePalette.panelElevated,
+                        SystemCorePalette.panel,
+                      ],
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Демо-фильмы и фиктивные озвучки удалены. Для реальных результатов нужен подключённый источник каталога.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: SystemCorePalette.muted, height: 1.45),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: SystemCorePalette.green.withValues(alpha: 0.24),
                     ),
-                  ],
+                    boxShadow: [
+                      BoxShadow(
+                        color: SystemCorePalette.green.withValues(alpha: 0.05),
+                        blurRadius: 28,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 68,
+                        height: 68,
+                        decoration: BoxDecoration(
+                          color: SystemCorePalette.green.withValues(alpha: 0.08),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: SystemCorePalette.green.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.travel_explore,
+                          size: 32,
+                          color: SystemCorePalette.green,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      const Text(
+                        'МЕДИА-КАТАЛОГ НЕ ПОДКЛЮЧЁН',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          letterSpacing: 0.6,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Демо-фильмы и фиктивные озвучки удалены. Для реальных результатов нужен подключённый источник каталога.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: SystemCorePalette.muted,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.shield_outlined,
+                            size: 15,
+                            color: SystemCorePalette.green,
+                          ),
+                          SizedBox(width: 7),
+                          Text(
+                            'БЕЗ ДЕМО-ДАННЫХ',
+                            style: TextStyle(
+                              color: SystemCorePalette.green,
+                              fontSize: 10,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             )
@@ -126,9 +194,25 @@ class _MediaPageState extends State<MediaPage> {
   }
 
   Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            SystemCorePalette.panelElevated,
+            SystemCorePalette.panel,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: SystemCorePalette.green.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         const Text(
           'OMNI AI  //  MEDIA',
           style: TextStyle(
@@ -235,12 +319,13 @@ class _MediaPageState extends State<MediaPage> {
             ],
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 
   OutlineInputBorder _searchBorder() => OutlineInputBorder(
-    borderRadius: BorderRadius.zero,
+    borderRadius: BorderRadius.circular(14),
     borderSide: BorderSide(
       color: SystemCorePalette.muted.withValues(alpha: 0.35),
     ),
