@@ -200,7 +200,6 @@ class _AppStartupPageState extends State<_AppStartupPage>
   }
 }
 
-
 class _OmniLoadingScreen extends StatelessWidget {
   const _OmniLoadingScreen({required this.progress});
 
@@ -350,10 +349,7 @@ class _OmniBrandMark extends StatelessWidget {
 }
 
 class _OmniLoadingProgress extends StatelessWidget {
-  const _OmniLoadingProgress({
-    required this.amount,
-    this.compact = false,
-  });
+  const _OmniLoadingProgress({required this.amount, this.compact = false});
 
   final double amount;
   final bool compact;
@@ -440,10 +436,7 @@ class _OmniLoadingProgress extends StatelessWidget {
         const Text(
           'Версия 1.0.0',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFF53616C),
-            fontSize: 10,
-          ),
+          style: TextStyle(color: Color(0xFF53616C), fontSize: 10),
         ),
       ],
     );
