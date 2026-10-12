@@ -50,13 +50,10 @@ void main() {
 }
 
 Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
-  print('NEWS_TEST checkpoint: helper start');
   SharedPreferences.setMockInitialValues({});
   SharedPreferencesAsyncPlatform.instance =
       InMemorySharedPreferencesAsync.empty();
   final preferences = SharedPreferencesAsync();
-  print('NEWS_TEST checkpoint: preferences created');
-  print('NEWS_TEST checkpoint: writing cache');
   await preferences.setString(
     'omni_ai.news_cache.articles.v1',
     '[{"id":"cached-anime","title":"Saved anime announcement",'
@@ -68,7 +65,6 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     '"isVerified":true,"contentType":"article"}]',
   );
 
-  print('NEWS_TEST checkpoint: cache written');
   String? submittedPrompt;
   final dependencies = AppDependencies(
     apiKeySource: const _TestApiKeySource(),
@@ -100,26 +96,20 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     }),
   );
 
-  print('NEWS_TEST checkpoint: dependencies created');
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(body: AIChatPage(dependencies: dependencies)),
     ),
   );
-  print('NEWS_TEST checkpoint: widget mounted');
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
-  print('NEWS_TEST checkpoint: mode pump finished');
   await tester.enterText(find.byType(TextField), prompt);
-  print('NEWS_TEST checkpoint: prompt entered');
   await tester.tap(find.byTooltip('Отправить'));
-  print('NEWS_TEST checkpoint: send tapped');
   for (var i = 0; i < 30; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  print('NEWS_TEST checkpoint: response pump finished; prompt=$submittedPrompt');
   expect(submittedPrompt, isNotNull);
   expect(
     submittedPrompt,
@@ -128,11 +118,8 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   );
   expect(tester.takeException(), isNull);
 
-  print('NEWS_TEST checkpoint: assertions passed; unmounting');
   await tester.pumpWidget(const SizedBox.shrink());
-  print('NEWS_TEST checkpoint: widget unmounted; disposing dependencies');
   await dependencies.dispose();
-  print('NEWS_TEST checkpoint: dependencies disposed');
   return submittedPrompt!;
 }
 
