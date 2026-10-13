@@ -1,3 +1,5 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 abstract interface class OpenRouterApiKeySource {
   Future<String?> readApiKey();
 }
@@ -24,4 +26,33 @@ class UnconfiguredOpenRouterApiKeySource implements OpenRouterApiKeySource {
 
   @override
   Future<String?> readApiKey() async => null;
+}
+
+/// Mutable key store for a user's own OpenRouter account.
+abstract interface class OpenRouterApiKeyStore implements OpenRouterApiKeySource {
+  Future<void> writeApiKey(String apiKey);
+  Future<void> deleteApiKey();
+}
+
+/// Stores the user's personal key using the platform secure-storage facility.
+class SecureStorageOpenRouterApiKeySource implements OpenRouterApiKeyStore {
+  SecureStorageOpenRouterApiKeySource({FlutterSecureStorage? storage})
+    : _storage = storage ?? const FlutterSecureStorage();
+
+  static const storageKey = 'omni_ai.openrouter_api_key.v1';
+  final FlutterSecureStorage _storage;
+
+  @override
+  Future<String?> readApiKey() async {
+    final value = await _storage.read(key: storageKey);
+    final key = value?.trim();
+    return key == null || key.isEmpty ? null : key;
+  }
+
+  @override
+  Future<void> writeApiKey(String apiKey) =>
+      _storage.write(key: storageKey, value: apiKey.trim());
+
+  @override
+  Future<void> deleteApiKey() => _storage.delete(key: storageKey);
 }
