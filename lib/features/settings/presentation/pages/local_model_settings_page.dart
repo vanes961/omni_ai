@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
+import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
+import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
@@ -36,6 +38,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
   bool _hasCloudKey = false;
   bool _keyLoading = false;
   bool _keySaving = false;
+  bool _cloudTesting = false;
   String? _keyMessage;
 
   @override
@@ -97,6 +100,33 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
       setState(() => _keyMessage = 'Не удалось сохранить ключ: $error');
     } finally {
       if (mounted) setState(() => _keySaving = false);
+    }
+  }
+
+  Future<void> _testCloudConnection() async {
+    final dependencies = widget.aiDependencies;
+    if (dependencies == null || _cloudTesting) return;
+    setState(() {
+      _cloudTesting = true;
+      _keyMessage = 'Проверяем реальный ответ OpenRouter…';
+    });
+    try {
+      final response = await dependencies.cloudProvider
+          .complete(
+            const AIRequest(
+              id: 'openrouter-connection-check',
+              prompt: 'Ответь одним словом: OK',
+            ),
+            cancellationToken: AICancellationToken(),
+          )
+          .timeout(const Duration(seconds: 15));
+      if (!mounted) return;
+      setState(() => _keyMessage = 'Облако отвечает (${response.providerId}, ${response.metadata['model'] ?? 'модель не указана'}).');
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _keyMessage = 'Проверка облака не прошла: $error');
+    } finally {
+      if (mounted) setState(() => _cloudTesting = false);
     }
   }
 
@@ -380,6 +410,25 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                       icon: const Icon(Icons.delete_outline),
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('test-openrouter-connection-button'),
+                    onPressed: !_hasCloudKey || _cloudTesting || _keyLoading
+                        ? null
+                        : _testCloudConnection,
+                    icon: _cloudTesting
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.cloud_done_outlined),
+                    label: Text(
+                      _cloudTesting ? 'ПРОВЕРКА ОБЛАКА…' : 'ПРОВЕРИТЬ ОБЛАЧНЫЙ ИИ',
+                    ),
+                  ),
                 ),
                 Text(
                   _keyLoading
