@@ -40,14 +40,16 @@ class OpenRouterProvider implements AIProvider {
         throw const AIEngineException(
           AIError(
             code: AIErrorCode.invalidRequest,
-            message:
-                'Облачный AI не настроен: нет ключа OpenRouter.',
+            message: 'Облачный AI не настроен: нет ключа OpenRouter.',
           ),
         );
       }
       if (cancellationToken.isCancelled) {
         throw const AIEngineException(
-          AIError(code: AIErrorCode.cancelled, message: 'OpenRouter request cancelled.'),
+          AIError(
+            code: AIErrorCode.cancelled,
+            message: 'OpenRouter request cancelled.',
+          ),
         );
       }
 
