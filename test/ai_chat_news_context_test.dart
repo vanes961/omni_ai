@@ -153,7 +153,7 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   // The AI graph itself is created by AppDependencies and must be closed even
   // though its mock HTTP client and fake local provider are caller-owned.
   _checkpoint('[news-context-test] disposing AI graph');
-  await dependencies.ai.dispose();
+  await tester.runAsync(() => dependencies.ai.dispose());
   _checkpoint('[news-context-test] AI graph disposed; helper complete');
   return submittedPrompt!;
 }
