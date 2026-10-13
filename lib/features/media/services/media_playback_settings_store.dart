@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 abstract interface class MediaPlaybackSettingsStore {
   Future<String?> loadVoiceover(String mediaId);
   Future<void> saveVoiceover(String mediaId, String voiceover);
+  Future<String?> loadQuality(String mediaId);
+  Future<void> saveQuality(String mediaId, String quality);
   Future<Set<String>> loadLikedVoiceovers();
   Future<bool> toggleVoiceoverLike(String voiceover);
 }
@@ -20,6 +22,8 @@ class SharedPreferencesMediaPlaybackSettingsStore
   String _voiceoverKey(String mediaId) =>
       'omni_ai.media_voiceover.v1.$mediaId';
 
+  String _qualityKey(String mediaId) => 'omni_ai.media_quality.v1.$mediaId';
+
   @override
   Future<String?> loadVoiceover(String mediaId) async {
     try {
@@ -34,6 +38,25 @@ class SharedPreferencesMediaPlaybackSettingsStore
   Future<void> saveVoiceover(String mediaId, String voiceover) async {
     try {
       await _preferences.setString(_voiceoverKey(mediaId), voiceover);
+    } on Object {
+      // A preference failure must not interrupt playback.
+    }
+  }
+
+  @override
+  Future<String?> loadQuality(String mediaId) async {
+    try {
+      final value = await _preferences.getString(_qualityKey(mediaId));
+      return value?.trim().isNotEmpty == true ? value : null;
+    } on Object {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveQuality(String mediaId, String quality) async {
+    try {
+      await _preferences.setString(_qualityKey(mediaId), quality);
     } on Object {
       // A preference failure must not interrupt playback.
     }
