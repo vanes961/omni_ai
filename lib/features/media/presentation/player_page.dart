@@ -311,10 +311,7 @@ class _PlayerPageState extends State<PlayerPage> {
                     child: Text(
                       'ОШИБКА ВОСПРОИЗВЕДЕНИЯ: ${_playerError.runtimeType}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
                     ),
                   ),
                 ),
