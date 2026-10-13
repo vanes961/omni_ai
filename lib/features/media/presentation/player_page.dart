@@ -96,10 +96,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     unawaited(_loadWatchedHistory());
-    _progressTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) => unawaited(_saveProgress()),
-    );
+    _progressTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      unawaited(_saveProgress());
+      if (mounted) setState(() {});
+    });
     _selectedVoiceover = widget.searchService.preferredVoiceover(
       widget.item,
       widget.preferences,
@@ -280,6 +280,35 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       _playerError = playerError;
       _isLoading = false;
     });
+  }
+
+  Future<void> _skipIntro(MediaPlaybackController player) async {
+    final target = player.position + const Duration(seconds: 90);
+    await _seekTo(player, target < player.duration ? target : player.duration);
+  }
+
+  Future<void> _skipCredits(MediaPlaybackController player) async {
+    final target = player.duration - const Duration(seconds: 5);
+    await _seekTo(
+      player,
+      target > Duration.zero ? target : Duration.zero,
+    );
+  }
+
+  Future<void> _seekTo(
+    MediaPlaybackController player,
+    Duration position,
+  ) async {
+    try {
+      await player.seekTo(position);
+      if (mounted && identical(_player, player)) {
+        setState(() => _playerError = null);
+      }
+    } on Object catch (error) {
+      if (mounted && identical(_player, player)) {
+        setState(() => _playerError = error);
+      }
+    }
   }
 
   Future<void> _togglePlayback(MediaPlaybackController player) async {
@@ -508,7 +537,44 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                   ),
                 ),
               ),
-            if (player?.isInitialized ?? false)
+            if (player?.isInitialized ?? false) ...[
+              if (player!.position >= const Duration(seconds: 5) &&
+                  player.position <= const Duration(minutes: 5))
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: FilledButton.tonalIcon(
+                    key: const ValueKey('skip-intro-button'),
+                    onPressed: () => _skipIntro(player),
+                    icon: const Icon(Icons.fast_forward, size: 18),
+                    label: const Text('Пропустить вступление'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.black87,
+                      foregroundColor: Colors.white,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
+              if (player.duration > Duration.zero &&
+                  player.duration - player.position <=
+                      const Duration(minutes: 3) &&
+                  player.duration - player.position >
+                      const Duration(seconds: 10))
+                Positioned(
+                  bottom: 58,
+                  right: 8,
+                  child: FilledButton.tonalIcon(
+                    key: const ValueKey('skip-credits-button'),
+                    onPressed: () => _skipCredits(player),
+                    icon: const Icon(Icons.skip_next, size: 18),
+                    label: const Text('Пропустить титры'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.black87,
+                      foregroundColor: Colors.white,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
@@ -516,7 +582,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                   color: Colors.black54,
                   alignment: Alignment.center,
                   child: IconButton(
-                    tooltip: player!.isPlaying ? 'Пауза' : 'Воспроизвести',
+                    tooltip: player.isPlaying ? 'Пауза' : 'Воспроизвести',
                     onPressed: () => _togglePlayback(player),
                     icon: Icon(
                       player.isPlaying ? Icons.pause : Icons.play_arrow,
@@ -525,6 +591,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                   ),
                 ),
               ),
+            ],
           ],
         ),
       ),
