@@ -156,6 +156,51 @@ void main() {
     expect(controllers.last.isDisposed, isFalse);
   });
 
+  testWidgets('disposes every controller when all stream sources fail', (
+    tester,
+  ) async {
+    final playerSources = <Uri>[];
+    final controllers = <_FakePlaybackController>[];
+    final item = MediaItem(
+      id: 'all-sources-fail-test',
+      title: 'All Sources Fail Test',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://primary.example/video.mp4',
+      videoFallbackUrls: const ['https://mirror.example/video.mp4'],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          playerFactory: (source) {
+            playerSources.add(source);
+            final controller = _FakePlaybackController(
+              initializationError: StateError('Initialization failed'),
+            );
+            controllers.add(controller);
+            return controller;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(playerSources, [
+      Uri.parse('https://primary.example/video.mp4'),
+      Uri.parse('https://mirror.example/video.mp4'),
+    ]);
+    expect(controllers, hasLength(2));
+    expect(controllers.every((controller) => controller.isDisposed), isTrue);
+    expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsOneWidget);
+    expect(find.text('StateError'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shows an honest empty state instead of demo media', (
     tester,
   ) async {
