@@ -228,7 +228,7 @@ class _NetworkSettingsPageState extends State<NetworkSettingsPage> {
                     labelText: 'URL сервера',
                     hintText: 'http://192.168.1.20:8090',
                     helperText:
-                        'Для домашней сети можно указать локальный IP. Не добавляйте логин или пароль в URL.',
+                        'Можно указать IP домашней сети. HTTP не шифрует трафик: не открывайте сервер в интернет. Не добавляйте логин или пароль в URL.',
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
