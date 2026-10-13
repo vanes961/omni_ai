@@ -156,14 +156,10 @@ class TorrServerPlaybackResolver {
         .where((file) => patterns.any((pattern) => pattern.hasMatch(file.path)))
         .toList(growable: false);
     if (matches.length == 1) return matches.single;
-    if (matches.isEmpty) {
-      throw StateError(
-        'Could not match episode $episodeNumber to a file in the torrent.',
-      );
+    if (matches.length != 1) {
+      throw TorrServerFileSelectionRequired(videos);
     }
-    throw StateError(
-      'More than one torrent file matches episode $episodeNumber.',
-    );
+    return matches.single;
   }
 
   void close() {
