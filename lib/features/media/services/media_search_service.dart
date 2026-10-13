@@ -177,6 +177,72 @@ class MediaSearchService {
     }
   }
 
+  /// Loads episode metadata for a TMDB TV season. These entries deliberately
+  /// contain no playable URLs; a stream resolver must supply real sources.
+  Future<List<MediaCatalogEpisode>> loadSeasonEpisodes(
+    MediaItem item,
+    int seasonNumber,
+  ) async {
+    if (!isConfigured || !item.id.startsWith('tmdb:tv:') || seasonNumber < 0) {
+      return const [];
+    }
+    final parts = item.id.split(':');
+    if (parts.length != 3 || int.tryParse(parts[2]) == null) {
+      return const [];
+    }
+    final uri = Uri.parse(
+      '$_api/tv/${parts[2]}/season/$seasonNumber',
+    ).replace(queryParameters: {'language': 'ru-RU'});
+    try {
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer ${accessToken.trim()}',
+              'accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 12));
+      if (response.statusCode != 200) return const [];
+      return parseSeasonEpisodes(
+        jsonDecode(response.body),
+        seasonNumber: seasonNumber,
+      );
+    } on Object {
+      return const [];
+    }
+  }
+
+  /// Parses catalog-only episode metadata without inventing stream URLs.
+  static List<MediaCatalogEpisode> parseSeasonEpisodes(
+    Object? payload, {
+    required int seasonNumber,
+  }) {
+    if (payload is! Map<String, dynamic> || payload['episodes'] is! List) {
+      return const [];
+    }
+    final episodes = <MediaCatalogEpisode>[];
+    for (final raw in payload['episodes'] as List) {
+      if (raw is! Map<String, dynamic>) continue;
+      final number = raw['episode_number'];
+      final title = (raw['name'] as String? ?? '').trim();
+      if (number is! num || number <= 0 || title.isEmpty) continue;
+      final still = raw['still_path'] as String?;
+      episodes.add(
+        MediaCatalogEpisode(
+          seasonNumber: seasonNumber,
+          episodeNumber: number.toInt(),
+          title: title,
+          overview: raw['overview'] as String? ?? '',
+          airDate: raw['air_date'] as String? ?? '',
+          stillUrl: still == null ? '' : 'https://image.tmdb.org/t/p/w500$still',
+        ),
+      );
+    }
+    episodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
+    return episodes;
+  }
+
   String? preferredVoiceover(MediaItem item, UserPreferences preferences) {
     for (final p in preferences.voiceDubbing) {
       for (final v in item.voiceovers) {
@@ -202,6 +268,25 @@ class MediaDetails {
   final List<MediaCastMember> cast;
   final int? runtimeMinutes;
   final String releaseDate, backdropUrl, homepage;
+}
+
+/// Descriptive season metadata from a catalog; intentionally not playable.
+class MediaCatalogEpisode {
+  const MediaCatalogEpisode({
+    required this.seasonNumber,
+    required this.episodeNumber,
+    required this.title,
+    required this.overview,
+    required this.airDate,
+    required this.stillUrl,
+  });
+
+  final int seasonNumber;
+  final int episodeNumber;
+  final String title;
+  final String overview;
+  final String airDate;
+  final String stillUrl;
 }
 
 class MediaCastMember {
