@@ -434,10 +434,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     // cleared the old cache but left the news list empty until Refresh was
     // tapped manually.
     final activeProfile = _profile;
-    if (saved &&
-        mounted &&
-        !_loadingNewsCache &&
-        activeProfile != null) {
+    if (saved && mounted && !_loadingNewsCache && activeProfile != null) {
       if (_refreshingNews) {
         // A request for the previous topic selection may still be unwinding.
         // Queue one refresh so saving the new profile cannot leave the feed blank.
