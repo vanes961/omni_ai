@@ -289,10 +289,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   Future<void> _skipCredits(MediaPlaybackController player) async {
     final target = player.duration - const Duration(seconds: 5);
-    await _seekTo(
-      player,
-      target > Duration.zero ? target : Duration.zero,
-    );
+    await _seekTo(player, target > Duration.zero ? target : Duration.zero);
   }
 
   Future<void> _seekTo(
