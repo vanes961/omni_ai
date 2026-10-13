@@ -2,6 +2,7 @@ import '../models/ai_error.dart';
 import '../models/ai_request.dart';
 import '../models/ai_response.dart';
 import 'ai_provider.dart';
+import 'ai_streaming_provider.dart';
 
 /// The explicitly selected destination for AI requests.
 enum AIExecutionMode { local, cloud }
@@ -11,7 +12,7 @@ enum AIExecutionMode { local, cloud }
 /// This deliberately does not retry through the other provider if the selected
 /// provider fails. That prevents local prompts from silently leaving the
 /// device when local inference is unavailable.
-class RoutingAIProvider implements AIProvider {
+class RoutingAIProvider implements AIProvider, AIStreamingProvider {
   RoutingAIProvider({
     required this.localProvider,
     required this.cloudProvider,
@@ -46,4 +47,35 @@ class RoutingAIProvider implements AIProvider {
     };
     return selected.complete(request, cancellationToken: cancellationToken);
   }
+  @override
+  Future<AIResponse> completeStreaming(
+    AIRequest request, {
+    required AICancellationToken cancellationToken,
+    required void Function(String token) onToken,
+  }) async {
+    if (cancellationToken.isCancelled) {
+      throw const AIEngineException(
+        AIError(code: AIErrorCode.cancelled, message: 'AI request cancelled.'),
+      );
+    }
+
+    final selected = switch (mode) {
+      AIExecutionMode.local => localProvider,
+      AIExecutionMode.cloud => cloudProvider,
+    };
+    if (selected is AIStreamingProvider) {
+      return selected.completeStreaming(
+        request,
+        cancellationToken: cancellationToken,
+        onToken: onToken,
+      );
+    }
+    final response = await selected.complete(
+      request,
+      cancellationToken: cancellationToken,
+    );
+    if (response.text.isNotEmpty) onToken(response.text);
+    return response;
+  }
+
 }
