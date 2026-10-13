@@ -227,6 +227,11 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                 SegmentedButton<AIExecutionMode>(
                   segments: const [
                     ButtonSegment(
+                      value: AIExecutionMode.automatic,
+                      icon: Icon(Icons.auto_awesome),
+                      label: Text('Авто'),
+                    ),
+                    ButtonSegment(
                       value: AIExecutionMode.local,
                       icon: Icon(Icons.phone_android),
                       label: Text('Local AI'),
@@ -245,9 +250,14 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  _executionMode == AIExecutionMode.local
-                      ? 'Локальный режим: запросы не отправляются облачному провайдеру. Сначала установите встроенную модель ниже.'
-                      : 'Облачный режим: используется OpenRouter (openrouter/free). До настройки безопасного источника API-ключа облачные запросы могут быть недоступны; ключ не вшивается в APK.',
+                  switch (_executionMode) {
+                    AIExecutionMode.automatic =>
+                      'Авто: команды приложения обрабатываются локально, рекомендации и сложные вопросы направляются в облако. При сбое облака выполняется попытка локального ответа.',
+                    AIExecutionMode.local =>
+                      'Локальный режим: запросы не отправляются облачному провайдеру. Сначала установите встроенную модель ниже.',
+                    AIExecutionMode.cloud =>
+                      'Облачный режим: используется OpenRouter (openrouter/free). Нужен API-ключ; он не должен вшиваться в APK.',
+                  },
                   style: const TextStyle(
                     color: SystemCorePalette.muted,
                     fontSize: 11,
