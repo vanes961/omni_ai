@@ -55,6 +55,22 @@ void main() {
       expect(cloud.calls, 1);
     });
 
+    test('falls back to local when automatic cloud request fails', () async {
+      cloud.failure = StateError('network unavailable');
+
+      final response = await router.complete(
+        AIRequest(
+          id: 'film-offline',
+          prompt: 'Посоветуй фильм с неожиданной концовкой',
+        ),
+        cancellationToken: AICancellationToken(),
+      );
+
+      expect(response.providerId, 'local');
+      expect(cloud.calls, 1);
+      expect(local.calls, 1);
+    });
+
     test('does not fall back when selected local provider fails', () async {
       local.failure = StateError('local model unavailable');
 
