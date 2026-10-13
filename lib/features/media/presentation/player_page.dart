@@ -76,7 +76,8 @@ class _PlayerPageState extends State<PlayerPage> {
     final episode = _hasEpisodes ? widget.item.episodes[episodeIndex] : null;
     final defaultSource = episode?.videoUrl ?? widget.item.videoUrl;
     final availableVoiceovers = _availableVoiceoversFor(episode);
-    final selectedVoiceover = availableVoiceovers.isNotEmpty &&
+    final selectedVoiceover =
+        availableVoiceovers.isNotEmpty &&
             !availableVoiceovers.contains(_selectedVoiceover)
         ? _preferredAvailableVoiceover(availableVoiceovers)
         : _selectedVoiceover;
