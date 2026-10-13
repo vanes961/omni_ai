@@ -43,7 +43,7 @@ class MediaDetailsPage extends StatelessWidget {
                   d!.backdropUrl,
                   height: 180,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 ),
               ),
             const SizedBox(height: 12),
@@ -58,7 +58,7 @@ class MediaDetailsPage extends StatelessWidget {
                       width: 112,
                       height: 166,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
                     ),
                   ),
                 const SizedBox(width: 12),
@@ -138,7 +138,7 @@ class MediaDetailsPage extends StatelessWidget {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: d.cast.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  separatorBuilder: (_, _) => const SizedBox(width: 10),
                   itemBuilder: (context, i) {
                     final a = d.cast[i];
                     return SizedBox(
@@ -162,7 +162,7 @@ class MediaDetailsPage extends StatelessWidget {
                               width: 100,
                               height: 110,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
+                              errorBuilder: (_, _, _) => Container(
                                 width: 100,
                                 height: 110,
                                 color: SystemCorePalette.panel,
