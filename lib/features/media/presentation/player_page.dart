@@ -594,7 +594,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
             ),
           ),
           const SizedBox(height: 20),
-          if (_tracksEpisodeHistory && episodes.isNotEmpty) ...[
+          if (episodes.isNotEmpty) ...[
             Text(
               'ПРОСМОТРЕНО: ${_watchedEpisodes.length} ИЗ ${episodes.length} СЕРИЙ',
               key: const ValueKey('watched-episode-count'),
