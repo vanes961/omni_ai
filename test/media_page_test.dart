@@ -241,6 +241,7 @@ void main() {
       type: 'Фильм',
       posterUrl: '',
       rating: 8,
+      voiceovers: const ['Original'],
       videoUrl: 'https://example.com/video.mp4',
     );
 
