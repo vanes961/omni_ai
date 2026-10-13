@@ -238,7 +238,9 @@ class TorrServerClient {
 
     final decoded = jsonDecode(response.body);
     if (decoded is! Map) {
-      throw const FormatException('TorrServer returned an unexpected response.');
+      throw const FormatException(
+        'TorrServer returned an unexpected response.',
+      );
     }
     return Map<String, dynamic>.from(decoded);
   }
