@@ -40,6 +40,7 @@ class AIDependencies {
       ownsLocalModelStorage: ownsLocalModelStorage,
       localProvider: local,
       cloudProvider: cloud,
+      apiKeySource: apiKeySource ?? const UnconfiguredOpenRouterApiKeySource(),
       router: router,
       modeStore: modeStore ?? SharedPreferencesAIExecutionModeStore(),
     );
@@ -52,6 +53,7 @@ class AIDependencies {
     required this.ownsLocalModelStorage,
     required this.localProvider,
     required this.cloudProvider,
+    required this.apiKeySource,
     required this.router,
     required this.modeStore,
   }) {
@@ -68,6 +70,7 @@ class AIDependencies {
   final bool ownsLocalModelStorage;
   final AIProvider localProvider;
   final OpenRouterProvider cloudProvider;
+  final OpenRouterApiKeySource apiKeySource;
   final RoutingAIProvider router;
   final AIExecutionModeStore modeStore;
   late final AIEngine engine;
@@ -76,6 +79,28 @@ class AIDependencies {
   bool _modeLoaded = false;
 
   AIExecutionMode get executionMode => router.mode;
+
+  Future<bool> get hasCloudApiKey async =>
+      (await apiKeySource.readApiKey())?.isNotEmpty == true;
+
+  Future<void> saveCloudApiKey(String apiKey) async {
+    final store = apiKeySource;
+    if (store is! OpenRouterApiKeyStore) {
+      throw StateError('Безопасное хранилище облачного ключа не настроено.');
+    }
+    if (apiKey.trim().isEmpty) {
+      throw ArgumentError.value(apiKey, 'apiKey', 'Ключ не может быть пустым.');
+    }
+    await store.writeApiKey(apiKey);
+  }
+
+  Future<void> deleteCloudApiKey() async {
+    final store = apiKeySource;
+    if (store is! OpenRouterApiKeyStore) {
+      throw StateError('Безопасное хранилище облачного ключа не настроено.');
+    }
+    await store.deleteApiKey();
+  }
 
   /// Restores the saved destination before the first provider sees a prompt.
   Future<void> restoreExecutionMode() {
