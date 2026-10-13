@@ -1156,8 +1156,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                 ),
               ],
               if (profile.topics.isEmpty &&
-                  !profile.includeCriticalOutsideInterests &&
-                  _newsError == null) ...[
+                  !profile.includeCriticalOutsideInterests) ...[
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
                   onPressed: _scrollToInterests,
