@@ -698,6 +698,8 @@ void main() {
       160,
       scrollable: find.byKey(const ValueKey('player-page-scroll')),
     );
+    await tester.ensureVisible(find.byKey(const ValueKey('quality-selector')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('quality-selector')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('1080p').last);
@@ -710,6 +712,8 @@ void main() {
       160,
       scrollable: find.byKey(const ValueKey('player-page-scroll')),
     );
+    await tester.ensureVisible(find.byKey(const ValueKey('voiceover-like-button')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('voiceover-like-button')));
     await tester.pumpAndSettle();
     expect(settings.likedVoiceovers, contains('Studio A'));
