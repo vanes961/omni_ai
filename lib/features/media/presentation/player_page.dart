@@ -608,7 +608,33 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
             ),
             const SizedBox(height: 12),
           ],
-          if (episodes.length > 1) ...[
+          if (episodes.map((episode) => episode.seasonNumber).toSet().length > 1) ...[
+            const _PlayerSectionLabel('ВЫБОР СЕЗОНА'),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<int>(
+              key: const ValueKey('season-selector'),
+              initialValue: episodes[_selectedEpisode].seasonNumber,
+              isExpanded: true,
+              dropdownColor: SystemCorePalette.panel,
+              decoration: _selectorDecoration(),
+              items: [
+                for (final season in (episodes.map((episode) => episode.seasonNumber).toSet().toList()..sort()))
+                  DropdownMenuItem(
+                    value: season,
+                    child: Text('СЕЗОН ${season.toString().padLeft(2, '0')}'),
+                  ),
+              ],
+              onChanged: (season) {
+                if (season == null) return;
+                final firstEpisode = episodes.indexWhere((episode) => episode.seasonNumber == season);
+                if (firstEpisode >= 0 && firstEpisode != _selectedEpisode) {
+                  _loadEpisode(firstEpisode);
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (episodes.where((episode) => episode.seasonNumber == episodes[_selectedEpisode].seasonNumber).length > 1) ...[
             const _PlayerSectionLabel('ВЫБОР СЕРИИ'),
             const SizedBox(height: 8),
             DropdownButtonFormField<int>(
@@ -619,7 +645,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
               decoration: _selectorDecoration(),
               items: [
                 for (var index = 0; index < episodes.length; index++)
-                  DropdownMenuItem(
+                  if (episodes[index].seasonNumber == episodes[_selectedEpisode].seasonNumber)
+                    DropdownMenuItem(
                     value: index,
                     child: Text(
                       '${_watchedEpisodes.contains(index) ? '✓  ' : ''}${episodes[index].label}',
