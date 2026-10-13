@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -55,7 +54,7 @@ void main() {
 }
 
 Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
-  developer.log('[news-context-test] helper entered');
+  _checkpoint('[news-context-test] helper entered');
   SharedPreferences.setMockInitialValues({});
   SharedPreferencesAsyncPlatform.instance =
       InMemorySharedPreferencesAsync.empty();
@@ -71,7 +70,7 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     '"isVerified":true,"contentType":"article"}]',
   );
 
-  developer.log('[news-context-test] cached news written');
+  _checkpoint('[news-context-test] cached news written');
   String? submittedPrompt;
   final dependencies = AppDependencies(
     apiKeySource: const _TestApiKeySource(),
@@ -104,7 +103,7 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     }),
   );
 
-  developer.log('[news-context-test] dependencies composed');
+  _checkpoint('[news-context-test] dependencies composed');
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(body: AIChatPage(dependencies: dependencies)),
@@ -113,16 +112,16 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
-  developer.log('[news-context-test] initial widget pumps complete');
+  _checkpoint('[news-context-test] initial widget pumps complete');
   await tester.enterText(find.byType(TextField), prompt);
-  developer.log('[news-context-test] prompt entered');
+  _checkpoint('[news-context-test] prompt entered');
   await tester.tap(find.byTooltip('Отправить'));
-  developer.log('[news-context-test] send tapped');
+  _checkpoint('[news-context-test] send tapped');
   for (var i = 0; i < 30; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  developer.log('[news-context-test] send pumps complete; submittedPrompt=${submittedPrompt != null}');
+  _checkpoint('[news-context-test] send pumps complete; submittedPrompt=${submittedPrompt != null}');
   expect(submittedPrompt, isNotNull);
   expect(
     submittedPrompt,
@@ -131,28 +130,28 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   );
   expect(tester.takeException(), isNull);
 
-  developer.log('[news-context-test] beginning widget teardown');
+  _checkpoint('[news-context-test] beginning widget teardown');
   await tester.pumpWidget(const SizedBox.shrink());
-  developer.log('[news-context-test] widget teardown complete');
+  _checkpoint('[news-context-test] widget teardown complete');
   // Drain widget teardown before disposing the injected dependencies.
   await tester.pump();
-  developer.log('[news-context-test] disposing orchestrator');
+  _checkpoint('[news-context-test] disposing orchestrator');
   await dependencies.orchestrator.dispose().timeout(
     const Duration(seconds: 5),
     onTimeout: () => throw TimeoutException('Orchestrator disposal timed out.'),
   );
   // The test injects the process service, so AppDependencies leaves it to the
   // caller. Close its broadcast stream after the recorder subscription drains.
-  developer.log('[news-context-test] disposing process service');
+  _checkpoint('[news-context-test] disposing process service');
   await dependencies.processService.dispose().timeout(
     const Duration(seconds: 5),
     onTimeout: () => throw TimeoutException('Process service disposal timed out.'),
   );
   // The AI graph itself is created by AppDependencies and must be closed even
   // though its mock HTTP client and fake local provider are caller-owned.
-  developer.log('[news-context-test] disposing AI graph');
+  _checkpoint('[news-context-test] disposing AI graph');
   await dependencies.ai.dispose();
-  developer.log('[news-context-test] AI graph disposed; helper complete');
+  _checkpoint('[news-context-test] AI graph disposed; helper complete');
   return submittedPrompt!;
 }
 
@@ -199,4 +198,9 @@ class _TestMemoryRepository implements AIMemoryRepository {
 
   @override
   Future<void> dispose() async {}
+}
+
+void _checkpoint(String message) {
+  // ignore: avoid_print
+  print(message);
 }
