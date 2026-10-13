@@ -324,16 +324,16 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     await tester.tap(find.byKey(const ValueKey('episode-selector')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.textContaining('Second').last);
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(playerSources.last, Uri.parse('https://example.com/second.mp4'));
     expect(controllers, hasLength(2));
     expect(controllers[1].isDisposed, isFalse);
 
     firstInitialization.complete();
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(controllers.first.isDisposed, isTrue);
     expect(controllers[1].isDisposed, isFalse);
