@@ -258,9 +258,9 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     await tester.tap(find.byKey(const ValueKey('episode-selector')));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.textContaining('Second').last);
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(
       playerSources.last,
       Uri.parse('https://example.com/studio-a-second.mp4'),
