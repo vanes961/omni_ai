@@ -903,10 +903,15 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     final sources = episodeSources.isNotEmpty
         ? episodeSources
         : widget.item.voiceoverVideoUrls;
+    final variants = _availableVideoSourcesFor(episode);
     return [
       for (final voiceover in widget.item.voiceovers)
-        if (sources.containsKey(voiceover) &&
-            sources[voiceover]!.trim().isNotEmpty)
+        if ((sources.containsKey(voiceover) &&
+                sources[voiceover]!.trim().isNotEmpty) ||
+            variants.any(
+              (source) =>
+                  source.voiceover == voiceover && source.url.trim().isNotEmpty,
+            ))
           voiceover,
     ];
   }
