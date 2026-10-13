@@ -6,6 +6,7 @@ import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_resume_position_store.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
+import 'package:omni_ai/features/media/services/media_segment_marker_store.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 import 'package:video_player/video_player.dart';
@@ -39,6 +40,7 @@ class PlayerPage extends StatefulWidget {
     this.searchService = const MediaSearchService(),
     this.playerFactory,
     this.resumePositionStore,
+    this.segmentMarkerStore,
     super.key,
   });
 
@@ -47,6 +49,7 @@ class PlayerPage extends StatefulWidget {
   final MediaSearchService searchService;
   final MediaPlayerFactory? playerFactory;
   final MediaResumePositionStore? resumePositionStore;
+  final MediaSegmentMarkerStore? segmentMarkerStore;
 
   @override
   State<PlayerPage> createState() => _PlayerPageState();
@@ -62,6 +65,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   Timer? _progressTimer;
   final Set<int> _resumePromptedEpisodes = <int>{};
   final Set<int> _watchedEpisodes = <int>{};
+  List<MediaSegmentMarker> _segmentMarkers = const [];
+  final Map<MediaSegmentType, Duration> _pendingSegmentStarts = {};
 
   bool get _tracksEpisodeHistory {
     final type = widget.item.type.toLowerCase();
@@ -88,6 +93,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   MediaResumePositionStore get _resumeStore =>
       widget.resumePositionStore ?? SharedPreferencesMediaResumePositionStore();
+
+  MediaSegmentMarkerStore get _segmentStore =>
+      widget.segmentMarkerStore ?? SharedPreferencesMediaSegmentMarkerStore();
 
   bool get _hasEpisodes => widget.item.episodes.isNotEmpty;
 
@@ -241,6 +249,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     unawaited(_saveProgress(player: oldPlayer, episodeIndex: _selectedEpisode));
     setState(() {
       _selectedEpisode = episodeIndex;
+      _segmentMarkers = const [];
+      _pendingSegmentStarts.clear();
       if (selectedVoiceover != null) {
         _selectedVoiceover = selectedVoiceover;
       }
@@ -249,6 +259,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       _player = null;
     });
     await _disposePlayer(oldPlayer);
+    final savedMarkers = await _segmentStore.load(widget.item.id, episodeIndex);
+    if (!mounted || generation != _playerGeneration) return;
+    setState(() => _segmentMarkers = savedMarkers);
 
     Object? playerError;
     for (var index = 0; index < sources.length; index++) {
@@ -280,6 +293,111 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       _playerError = playerError;
       _isLoading = false;
     });
+  }
+
+  MediaSegmentMarker? _activeMarker(
+    MediaSegmentType type,
+    MediaPlaybackController player,
+  ) {
+    for (final marker in _segmentMarkers) {
+      if (marker.type == type &&
+          player.position >= marker.start &&
+          player.position < marker.end) {
+        return marker;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _skipSegment(
+    MediaPlaybackController player,
+    MediaSegmentMarker marker,
+  ) => _seekTo(player, marker.end);
+
+  Future<void> _setSegmentBoundary(
+    MediaSegmentType type, {
+    required bool isStart,
+  }) async {
+    final player = _player;
+    if (player == null || !player.isInitialized) return;
+    final position = player.position;
+    if (isStart) {
+      setState(() => _pendingSegmentStarts[type] = position);
+      return;
+    }
+    final start = _pendingSegmentStarts.remove(type);
+    if (start == null || position <= start) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Сначала отметьте начало сегмента.')),
+        );
+      }
+      return;
+    }
+    final marker = MediaSegmentMarker(type: type, start: start, end: position);
+    final markers = [
+      ..._segmentMarkers.where((item) => item.type != type),
+      marker,
+    ]..sort((a, b) => a.start.compareTo(b.start));
+    await _segmentStore.save(widget.item.id, _selectedEpisode, markers);
+    if (!mounted) return;
+    setState(() => _segmentMarkers = markers);
+  }
+
+  Widget _buildSegmentEditor() {
+    return ExpansionTile(
+      key: const ValueKey('segment-marker-editor'),
+      collapsedIconColor: SystemCorePalette.green,
+      iconColor: SystemCorePalette.green,
+      title: const Text(
+        'РАЗМЕТКА ВСТУПЛЕНИЯ И ТИТРОВ',
+        style: TextStyle(
+          color: SystemCorePalette.muted,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      children: [
+        for (final type in MediaSegmentType.values) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                type == MediaSegmentType.intro ? 'Вступление' : 'Финальные титры',
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
+          Wrap(
+            spacing: 8,
+            children: [
+              OutlinedButton(
+                key: ValueKey('mark-${type.name}-start'),
+                onPressed: () => _setSegmentBoundary(type, isStart: true),
+                child: Text(
+                  _pendingSegmentStarts.containsKey(type)
+                      ? 'Начало отмечено'
+                      : 'Отметить начало',
+                ),
+              ),
+              OutlinedButton(
+                key: ValueKey('mark-${type.name}-end'),
+                onPressed: () => _setSegmentBoundary(type, isStart: false),
+                child: const Text('Отметить конец'),
+              ),
+            ],
+          ),
+        ],
+        const Padding(
+          padding: EdgeInsets.all(12),
+          child: Text(
+            'Метки сохраняются для выбранного фильма или серии и используются при следующем просмотре.',
+            style: TextStyle(color: SystemCorePalette.muted, fontSize: 11),
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _skipIntro(MediaPlaybackController player) async {
@@ -348,6 +466,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
           _buildPlayerSurface(),
+          if (_player?.isInitialized ?? false) _buildSegmentEditor(),
           const SizedBox(height: 18),
           Text(
             widget.item.title,
@@ -535,14 +654,13 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                 ),
               ),
             if (player?.isInitialized ?? false) ...[
-              if (player!.position >= const Duration(seconds: 5) &&
-                  player.position <= const Duration(minutes: 5))
+              if (_activeMarker(MediaSegmentType.intro, player) case final marker?)
                 Positioned(
                   top: 8,
                   right: 8,
                   child: FilledButton.tonalIcon(
                     key: const ValueKey('skip-intro-button'),
-                    onPressed: () => _skipIntro(player),
+                    onPressed: () => _skipSegment(player, marker),
                     icon: const Icon(Icons.fast_forward, size: 18),
                     label: const Text('Пропустить вступление'),
                     style: FilledButton.styleFrom(
@@ -552,17 +670,14 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                     ),
                   ),
                 ),
-              if (player.duration > Duration.zero &&
-                  player.duration - player.position <=
-                      const Duration(minutes: 3) &&
-                  player.duration - player.position >
-                      const Duration(seconds: 10))
+              if (_activeMarker(MediaSegmentType.credits, player)
+                  case final marker?)
                 Positioned(
                   bottom: 58,
                   right: 8,
                   child: FilledButton.tonalIcon(
                     key: const ValueKey('skip-credits-button'),
-                    onPressed: () => _skipCredits(player),
+                    onPressed: () => _skipSegment(player, marker),
                     icon: const Icon(Icons.skip_next, size: 18),
                     label: const Text('Пропустить титры'),
                     style: FilledButton.styleFrom(
