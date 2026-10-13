@@ -274,6 +274,21 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         : '${position.inMinutes}:$seconds';
   }
 
+  String _formatTorrentFileSize(int bytes) {
+    const megabyte = 1024 * 1024;
+    const gigabyte = 1024 * megabyte;
+    if (bytes >= gigabyte) {
+      return '${(bytes / gigabyte).toStringAsFixed(1)} ГБ';
+    }
+    if (bytes >= megabyte) {
+      return '${(bytes / megabyte).toStringAsFixed(0)} МБ';
+    }
+    if (bytes >= 1024) {
+      return '${(bytes / 1024).toStringAsFixed(0)} КБ';
+    }
+    return '$bytes Б';
+  }
+
   Future<int?> _chooseTorrServerFile(
     TorrServerFileSelectionRequired selection,
   ) {
@@ -283,17 +298,22 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         title: const Text('ВЫБЕРИТЕ ВИДЕОФАЙЛ'),
         content: SizedBox(
           width: double.maxFinite,
+          height: MediaQuery.sizeOf(dialogContext).height * 0.55,
           child: ListView.separated(
-            shrinkWrap: true,
             itemCount: selection.files.length,
             separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final file = selection.files[index];
-              final parts = file.path.split('/');
+              final normalizedPath = file.path.replaceAll('\\\\', '/');
+              final parts = normalizedPath.split('/');
               final name = parts.isEmpty ? file.path : parts.last;
               return ListTile(
-                title: Text(name),
-                subtitle: Text(file.path),
+                title: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis),
+                subtitle: Text(
+                  '${file.path}\n${_formatTorrentFileSize(file.length)}',
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 onTap: () => Navigator.of(dialogContext).pop(file.id),
               );
             },
