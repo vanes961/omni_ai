@@ -146,7 +146,7 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
     required void Function(String token) onToken,
   }) async {
     if (selected is AIStreamingProvider) {
-      return selected.completeStreaming(
+      return (selected as AIStreamingProvider).completeStreaming(
         request,
         cancellationToken: cancellationToken,
         onToken: onToken,
