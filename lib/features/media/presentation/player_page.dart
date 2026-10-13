@@ -608,7 +608,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
             ),
             const SizedBox(height: 12),
           ],
-          if (episodes.map((episode) => episode.seasonNumber).toSet().length >
+          if (episodes
+                  .map((episode) => episode.seasonNumber)
+                  .toSet()
+                  .length >
               1) ...[
             const _PlayerSectionLabel('ВЫБОР СЕЗОНА'),
             const SizedBox(height: 8),
