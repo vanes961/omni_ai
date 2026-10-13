@@ -57,7 +57,10 @@ class SharedPreferencesMediaResumePositionStore
       return;
     }
     try {
-      await _preferences.setInt(_key(mediaId, episodeIndex), position.inMilliseconds);
+      await _preferences.setInt(
+        _key(mediaId, episodeIndex),
+        position.inMilliseconds,
+      );
     } on Object {
       // A storage error must not interrupt playback.
     }
