@@ -10,6 +10,7 @@ import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
 import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
+import 'package:omni_ai/features/media/services/media_like_repository.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
@@ -33,9 +34,12 @@ class MediaPage extends StatefulWidget {
 class _MediaPageState extends State<MediaPage> {
   final TextEditingController _searchController = TextEditingController();
   final FavoritesRepository _favoritesRepository = FavoritesRepository();
+  final MediaLikeRepository _likeRepository = MediaLikeRepository();
   final FavoriteInterestAnalytics _interestAnalytics =
       const FavoriteInterestAnalytics();
   List<FavoriteItem> _favoriteItems = const <FavoriteItem>[];
+  List<FavoriteItem> _likedItems = const <FavoriteItem>[];
+  Set<String> _likedIds = <String>{};
   String _query = '';
   String? _selectedType;
   Timer? _searchDebounce;
@@ -52,15 +56,20 @@ class _MediaPageState extends State<MediaPage> {
   Future<void> _loadFavoriteInterests() async {
     try {
       final items = await _favoritesRepository.getAll();
+      final liked = await _likeRepository.getAll();
       if (!mounted) return;
-      setState(() => _favoriteItems = items);
+      setState(() {
+        _favoriteItems = items;
+        _likedItems = liked;
+        _likedIds = liked.map((item) => item.id).toSet();
+      });
     } catch (_) {
       // Search remains usable if local favorite analytics cannot be read.
     }
   }
 
   List<MediaItem> _rankByFavoriteInterests(List<MediaItem> items) {
-    final profile = _interestAnalytics.analyze(_favoriteItems);
+    final profile = _interestAnalytics.analyze([..._favoriteItems, ..._likedItems]);
     return _interestAnalytics.rank(items, profile);
   }
 
@@ -402,6 +411,8 @@ class _MediaPageState extends State<MediaPage> {
                         ? null
                         : () => _openPlayer(item),
                     onFavorite: () => _saveFavorite(item),
+                    isLiked: _likedIds.contains(item.id),
+                    onLike: () => _toggleLike(item),
                   );
                 },
               ),
@@ -447,6 +458,8 @@ class _MediaPageState extends State<MediaPage> {
                     item: item,
                     onTap: () => _openPlayer(item),
                     onFavorite: () => _saveFavorite(item),
+                    isLiked: _likedIds.contains(item.id),
+                    onLike: () => _toggleLike(item),
                   );
                 },
               ),
@@ -482,6 +495,39 @@ class _MediaPageState extends State<MediaPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('«${item.title}» добавлено в «${category.label}»'),
+      ),
+    );
+  }
+
+  Future<void> _toggleLike(MediaItem item) async {
+    final category = switch (item.type.toLowerCase()) {
+      'фильм' || 'movie' => FavoriteCategory.movie,
+      'сериал' || 'series' => FavoriteCategory.series,
+      'аниме' || 'anime' => FavoriteCategory.anime,
+      _ => null,
+    };
+    if (category == null) return;
+    final liked = await _likeRepository.toggle(
+      FavoriteItem(
+        id: item.id,
+        title: item.title,
+        category: category,
+        addedAt: DateTime.now(),
+        description: item.description,
+        interests: item.categories,
+        imageUrl: item.posterUrl.isEmpty ? null : item.posterUrl,
+        sourceUrl: item.videoUrl.isEmpty ? null : item.videoUrl,
+      ),
+    );
+    await _loadFavoriteInterests();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          liked
+              ? 'Лайк сохранён — рекомендации будут учитывать этот интерес'
+              : 'Лайк убран из анализа интересов',
+        ),
       ),
     );
   }
@@ -548,11 +594,15 @@ class _MediaPosterCard extends StatelessWidget {
     required this.item,
     required this.onTap,
     required this.onFavorite,
+    required this.isLiked,
+    required this.onLike,
   });
 
   final MediaItem item;
   final VoidCallback onTap;
   final VoidCallback onFavorite;
+  final bool isLiked;
+  final VoidCallback onLike;
 
   @override
   Widget build(BuildContext context) {
@@ -578,10 +628,24 @@ class _MediaPosterCard extends StatelessWidget {
                     Positioned(
                       top: 4,
                       right: 4,
-                      child: IconButton.filledTonal(
-                        tooltip: 'В избранное',
-                        onPressed: onFavorite,
-                        icon: const Icon(Icons.favorite_border, size: 18),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton.filledTonal(
+                            tooltip: 'В избранное',
+                            onPressed: onFavorite,
+                            icon: const Icon(Icons.favorite_border, size: 18),
+                          ),
+                          IconButton.filledTonal(
+                            tooltip: isLiked ? 'Убрать лайк' : 'Нравится',
+                            onPressed: onLike,
+                            icon: Icon(
+                              isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                              size: 17,
+                              color: isLiked ? SystemCorePalette.green : null,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -636,11 +700,15 @@ class _MediaResultTile extends StatelessWidget {
     required this.item,
     required this.onTap,
     required this.onFavorite,
+    required this.isLiked,
+    required this.onLike,
   });
 
   final MediaItem item;
   final VoidCallback? onTap;
   final VoidCallback onFavorite;
+  final bool isLiked;
+  final VoidCallback onLike;
 
   @override
   Widget build(BuildContext context) {
@@ -698,10 +766,23 @@ class _MediaResultTile extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                tooltip: 'В избранное',
-                onPressed: onFavorite,
-                icon: const Icon(Icons.favorite_border),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'В избранное',
+                    onPressed: onFavorite,
+                    icon: const Icon(Icons.favorite_border),
+                  ),
+                  IconButton(
+                    tooltip: isLiked ? 'Убрать лайк' : 'Нравится',
+                    onPressed: onLike,
+                    icon: Icon(
+                      isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                      color: isLiked ? SystemCorePalette.green : null,
+                    ),
+                  ),
+                ],
               ),
               if (onTap != null)
                 const Icon(Icons.chevron_right, color: SystemCorePalette.muted),
