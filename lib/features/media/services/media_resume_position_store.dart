@@ -11,6 +11,10 @@ abstract interface class MediaResumePositionStore {
   );
 
   Future<void> clear(String mediaId, int episodeIndex);
+
+  Future<Set<int>> loadWatchedEpisodes(String mediaId);
+
+  Future<void> markEpisodeWatched(String mediaId, int episodeIndex);
 }
 
 class SharedPreferencesMediaResumePositionStore
@@ -47,6 +51,7 @@ class SharedPreferencesMediaResumePositionStore
     if (duration > Duration.zero &&
         remaining <= const Duration(seconds: 15)) {
       await clear(mediaId, episodeIndex);
+      await markEpisodeWatched(mediaId, episodeIndex);
       return;
     }
     try {
@@ -55,6 +60,38 @@ class SharedPreferencesMediaResumePositionStore
       // A storage error must not interrupt playback.
     }
   }
+
+  @override
+  Future<Set<int>> loadWatchedEpisodes(String mediaId) async {
+    try {
+      final values = await _store.getStringList(_watchedKey(mediaId));
+      return values
+              ?.map(int.tryParse)
+              .whereType<int>()
+              .toSet() ??
+          <int>{};
+    } on Object {
+      return <int>{};
+    }
+  }
+
+  @override
+  Future<void> markEpisodeWatched(String mediaId, int episodeIndex) async {
+    try {
+      final watched = await loadWatchedEpisodes(mediaId);
+      if (watched.add(episodeIndex)) {
+        await _store.setStringList(
+          _watchedKey(mediaId),
+          watched.map((index) => index.toString()).toList(),
+        );
+      }
+    } on Object {
+      // History must never interrupt playback.
+    }
+  }
+
+  String _watchedKey(String mediaId) =>
+      'omni_ai.media_watched_episodes.v1.$mediaId';
 
   @override
   Future<void> clear(String mediaId, int episodeIndex) async {
