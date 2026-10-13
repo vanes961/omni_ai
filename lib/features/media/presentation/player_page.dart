@@ -62,6 +62,30 @@ class _PlayerPageState extends State<PlayerPage>
   int _playerGeneration = 0;
   Timer? _progressTimer;
   final Set<int> _resumePromptedEpisodes = <int>{};
+  final Set<int> _watchedEpisodes = <int>{};
+
+  bool get _tracksEpisodeHistory {
+    final type = widget.item.type.toLowerCase();
+    return type.contains('сериал') ||
+        type.contains('аниме') ||
+        type.contains('series') ||
+        type.contains('anime');
+  }
+
+  Future<void> _loadWatchedHistory() async {
+    if (!_tracksEpisodeHistory || !_hasEpisodes) return;
+    final watched = await _resumeStore.loadWatchedEpisodes(widget.item.id);
+    if (!mounted) return;
+    setState(() {
+      _watchedEpisodes
+        ..clear()
+        ..addAll(
+          watched.where(
+            (index) => index >= 0 && index < widget.item.episodes.length,
+          ),
+        );
+    });
+  }
 
   MediaResumePositionStore get _resumeStore =>
       widget.resumePositionStore ?? SharedPreferencesMediaResumePositionStore();
@@ -72,6 +96,7 @@ class _PlayerPageState extends State<PlayerPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    unawaited(_loadWatchedHistory());
     _progressTimer = Timer.periodic(
       const Duration(seconds: 5),
       (_) => unawaited(_saveProgress()),
@@ -106,12 +131,25 @@ class _PlayerPageState extends State<PlayerPage>
   }) async {
     final activePlayer = player ?? _player;
     if (activePlayer == null || !activePlayer.isInitialized) return;
+    final index = episodeIndex ?? _selectedEpisode;
     await _resumeStore.save(
       widget.item.id,
-      episodeIndex ?? _selectedEpisode,
+      index,
       activePlayer.position,
       activePlayer.duration,
     );
+    final remaining = activePlayer.duration - activePlayer.position;
+    if (_tracksEpisodeHistory &&
+        _hasEpisodes &&
+        activePlayer.duration > Duration.zero &&
+        remaining <= const Duration(seconds: 15) &&
+        index >= 0 &&
+        index < widget.item.episodes.length) {
+      await _resumeStore.markEpisodeWatched(widget.item.id, index);
+      if (mounted && _watchedEpisodes.add(index)) {
+        setState(() {});
+      }
+    }
   }
 
   Future<void> _offerResumeIfAvailable(
@@ -301,6 +339,19 @@ class _PlayerPageState extends State<PlayerPage>
             ),
           ),
           const SizedBox(height: 20),
+          if (_tracksEpisodeHistory && episodes.isNotEmpty) ...[
+            Text(
+              'ПРОСМОТРЕНО: ${_watchedEpisodes.length} ИЗ ${episodes.length} СЕРИЙ',
+              key: const ValueKey('watched-episode-count'),
+              style: const TextStyle(
+                color: SystemCorePalette.green,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           if (episodes.length > 1) ...[
             const _PlayerSectionLabel('ВЫБОР СЕРИИ'),
             const SizedBox(height: 8),
@@ -315,7 +366,7 @@ class _PlayerPageState extends State<PlayerPage>
                   DropdownMenuItem(
                     value: index,
                     child: Text(
-                      episodes[index].label,
+                      '${_watchedEpisodes.contains(index) ? '✓  ' : ''}${episodes[index].label}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
