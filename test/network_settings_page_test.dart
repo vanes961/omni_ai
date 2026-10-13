@@ -89,6 +89,47 @@ void main() {
     expect(restored?.autoMirrorEnabled, isFalse);
   });
 
+  testWidgets('saves the TorrServer URL and validates empty endpoint', (
+    tester,
+  ) async {
+    final keyValueStore = _MemoryStringStore();
+    final preferences = UserPreferences();
+    final preferencesStore = SharedPreferencesUserPreferencesStore(
+      store: keyValueStore,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: NetworkSettingsPage(
+            preferences: preferences,
+            preferencesStore: preferencesStore,
+            mirrors: [Uri.https('mirror.example', '/')],
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final urlField = find.byKey(const ValueKey('torrserver-url-field'));
+    await tester.ensureVisible(urlField);
+    await tester.enterText(urlField, 'http://192.168.1.20:8090');
+    await tester.pumpAndSettle();
+    expect(preferences.torrServerUrl, 'http://192.168.1.20:8090');
+
+    final restored = await preferencesStore.load();
+    expect(restored?.torrServerUrl, 'http://192.168.1.20:8090');
+
+    await tester.enterText(urlField, '');
+    await tester.pumpAndSettle();
+    final checkButton = find.byKey(const ValueKey('check-torrserver-button'));
+    await tester.ensureVisible(checkButton);
+    await tester.tap(checkButton);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('корректный адрес'), findsOneWidget);
+  });
+
   testWidgets('shows an unavailable transport instead of throwing', (
     tester,
   ) async {
