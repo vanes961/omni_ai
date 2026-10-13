@@ -4,6 +4,7 @@ import '../models/ai_error.dart';
 import '../models/ai_request.dart';
 import '../models/ai_response.dart';
 import '../providers/ai_provider.dart';
+import '../providers/ai_streaming_provider.dart';
 
 class AIEngine {
   const AIEngine({
@@ -21,6 +22,7 @@ class AIEngine {
   Future<AIResponse> execute(
     AIRequest request, {
     AICancellationToken? cancellationToken,
+    void Function(String token)? onToken,
   }) async {
     final token = cancellationToken ?? AICancellationToken();
     if (request.prompt.trim().isEmpty) {
@@ -34,10 +36,17 @@ class AIEngine {
 
     try {
       await beforeExecute?.call();
-      final providerFuture = provider.complete(
-        request,
-        cancellationToken: token,
-      );
+      final providerFuture = onToken != null &&
+              provider is AIStreamingProvider
+          ? provider.completeStreaming(
+              request,
+              cancellationToken: token,
+              onToken: onToken,
+            )
+          : provider.complete(
+              request,
+              cancellationToken: token,
+            );
       final response =
           await Future.any<AIResponse>([
             providerFuture,
