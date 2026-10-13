@@ -158,7 +158,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     final checkButton = find.byKey(const ValueKey('check-network-button'));
-    await tester.ensureVisible(checkButton);
+    await tester.scrollUntilVisible(
+      checkButton,
+      200,
+      scrollable: find.byKey(const ValueKey('network-settings-page')),
+    );
     await tester.tap(checkButton);
     await tester.pumpAndSettle();
 
