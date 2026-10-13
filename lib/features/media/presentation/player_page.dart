@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/services/ani_skip_segment_provider.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
+import 'package:omni_ai/features/media/services/media_playback_settings_store.dart';
 import 'package:omni_ai/features/media/services/media_resume_position_store.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/media/services/media_segment_marker_store.dart';
@@ -43,6 +44,7 @@ class PlayerPage extends StatefulWidget {
     this.resumePositionStore,
     this.segmentMarkerStore,
     this.aniSkipSegmentProvider,
+    this.playbackSettingsStore,
     super.key,
   });
 
@@ -53,6 +55,7 @@ class PlayerPage extends StatefulWidget {
   final MediaResumePositionStore? resumePositionStore;
   final MediaSegmentMarkerStore? segmentMarkerStore;
   final AniSkipSegmentProvider? aniSkipSegmentProvider;
+  final MediaPlaybackSettingsStore? playbackSettingsStore;
 
   @override
   State<PlayerPage> createState() => _PlayerPageState();
@@ -70,6 +73,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   final Set<int> _watchedEpisodes = <int>{};
   List<MediaSegmentMarker> _segmentMarkers = const [];
   List<MediaSegmentMarker> _remoteSegmentMarkers = const [];
+  Set<String> _likedVoiceovers = <String>{};
   final Map<MediaSegmentType, Duration> _pendingSegmentStarts = {};
 
   bool get _tracksEpisodeHistory {
@@ -104,6 +108,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   AniSkipSegmentProvider get _aniSkipProvider =>
       widget.aniSkipSegmentProvider ?? AniSkipSegmentProvider();
 
+  MediaPlaybackSettingsStore get _playbackSettingsStore =>
+      widget.playbackSettingsStore ??
+      SharedPreferencesMediaPlaybackSettingsStore();
+
   bool get _hasEpisodes => widget.item.episodes.isNotEmpty;
 
   @override
@@ -111,6 +119,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     unawaited(_loadWatchedHistory());
+    unawaited(_loadLikedVoiceovers());
     _progressTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       unawaited(_saveProgress());
       if (mounted) setState(() {});
@@ -119,7 +128,32 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       widget.item,
       widget.preferences,
     );
-    _loadEpisode(0);
+    unawaited(_restoreVoiceoverAndLoadEpisode());
+  }
+
+  Future<void> _restoreVoiceoverAndLoadEpisode() async {
+    final saved = await _playbackSettingsStore.loadVoiceover(widget.item.id);
+    if (mounted && saved != null && widget.item.voiceovers.contains(saved)) {
+      _selectedVoiceover = saved;
+    }
+    if (mounted) await _loadEpisode(0);
+  }
+
+  Future<void> _loadLikedVoiceovers() async {
+    final liked = await _playbackSettingsStore.loadLikedVoiceovers();
+    if (mounted) setState(() => _likedVoiceovers = liked);
+  }
+
+  Future<void> _toggleVoiceoverLike(String voiceover) async {
+    final nowLiked = await _playbackSettingsStore.toggleVoiceoverLike(voiceover);
+    if (!mounted) return;
+    setState(() {
+      if (nowLiked) {
+        _likedVoiceovers.add(voiceover);
+      } else {
+        _likedVoiceovers.remove(voiceover);
+      }
+    });
   }
 
   @override
@@ -606,11 +640,39 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                       return;
                     }
                     setState(() => _selectedVoiceover = voiceover);
+                    unawaited(
+                      _playbackSettingsStore.saveVoiceover(
+                        widget.item.id,
+                        voiceover,
+                      ),
+                    );
                     _loadEpisode(_selectedEpisode);
                   },
                 );
               },
             ),
+            if (_selectedVoiceover != null &&
+                _availableVoiceoversFor(
+                  _hasEpisodes ? episodes[_selectedEpisode] : null,
+                ).contains(_selectedVoiceover))
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  key: const ValueKey('voiceover-like-button'),
+                  onPressed: () => _toggleVoiceoverLike(_selectedVoiceover!),
+                  icon: Icon(
+                    _likedVoiceovers.contains(_selectedVoiceover)
+                        ? Icons.thumb_up
+                        : Icons.thumb_up_outlined,
+                    size: 18,
+                  ),
+                  label: Text(
+                    _likedVoiceovers.contains(_selectedVoiceover)
+                        ? 'Озвучка нравится'
+                        : 'Нравится эта озвучка',
+                  ),
+                ),
+              ),
           ],
         ],
       ),
