@@ -9,11 +9,10 @@ import 'package:omni_ai/features/media/data/torrserver_stream_resolver.dart';
 class TorrServerPlaybackResolver {
   TorrServerPlaybackResolver({
     TorrServerClient? client,
-    TorrServerStreamResolver streamResolver = const TorrServerStreamResolver(),
+    this._streamResolver = const TorrServerStreamResolver(),
     Future<void> Function(Duration)? wait,
   }) : _client = client ?? TorrServerClient(),
        _ownsClient = client == null,
-       _streamResolver = streamResolver,
        _wait = wait ?? Future<void>.delayed;
 
   final TorrServerClient _client;
