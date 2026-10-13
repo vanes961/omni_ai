@@ -296,8 +296,14 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.pump(const Duration(milliseconds: 50));
+    for (var attempt = 0; attempt < 5; attempt++) {
+      if (find.byKey(const ValueKey('watched-episode-count')).evaluate().isNotEmpty) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 20));
+    }
 
+    expect(find.byKey(const ValueKey('watched-episode-count')), findsOneWidget);
     expect(find.text('ПРОСМОТРЕНО: 1 ИЗ 2 СЕРИЙ'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('episode-selector')),
