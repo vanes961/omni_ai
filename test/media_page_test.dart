@@ -231,6 +231,42 @@ void main() {
     expect(playerSources.last, Uri.parse('https://example.com/second.mp4'));
   });
 
+  testWidgets('playback control awaits play and pause state changes', (
+    tester,
+  ) async {
+    final controller = _FakePlaybackController();
+    final item = MediaItem(
+      id: 'play-pause-test',
+      title: 'Play Pause Test',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8,
+      videoUrl: 'https://example.com/video.mp4',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          playerFactory: (_) => controller,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Воспроизвести'), findsOneWidget);
+    await tester.tap(find.byTooltip('Воспроизвести'));
+    await tester.pumpAndSettle();
+    expect(controller.isPlaying, isTrue);
+    expect(find.byTooltip('Пауза'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Пауза'));
+    await tester.pumpAndSettle();
+    expect(controller.isPlaying, isFalse);
+    expect(find.byTooltip('Воспроизвести'), findsOneWidget);
+  });
+
   testWidgets('long episode titles do not overflow the player layout', (
     tester,
   ) async {
