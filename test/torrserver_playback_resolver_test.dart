@@ -122,7 +122,42 @@ void main() {
         endpoint: 'http://media.example:8090',
         magnetUri: Uri.parse(_magnet),
       ),
-      throwsA(isA<StateError>()),
+      throwsA(isA<TorrServerFileSelectionRequired>()),
     );
+  });
+
+  test('resolves the explicitly selected file from a multi-video torrent', () async {
+    final resolver = TorrServerPlaybackResolver(
+      client: TorrServerClient(
+        client: MockClient((request) async {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          if (body['action'] == 'add') {
+            return http.Response(
+              jsonEncode({'hash': 'multi-hash', 'file_stats': []}),
+              200,
+            );
+          }
+          return http.Response(
+            jsonEncode({
+              'hash': 'multi-hash',
+              'file_stats': [
+                {'id': 1, 'path': 'one.mkv', 'length': 1000},
+                {'id': 2, 'path': 'two.mp4', 'length': 1000},
+              ],
+            }),
+            200,
+          );
+        }),
+      ),
+      wait: (_) async {},
+    );
+
+    final uri = await resolver.resolve(
+      endpoint: 'http://media.example:8090',
+      magnetUri: Uri.parse(_magnet),
+      selectedFileIndex: 2,
+    );
+
+    expect(uri.queryParameters['index'], '2');
   });
 }
