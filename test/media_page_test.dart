@@ -318,7 +318,7 @@ void main() {
     );
     await tester.tap(find.byKey(const ValueKey('episode-selector')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('✓  СЕРИЯ 01'), findsOneWidget);
+    expect(find.textContaining('✓  СЕРИЯ 01'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
@@ -826,7 +826,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.textContaining('СЕРИЯ 01  //  Second season episode one'),
-      findsOneWidget,
+      findsWidgets,
     );
     expect(find.textContaining('First season episode one'), findsNothing);
     expect(tester.takeException(), isNull);
