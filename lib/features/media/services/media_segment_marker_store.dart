@@ -54,12 +54,11 @@ abstract interface class MediaSegmentMarkerStore {
 
 class SharedPreferencesMediaSegmentMarkerStore
     implements MediaSegmentMarkerStore {
-  SharedPreferencesMediaSegmentMarkerStore({SharedPreferencesAsync? store})
-    : _store = store;
+  SharedPreferencesMediaSegmentMarkerStore({this.store});
 
-  final SharedPreferencesAsync? _store;
+  final SharedPreferencesAsync? store;
 
-  SharedPreferencesAsync get _preferences => _store ?? SharedPreferencesAsync();
+  SharedPreferencesAsync get _preferences => store ?? SharedPreferencesAsync();
 
   String _key(String mediaId, int episodeIndex) =>
       'omni_ai.media_segments.v1.$mediaId.$episodeIndex';
