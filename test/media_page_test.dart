@@ -10,6 +10,7 @@ import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
+import 'package:omni_ai/features/media/services/media_resume_position_store.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 void main() {
@@ -198,6 +199,45 @@ void main() {
     expect(controllers.every((controller) => controller.isDisposed), isTrue);
     expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsOneWidget);
     expect(find.text('StateError'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('offers to resume playback from the saved position', (
+    tester,
+  ) async {
+    final resumeStore = _FakeMediaResumePositionStore()
+      ..positions['resume-test:0'] = const Duration(minutes: 12, seconds: 34);
+    final controller = _FakePlaybackController(
+      duration: const Duration(minutes: 90),
+    );
+    final item = MediaItem(
+      id: 'resume-test',
+      title: 'Resume Test',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/resume.mp4',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          resumePositionStore: resumeStore,
+          playerFactory: (_) => controller,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Продолжить просмотр?'), findsOneWidget);
+    expect(find.text('Вы остановились на 12:34.'), findsOneWidget);
+    await tester.tap(find.text('ПРОДОЛЖИТЬ'));
+    await tester.pumpAndSettle();
+
+    expect(controller.position, const Duration(minutes: 12, seconds: 34));
     expect(tester.takeException(), isNull);
   });
 
@@ -549,6 +589,8 @@ class _FakePlaybackController implements MediaPlaybackController {
     this.initializationError,
     this.initializationCompleter,
     this.playError,
+    this.position = Duration.zero,
+    this.duration = const Duration(minutes: 90),
   });
 
   final Object? initializationError;
@@ -556,6 +598,12 @@ class _FakePlaybackController implements MediaPlaybackController {
   final Object? playError;
   bool _isPlaying = false;
   bool isDisposed = false;
+
+  @override
+  Duration position;
+
+  @override
+  final Duration duration;
 
   @override
   bool get isInitialized => true;
@@ -584,10 +632,40 @@ class _FakePlaybackController implements MediaPlaybackController {
   }
 
   @override
+  Future<void> seekTo(Duration position) async {
+    this.position = position;
+  }
+
+  @override
   Future<void> dispose() async {
     isDisposed = true;
   }
 
   @override
   Widget buildView() => const ColoredBox(color: Colors.black);
+}
+
+class _FakeMediaResumePositionStore implements MediaResumePositionStore {
+  final Map<String, Duration> positions = <String, Duration>{};
+
+  String _key(String mediaId, int episodeIndex) => '$mediaId:$episodeIndex';
+
+  @override
+  Future<Duration?> load(String mediaId, int episodeIndex) async =>
+      positions[_key(mediaId, episodeIndex)];
+
+  @override
+  Future<void> save(
+    String mediaId,
+    int episodeIndex,
+    Duration position,
+    Duration duration,
+  ) async {
+    positions[_key(mediaId, episodeIndex)] = position;
+  }
+
+  @override
+  Future<void> clear(String mediaId, int episodeIndex) async {
+    positions.remove(_key(mediaId, episodeIndex));
+  }
 }
