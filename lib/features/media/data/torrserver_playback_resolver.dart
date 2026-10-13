@@ -7,9 +7,13 @@ import 'package:omni_ai/features/media/data/torrserver_stream_resolver.dart';
 /// reports a matching video file. It never silently chooses an arbitrary file
 /// from a multi-video torrent.
 class TorrServerFileSelectionRequired implements Exception {
-  const TorrServerFileSelectionRequired(this.files);
+  const TorrServerFileSelectionRequired(
+    this.files, {
+    required this.torrentHash,
+  });
 
   final List<TorrServerFileStat> files;
+  final String torrentHash;
 
   @override
   String toString() => 'Choose a video file from the torrent.';
@@ -49,6 +53,7 @@ class TorrServerPlaybackResolver {
     int? episodeNumber,
     int? seasonNumber,
     int? selectedFileIndex,
+    String? existingTorrentHash,
     Duration metadataTimeout = const Duration(seconds: 30),
     Duration pollInterval = const Duration(seconds: 1),
   }) async {
@@ -64,12 +69,21 @@ class TorrServerPlaybackResolver {
       );
     }
 
-    final initial = await _client.addMagnet(
-      endpoint: endpoint,
-      magnetUri: magnetUri,
-      title: title,
-      timeout: metadataTimeout,
-    );
+    final initial = existingTorrentHash == null
+        ? await _client.addMagnet(
+            endpoint: endpoint,
+            magnetUri: magnetUri,
+            title: title,
+            timeout: metadataTimeout,
+          )
+        : await _client.getTorrentInfo(
+                endpoint: endpoint,
+                hash: existingTorrentHash,
+                timeout: metadataTimeout,
+              ) ??
+              (throw StateError(
+                'TorrServer no longer has the selected torrent.',
+              ));
     if (initial.hash.trim().isEmpty) {
       throw const FormatException(
         'TorrServer did not return the torrent hash; cannot query its files.',
@@ -131,7 +145,7 @@ class TorrServerPlaybackResolver {
   }) {
     if (episodeNumber == null) {
       if (videos.length == 1) return videos.single;
-      throw TorrServerFileSelectionRequired(videos);
+      throw TorrServerFileSelectionRequired(videos, torrentHash: initial.hash);
     }
 
     final episode = episodeNumber.toString().padLeft(2, '0');
@@ -157,7 +171,7 @@ class TorrServerPlaybackResolver {
         .toList(growable: false);
     if (matches.length == 1) return matches.single;
     if (matches.length != 1) {
-      throw TorrServerFileSelectionRequired(videos);
+      throw TorrServerFileSelectionRequired(videos, torrentHash: initial.hash);
     }
     return matches.single;
   }
