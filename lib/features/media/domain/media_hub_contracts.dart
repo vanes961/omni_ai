@@ -75,9 +75,17 @@ class MediaStreamSource {
 
     final hash = topic.substring(prefix.length);
     final isHexHash =
-        hash.length == 40 && RegExp(r'^[0-9a-f]+').hasMatch(hash);
+        hash.length == 40 &&
+        hash.codeUnits.every(
+          (unit) =>
+              (unit >= 48 && unit <= 57) || (unit >= 97 && unit <= 102),
+        );
     final isBase32Hash =
-        hash.length == 32 && RegExp(r'^[a-z2-7]+').hasMatch(hash);
+        hash.length == 32 &&
+        hash.codeUnits.every(
+          (unit) =>
+              (unit >= 97 && unit <= 122) || (unit >= 50 && unit <= 55),
+        );
     return isHexHash || isBase32Hash;
   }
 }
