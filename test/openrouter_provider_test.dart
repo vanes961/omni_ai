@@ -61,7 +61,7 @@ void main() {
     await expectLater(
       _engine(provider).execute(_request()),
       throwsA(isA<AIEngineException>().having(
-        (e) => e.error.message, 'message', contains('отсутствует API-ключ OpenRouter'),
+        (e) => e.error.message, 'message', contains('нет ключа OpenRouter'),
       )),
     );
     expect(sent, isFalse);
