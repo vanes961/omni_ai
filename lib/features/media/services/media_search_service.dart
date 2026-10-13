@@ -14,6 +14,10 @@ class MediaSearchService {
 
   List<MediaItem> get trending => List.unmodifiable(_catalog);
 
+  /// There is no verified public ZONA API, so in-app search intentionally
+  /// returns no fabricated entries; use [zonaCatalogUri] for live search.
+  Future<List<MediaItem>> searchOnline(String query) async => const [];
+
   List<MediaItem> search(String query, {String? type}) {
     final normalizedQuery = query.trim().toLowerCase();
     return _catalog
