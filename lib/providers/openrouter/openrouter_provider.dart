@@ -58,23 +58,24 @@ class OpenRouterProvider implements AIProvider {
           {'role': 'system', 'content': request.systemInstruction!.trim()},
         {'role': 'user', 'content': request.prompt},
       ];
-      final apiRequest = http.AbortableRequest(
-        'POST',
-        Uri.parse(config.endpoint),
-        abortTrigger: cancellationToken.cancelled,
-      )
-        ..headers.addAll({
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $apiKey',
-          'HTTP-Referer': config.siteUrl,
-          'X-Title': config.appName,
-        })
-        ..body = jsonEncode({
-          'model': config.model,
-          'messages': messages,
-          'stream': false,
-        });
+      final apiRequest =
+          http.AbortableRequest(
+              'POST',
+              Uri.parse(config.endpoint),
+              abortTrigger: cancellationToken.cancelled,
+            )
+            ..headers.addAll({
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $apiKey',
+              'HTTP-Referer': config.siteUrl,
+              'X-Title': config.appName,
+            })
+            ..body = jsonEncode({
+              'model': config.model,
+              'messages': messages,
+              'stream': false,
+            });
 
       final streamedResponse = await _client.send(apiRequest);
       final response = await http.Response.fromStream(streamedResponse);
