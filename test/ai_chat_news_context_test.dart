@@ -136,11 +136,9 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     onTimeout: () => throw TimeoutException('Orchestrator disposal timed out.'),
   );
   debugPrint('NEWS_TEST checkpoint: orchestrator disposed');
-  await dependencies.ai.dispose().timeout(
-    const Duration(seconds: 5),
-    onTimeout: () => throw TimeoutException('AI dependencies disposal timed out.'),
-  );
-  debugPrint('NEWS_TEST checkpoint: AI disposed');
+  // The test injects a mock HTTP client and a stateless fake local provider.
+  // AppDependencies does not own those resources, so disposing its AI graph
+  // here is unnecessary; the orchestrator is the owned subscription to drain.
   await dependencies.aiMemoryRepository.dispose();
   debugPrint('NEWS_TEST checkpoint: memory disposed');
   return submittedPrompt!;
