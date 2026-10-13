@@ -276,7 +276,10 @@ class _MediaPageState extends State<MediaPage> {
               _searchDebounce = Timer(const Duration(milliseconds: 350), () {
                 if (mounted) {
                   setState(() {
-                    _onlineSearch = widget.searchService.searchOnline(value, type: _selectedType);
+                    _onlineSearch = widget.searchService.searchOnline(
+                      value,
+                      type: _selectedType,
+                    );
                   });
                 }
               });
@@ -541,7 +544,18 @@ class _MediaPageState extends State<MediaPage> {
     );
   }
 
-  void _openDetails(MediaItem item) { Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MediaDetailsPage(item:item,searchService:widget.searchService,preferences:widget.preferences,playerFactory:widget.playerFactory))); }
+  void _openDetails(MediaItem item) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => MediaDetailsPage(
+          item: item,
+          searchService: widget.searchService,
+          preferences: widget.preferences,
+          playerFactory: widget.playerFactory,
+        ),
+      ),
+    );
+  }
 
   void _openPlayer(MediaItem item) {
     Navigator.of(context).push(
