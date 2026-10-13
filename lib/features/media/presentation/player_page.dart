@@ -136,8 +136,11 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     final savedVoiceover = await _playbackSettingsStore.loadVoiceover(
       widget.item.id,
     );
-    final savedQuality = await _playbackSettingsStore.loadQuality(widget.item.id);
-    if (mounted && savedVoiceover != null &&
+    final savedQuality = await _playbackSettingsStore.loadQuality(
+      widget.item.id,
+    );
+    if (mounted &&
+        savedVoiceover != null &&
         widget.item.voiceovers.contains(savedVoiceover)) {
       _selectedVoiceover = savedVoiceover;
     }
@@ -151,7 +154,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   }
 
   Future<void> _toggleVoiceoverLike(String voiceover) async {
-    final nowLiked = await _playbackSettingsStore.toggleVoiceoverLike(voiceover);
+    final nowLiked = await _playbackSettingsStore.toggleVoiceoverLike(
+      voiceover,
+    );
     if (!mounted) return;
     setState(() {
       if (nowLiked) {
@@ -303,10 +308,14 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       ...widget.item.videoFallbackUrls,
       if (episode != null) ...episode.videoFallbackUrls,
     ];
-    if (selectedVariant != null && _selectedQuality != selectedVariant.quality) {
+    if (selectedVariant != null &&
+        _selectedQuality != selectedVariant.quality) {
       _selectedQuality = selectedVariant.quality;
       unawaited(
-        _playbackSettingsStore.saveQuality(widget.item.id, selectedVariant.quality),
+        _playbackSettingsStore.saveQuality(
+          widget.item.id,
+          selectedVariant.quality,
+        ),
       );
     }
     final sources = <String>{
@@ -687,9 +696,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 key: const ValueKey('quality-selector'),
-                initialValue: _availableQualitiesFor(
-                  _hasEpisodes ? episodes[_selectedEpisode] : null,
-                ).contains(_selectedQuality)
+                initialValue:
+                    _availableQualitiesFor(
+                      _hasEpisodes ? episodes[_selectedEpisode] : null,
+                    ).contains(_selectedQuality)
                     ? _selectedQuality
                     : _availableQualitiesFor(
                         _hasEpisodes ? episodes[_selectedEpisode] : null,
@@ -870,7 +880,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   List<MediaVideoSource> _availableVideoSourcesFor(MediaEpisode? episode) {
     final episodeSources = episode?.videoSources ?? const <MediaVideoSource>[];
-    return episodeSources.isNotEmpty ? episodeSources : widget.item.videoSources;
+    return episodeSources.isNotEmpty
+        ? episodeSources
+        : widget.item.videoSources;
   }
 
   List<String> _availableQualitiesFor(MediaEpisode? episode) {
