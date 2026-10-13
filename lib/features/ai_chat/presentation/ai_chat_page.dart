@@ -64,10 +64,14 @@ class _AIChatPageState extends State<AIChatPage> {
         .toList(growable: false);
     _input.clear();
     final token = AICancellationToken();
+    final streamedOutput = StringBuffer();
+    late int assistantMessageIndex;
     setState(() {
       _sending = true;
       _activeToken = token;
       _messages.add(_ChatMessage(text: prompt, isUser: true));
+      assistantMessageIndex = _messages.length;
+      _messages.add(const _ChatMessage(text: '', isUser: false));
       _modeError = null;
     });
     _scrollToBottom();
@@ -101,27 +105,35 @@ class _AIChatPageState extends State<AIChatPage> {
         explicitMemories: savedMemories
             .map((memory) => memory.content)
             .toList(growable: false),
+        onToken: (chunk) {
+          streamedOutput.write(chunk);
+          final visibleText = _cleanAssistantAnswer(streamedOutput.toString());
+          if (!mounted) return;
+          setState(() {
+            _messages[assistantMessageIndex] = _ChatMessage(
+              text: visibleText,
+              isUser: false,
+            );
+          });
+          _scrollToBottom();
+        },
       );
       if (!mounted) return;
       setState(() {
-        _messages.add(
-          _ChatMessage(
-            text: _cleanAssistantAnswer(response.text),
-            isUser: false,
-          ),
+        _messages[assistantMessageIndex] = _ChatMessage(
+          text: _cleanAssistantAnswer(response.text),
+          isUser: false,
         );
       });
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
-        _messages.add(
-          _ChatMessage(
-            text: token.isCancelled
-                ? 'Запрос отменён.'
-                : 'Не удалось получить ответ: $error',
-            isUser: false,
-            isError: !token.isCancelled,
-          ),
+        _messages[assistantMessageIndex] = _ChatMessage(
+          text: token.isCancelled
+              ? 'Запрос отменён.'
+              : 'Не удалось получить ответ: $error',
+          isUser: false,
+          isError: !token.isCancelled,
         );
       });
     } finally {
@@ -386,10 +398,13 @@ String _cleanAssistantAnswer(String text) {
       RegExp('<$tag>[\\s\\S]*?</$tag>', caseSensitive: false),
       '',
     );
+    final openingTag = RegExp('<$tag>', caseSensitive: false);
     final closingTag = RegExp('</$tag>', caseSensitive: false);
+    final openingMatch = openingTag.firstMatch(answer);
     final closingMatch = closingTag.firstMatch(answer);
-    if (closingMatch != null &&
-        !RegExp('<$tag>', caseSensitive: false).hasMatch(answer)) {
+    if (openingMatch != null && closingMatch == null) {
+      answer = answer.substring(0, openingMatch.start);
+    } else if (closingMatch != null && openingMatch == null) {
       answer = answer.substring(closingMatch.end);
     }
   }
