@@ -6,6 +6,15 @@ import 'package:omni_ai/features/media/data/torrserver_stream_resolver.dart';
 /// Resolves a magnet into a playable TorrServer URL only after the server
 /// reports a matching video file. It never silently chooses an arbitrary file
 /// from a multi-video torrent.
+class TorrServerFileSelectionRequired implements Exception {
+  const TorrServerFileSelectionRequired(this.files);
+
+  final List<TorrServerFileStat> files;
+
+  @override
+  String toString() => 'Choose a video file from the torrent.';
+}
+
 class TorrServerPlaybackResolver {
   TorrServerPlaybackResolver({
     TorrServerClient? client,
@@ -39,6 +48,7 @@ class TorrServerPlaybackResolver {
     String? title,
     int? episodeNumber,
     int? seasonNumber,
+    int? selectedFileIndex,
     Duration metadataTimeout = const Duration(seconds: 30),
     Duration pollInterval = const Duration(seconds: 1),
   }) async {
@@ -88,11 +98,20 @@ class TorrServerPlaybackResolver {
       throw StateError('TorrServer has not reported any playable video files.');
     }
 
-    final selected = _selectFile(
-      videos,
-      episodeNumber: episodeNumber,
-      seasonNumber: seasonNumber,
-    );
+    final selected = selectedFileIndex == null
+        ? _selectFile(
+            videos,
+            episodeNumber: episodeNumber,
+            seasonNumber: seasonNumber,
+          )
+        : videos.firstWhere(
+            (file) => file.id == selectedFileIndex,
+            orElse: () => throw ArgumentError.value(
+              selectedFileIndex,
+              'selectedFileIndex',
+              'The selected file is not a playable video in this torrent.',
+            ),
+          );
     return _streamResolver.resolve(
       endpoint: endpoint,
       magnetUri: magnetUri,
@@ -112,9 +131,7 @@ class TorrServerPlaybackResolver {
   }) {
     if (episodeNumber == null) {
       if (videos.length == 1) return videos.single;
-      throw StateError(
-        'Torrent contains multiple videos; choose a specific episode/file.',
-      );
+      throw TorrServerFileSelectionRequired(videos);
     }
 
     final episode = episodeNumber.toString().padLeft(2, '0');
