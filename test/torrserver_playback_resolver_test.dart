@@ -126,17 +126,21 @@ void main() {
     );
   });
 
-  test('resolves the explicitly selected file from a multi-video torrent', () async {
+  test('reuses the discovered torrent when the user selects a file', () async {
+    var addCount = 0;
+    var getCount = 0;
     final resolver = TorrServerPlaybackResolver(
       client: TorrServerClient(
         client: MockClient((request) async {
           final body = jsonDecode(request.body) as Map<String, dynamic>;
           if (body['action'] == 'add') {
+            addCount++;
             return http.Response(
               jsonEncode({'hash': 'multi-hash', 'file_stats': []}),
               200,
             );
           }
+          getCount++;
           return http.Response(
             jsonEncode({
               'hash': 'multi-hash',
@@ -152,12 +156,26 @@ void main() {
       wait: (_) async {},
     );
 
+    late TorrServerFileSelectionRequired selection;
+    try {
+      await resolver.resolve(
+        endpoint: 'http://media.example:8090',
+        magnetUri: Uri.parse(_magnet),
+      );
+      fail('Expected a file selection request.');
+    } on TorrServerFileSelectionRequired catch (error) {
+      selection = error;
+    }
+
     final uri = await resolver.resolve(
       endpoint: 'http://media.example:8090',
       magnetUri: Uri.parse(_magnet),
       selectedFileIndex: 2,
+      existingTorrentHash: selection.torrentHash,
     );
 
     expect(uri.queryParameters['index'], '2');
+    expect(addCount, 1);
+    expect(getCount, 2);
   });
 }
