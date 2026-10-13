@@ -454,7 +454,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     final profile = _profile;
     if (profile == null || _refreshingNews || _loadingNewsCache) return;
     final revisionAtStart = _interestRevision;
-     setState(() {
+    setState(() {
       _refreshingNews = true;
       _newsError = null;
     });
