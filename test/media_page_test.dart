@@ -296,6 +296,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('ПРОСМОТРЕНО: 1 ИЗ 2 СЕРИЙ'), findsOneWidget);
     await tester.scrollUntilVisible(
