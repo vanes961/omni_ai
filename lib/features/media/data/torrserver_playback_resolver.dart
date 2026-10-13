@@ -117,6 +117,7 @@ class TorrServerPlaybackResolver {
             videos,
             episodeNumber: episodeNumber,
             seasonNumber: seasonNumber,
+            torrentHash: info.hash,
           )
         : videos.firstWhere(
             (file) => file.id == selectedFileIndex,
@@ -142,10 +143,11 @@ class TorrServerPlaybackResolver {
     List<TorrServerFileStat> videos, {
     int? episodeNumber,
     int? seasonNumber,
+    required String torrentHash,
   }) {
     if (episodeNumber == null) {
       if (videos.length == 1) return videos.single;
-      throw TorrServerFileSelectionRequired(videos, torrentHash: initial.hash);
+      throw TorrServerFileSelectionRequired(videos, torrentHash: torrentHash);
     }
 
     final episode = episodeNumber.toString().padLeft(2, '0');
