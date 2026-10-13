@@ -296,6 +296,29 @@ class _PlayerPageState extends State<PlayerPage> {
                   ),
                 ),
               ),
+            if ((player?.isInitialized ?? false) && _playerError != null)
+              Positioned(
+                top: 8,
+                left: 8,
+                right: 8,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Colors.black87,
+                    border: Border.all(color: SystemCorePalette.green),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text(
+                      'ОШИБКА ВОСПРОИЗВЕДЕНИЯ: ${_playerError.runtimeType}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             if (player?.isInitialized ?? false)
               Align(
                 alignment: Alignment.bottomCenter,
