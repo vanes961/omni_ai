@@ -729,7 +729,8 @@ void main() {
     () async {
       final service = NewsRssService(
         client: MockClient((request) async {
-          expect(request.url.queryParameters['q'], 'news');
+          expect(request.url.path, '/rss');
+          expect(request.url.queryParameters, isNot(contains('q')));
           return http.Response('''<rss><channel>
             <item>
               <title>International science update</title>
