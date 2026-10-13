@@ -217,4 +217,3 @@ class MediaCastMember {
   });
   final String name, character, photoUrl;
 }
-Formatted 4 files (3 changed) in 0.07 seconds.
