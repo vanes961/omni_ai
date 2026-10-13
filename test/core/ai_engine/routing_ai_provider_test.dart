@@ -17,7 +17,7 @@ void main() {
       router = RoutingAIProvider(localProvider: local, cloudProvider: cloud);
     });
 
-    test('defaults to local and never invokes cloud', () async {
+    test('defaults to automatic and keeps greetings local', () async {
       final response = await router.complete(
         _request,
         cancellationToken: AICancellationToken(),
@@ -28,7 +28,21 @@ void main() {
       expect(cloud.calls, 0);
     });
 
-    test('uses cloud only after explicit mode selection', () async {
+    test('routes film recommendations to cloud in automatic mode', () async {
+      final response = await router.complete(
+        AIRequest(
+          id: 'film-request',
+          prompt: 'Посоветуй фильм с неожиданной концовкой',
+        ),
+        cancellationToken: AICancellationToken(),
+      );
+
+      expect(response.providerId, 'cloud');
+      expect(local.calls, 0);
+      expect(cloud.calls, 1);
+    });
+
+    test('uses cloud when cloud mode is explicitly selected', () async {
       router.mode = AIExecutionMode.cloud;
 
       final response = await router.complete(
