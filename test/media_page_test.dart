@@ -297,19 +297,24 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    for (var attempt = 0; attempt < 5; attempt++) {
-      if (find.byKey(const ValueKey('watched-episode-count')).evaluate().isNotEmpty) {
-        break;
-      }
-      await tester.pump(const Duration(milliseconds: 20));
-    }
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('watched-episode-count')),
+      160,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
+    );
 
     expect(find.byKey(const ValueKey('watched-episode-count')), findsOneWidget);
     expect(find.text('ПРОСМОТРЕНО: 1 ИЗ 2 СЕРИЙ'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('episode-selector')),
       160,
-      scrollable: find.byKey(const ValueKey('player-page-scroll')),
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
     );
     await tester.tap(find.byKey(const ValueKey('episode-selector')));
     await tester.pumpAndSettle();
@@ -375,7 +380,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('voiceover-selector')),
       160,
-      scrollable: find.byKey(const ValueKey('player-page-scroll')),
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
     );
     final voiceoverField = tester.widget<DropdownButtonFormField<String>>(
       find.byKey(const ValueKey('voiceover-selector')),
@@ -392,7 +400,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('episode-selector')),
       160,
-      scrollable: find.byKey(const ValueKey('player-page-scroll')),
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
     );
     await tester.tap(find.byKey(const ValueKey('episode-selector')));
     await tester.pump(const Duration(milliseconds: 300));
@@ -458,7 +469,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('episode-selector')),
       160,
-      scrollable: find.byKey(const ValueKey('player-page-scroll')),
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
     );
     await tester.tap(find.byKey(const ValueKey('episode-selector')));
     await tester.pump(const Duration(milliseconds: 300));
@@ -506,7 +520,10 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('voiceover-selector')),
       160,
-      scrollable: find.byKey(const ValueKey('player-page-scroll')),
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
     );
 
     final selector = tester.widget<DropdownButtonFormField<String>>(
@@ -695,7 +712,10 @@ void main() {
     expect(sources.first, Uri.parse('https://example.com/720.mp4'));
     await tester.dragUntilVisible(
       find.byKey(const ValueKey('quality-selector')),
-      find.byKey(const ValueKey('player-page-scroll')),
+      find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
       const Offset(0, -160),
     );
     await tester.pumpAndSettle();
@@ -708,7 +728,10 @@ void main() {
 
     await tester.dragUntilVisible(
       find.byKey(const ValueKey('voiceover-like-button')),
-      find.byKey(const ValueKey('player-page-scroll')),
+      find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
       const Offset(0, -160),
     );
     await tester.pumpAndSettle();
@@ -773,12 +796,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('season-selector')), findsOneWidget);
     await tester.dragUntilVisible(
       find.byKey(const ValueKey('season-selector')),
-      find.byKey(const ValueKey('player-page-scroll')),
+      find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
       const Offset(0, -160),
     );
+    expect(find.byKey(const ValueKey('season-selector')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('season-selector')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('СЕЗОН 02').last);
@@ -790,7 +816,10 @@ void main() {
     );
     await tester.dragUntilVisible(
       find.byKey(const ValueKey('episode-selector')),
-      find.byKey(const ValueKey('player-page-scroll')),
+      find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
       const Offset(0, -160),
     );
     await tester.tap(find.byKey(const ValueKey('episode-selector')));
