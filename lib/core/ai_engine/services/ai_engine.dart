@@ -37,7 +37,7 @@ class AIEngine {
     try {
       await beforeExecute?.call();
       final providerFuture = onToken != null && provider is AIStreamingProvider
-          ? provider.completeStreaming(
+          ? (provider as AIStreamingProvider).completeStreaming(
               request,
               cancellationToken: token,
               onToken: onToken,
