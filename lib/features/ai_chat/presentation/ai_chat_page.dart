@@ -104,7 +104,12 @@ class _AIChatPageState extends State<AIChatPage> {
       );
       if (!mounted) return;
       setState(() {
-        _messages.add(_ChatMessage(text: _cleanAssistantAnswer(response.text), isUser: false));
+        _messages.add(
+          _ChatMessage(
+            text: _cleanAssistantAnswer(response.text),
+            isUser: false,
+          ),
+        );
       });
     } on Object catch (error) {
       if (!mounted) return;
