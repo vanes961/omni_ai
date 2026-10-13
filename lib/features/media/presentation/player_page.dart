@@ -74,6 +74,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   List<MediaSegmentMarker> _segmentMarkers = const [];
   List<MediaSegmentMarker> _remoteSegmentMarkers = const [];
   Set<String> _likedVoiceovers = <String>{};
+  String? _selectedQuality;
   final Map<MediaSegmentType, Duration> _pendingSegmentStarts = {};
 
   bool get _tracksEpisodeHistory {
@@ -132,10 +133,15 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   }
 
   Future<void> _restoreVoiceoverAndLoadEpisode() async {
-    final saved = await _playbackSettingsStore.loadVoiceover(widget.item.id);
-    if (mounted && saved != null && widget.item.voiceovers.contains(saved)) {
-      _selectedVoiceover = saved;
+    final savedVoiceover = await _playbackSettingsStore.loadVoiceover(
+      widget.item.id,
+    );
+    final savedQuality = await _playbackSettingsStore.loadQuality(widget.item.id);
+    if (mounted && savedVoiceover != null &&
+        widget.item.voiceovers.contains(savedVoiceover)) {
+      _selectedVoiceover = savedVoiceover;
     }
+    if (mounted) _selectedQuality = savedQuality;
     if (mounted) await _loadEpisode(0);
   }
 
@@ -271,16 +277,38 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
             !availableVoiceovers.contains(_selectedVoiceover)
         ? _preferredAvailableVoiceover(availableVoiceovers)
         : _selectedVoiceover;
+    final variants = _availableVideoSourcesFor(episode);
+    final voiceoverVariants = variants
+        .where((variant) => variant.voiceover == selectedVoiceover)
+        .toList(growable: false);
+    final matchingVariants = voiceoverVariants.isNotEmpty
+        ? voiceoverVariants
+        : variants.where((variant) => variant.voiceover == null).toList();
+    final selectedVariant = matchingVariants.isEmpty
+        ? null
+        : matchingVariants.firstWhere(
+            (variant) => variant.quality == _selectedQuality,
+            orElse: () => matchingVariants.first,
+          );
     final voiceoverSource = selectedVoiceover == null
         ? null
         : episode?.voiceoverVideoUrls[selectedVoiceover] ??
               widget.item.voiceoverVideoUrls[selectedVoiceover];
-    final source = voiceoverSource ?? defaultSource;
+    final source = selectedVariant?.url ?? voiceoverSource ?? defaultSource;
     final fallbackUrls = [
+      ...matchingVariants
+          .where((variant) => variant.url != source)
+          .map((variant) => variant.url),
       if (voiceoverSource != null) defaultSource,
       ...widget.item.videoFallbackUrls,
       if (episode != null) ...episode.videoFallbackUrls,
     ];
+    if (selectedVariant != null && _selectedQuality != selectedVariant.quality) {
+      _selectedQuality = selectedVariant.quality;
+      unawaited(
+        _playbackSettingsStore.saveQuality(widget.item.id, selectedVariant.quality),
+      );
+    }
     final sources = <String>{
       source.trim(),
       ...fallbackUrls.map((url) => url.trim()),
@@ -651,6 +679,35 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                 );
               },
             ),
+            if (_availableQualitiesFor(
+              _hasEpisodes ? episodes[_selectedEpisode] : null,
+            ).isNotEmpty) ...[
+              const SizedBox(height: 14),
+              const _PlayerSectionLabel('КАЧЕСТВО ВИДЕО'),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                key: const ValueKey('quality-selector'),
+                initialValue: _availableQualitiesFor(
+                  _hasEpisodes ? episodes[_selectedEpisode] : null,
+                ).contains(_selectedQuality)
+                    ? _selectedQuality
+                    : _availableQualitiesFor(
+                        _hasEpisodes ? episodes[_selectedEpisode] : null,
+                      ).first,
+                isExpanded: true,
+                dropdownColor: SystemCorePalette.panel,
+                decoration: _selectorDecoration(),
+                items: [
+                  for (final quality in _availableQualitiesFor(
+                    _hasEpisodes ? episodes[_selectedEpisode] : null,
+                  ))
+                    DropdownMenuItem(value: quality, child: Text(quality)),
+                ],
+                onChanged: (quality) {
+                  if (quality != null) unawaited(_selectQuality(quality));
+                },
+              ),
+            ],
             if (_selectedVoiceover != null &&
                 _availableVoiceoversFor(
                   _hasEpisodes ? episodes[_selectedEpisode] : null,
@@ -809,6 +866,35 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  List<MediaVideoSource> _availableVideoSourcesFor(MediaEpisode? episode) {
+    final episodeSources = episode?.videoSources ?? const <MediaVideoSource>[];
+    return episodeSources.isNotEmpty ? episodeSources : widget.item.videoSources;
+  }
+
+  List<String> _availableQualitiesFor(MediaEpisode? episode) {
+    final sources = _availableVideoSourcesFor(episode);
+    final voiceover = _selectedVoiceover;
+    final matching = sources.where((source) => source.voiceover == voiceover);
+    final candidates = matching.isNotEmpty
+        ? matching
+        : sources.where((source) => source.voiceover == null);
+    final qualities = <String>[];
+    for (final source in candidates) {
+      final quality = source.quality.trim();
+      if (quality.isNotEmpty && !qualities.contains(quality)) {
+        qualities.add(quality);
+      }
+    }
+    return qualities;
+  }
+
+  Future<void> _selectQuality(String quality) async {
+    if (quality == _selectedQuality) return;
+    setState(() => _selectedQuality = quality);
+    await _playbackSettingsStore.saveQuality(widget.item.id, quality);
+    if (mounted) await _loadEpisode(_selectedEpisode);
   }
 
   List<String> _availableVoiceoversFor(MediaEpisode? episode) {
