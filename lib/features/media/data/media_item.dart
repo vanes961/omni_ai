@@ -44,6 +44,7 @@ class MediaEpisode {
     this.videoFallbackUrls = const [],
     this.voiceoverVideoUrls = const {},
     this.videoSources = const [],
+    this.seasonNumber = 1,
   });
 
   final int number;
@@ -52,6 +53,7 @@ class MediaEpisode {
   final List<String> videoFallbackUrls;
   final Map<String, String> voiceoverVideoUrls;
   final List<MediaVideoSource> videoSources;
+  final int seasonNumber;
 
   String get label => 'СЕРИЯ ${number.toString().padLeft(2, '0')}  //  $title';
 }
