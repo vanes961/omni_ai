@@ -43,9 +43,9 @@ class SharedPreferencesMediaResumePositionStore
     Duration duration,
   ) async {
     final remaining = duration - position;
-    if (position < const Duration(seconds: 10) ||
-        (duration > Duration.zero &&
-            remaining <= const Duration(seconds: 15))) {
+    if (position < const Duration(seconds: 10)) return;
+    if (duration > Duration.zero &&
+        remaining <= const Duration(seconds: 15)) {
       await clear(mediaId, episodeIndex);
       return;
     }
