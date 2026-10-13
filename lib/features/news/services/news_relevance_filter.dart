@@ -30,7 +30,7 @@ class NewsRelevanceFilter {
       final matchesTopic = article.topics.any(
         (topic) => topics.contains(_normalize(topic)),
       );
-      if (isDiscoveryFeed ||
+      if ((isDiscoveryFeed && !article.isCritical) ||
           matchesTopic ||
           (article.isCritical && profile.includeCriticalOutsideInterests)) {
         matching.add(article);
