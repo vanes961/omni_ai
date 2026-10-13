@@ -44,7 +44,7 @@ void main() {
           isA<AIEngineException>().having(
             (error) => error.error.message,
             'message',
-            contains('отсутствует API-ключ OpenRouter'),
+            contains('нет ключа OpenRouter'),
           ),
         ),
       );
