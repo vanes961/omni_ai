@@ -12,16 +12,16 @@ import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 void main() {
-  test('media headers emulate desktop Chrome with Kinopoisk origin', () {
+  test('media headers use generic browser headers without a provider origin', () {
     final headers = MediaHeaders.getHeaders(
       'https://video.example/path/stream.m3u8',
     );
 
     expect(headers['User-Agent'], contains('Chrome/122.0.0.0'));
-    expect(headers['Referer'], 'https://kinopoisk.ru/');
-    expect(headers['Origin'], 'https://kinopoisk.ru');
+    expect(headers['Referer'], isNull);
+    expect(headers['Origin'], isNull);
     expect(headers['Accept'], '*/*');
-    expect(MediaHeaders.getHeaders('')['Origin'], isNull);
+    expect(MediaHeaders.getHeaders('')['Referer'], isNull);
   });
 
   testWidgets('network images use a User-Agent and try fallback URLs', (
