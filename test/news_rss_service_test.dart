@@ -723,6 +723,39 @@ void main() {
   });
 
   test(
+    'loads a broad discovery query when no interests are configured',
+    () async {
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          expect(request.url.queryParameters['q'], 'news');
+          return http.Response('''<rss><channel>
+            <item>
+              <title>International science update</title>
+              <link>https://publisher.example/science</link>
+              <description>A new scientific discovery was announced.</description>
+              <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+              <source>Science News</source>
+            </item>
+            <item>
+              <title>International technology update</title>
+              <link>https://publisher.example/technology</link>
+              <description>A new technology was announced.</description>
+              <pubDate>Sat, 10 Oct 2026 11:00:00 GMT</pubDate>
+              <source>Technology News</source>
+            </item>
+          </channel></rss>''', 200);
+        }),
+      );
+      addTearDown(service.dispose);
+
+      final articles = await service.fetch(const NewsInterestProfile());
+
+      expect(articles, hasLength(2));
+      expect(articles.first.title, 'International science update');
+    },
+  );
+
+  test(
     'does not make a network request when selected topics are blank',
     () async {
       var requests = 0;
