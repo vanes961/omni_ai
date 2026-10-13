@@ -104,8 +104,6 @@ class NewsRssService {
   Future<List<NewsArticle>> fetchInternational(
     NewsInterestProfile profile,
   ) async {
-    final isDiscoveryFeed =
-        profile.topics.isEmpty && !profile.includeCriticalOutsideInterests;
     const locales = <List<String>>[
       ['ru', 'RU'],
       ['en', 'US'],
