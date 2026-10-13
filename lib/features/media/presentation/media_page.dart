@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:omni_ai/core/network/widgets/network_image_with_fallback.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/favorites/data/favorite_item.dart';
@@ -301,6 +302,16 @@ class _MediaPageState extends State<MediaPage> {
             ),
           ),
           const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const ValueKey('open-zona-catalog'),
+              onPressed: _openZonaCatalog,
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('ОТКРЫТЬ КАТАЛОГ ZONA'),
+            ),
+          ),
+          const SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -362,7 +373,7 @@ class _MediaPageState extends State<MediaPage> {
               padding: EdgeInsets.all(24),
               child: Center(
                 child: Text(
-                  'НЕТ РЕАЛЬНЫХ РЕЗУЛЬТАТОВ. ПРОВЕРЬТЕ ПОДКЛЮЧЕНИЕ КАТАЛОГА.',
+                  'ВНУТРЕННИЙ КАТАЛОГ ПОКА НЕ ПОДКЛЮЧЁН. ОТКРОЙТЕ ZONA КНОПКОЙ ВЫШЕ.',
                   style: TextStyle(
                     color: SystemCorePalette.muted,
                     fontSize: 12,
@@ -472,6 +483,13 @@ class _MediaPageState extends State<MediaPage> {
       SnackBar(
         content: Text('«${item.title}» добавлено в «${category.label}»'),
       ),
+    );
+  }
+
+  Future<void> _openZonaCatalog() async {
+    await launchUrl(
+      MediaSearchService.zonaCatalogUri,
+      mode: LaunchMode.externalApplication,
     );
   }
 
