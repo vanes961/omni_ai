@@ -214,27 +214,27 @@ class _PlayerPageState extends State<PlayerPage> {
             const _PlayerSectionLabel('ОЗВУЧКА'),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-            key: const ValueKey('voiceover-selector'),
-            initialValue: _selectedVoiceover,
-            isExpanded: true,
-            dropdownColor: SystemCorePalette.panel,
-            decoration: _selectorDecoration(),
-            items: [
-              for (final voiceover in widget.item.voiceovers)
-                DropdownMenuItem(
-                  value: voiceover,
-                  child: Text(
-                    voiceover,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+              key: const ValueKey('voiceover-selector'),
+              initialValue: _selectedVoiceover,
+              isExpanded: true,
+              dropdownColor: SystemCorePalette.panel,
+              decoration: _selectorDecoration(),
+              items: [
+                for (final voiceover in widget.item.voiceovers)
+                  DropdownMenuItem(
+                    value: voiceover,
+                    child: Text(
+                      voiceover,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-            ],
-            onChanged: (voiceover) {
-              if (voiceover != null) {
-                setState(() => _selectedVoiceover = voiceover);
-              }
-            },
+              ],
+              onChanged: (voiceover) {
+                if (voiceover != null) {
+                  setState(() => _selectedVoiceover = voiceover);
+                }
+              },
             ),
           ],
         ],
