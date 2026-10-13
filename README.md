@@ -1,30 +1,28 @@
-# omni_ai
+# OMNI AI
 
-A new Flutter project.
+OMNI AI — персональный AI-ассистент с единым центром управления контекстом, памятью и задачами. Проект объединяет локальную модель на устройстве и облачные AI-провайдеры, чтобы пользователь мог выбирать подходящий режим обработки запросов.
 
-## Kinopoisk metadata
+## Концепция
 
-Online title search uses the Kinopoisk API key supplied through
-`KINOPOISK_API_KEY`. The local demo catalog remains available without a key.
+- **Один ассистент, единый контекст.** Общая логика работы с запросами, историей и сохранёнными пользовательскими предпочтениями вместо набора несвязанных помощников.
+- **Локальный и облачный AI.** Локальная модель предназначена для обработки на устройстве; облачный провайдер подключается отдельно и используется в выбранном режиме.
+- **Персональная новостная лента.** Сбор новостей из RSS-источников, фильтрация по интересам, сохранение материалов и передача релевантных статей в контекст AI при вопросах о новостях.
+- **Медиа и избранное.** Основа для поиска фильмов, сериалов и аниме, хранения избранного и персонализации рекомендаций на основе интересов.
+- **Конфиденциальность и прозрачность.** Режим обработки должен быть явным: локальные запросы не должны незаметно перенаправляться в облако. Внешние сервисы и сетевые функции зависят от доступности источников и конфигурации.
 
-```powershell
-flutter run --dart-define=KINOPOISK_API_KEY=your-api-key
-flutter build apk --debug --dart-define=KINOPOISK_API_KEY=your-api-key
-```
+## Текущее состояние
 
-The key is embedded in the app binary. Use a restricted key and avoid
-committing it to source control.
+OMNI AI находится в активной разработке. Отдельные функции и интеграции ещё могут быть неполными; наличие раздела в интерфейсе не означает, что все его сценарии уже подключены к реальным источникам данных.
 
-## Getting Started
+Основные направления разработки — надёжная загрузка новостей, единая работа AI с контекстом, безопасная настройка облачного провайдера, подключение реальных медиаданных и дальнейшая полировка интерфейса в зелёной неоновой gothic-cyberpunk стилистике.
 
-This project is a starting point for a Flutter application.
+## Безопасность ключей
 
-A few resources to get you started if this is your first Flutter project:
+Не помещайте реальные API-ключи в исходный код, README, публичные коммиты или распространяемый APK. Значения, переданные через `--dart-define`, встраиваются в сборку и не являются защищённым хранилищем секретов. Для интеграций с секретными ключами предпочтителен серверный посредник; используйте ограничения ключей и минимальные необходимые разрешения.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Технологии
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter / Dart
+- Локальный запуск GGUF-модели на Android
+- Единый AI Engine с явной маршрутизацией между локальным и облачным провайдерами
+- RSS-источники и локальное хранение пользовательских настроек, истории и памяти
