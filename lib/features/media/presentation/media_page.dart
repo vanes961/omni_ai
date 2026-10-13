@@ -151,7 +151,7 @@ class _MediaPageState extends State<MediaPage> {
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        'Демо-фильмы и фиктивные озвучки удалены. Для реальных результатов нужен подключённый источник каталога.',
+                        'Демо-фильмы и фиктивные озвучки удалены. Откройте каталог ZONA кнопкой выше; встроенный поиск и воспроизведение подключим после подтверждения доступного интерфейса источника.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: SystemCorePalette.muted,
