@@ -9,6 +9,7 @@ import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
 import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
 import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
+import 'package:omni_ai/features/media/presentation/media_details_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_like_repository.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
@@ -275,7 +276,7 @@ class _MediaPageState extends State<MediaPage> {
               _searchDebounce = Timer(const Duration(milliseconds: 350), () {
                 if (mounted) {
                   setState(() {
-                    _onlineSearch = widget.searchService.searchOnline(value);
+                    _onlineSearch = widget.searchService.searchOnline(value, type: _selectedType);
                   });
                 }
               });
@@ -410,9 +411,7 @@ class _MediaPageState extends State<MediaPage> {
                   final item = rankedCombined[index];
                   return _MediaResultTile(
                     item: item,
-                    onTap: item.videoUrl.isEmpty
-                        ? null
-                        : () => _openPlayer(item),
+                    onTap: () => _openDetails(item),
                     onFavorite: () => _saveFavorite(item),
                     isLiked: _likedIds.contains(item.id),
                     onLike: () => _toggleLike(item),
@@ -541,6 +540,8 @@ class _MediaPageState extends State<MediaPage> {
       mode: LaunchMode.externalApplication,
     );
   }
+
+  void _openDetails(MediaItem item) { Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MediaDetailsPage(item:item,searchService:widget.searchService,preferences:widget.preferences,playerFactory:widget.playerFactory))); }
 
   void _openPlayer(MediaItem item) {
     Navigator.of(context).push(
