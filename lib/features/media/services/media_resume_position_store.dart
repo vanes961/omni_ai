@@ -31,7 +31,9 @@ class SharedPreferencesMediaResumePositionStore
   @override
   Future<Duration?> load(String mediaId, int episodeIndex) async {
     try {
-      final milliseconds = await _preferences.getInt(_key(mediaId, episodeIndex));
+      final milliseconds = await _preferences.getInt(
+        _key(mediaId, episodeIndex),
+      );
       if (milliseconds == null || milliseconds <= 0) return null;
       return Duration(milliseconds: milliseconds);
     } on Object {
