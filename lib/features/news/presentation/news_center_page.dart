@@ -145,9 +145,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       });
       // When no valid cached feed exists, load the selected topics on entry
       // instead of leaving a blank screen until the user discovers Refresh.
-      final hasFeedInterests =
-          (_profile?.topics.isNotEmpty ?? false) ||
-          (_profile?.includeCriticalOutsideInterests ?? false);
+      final hasFeedInterests = _profile != null;
       if (hasFeedInterests && _articles.isEmpty) {
         unawaited(_refreshNews());
       }
@@ -158,9 +156,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // cached payload cannot be read, still attempt a fresh feed rather than
       // leaving users with a blank screen until they manually tap Refresh.
       final activeProfile = loadedProfile ?? _profile;
-      final hasFeedInterests =
-          (activeProfile?.topics.isNotEmpty ?? false) ||
-          (activeProfile?.includeCriticalOutsideInterests ?? false);
+      final hasFeedInterests = activeProfile != null;
       if (hasFeedInterests && _articles.isEmpty) {
         unawaited(_refreshNews());
       }
@@ -191,7 +187,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     final hasNoTopics = profile.topics.isEmpty;
     final criticalNewsDisabled = !profile.includeCriticalOutsideInterests;
     if (hasNoTopics && criticalNewsDisabled) {
-      return 'Лента не загружает новости без выбранных тем. Настройте интересы в разделе ниже или включите критические новости вне интересов.';
+      return _hasCompletedNewsFetch
+          ? 'Обзор свежих новостей. Выберите интересы ниже, чтобы персонализировать ленту.'
+          : 'Загружаем обзор свежих новостей. Выберите интересы ниже, чтобы персонализировать ленту.';
     }
     if (_hasCompletedNewsFetch) {
       return 'По выбранным темам сейчас не найдено подходящих публикаций. Попробуйте добавить более широкую тему или обновить ленту позже.';
@@ -456,16 +454,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     final profile = _profile;
     if (profile == null || _refreshingNews || _loadingNewsCache) return;
     final revisionAtStart = _interestRevision;
-    if (profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) {
-      setState(() {
-        _articles = const [];
-        _newsError = null;
-        _status =
-            'Выберите тему или включите критические новости вне интересов.';
-      });
-      return;
-    }
-    setState(() {
+     setState(() {
       _refreshingNews = true;
       _newsError = null;
     });
@@ -1354,7 +1343,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Выберите темы. В обычную ленту попадут только материалы по выбранным темам. Если ничего не выбрано, новости не показываются.',
+                'Показываем свежие новости даже без настроек. Выберите интересы, чтобы сделать ленту персональной.',
                 style: TextStyle(color: Colors.white70, height: 1.4),
               ),
               Row(
