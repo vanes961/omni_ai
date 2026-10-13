@@ -309,7 +309,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('episode-selector')),
       160,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: find.byKey(const ValueKey('player-page-scroll')),
     );
     await tester.tap(find.byKey(const ValueKey('episode-selector')));
     await tester.pumpAndSettle();
@@ -375,7 +375,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('voiceover-selector')),
       160,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: find.byKey(const ValueKey('player-page-scroll')),
     );
     final voiceoverField = tester.widget<DropdownButtonFormField<String>>(
       find.byKey(const ValueKey('voiceover-selector')),
@@ -392,7 +392,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('episode-selector')),
       160,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: find.byKey(const ValueKey('player-page-scroll')),
     );
     await tester.tap(find.byKey(const ValueKey('episode-selector')));
     await tester.pump(const Duration(milliseconds: 300));
@@ -458,7 +458,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('episode-selector')),
       160,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: find.byKey(const ValueKey('player-page-scroll')),
     );
     await tester.tap(find.byKey(const ValueKey('episode-selector')));
     await tester.pump(const Duration(milliseconds: 300));
@@ -506,7 +506,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('voiceover-selector')),
       160,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: find.byKey(const ValueKey('player-page-scroll')),
     );
 
     final selector = tester.widget<DropdownButtonFormField<String>>(
@@ -696,7 +696,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('quality-selector')),
       160,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: find.byKey(const ValueKey('player-page-scroll')),
     );
     await tester.tap(find.byKey(const ValueKey('quality-selector')));
     await tester.pumpAndSettle();
@@ -708,7 +708,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('voiceover-like-button')),
       160,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: find.byKey(const ValueKey('player-page-scroll')),
     );
     await tester.tap(find.byKey(const ValueKey('voiceover-like-button')));
     await tester.pumpAndSettle();
