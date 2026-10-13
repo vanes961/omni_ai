@@ -151,8 +151,7 @@ class MediaSearchService {
       int? runtime;
       if (data['runtime'] is num) {
         runtime = (data['runtime'] as num).toInt();
-      }
-      else {
+      } else {
         for (final x in (data['episode_run_time'] as List? ?? const [])) {
           if (x is num) {
             runtime = x.toInt();
