@@ -375,7 +375,8 @@ class _PlayerPageState extends State<PlayerPage> {
   }
 
   List<String> _availableVoiceoversFor(MediaEpisode? episode) {
-    final episodeSources = episode?.voiceoverVideoUrls ?? const <String, String>{};
+    final episodeSources =
+        episode?.voiceoverVideoUrls ?? const <String, String>{};
     final sources = episodeSources.isNotEmpty
         ? episodeSources
         : widget.item.voiceoverVideoUrls;
