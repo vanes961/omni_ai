@@ -330,7 +330,7 @@ void main() {
     await tester.pump();
     await tester.dragUntilVisible(
       find.text('СОХРАНИТЬ ИНТЕРЕСЫ'),
-      find.byType(Scrollable).first,
+      find.byType(Scrollable).last,
       const Offset(0, -300),
     );
     await tester.tap(find.text('СОХРАНИТЬ ИНТЕРЕСЫ'));
