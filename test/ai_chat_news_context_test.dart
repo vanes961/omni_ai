@@ -139,8 +139,7 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   // The test injects a mock HTTP client and a stateless fake local provider.
   // AppDependencies does not own those resources, so disposing its AI graph
   // here is unnecessary; the orchestrator is the owned subscription to drain.
-  await dependencies.aiMemoryRepository.dispose();
-  debugPrint('NEWS_TEST checkpoint: memory disposed');
+  // _TestMemoryRepository is stateless and owns no resources to dispose.
   return submittedPrompt!;
 }
 
