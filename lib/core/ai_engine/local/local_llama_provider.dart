@@ -19,8 +19,8 @@ class LocalLlamaProvider implements AIProvider {
     LlamaController? controller,
     this.threads = 4,
     this.contextSize = 2048,
-    this.maxTokens = 256,
-    this.temperature = 0.7,
+    this.maxTokens = 128,
+    this.temperature = 0.3,
   }) : _controller = controller ?? LlamaController();
 
   final File modelFile;
