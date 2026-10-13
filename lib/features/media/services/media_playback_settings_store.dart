@@ -19,8 +19,7 @@ class SharedPreferencesMediaPlaybackSettingsStore
 
   SharedPreferencesAsync get _preferences => store ?? SharedPreferencesAsync();
 
-  String _voiceoverKey(String mediaId) =>
-      'omni_ai.media_voiceover.v1.$mediaId';
+  String _voiceoverKey(String mediaId) => 'omni_ai.media_voiceover.v1.$mediaId';
 
   String _qualityKey(String mediaId) => 'omni_ai.media_quality.v1.$mediaId';
 
