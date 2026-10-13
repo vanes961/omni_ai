@@ -94,7 +94,7 @@ class _AIChatPageState extends State<AIChatPage> {
           id: DateTime.now().microsecondsSinceEpoch.toString(),
           prompt: requestPrompt,
           systemInstruction:
-              'Отвечай только готовым ответом для пользователя. Не показывай внутренние рассуждения, черновик анализа или содержимое тегов <think> и <analysis>.',
+              'Отвечай сразу, кратко и по делу, как быстрый помощник. Сначала дай готовый ответ или следующий конкретный шаг; подробности добавляй только если нужны. Не показывай внутренние рассуждения, черновик анализа или содержимое тегов <think>, <analysis> и <reasoning>.',
         ),
         cancellationToken: token,
         conversationHistory: conversationHistory,
