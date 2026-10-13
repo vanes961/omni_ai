@@ -47,7 +47,7 @@ class SystemCoreProcessService {
   final SystemCoreProcessRunner _runner;
   final DateTime Function() _clock;
   final StreamController<SystemCoreProcessState> _states =
-      StreamController<SystemCoreProcessState>.broadcast(sync: true);
+      StreamController<SystemCoreProcessState>.broadcast();
 
   SystemCoreProcessState _state;
   Completer<void>? _cancellation;
