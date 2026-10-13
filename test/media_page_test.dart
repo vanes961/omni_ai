@@ -784,7 +784,10 @@ void main() {
     await tester.tap(find.text('СЕЗОН 02').last);
     await tester.pumpAndSettle();
 
-    expect(sources.last, Uri.parse('https://example.com/season-2-episode-1.mp4'));
+    expect(
+      sources.last,
+      Uri.parse('https://example.com/season-2-episode-1.mp4'),
+    );
     await tester.dragUntilVisible(
       find.byKey(const ValueKey('episode-selector')),
       find.byKey(const ValueKey('player-page-scroll')),
@@ -792,7 +795,10 @@ void main() {
     );
     await tester.tap(find.byKey(const ValueKey('episode-selector')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('СЕРИЯ 01  //  Second season episode one'), findsOneWidget);
+    expect(
+      find.textContaining('СЕРИЯ 01  //  Second season episode one'),
+      findsOneWidget,
+    );
     expect(find.textContaining('First season episode one'), findsNothing);
     expect(tester.takeException(), isNull);
   });
