@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
@@ -58,7 +59,10 @@ class MediaSearchService {
       final response = await http
           .get(
             uri,
-            headers: {'Authorization': 'Bearer ${accessToken.trim()}', 'accept': 'application/json'},
+            headers: {
+              'Authorization': 'Bearer ${accessToken.trim()}',
+              'accept': 'application/json',
+            },
           )
           .timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
@@ -235,7 +239,9 @@ class MediaSearchService {
           title: title,
           overview: raw['overview'] as String? ?? '',
           airDate: raw['air_date'] as String? ?? '',
-          stillUrl: still == null ? '' : 'https://image.tmdb.org/t/p/w500$still',
+          stillUrl: still == null
+              ? ''
+              : 'https://image.tmdb.org/t/p/w500$still',
         ),
       );
     }
