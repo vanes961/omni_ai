@@ -136,16 +136,21 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   // Dispose resources through the composition root. The injected process
   // service remains caller-owned and is closed after the recorder drains.
   await tester.pump();
-  _checkpoint('[news-context-test] disposing dependencies');
-  await dependencies.dispose().timeout(
-    const Duration(seconds: 5),
-    onTimeout: () => throw TimeoutException('Dependency disposal timed out.'),
+  _checkpoint('[news-context-test] disposing dependencies outside fake async');
+  await tester.runAsync(
+    () => dependencies.dispose().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () => throw TimeoutException('Dependency disposal timed out.'),
+    ),
   );
   _checkpoint('[news-context-test] dependencies disposed');
-  await dependencies.processService.dispose().timeout(
-    const Duration(seconds: 5),
-    onTimeout: () => throw TimeoutException('Process service disposal timed out.'),
+  await tester.runAsync(
+    () => dependencies.processService.dispose().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () => throw TimeoutException('Process service disposal timed out.'),
+    ),
   );
+  _checkpoint('[news-context-test] process service disposed');
   _checkpoint('[news-context-test] helper complete');
   return submittedPrompt!;
 }
