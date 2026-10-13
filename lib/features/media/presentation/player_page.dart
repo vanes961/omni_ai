@@ -572,6 +572,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         backgroundColor: SystemCorePalette.background,
       ),
       body: ListView(
+        key: const ValueKey('player-page-scroll'),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
           _buildPlayerSurface(),
