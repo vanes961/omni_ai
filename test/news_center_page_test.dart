@@ -307,7 +307,7 @@ void main() {
         home: NewsCenterPage(repository: repository, newsService: service),
       ),
     );
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < 30; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
