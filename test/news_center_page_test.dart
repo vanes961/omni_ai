@@ -322,9 +322,9 @@ void main() {
     }
     expect(requestCount, 3);
 
-    await tester.ensureVisible(find.text('ВАШИ ИНТЕРЕСЫ'));
-    await tester.pumpAndSettle(const Duration(milliseconds: 50));
     final chip = find.byType(InputChip);
+    await tester.ensureVisible(chip);
+    await tester.pump(const Duration(milliseconds: 50));
     expect(chip, findsOneWidget);
     tester.widget<InputChip>(chip).onDeleted!();
     await tester.pump();
