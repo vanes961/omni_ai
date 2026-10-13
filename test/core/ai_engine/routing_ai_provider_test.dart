@@ -3,6 +3,7 @@ import 'package:omni_ai/core/ai_engine/models/ai_error.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_response.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
+import 'package:omni_ai/core/ai_engine/providers/ai_streaming_provider.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 
 void main() {
@@ -71,6 +72,52 @@ void main() {
       expect(local.calls, 1);
     });
 
+    test('falls back to local streaming before any cloud token is emitted', () async {
+      cloud.failure = StateError('network unavailable');
+      final tokens = <String>[];
+
+      final response = await router.completeStreaming(
+        AIRequest(
+          id: 'stream-offline',
+          prompt: 'Посоветуй фильм с неожиданной концовкой',
+        ),
+        cancellationToken: AICancellationToken(),
+        onToken: tokens.add,
+      );
+
+      expect(response.providerId, 'local');
+      expect(tokens, ['reply from local']);
+      expect(cloud.calls, 1);
+      expect(local.calls, 1);
+    });
+
+    test('does not append local output after partial cloud streaming output', () async {
+      final streamingCloud = _FakeStreamingProvider('cloud')
+        ..failure = StateError('connection dropped')
+        ..emitBeforeFailure = true;
+      final streamingRouter = RoutingAIProvider(
+        localProvider: local,
+        cloudProvider: streamingCloud,
+      );
+      final tokens = <String>[];
+
+      await expectLater(
+        streamingRouter.completeStreaming(
+          AIRequest(
+            id: 'stream-partial',
+            prompt: 'Посоветуй фильм с неожиданной концовкой',
+          ),
+          cancellationToken: AICancellationToken(),
+          onToken: tokens.add,
+        ),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(tokens, ['partial cloud answer']);
+      expect(local.calls, 0);
+      expect(streamingCloud.calls, 1);
+    });
+
     test('does not fall back when selected local provider fails', () async {
       local.failure = StateError('local model unavailable');
 
@@ -130,5 +177,33 @@ class _FakeProvider implements AIProvider {
       providerId: id,
       generatedAt: DateTime.utc(2026),
     );
+  }
+}
+
+
+class _FakeStreamingProvider extends _FakeProvider
+    implements AIStreamingProvider {
+  _FakeStreamingProvider(super.id);
+
+  bool emitBeforeFailure = false;
+
+  @override
+  Future<AIResponse> completeStreaming(
+    AIRequest request, {
+    required AICancellationToken cancellationToken,
+    required void Function(String token) onToken,
+  }) async {
+    calls++;
+    if (emitBeforeFailure) onToken('partial cloud answer');
+    final error = failure;
+    if (error != null) throw error;
+    final response = AIResponse(
+      requestId: request.id,
+      text: 'reply from $id',
+      providerId: id,
+      generatedAt: DateTime.utc(2026),
+    );
+    if (response.text.isNotEmpty) onToken(response.text);
+    return response;
   }
 }
