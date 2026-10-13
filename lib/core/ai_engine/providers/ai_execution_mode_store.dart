@@ -2,7 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'routing_ai_provider.dart';
 
-/// Persists the user's explicit AI destination independently of profile data.
+/// Persists the user's AI routing policy independently of profile data.
 abstract interface class AIExecutionModeStore {
   Future<AIExecutionMode> load();
 
@@ -27,7 +27,8 @@ class SharedPreferencesAIExecutionModeStore implements AIExecutionModeStore {
     return switch (stored) {
       'cloud' => AIExecutionMode.cloud,
       'local' => AIExecutionMode.local,
-      _ => AIExecutionMode.local,
+      'automatic' || null => AIExecutionMode.automatic,
+      _ => AIExecutionMode.automatic,
     };
   }
 
