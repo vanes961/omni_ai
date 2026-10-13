@@ -285,6 +285,61 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('refreshes broad discovery after all interests are removed', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+    var requestCount = 0;
+    final service = NewsRssService(
+      client: MockClient((_) async {
+        requestCount++;
+        return http.Response(
+          '<rss><channel><item>'
+          '<title>World leaders meet at summit</title>'
+          '<link>https://publisher.example/world-summit</link>'
+          '<description>Global leaders met today for a summit.</description>'
+          '<pubDate>Mon, 12 Oct 2026 09:00:00 GMT</pubDate>'
+          '<source>World News</source>'
+          '</item></channel></rss>',
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(repository: repository, newsService: service),
+      ),
+    );
+    for (var i = 0; i < 25; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(requestCount, 3);
+
+    await tester.ensureVisible(find.text('ВАШИ ИНТЕРЕСЫ'));
+    await tester.pumpAndSettle(const Duration(milliseconds: 50));
+    final chip = find.byType(InputChip);
+    expect(chip, findsOneWidget);
+    tester.widget<InputChip>(chip).onDeleted!();
+    await tester.pump();
+    await tester.ensureVisible(find.text('СОХРАНИТЬ ИНТЕРЕСЫ'));
+    await tester.tap(find.text('СОХРАНИТЬ ИНТЕРЕСЫ'));
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(requestCount, 6);
+    expect(find.text('World leaders meet at summit'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('explains why the feed is empty when no interests are selected', (
     WidgetTester tester,
   ) async {
