@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/media/data/torrserver_playback_resolver.dart';
 import 'package:omni_ai/features/media/services/ani_skip_segment_provider.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_playback_settings_store.dart';
@@ -41,6 +42,7 @@ class PlayerPage extends StatefulWidget {
     required this.preferences,
     this.searchService = const MediaSearchService(),
     this.playerFactory,
+    this.torrServerResolver,
     this.resumePositionStore,
     this.segmentMarkerStore,
     this.aniSkipSegmentProvider,
@@ -52,6 +54,7 @@ class PlayerPage extends StatefulWidget {
   final UserPreferences preferences;
   final MediaSearchService searchService;
   final MediaPlayerFactory? playerFactory;
+  final TorrServerPlaybackResolver? torrServerResolver;
   final MediaResumePositionStore? resumePositionStore;
   final MediaSegmentMarkerStore? segmentMarkerStore;
   final AniSkipSegmentProvider? aniSkipSegmentProvider;
@@ -343,11 +346,43 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     setState(() => _segmentMarkers = savedMarkers);
 
     Object? playerError;
-    for (var index = 0; index < sources.length; index++) {
+    final playableSources = <String>[];
+    for (final candidate in sources) {
+      final candidateUri = Uri.tryParse(candidate);
+      if (candidateUri?.scheme.toLowerCase() != 'magnet') {
+        playableSources.add(candidate);
+        continue;
+      }
+      final endpoint = widget.preferences.torrServerUrl.trim();
+      if (endpoint.isEmpty) {
+        playerError = StateError(
+          'Сначала укажите адрес TorrServer в сетевых настройках.',
+        );
+        continue;
+      }
+
+      final resolver = widget.torrServerResolver ?? TorrServerPlaybackResolver();
+      try {
+        final resolvedUri = await resolver.resolve(
+          endpoint: endpoint,
+          magnetUri: candidateUri!,
+          title: widget.item.title,
+          episodeNumber: episode?.number,
+          seasonNumber: episode?.seasonNumber,
+        );
+        playableSources.add(resolvedUri.toString());
+      } on Object catch (error) {
+        playerError = error;
+      } finally {
+        if (widget.torrServerResolver == null) resolver.close();
+      }
+    }
+
+    for (var index = 0; index < playableSources.length; index++) {
       if (!mounted || generation != _playerGeneration) return;
       MediaPlaybackController? nextPlayer;
       try {
-        nextPlayer = playerFactory(Uri.parse(sources[index]));
+        nextPlayer = playerFactory(Uri.parse(playableSources[index]));
         await nextPlayer.initialize();
         if (!mounted || generation != _playerGeneration) {
           await _disposePlayer(nextPlayer);
