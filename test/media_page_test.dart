@@ -693,12 +693,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(sources.first, Uri.parse('https://example.com/720.mp4'));
-    await tester.scrollUntilVisible(
+    await tester.dragUntilVisible(
       find.byKey(const ValueKey('quality-selector')),
-      160,
-      scrollable: find.byKey(const ValueKey('player-page-scroll')),
+      find.byKey(const ValueKey('player-page-scroll')),
+      const Offset(0, -160),
     );
-    await tester.ensureVisible(find.byKey(const ValueKey('quality-selector')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('quality-selector')));
     await tester.pumpAndSettle();
@@ -707,12 +706,11 @@ void main() {
     expect(sources.last, Uri.parse('https://example.com/1080.mp4'));
     expect(settings.savedQuality, '1080p');
 
-    await tester.scrollUntilVisible(
+    await tester.dragUntilVisible(
       find.byKey(const ValueKey('voiceover-like-button')),
-      160,
-      scrollable: find.byKey(const ValueKey('player-page-scroll')),
+      find.byKey(const ValueKey('player-page-scroll')),
+      const Offset(0, -160),
     );
-    await tester.ensureVisible(find.byKey(const ValueKey('voiceover-like-button')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('voiceover-like-button')));
     await tester.pumpAndSettle();
