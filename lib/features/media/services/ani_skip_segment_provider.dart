@@ -17,9 +17,7 @@ class AniSkipSegmentProvider {
     required int episodeNumber,
     required Duration episodeDuration,
   }) async {
-    if (malId <= 0 ||
-        episodeNumber <= 0 ||
-        episodeDuration <= Duration.zero) {
+    if (malId <= 0 || episodeNumber <= 0 || episodeDuration <= Duration.zero) {
       return const [];
     }
 
@@ -34,8 +32,9 @@ class AniSkipSegmentProvider {
     );
 
     try {
-      final response = await (_client?.get(uri) ?? http.get(uri))
-          .timeout(const Duration(seconds: 5));
+      final response = await (_client?.get(uri) ?? http.get(uri)).timeout(
+        const Duration(seconds: 5),
+      );
       if (response.statusCode != 200) return const [];
 
       final decoded = jsonDecode(response.body);
@@ -70,8 +69,8 @@ class AniSkipSegmentProvider {
 
         // Different encodes often have slightly different runtimes. Scale
         // source timestamps to the actual duration of the playing file.
-        final scale = episodeDuration.inMilliseconds /
-            (sourceDuration.toDouble() * 1000);
+        final scale =
+            episodeDuration.inMilliseconds / (sourceDuration.toDouble() * 1000);
         final start = Duration(
           milliseconds: (rawStart.toDouble() * 1000 * scale).round(),
         );
