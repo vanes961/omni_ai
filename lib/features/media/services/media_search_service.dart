@@ -310,6 +310,7 @@ class MediaDetails {
   final List<MediaCastMember> cast;
   final int? runtimeMinutes;
   final String releaseDate, backdropUrl, homepage;
+  final List<MediaCatalogSeason> seasons;
 }
 
 /// Descriptive season metadata from a catalog; intentionally not playable.
