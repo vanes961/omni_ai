@@ -10,6 +10,7 @@ import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
+import 'package:omni_ai/features/media/services/media_playback_settings_store.dart';
 import 'package:omni_ai/features/media/services/media_resume_position_store.dart';
 import 'package:omni_ai/features/media/services/media_segment_marker_store.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
@@ -649,6 +650,73 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('player selects real quality variants and likes voiceovers', (
+    tester,
+  ) async {
+    final sources = <Uri>[];
+    final settings = _FakeMediaPlaybackSettingsStore();
+    final item = MediaItem(
+      id: 'quality-voiceover-test',
+      title: 'Quality Test',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const ['Studio A'],
+      videoUrl: 'https://example.com/default.mp4',
+      videoSources: const [
+        MediaVideoSource(
+          url: 'https://example.com/720.mp4',
+          quality: '720p',
+          voiceover: 'Studio A',
+        ),
+        MediaVideoSource(
+          url: 'https://example.com/1080.mp4',
+          quality: '1080p',
+          voiceover: 'Studio A',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences()..voiceDubbing = ['Studio A'],
+          playbackSettingsStore: settings,
+          playerFactory: (source) {
+            sources.add(source);
+            return _FakePlaybackController();
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(sources.first, Uri.parse('https://example.com/720.mp4'));
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('quality-selector')),
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.byKey(const ValueKey('quality-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1080p').last);
+    await tester.pumpAndSettle();
+    expect(sources.last, Uri.parse('https://example.com/1080.mp4'));
+    expect(settings.savedQuality, '1080p');
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('voiceover-like-button')),
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.byKey(const ValueKey('voiceover-like-button')));
+    await tester.pumpAndSettle();
+    expect(settings.likedVoiceovers, contains('Studio A'));
+    expect(find.text('Озвучка нравится'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('long episode titles do not overflow the player layout', (
     tester,
   ) async {
@@ -807,5 +875,39 @@ class _FakeMediaSegmentMarkerStore implements MediaSegmentMarkerStore {
   ) async {
     this.markers[_key(mediaId, episodeIndex)] =
         List<MediaSegmentMarker>.from(markers);
+  }
+}
+
+
+class _FakeMediaPlaybackSettingsStore implements MediaPlaybackSettingsStore {
+  String? savedVoiceover;
+  String? savedQuality;
+  final Set<String> likedVoiceovers = <String>{};
+
+  @override
+  Future<String?> loadVoiceover(String mediaId) async => savedVoiceover;
+
+  @override
+  Future<void> saveVoiceover(String mediaId, String voiceover) async {
+    savedVoiceover = voiceover;
+  }
+
+  @override
+  Future<String?> loadQuality(String mediaId) async => savedQuality;
+
+  @override
+  Future<void> saveQuality(String mediaId, String quality) async {
+    savedQuality = quality;
+  }
+
+  @override
+  Future<Set<String>> loadLikedVoiceovers() async =>
+      Set<String>.from(likedVoiceovers);
+
+  @override
+  Future<bool> toggleVoiceoverLike(String voiceover) async {
+    if (likedVoiceovers.remove(voiceover)) return false;
+    likedVoiceovers.add(voiceover);
+    return true;
   }
 }
