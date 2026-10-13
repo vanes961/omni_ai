@@ -57,12 +57,24 @@ void main() {
         label: 'Invalid torrent',
         uri: Uri.parse('magnet:?xt=urn:sha1:0123456789'),
       );
+      final malformedHash = MediaStreamSource(
+        id: 'magnet-malformed',
+        label: 'Malformed torrent hash',
+        uri: Uri.parse('magnet:?xt=urn:btih:xyz'),
+      );
+      final base32Hash = MediaStreamSource(
+        id: 'magnet-base32',
+        label: 'Base32 torrent hash',
+        uri: Uri.parse('magnet:?xt=urn:btih:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+      );
 
       expect(valid.isMagnet, isTrue);
       expect(valid.isSupportedInput, isTrue);
       expect(missingHash.isMagnet, isFalse);
       expect(missingHash.isSupportedInput, isFalse);
       expect(wrongHashType.isMagnet, isFalse);
+      expect(malformedHash.isMagnet, isFalse);
+      expect(base32Hash.isMagnet, isTrue);
     });
   });
 
