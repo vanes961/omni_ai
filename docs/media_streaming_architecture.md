@@ -18,7 +18,7 @@ Separate the system into interfaces so the UI does not depend on a specific prov
 
 This is the fastest prototype path. OMNI AI can offer a server URL setting, a connection/health check, and a small adapter for the documented API. The server may run on the same device or another device on the user's trusted network.
 
-Security requirements: warn on non-loopback plain HTTP, do not expose credentials in logs, do not bind an unauthenticated server to the public network, and never ship default credentials.
+Security requirements: warn that plain HTTP is unencrypted (especially for non-loopback hosts), do not put credentials in the URL or logs, do not expose an unauthenticated server to the public network, and never ship default credentials. The current settings prototype validates a root HTTP(S) URL and checks the documented `GET /echo` health endpoint. A successful health check confirms reachability only; it does not yet prove that playback works.
 
 ### Option B — bundle or embed a torrent engine
 
@@ -32,7 +32,7 @@ This provides control but has the highest cost and maintenance risk. It requires
 
 1. Keep the current no-fake-data media UI and external ZONA handoff as a temporary state.
 2. Add a provider-neutral engine interface and tests with a fake engine; no torrent downloads yet.
-3. Prototype a user-configured TorrServer endpoint and test it against an instance the developer controls.
+3. Add a user-configured TorrServer endpoint, validate it, and check the documented `GET /echo` health endpoint. Then test against an instance the developer controls before connecting playback.
 4. Add playback only for user-provided or otherwise authorized torrent sources, with clear progress/error/cancel states and bounded cache.
 5. Evaluate whether to bundle the engine only after Android packaging, license, privacy, and security reviews.
 6. Integrate a real metadata provider only where documented API access or permitted data access is available. Never promise that TorrServer alone provides ZONA's catalog.
