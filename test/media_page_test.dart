@@ -275,6 +275,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('voiceover-selector')),
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
 
     final selector = tester.widget<DropdownButtonFormField<String>>(
       find.byKey(const ValueKey('voiceover-selector')),
