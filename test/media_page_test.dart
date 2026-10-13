@@ -67,6 +67,7 @@ void main() {
     tester,
   ) async {
     final playerSources = <Uri>[];
+    final controllers = <_FakePlaybackController>[];
     final item = MediaItem(
       id: 'fallback-test',
       title: 'Fallback Test',
@@ -85,11 +86,13 @@ void main() {
           preferences: UserPreferences(),
           playerFactory: (source) {
             playerSources.add(source);
-            return _FakePlaybackController(
+            final controller = _FakePlaybackController(
               initializationError: source.host == 'primary.example'
                   ? PlatformException(code: 'video_unavailable')
                   : null,
             );
+            controllers.add(controller);
+            return controller;
           },
         ),
       ),
@@ -101,12 +104,16 @@ void main() {
       Uri.parse('https://mirror.example/video.mp4'),
     ]);
     expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsNothing);
+    expect(controllers, hasLength(2));
+    expect(controllers.first.isDisposed, isTrue);
+    expect(controllers.last.isDisposed, isFalse);
   });
 
   testWidgets('retries a fallback video URL after a network error', (
     tester,
   ) async {
     final playerSources = <Uri>[];
+    final controllers = <_FakePlaybackController>[];
     final item = MediaItem(
       id: 'network-fallback-test',
       title: 'Network Fallback Test',
@@ -125,11 +132,13 @@ void main() {
           preferences: UserPreferences(),
           playerFactory: (source) {
             playerSources.add(source);
-            return _FakePlaybackController(
+            final controller = _FakePlaybackController(
               initializationError: source.host == 'primary.example'
                   ? const SocketException('Connection failed')
                   : null,
             );
+            controllers.add(controller);
+            return controller;
           },
         ),
       ),
@@ -141,6 +150,9 @@ void main() {
       Uri.parse('https://mirror.example/video.mp4'),
     ]);
     expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsNothing);
+    expect(controllers, hasLength(2));
+    expect(controllers.first.isDisposed, isTrue);
+    expect(controllers.last.isDisposed, isFalse);
   });
 
   testWidgets('shows an honest empty state instead of demo media', (
@@ -171,6 +183,7 @@ void main() {
     tester,
   ) async {
     final playerSources = <Uri>[];
+    final controllers = <_FakePlaybackController>[];
     final item = MediaItem(
       id: 'series-test',
       title: 'Test Series',
@@ -209,7 +222,9 @@ void main() {
           preferences: preferences,
           playerFactory: (source) {
             playerSources.add(source);
-            return _FakePlaybackController();
+            final controller = _FakePlaybackController();
+            controllers.add(controller);
+            return controller;
           },
         ),
       ),
@@ -233,6 +248,8 @@ void main() {
     await tester.tap(find.text('Studio A').last);
     await tester.pumpAndSettle();
     expect(playerSources.last, Uri.parse('https://example.com/studio-a-first.mp4'));
+    expect(controllers[0].isDisposed, isTrue);
+    expect(controllers[1].isDisposed, isFalse);
 
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('episode-selector')),
@@ -247,6 +264,8 @@ void main() {
       playerSources.last,
       Uri.parse('https://example.com/studio-a-second.mp4'),
     );
+    expect(controllers[1].isDisposed, isTrue);
+    expect(controllers[2].isDisposed, isFalse);
   });
 
   testWidgets('voiceover selector excludes voices without a stream', (
@@ -414,6 +433,7 @@ class _FakePlaybackController implements MediaPlaybackController {
   final Object? initializationError;
   final Object? playError;
   bool _isPlaying = false;
+  bool isDisposed = false;
 
   @override
   bool get isInitialized => true;
@@ -441,7 +461,9 @@ class _FakePlaybackController implements MediaPlaybackController {
   }
 
   @override
-  Future<void> dispose() async {}
+  Future<void> dispose() async {
+    isDisposed = true;
+  }
 
   @override
   Widget buildView() => const ColoredBox(color: Colors.black);
