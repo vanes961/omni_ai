@@ -289,7 +289,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
             separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final file = selection.files[index];
-              final parts = file.path.split(RegExp(r'[/\\\\]'));
+              final parts = file.path.split('/');
               final name = parts.isEmpty ? file.path : parts.last;
               return ListTile(
                 title: Text(name),
