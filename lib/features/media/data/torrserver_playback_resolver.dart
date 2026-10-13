@@ -173,7 +173,7 @@ class TorrServerPlaybackResolver {
         .toList(growable: false);
     if (matches.length == 1) return matches.single;
     if (matches.length != 1) {
-      throw TorrServerFileSelectionRequired(videos, torrentHash: initial.hash);
+      throw TorrServerFileSelectionRequired(videos, torrentHash: torrentHash);
     }
     return matches.single;
   }
