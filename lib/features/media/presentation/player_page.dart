@@ -636,4 +636,3 @@ class _VideoPlayerAdapter implements MediaPlaybackController {
   @override
   Widget buildView() => VideoPlayer(_controller);
 }
-import 'dart:convert';
