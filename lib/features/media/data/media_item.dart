@@ -14,6 +14,7 @@ class MediaItem {
     this.episodes = const [],
     this.description = '',
     this.malId,
+    this.videoSources = const [],
   });
 
   final String id;
@@ -32,6 +33,7 @@ class MediaItem {
 
   /// MyAnimeList ID required by AniSkip; never populate with a TMDB ID.
   final int? malId;
+  final List<MediaVideoSource> videoSources;
 }
 
 class MediaEpisode {
@@ -41,6 +43,7 @@ class MediaEpisode {
     required this.videoUrl,
     this.videoFallbackUrls = const [],
     this.voiceoverVideoUrls = const {},
+    this.videoSources = const [],
   });
 
   final int number;
@@ -48,6 +51,23 @@ class MediaEpisode {
   final String videoUrl;
   final List<String> videoFallbackUrls;
   final Map<String, String> voiceoverVideoUrls;
+  final List<MediaVideoSource> videoSources;
 
   String get label => 'СЕРИЯ ${number.toString().padLeft(2, '0')}  //  $title';
+}
+
+/// A concrete stream variant exposed by a media source resolver.
+///
+/// Quality choices are only shown when the catalog supplies real variants;
+/// the player never invents quality labels for fallback URLs.
+class MediaVideoSource {
+  const MediaVideoSource({
+    required this.url,
+    required this.quality,
+    this.voiceover,
+  });
+
+  final String url;
+  final String quality;
+  final String? voiceover;
 }
