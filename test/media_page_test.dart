@@ -265,6 +265,49 @@ void main() {
     expect(find.byType(PlayerPage), findsNothing);
   });
 
+  testWidgets('shows persistent watched history for series and anime', (
+    tester,
+  ) async {
+    final store = _FakeMediaResumePositionStore()
+      ..watchedEpisodes['history-test'] = <int>{0};
+    final item = MediaItem(
+      id: 'history-test',
+      title: 'History Test',
+      type: 'Аниме',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/episode-1.mp4',
+      episodes: const [
+        MediaEpisode(number: 1, title: 'First', videoUrl: 'https://example.com/episode-1.mp4'),
+        MediaEpisode(number: 2, title: 'Second', videoUrl: 'https://example.com/episode-2.mp4'),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          resumePositionStore: store,
+          playerFactory: (_) => _FakePlaybackController(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('ПРОСМОТРЕНО: 1 ИЗ 2 СЕРИЙ'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('episode-selector')),
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.byKey(const ValueKey('episode-selector')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('✓  СЕРИЯ 01'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('player changes episode source and selects preferred voiceover', (
     tester,
   ) async {
@@ -647,6 +690,7 @@ class _FakePlaybackController implements MediaPlaybackController {
 
 class _FakeMediaResumePositionStore implements MediaResumePositionStore {
   final Map<String, Duration> positions = <String, Duration>{};
+  final Map<String, Set<int>> watchedEpisodes = <String, Set<int>>{};
 
   String _key(String mediaId, int episodeIndex) => '$mediaId:$episodeIndex';
 
@@ -662,6 +706,15 @@ class _FakeMediaResumePositionStore implements MediaResumePositionStore {
     Duration duration,
   ) async {
     positions[_key(mediaId, episodeIndex)] = position;
+  }
+
+  @override
+  Future<Set<int>> loadWatchedEpisodes(String mediaId) async =>
+      Set<int>.from(watchedEpisodes[mediaId] ?? <int>{});
+
+  @override
+  Future<void> markEpisodeWatched(String mediaId, int episodeIndex) async {
+    watchedEpisodes.putIfAbsent(mediaId, () => <int>{}).add(episodeIndex);
   }
 
   @override
