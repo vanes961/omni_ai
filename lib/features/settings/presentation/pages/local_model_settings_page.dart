@@ -32,6 +32,11 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
   bool _modeLoading = false;
   bool _modeSaving = false;
   String? _modeError;
+  final TextEditingController _cloudKeyController = TextEditingController();
+  bool _hasCloudKey = false;
+  bool _keyLoading = false;
+  bool _keySaving = false;
+  String? _keyMessage;
 
   @override
   void initState() {
@@ -39,7 +44,9 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
     _refreshStatus();
     if (widget.aiDependencies != null) {
       _modeLoading = true;
+      _keyLoading = true;
       unawaited(_restoreExecutionMode());
+      unawaited(_restoreCloudKeyStatus());
     }
   }
 
@@ -53,6 +60,65 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
       setState(() => _modeError = 'Не удалось восстановить режим AI: $error');
     } finally {
       if (mounted) setState(() => _modeLoading = false);
+    }
+  }
+
+  Future<void> _restoreCloudKeyStatus() async {
+    try {
+      final hasKey = await widget.aiDependencies!.hasCloudApiKey;
+      if (!mounted) return;
+      setState(() => _hasCloudKey = hasKey);
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _keyMessage = 'Не удалось проверить ключ: $error');
+    } finally {
+      if (mounted) setState(() => _keyLoading = false);
+    }
+  }
+
+  Future<void> _saveCloudKey() async {
+    final dependencies = widget.aiDependencies;
+    final key = _cloudKeyController.text.trim();
+    if (dependencies == null || key.isEmpty || _keySaving) return;
+    setState(() {
+      _keySaving = true;
+      _keyMessage = null;
+    });
+    try {
+      await dependencies.saveCloudApiKey(key);
+      if (!mounted) return;
+      _cloudKeyController.clear();
+      setState(() {
+        _hasCloudKey = true;
+        _keyMessage = 'Ключ сохранён в защищённом хранилище устройства.';
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _keyMessage = 'Не удалось сохранить ключ: $error');
+    } finally {
+      if (mounted) setState(() => _keySaving = false);
+    }
+  }
+
+  Future<void> _deleteCloudKey() async {
+    final dependencies = widget.aiDependencies;
+    if (dependencies == null || _keySaving) return;
+    setState(() {
+      _keySaving = true;
+      _keyMessage = null;
+    });
+    try {
+      await dependencies.deleteCloudApiKey();
+      if (!mounted) return;
+      setState(() {
+        _hasCloudKey = false;
+        _keyMessage = 'Облачный ключ удалён с устройства.';
+      });
+    } on Object catch (error) {
+      if (!mounted) return;
+      setState(() => _keyMessage = 'Не удалось удалить ключ: $error');
+    } finally {
+      if (mounted) setState(() => _keySaving = false);
     }
   }
 
@@ -263,6 +329,79 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                     fontSize: 11,
                   ),
                 ),
+                const SizedBox(height: 18),
+                const Text(
+                  'ОБЛАЧНЫЙ ДОСТУП // OPENROUTER',
+                  style: TextStyle(
+                    color: SystemCorePalette.green,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  key: const ValueKey('openrouter-api-key-field'),
+                  controller: _cloudKeyController,
+                  obscureText: true,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  decoration: const InputDecoration(
+                    labelText: 'Личный API-ключ OpenRouter',
+                    hintText: 'sk-or-…',
+                    helperText: 'Создаётся в аккаунте OpenRouter. Не отправляйте ключ в чат.',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        key: const ValueKey('save-openrouter-key-button'),
+                        onPressed: _keyLoading || _keySaving
+                            ? null
+                            : _saveCloudKey,
+                        icon: _keySaving
+                            ? const SizedBox.square(
+                                dimension: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.lock_outline),
+                        label: const Text('СОХРАНИТЬ КЛЮЧ'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      key: const ValueKey('delete-openrouter-key-button'),
+                      tooltip: 'Удалить ключ',
+                      onPressed: !_hasCloudKey || _keySaving
+                          ? null
+                          : _deleteCloudKey,
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                  ],
+                ),
+                Text(
+                  _keyLoading
+                      ? 'Проверяем сохранённый ключ…'
+                      : _hasCloudKey
+                          ? 'Ключ настроен на этом устройстве.'
+                          : 'Ключ не настроен.',
+                  style: const TextStyle(
+                    color: SystemCorePalette.muted,
+                    fontSize: 11,
+                  ),
+                ),
+                if (_keyMessage != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    _keyMessage!,
+                    style: const TextStyle(
+                      color: SystemCorePalette.green,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
                 if (_modeLoading || _modeSaving) ...[
                   const SizedBox(height: 10),
                   const LinearProgressIndicator(color: SystemCorePalette.green),
