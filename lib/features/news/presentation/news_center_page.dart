@@ -1136,7 +1136,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   ),
                 ),
               ],
-              if (_newsError == null && _articles.isEmpty) ...[
+              if (!_refreshingNews &&
+                  _newsError == null &&
+                  _articles.isEmpty) ...[
                 const SizedBox(height: 12),
                 const Icon(
                   Icons.rss_feed,
