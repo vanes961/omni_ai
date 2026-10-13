@@ -4,6 +4,7 @@ import '../models/ai_error.dart';
 import '../models/ai_request.dart';
 import '../models/ai_response.dart';
 import '../providers/ai_provider.dart';
+import '../providers/ai_streaming_provider.dart';
 import 'local_llama_provider.dart';
 import 'local_model_storage.dart';
 
@@ -11,7 +12,7 @@ import 'local_model_storage.dart';
 ///
 /// This provider never downloads a model or forwards prompts remotely. If the
 /// model is missing from app storage, it copies the packaged APK asset first.
-class StoredLocalLlamaProvider implements AIProvider {
+class StoredLocalLlamaProvider implements AIProvider, AIStreamingProvider {
   StoredLocalLlamaProvider({
     required this.storage,
     this.model = LocalModelCatalog.qwen3Small,
@@ -46,6 +47,27 @@ class StoredLocalLlamaProvider implements AIProvider {
     final provider = await _readyProvider();
     _ensureNotDisposed();
     return provider.complete(request, cancellationToken: cancellationToken);
+  }
+
+  @override
+  Future<AIResponse> completeStreaming(
+    AIRequest request, {
+    required AICancellationToken cancellationToken,
+    required void Function(String token) onToken,
+  }) async {
+    _ensureNotDisposed();
+    if (cancellationToken.isCancelled) {
+      throw const AIEngineException(
+        AIError(code: AIErrorCode.cancelled, message: 'AI request cancelled.'),
+      );
+    }
+    final provider = await _readyProvider();
+    _ensureNotDisposed();
+    return provider.completeStreaming(
+      request,
+      cancellationToken: cancellationToken,
+      onToken: onToken,
+    );
   }
 
   Future<LocalLlamaProvider> _readyProvider() {
