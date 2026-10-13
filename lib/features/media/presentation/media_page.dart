@@ -69,7 +69,10 @@ class _MediaPageState extends State<MediaPage> {
   }
 
   List<MediaItem> _rankByFavoriteInterests(List<MediaItem> items) {
-    final profile = _interestAnalytics.analyze([..._favoriteItems, ..._likedItems]);
+    final profile = _interestAnalytics.analyze([
+      ..._favoriteItems,
+      ..._likedItems,
+    ]);
     return _interestAnalytics.rank(items, profile);
   }
 
@@ -640,7 +643,9 @@ class _MediaPosterCard extends StatelessWidget {
                             tooltip: isLiked ? 'Убрать лайк' : 'Нравится',
                             onPressed: onLike,
                             icon: Icon(
-                              isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                              isLiked
+                                  ? Icons.thumb_up
+                                  : Icons.thumb_up_outlined,
                               size: 17,
                               color: isLiked ? SystemCorePalette.green : null,
                             ),
