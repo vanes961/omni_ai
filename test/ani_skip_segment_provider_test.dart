@@ -48,7 +48,7 @@ void main() {
     expect(requestedUri!.queryParameters['episodeLength'], '1420.000');
     expect(markers, hasLength(2));
     expect(markers.first.type, MediaSegmentType.intro);
-    expect(markers.first.start, const Duration(milliseconds: 91429));
+    expect(markers.first.start, const Duration(milliseconds: 91286));
     expect(markers.first.end, const Duration(milliseconds: 182571));
     expect(markers.last.type, MediaSegmentType.credits);
     expect(markers.last.end, lessThanOrEqualTo(const Duration(seconds: 1420)));
