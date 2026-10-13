@@ -184,11 +184,19 @@ void main() {
           number: 1,
           title: 'Pilot',
           videoUrl: 'https://example.com/first.mp4',
+          voiceoverVideoUrls: {
+            'Studio A': 'https://example.com/studio-a-first.mp4',
+            'Original': 'https://example.com/original-first.mp4',
+          },
         ),
         MediaEpisode(
           number: 2,
           title: 'Second',
           videoUrl: 'https://example.com/second.mp4',
+          voiceoverVideoUrls: {
+            'Studio A': 'https://example.com/studio-a-second.mp4',
+            'Original': 'https://example.com/original-second.mp4',
+          },
         ),
       ],
     );
@@ -208,7 +216,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(playerSources, [Uri.parse('https://example.com/first.mp4')]);
+    expect(playerSources, [
+      Uri.parse('https://example.com/original-first.mp4'),
+    ]);
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('voiceover-selector')),
       160,
@@ -218,6 +228,11 @@ void main() {
       find.byKey(const ValueKey('voiceover-selector')),
     );
     expect(voiceoverField.initialValue, 'Original');
+    await tester.tap(find.byKey(const ValueKey('voiceover-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Studio A').last);
+    await tester.pumpAndSettle();
+    expect(playerSources.last, Uri.parse('https://example.com/studio-a-first.mp4'));
 
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('episode-selector')),
@@ -228,7 +243,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.textContaining('Second').last);
     await tester.pumpAndSettle();
-    expect(playerSources.last, Uri.parse('https://example.com/second.mp4'));
+    expect(
+      playerSources.last,
+      Uri.parse('https://example.com/studio-a-second.mp4'),
+    );
   });
 
   testWidgets('playback control awaits play and pause state changes', (
