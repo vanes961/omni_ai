@@ -599,19 +599,20 @@ void main() {
   );
 
   test(
-    'does not make a network request when no interests are selected',
+    'requests discovery news when no interests are selected',
     () async {
       var requests = 0;
       final service = NewsRssService(
-        client: MockClient((_) async {
+        client: MockClient((request) async {
           requests++;
+          expect(request.url.queryParameters['q'], 'news');
           return http.Response('', 200);
         }),
       );
       addTearDown(service.dispose);
 
       expect(await service.fetch(const NewsInterestProfile()), isEmpty);
-      expect(requests, 0);
+      expect(requests, 1);
     },
   );
 
