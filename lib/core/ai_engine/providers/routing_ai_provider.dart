@@ -82,7 +82,24 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
     }
 
     final selected = _providerForMode(mode, request.prompt);
-    return selected.complete(request, cancellationToken: cancellationToken);
+    try {
+      return await selected.complete(
+        request,
+        cancellationToken: cancellationToken,
+      );
+    } on Object {
+      if (mode != AIExecutionMode.automatic ||
+          !identical(selected, cloudProvider) ||
+          cancellationToken.isCancelled) {
+        rethrow;
+      }
+      // Automatic mode is allowed to recover locally when the cloud is
+      // unavailable. Explicit Cloud mode never silently changes destination.
+      return localProvider.complete(
+        request,
+        cancellationToken: cancellationToken,
+      );
+    }
   }
 
   @override
@@ -98,6 +115,34 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
     }
 
     final selected = _providerForMode(mode, request.prompt);
+    try {
+      return await _completeSelectedStreaming(
+        selected,
+        request,
+        cancellationToken: cancellationToken,
+        onToken: onToken,
+      );
+    } on Object {
+      if (mode != AIExecutionMode.automatic ||
+          !identical(selected, cloudProvider) ||
+          cancellationToken.isCancelled) {
+        rethrow;
+      }
+      return _completeSelectedStreaming(
+        localProvider,
+        request,
+        cancellationToken: cancellationToken,
+        onToken: onToken,
+      );
+    }
+  }
+
+  Future<AIResponse> _completeSelectedStreaming(
+    AIProvider selected,
+    AIRequest request, {
+    required AICancellationToken cancellationToken,
+    required void Function(String token) onToken,
+  }) async {
     if (selected is AIStreamingProvider) {
       return selected.completeStreaming(
         request,
