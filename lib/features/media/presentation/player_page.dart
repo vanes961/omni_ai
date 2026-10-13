@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/media/services/ani_skip_segment_provider.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_resume_position_store.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
@@ -41,6 +42,7 @@ class PlayerPage extends StatefulWidget {
     this.playerFactory,
     this.resumePositionStore,
     this.segmentMarkerStore,
+    this.aniSkipSegmentProvider,
     super.key,
   });
 
@@ -50,6 +52,7 @@ class PlayerPage extends StatefulWidget {
   final MediaPlayerFactory? playerFactory;
   final MediaResumePositionStore? resumePositionStore;
   final MediaSegmentMarkerStore? segmentMarkerStore;
+  final AniSkipSegmentProvider? aniSkipSegmentProvider;
 
   @override
   State<PlayerPage> createState() => _PlayerPageState();
@@ -66,6 +69,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   final Set<int> _resumePromptedEpisodes = <int>{};
   final Set<int> _watchedEpisodes = <int>{};
   List<MediaSegmentMarker> _segmentMarkers = const [];
+  List<MediaSegmentMarker> _remoteSegmentMarkers = const [];
   final Map<MediaSegmentType, Duration> _pendingSegmentStarts = {};
 
   bool get _tracksEpisodeHistory {
@@ -96,6 +100,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   MediaSegmentMarkerStore get _segmentStore =>
       widget.segmentMarkerStore ?? SharedPreferencesMediaSegmentMarkerStore();
+
+  AniSkipSegmentProvider get _aniSkipProvider =>
+      widget.aniSkipSegmentProvider ?? AniSkipSegmentProvider();
 
   bool get _hasEpisodes => widget.item.episodes.isNotEmpty;
 
@@ -250,6 +257,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     setState(() {
       _selectedEpisode = episodeIndex;
       _segmentMarkers = const [];
+      _remoteSegmentMarkers = const [];
       _pendingSegmentStarts.clear();
       if (selectedVoiceover != null) {
         _selectedVoiceover = selectedVoiceover;
@@ -278,6 +286,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
           _player = nextPlayer;
           _isLoading = false;
         });
+        unawaited(_loadAniSkipMarkers(nextPlayer, episodeIndex, generation));
         await _offerResumeIfAvailable(nextPlayer, episodeIndex, generation);
         return;
       } on PlatformException catch (error) {
@@ -295,14 +304,51 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _loadAniSkipMarkers(
+    MediaPlaybackController player,
+    int episodeIndex,
+    int generation,
+  ) async {
+    final malId = widget.item.malId;
+    if (malId == null ||
+        !_tracksAnime ||
+        !player.isInitialized ||
+        player.duration <= Duration.zero) {
+      return;
+    }
+    final episodeNumber = _hasEpisodes
+        ? widget.item.episodes[episodeIndex].number
+        : episodeIndex + 1;
+    final markers = await _aniSkipProvider.load(
+      malId: malId,
+      episodeNumber: episodeNumber,
+      episodeDuration: player.duration,
+    );
+    if (!mounted ||
+        generation != _playerGeneration ||
+        !identical(_player, player)) {
+      return;
+    }
+    setState(() => _remoteSegmentMarkers = markers);
+  }
+
+  bool get _tracksAnime {
+    final type = widget.item.type.toLowerCase();
+    return type.contains('аниме') || type.contains('anime');
+  }
+
   MediaSegmentMarker? _activeMarker(
     MediaSegmentType type,
     MediaPlaybackController player,
   ) {
-    for (final marker in _segmentMarkers) {
-      if (marker.type == type &&
-          player.position >= marker.start &&
-          player.position < marker.end) {
+    final localMarkers = _segmentMarkers
+        .where((marker) => marker.type == type)
+        .toList(growable: false);
+    final markers = localMarkers.isNotEmpty
+        ? localMarkers
+        : _remoteSegmentMarkers.where((marker) => marker.type == type);
+    for (final marker in markers) {
+      if (player.position >= marker.start && player.position < marker.end) {
         return marker;
       }
     }
