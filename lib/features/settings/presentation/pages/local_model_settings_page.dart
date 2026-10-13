@@ -449,8 +449,8 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                   _keyLoading
                       ? 'Проверяем сохранённый ключ…'
                       : _hasCloudKey
-                          ? 'Ключ настроен на этом устройстве.'
-                          : 'Ключ не настроен.',
+                      ? 'Ключ настроен на этом устройстве.'
+                      : 'Ключ не настроен.',
                   style: const TextStyle(
                     color: SystemCorePalette.muted,
                     fontSize: 11,
