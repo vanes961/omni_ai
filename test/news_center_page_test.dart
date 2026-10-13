@@ -311,7 +311,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    expect(requestCount, 0);
+    // With no selected topics the service attempts a broad discovery fetch;
+    // the empty RSS response should still explain how to personalize the feed.
+    expect(requestCount, greaterThan(0));
     expect(
       find.textContaining('без выбранных тем'),
       findsOneWidget,
