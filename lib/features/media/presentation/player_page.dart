@@ -124,6 +124,23 @@ class _PlayerPageState extends State<PlayerPage> {
     });
   }
 
+  Future<void> _togglePlayback(MediaPlaybackController player) async {
+    try {
+      if (player.isPlaying) {
+        await player.pause();
+      } else {
+        await player.play();
+      }
+      if (mounted && identical(_player, player)) {
+        setState(() => _playerError = null);
+      }
+    } on Object catch (error) {
+      if (mounted && identical(_player, player)) {
+        setState(() => _playerError = error);
+      }
+    }
+  }
+
   Future<void> _disposePlayer(MediaPlaybackController? player) async {
     if (player == null) return;
     try {
@@ -288,13 +305,7 @@ class _PlayerPageState extends State<PlayerPage> {
                   alignment: Alignment.center,
                   child: IconButton(
                     tooltip: player!.isPlaying ? 'Пауза' : 'Воспроизвести',
-                    onPressed: () => setState(() {
-                      if (player.isPlaying) {
-                        player.pause();
-                      } else {
-                        player.play();
-                      }
-                    }),
+                    onPressed: () => _togglePlayback(player),
                     icon: Icon(
                       player.isPlaying ? Icons.pause : Icons.play_arrow,
                     ),
