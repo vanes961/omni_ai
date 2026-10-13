@@ -719,6 +719,84 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('player selects seasons and filters the episode list', (
+    tester,
+  ) async {
+    final sources = <Uri>[];
+    final item = MediaItem(
+      id: 'season-selector-test',
+      title: 'Season Test',
+      type: 'Сериал',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/season-1-episode-1.mp4',
+      episodes: const [
+        MediaEpisode(
+          number: 1,
+          title: 'First season episode one',
+          videoUrl: 'https://example.com/season-1-episode-1.mp4',
+          seasonNumber: 1,
+        ),
+        MediaEpisode(
+          number: 2,
+          title: 'First season episode two',
+          videoUrl: 'https://example.com/season-1-episode-2.mp4',
+          seasonNumber: 1,
+        ),
+        MediaEpisode(
+          number: 1,
+          title: 'Second season episode one',
+          videoUrl: 'https://example.com/season-2-episode-1.mp4',
+          seasonNumber: 2,
+        ),
+        MediaEpisode(
+          number: 2,
+          title: 'Second season episode two',
+          videoUrl: 'https://example.com/season-2-episode-2.mp4',
+          seasonNumber: 2,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          playerFactory: (source) {
+            sources.add(source);
+            return _FakePlaybackController();
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('season-selector')), findsOneWidget);
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('season-selector')),
+      find.byKey(const ValueKey('player-page-scroll')),
+      const Offset(0, -160),
+    );
+    await tester.tap(find.byKey(const ValueKey('season-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('СЕЗОН 02').last);
+    await tester.pumpAndSettle();
+
+    expect(sources.last, Uri.parse('https://example.com/season-2-episode-1.mp4'));
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('episode-selector')),
+      find.byKey(const ValueKey('player-page-scroll')),
+      const Offset(0, -160),
+    );
+    await tester.tap(find.byKey(const ValueKey('episode-selector')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('СЕРИЯ 01  //  Second season episode one'), findsOneWidget);
+    expect(find.textContaining('First season episode one'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('long episode titles do not overflow the player layout', (
     tester,
   ) async {
