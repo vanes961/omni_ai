@@ -23,15 +23,18 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
   AIExecutionMode mode;
 
   @override
-  String get id => _providerForMode(mode, _lastRequestText).id;
-
-  String _lastRequestText = '';
+  String get id => switch (mode) {
+    AIExecutionMode.automatic => 'auto-router',
+    AIExecutionMode.local => localProvider.id,
+    AIExecutionMode.cloud => cloudProvider.id,
+  };
 
   AIProvider _providerForMode(AIExecutionMode selectedMode, String prompt) {
     return switch (selectedMode) {
       AIExecutionMode.local => localProvider,
       AIExecutionMode.cloud => cloudProvider,
-      AIExecutionMode.automatic => _isLocalTask(prompt) ? localProvider : cloudProvider,
+      AIExecutionMode.automatic =>
+        _isLocalTask(prompt) ? localProvider : cloudProvider,
     };
   }
 
@@ -50,8 +53,6 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
     );
     if (localCommand.hasMatch(normalized)) return true;
 
-    // These tasks benefit from current knowledge, broader reasoning, or a
-    // catalogue/news context and should use the online model in auto mode.
     final cloudIntent = RegExp(
       r'(посоветуй|рекоменд|подбери|похож|сравни|объясни|расскажи|'
       r'почему|как лучше|что выбрать|фильм|кино|сериал|аниме|манг|'
@@ -63,8 +64,6 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
     );
     if (cloudIntent.hasMatch(normalized)) return false;
 
-    // Keep very short social turns local; treat the remaining open-ended
-    // conversation as cloud work, while explicit Local mode remains private.
     final words = normalized.split(RegExp(r'\s+')).where((word) => word.isNotEmpty);
     return words.length <= 3 &&
         !normalized.contains('?') &&
@@ -82,7 +81,6 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
       );
     }
 
-    _lastRequestText = request.prompt;
     final selected = _providerForMode(mode, request.prompt);
     return selected.complete(request, cancellationToken: cancellationToken);
   }
@@ -99,7 +97,6 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
       );
     }
 
-    _lastRequestText = request.prompt;
     final selected = _providerForMode(mode, request.prompt);
     if (selected is AIStreamingProvider) {
       return selected.completeStreaming(
