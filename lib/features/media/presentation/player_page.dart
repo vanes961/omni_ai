@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
+import 'package:omni_ai/features/media/services/media_resume_position_store.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
@@ -13,12 +16,16 @@ abstract interface class MediaPlaybackController {
   bool get isInitialized;
   bool get isPlaying;
   double get aspectRatio;
+  Duration get position;
+  Duration get duration;
 
   Future<void> initialize();
 
   Future<void> play();
 
   Future<void> pause();
+
+  Future<void> seekTo(Duration position);
 
   Future<void> dispose();
 
@@ -31,6 +38,7 @@ class PlayerPage extends StatefulWidget {
     required this.preferences,
     this.searchService = const MediaSearchService(),
     this.playerFactory,
+    this.resumePositionStore,
     super.key,
   });
 
@@ -38,24 +46,36 @@ class PlayerPage extends StatefulWidget {
   final UserPreferences preferences;
   final MediaSearchService searchService;
   final MediaPlayerFactory? playerFactory;
+  final MediaResumePositionStore? resumePositionStore;
 
   @override
   State<PlayerPage> createState() => _PlayerPageState();
 }
 
-class _PlayerPageState extends State<PlayerPage> {
+class _PlayerPageState extends State<PlayerPage>
+    with WidgetsBindingObserver {
   late String? _selectedVoiceover;
   MediaPlaybackController? _player;
   Object? _playerError;
   bool _isLoading = true;
   int _selectedEpisode = 0;
   int _playerGeneration = 0;
+  Timer? _progressTimer;
+  final Set<int> _resumePromptedEpisodes = <int>{};
+
+  MediaResumePositionStore get _resumeStore =>
+      widget.resumePositionStore ?? SharedPreferencesMediaResumePositionStore();
 
   bool get _hasEpisodes => widget.item.episodes.isNotEmpty;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _progressTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => unawaited(_saveProgress()),
+    );
     _selectedVoiceover = widget.searchService.preferredVoiceover(
       widget.item,
       widget.preferences,
@@ -66,8 +86,90 @@ class _PlayerPageState extends State<PlayerPage> {
   @override
   void dispose() {
     _playerGeneration++;
+    WidgetsBinding.instance.removeObserver(this);
+    _progressTimer?.cancel();
+    unawaited(_saveProgress());
     _player?.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      unawaited(_saveProgress());
+    }
+  }
+
+  Future<void> _saveProgress({
+    MediaPlaybackController? player,
+    int? episodeIndex,
+  }) async {
+    final activePlayer = player ?? _player;
+    if (activePlayer == null || !activePlayer.isInitialized) return;
+    await _resumeStore.save(
+      widget.item.id,
+      episodeIndex ?? _selectedEpisode,
+      activePlayer.position,
+      activePlayer.duration,
+    );
+  }
+
+  Future<void> _offerResumeIfAvailable(
+    MediaPlaybackController player,
+    int episodeIndex,
+    int generation,
+  ) async {
+    if (_resumePromptedEpisodes.contains(episodeIndex)) return;
+    _resumePromptedEpisodes.add(episodeIndex);
+    final savedPosition = await _resumeStore.load(widget.item.id, episodeIndex);
+    if (!mounted || generation != _playerGeneration || savedPosition == null) {
+      return;
+    }
+    final remaining = player.duration - savedPosition;
+    if (savedPosition < const Duration(seconds: 10) ||
+        (player.duration > Duration.zero &&
+            remaining <= const Duration(seconds: 15))) {
+      await _resumeStore.clear(widget.item.id, episodeIndex);
+      return;
+    }
+    final shouldResume = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: SystemCorePalette.panel,
+        title: const Text(
+          'Продолжить просмотр?',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Вы остановились на ${_formatPosition(savedPosition)}.',
+          style: const TextStyle(color: SystemCorePalette.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('НАЧАТЬ СНАЧАЛА'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('ПРОДОЛЖИТЬ'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || generation != _playerGeneration) return;
+    if (shouldResume == true) {
+      await player.seekTo(savedPosition);
+    } else {
+      await _resumeStore.clear(widget.item.id, episodeIndex);
+    }
+  }
+
+  String _formatPosition(Duration position) {
+    final hours = position.inHours;
+    final minutes = position.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = position.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return hours > 0 ? '$hours:$minutes:$seconds' : '${position.inMinutes}:$seconds';
   }
 
   Future<void> _loadEpisode(int episodeIndex) async {
@@ -97,6 +199,7 @@ class _PlayerPageState extends State<PlayerPage> {
     }.where((url) => url.isNotEmpty).toList(growable: false);
     final playerFactory = widget.playerFactory ?? _videoPlayerFactory;
 
+    await _saveProgress(player: oldPlayer, episodeIndex: _selectedEpisode);
     setState(() {
       _selectedEpisode = episodeIndex;
       if (selectedVoiceover != null) {
@@ -123,6 +226,7 @@ class _PlayerPageState extends State<PlayerPage> {
           _player = nextPlayer;
           _isLoading = false;
         });
+        await _offerResumeIfAvailable(nextPlayer, episodeIndex, generation);
         return;
       } on PlatformException catch (error) {
         playerError = error;
@@ -452,6 +556,12 @@ class _VideoPlayerAdapter implements MediaPlaybackController {
   bool get isPlaying => _controller.value.isPlaying;
 
   @override
+  Duration get position => _controller.value.position;
+
+  @override
+  Duration get duration => _controller.value.duration;
+
+  @override
   double get aspectRatio => _controller.value.aspectRatio > 0
       ? _controller.value.aspectRatio
       : 16 / 9;
@@ -464,6 +574,9 @@ class _VideoPlayerAdapter implements MediaPlaybackController {
 
   @override
   Future<void> pause() => _controller.pause();
+
+  @override
+  Future<void> seekTo(Duration position) => _controller.seekTo(position);
 
   @override
   Future<void> dispose() => _controller.dispose();
