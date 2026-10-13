@@ -54,6 +54,7 @@ void main() {
 }
 
 Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
+  print('[news-context-test] helper entered');
   SharedPreferences.setMockInitialValues({});
   SharedPreferencesAsyncPlatform.instance =
       InMemorySharedPreferencesAsync.empty();
@@ -69,6 +70,7 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     '"isVerified":true,"contentType":"article"}]',
   );
 
+  print('[news-context-test] cached news written');
   String? submittedPrompt;
   final dependencies = AppDependencies(
     apiKeySource: const _TestApiKeySource(),
@@ -101,6 +103,7 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     }),
   );
 
+  print('[news-context-test] dependencies composed');
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(body: AIChatPage(dependencies: dependencies)),
@@ -109,12 +112,16 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
+  print('[news-context-test] initial widget pumps complete');
   await tester.enterText(find.byType(TextField), prompt);
+  print('[news-context-test] prompt entered');
   await tester.tap(find.byTooltip('Отправить'));
+  print('[news-context-test] send tapped');
   for (var i = 0; i < 30; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
+  print('[news-context-test] send pumps complete; submittedPrompt=${submittedPrompt != null}');
   expect(submittedPrompt, isNotNull);
   expect(
     submittedPrompt,
@@ -123,22 +130,28 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   );
   expect(tester.takeException(), isNull);
 
+  print('[news-context-test] beginning widget teardown');
   await tester.pumpWidget(const SizedBox.shrink());
+  print('[news-context-test] widget teardown complete');
   // Drain widget teardown before disposing the injected dependencies.
   await tester.pump();
+  print('[news-context-test] disposing orchestrator');
   await dependencies.orchestrator.dispose().timeout(
     const Duration(seconds: 5),
     onTimeout: () => throw TimeoutException('Orchestrator disposal timed out.'),
   );
   // The test injects the process service, so AppDependencies leaves it to the
   // caller. Close its broadcast stream after the recorder subscription drains.
+  print('[news-context-test] disposing process service');
   await dependencies.processService.dispose().timeout(
     const Duration(seconds: 5),
     onTimeout: () => throw TimeoutException('Process service disposal timed out.'),
   );
   // The AI graph itself is created by AppDependencies and must be closed even
   // though its mock HTTP client and fake local provider are caller-owned.
+  print('[news-context-test] disposing AI graph');
   await dependencies.ai.dispose();
+  print('[news-context-test] AI graph disposed; helper complete');
   return submittedPrompt!;
 }
 
