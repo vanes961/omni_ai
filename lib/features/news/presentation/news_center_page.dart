@@ -437,9 +437,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     if (saved &&
         mounted &&
         !_loadingNewsCache &&
-        activeProfile != null &&
-        (activeProfile.topics.isNotEmpty ||
-            activeProfile.includeCriticalOutsideInterests)) {
+        activeProfile != null) {
       if (_refreshingNews) {
         // A request for the previous topic selection may still be unwinding.
         // Queue one refresh so saving the new profile cannot leave the feed blank.
