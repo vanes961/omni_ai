@@ -75,7 +75,11 @@ class _PlayerPageState extends State<PlayerPage> {
     final oldPlayer = _player;
     final episode = _hasEpisodes ? widget.item.episodes[episodeIndex] : null;
     final defaultSource = episode?.videoUrl ?? widget.item.videoUrl;
-    final selectedVoiceover = _selectedVoiceover;
+    final availableVoiceovers = _availableVoiceoversFor(episode);
+    final selectedVoiceover = availableVoiceovers.isNotEmpty &&
+            !availableVoiceovers.contains(_selectedVoiceover)
+        ? _preferredAvailableVoiceover(availableVoiceovers)
+        : _selectedVoiceover;
     final voiceoverSource = selectedVoiceover == null
         ? null
         : episode?.voiceoverVideoUrls[selectedVoiceover] ??
@@ -94,6 +98,9 @@ class _PlayerPageState extends State<PlayerPage> {
 
     setState(() {
       _selectedEpisode = episodeIndex;
+      if (selectedVoiceover != null) {
+        _selectedVoiceover = selectedVoiceover;
+      }
       _isLoading = true;
       _playerError = null;
       _player = null;
@@ -220,46 +227,48 @@ class _PlayerPageState extends State<PlayerPage> {
           if (widget.item.voiceovers.isNotEmpty) ...[
             const _PlayerSectionLabel('ОЗВУЧКА'),
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              key: const ValueKey('voiceover-selector'),
-              initialValue: _selectedVoiceover,
-              isExpanded: true,
-              dropdownColor: SystemCorePalette.panel,
-              decoration: _selectorDecoration(),
-              items: [
-                for (final voiceover in widget.item.voiceovers)
-                  DropdownMenuItem(
-                    value: voiceover,
-                    child: Text(
-                      voiceover,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-              onChanged: (voiceover) {
-                if (voiceover == null || voiceover == _selectedVoiceover) {
-                  return;
-                }
+            Builder(
+              builder: (context) {
                 final episode = _hasEpisodes
                     ? widget.item.episodes[_selectedEpisode]
                     : null;
-                final hasSource =
-                    episode?.voiceoverVideoUrls.containsKey(voiceover) ==
-                        true ||
-                    widget.item.voiceoverVideoUrls.containsKey(voiceover);
-                if (!hasSource) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Для этой озвучки нет отдельного видеопотока.',
-                      ),
+                final availableVoiceovers = _availableVoiceoversFor(episode);
+                if (availableVoiceovers.isEmpty) {
+                  return Text(
+                    widget.item.voiceovers.join(' · '),
+                    style: const TextStyle(
+                      color: SystemCorePalette.muted,
+                      fontSize: 12,
                     ),
                   );
-                  return;
                 }
-                setState(() => _selectedVoiceover = voiceover);
-                _loadEpisode(_selectedEpisode);
+                return DropdownButtonFormField<String>(
+                  key: const ValueKey('voiceover-selector'),
+                  initialValue: availableVoiceovers.contains(_selectedVoiceover)
+                      ? _selectedVoiceover
+                      : availableVoiceovers.first,
+                  isExpanded: true,
+                  dropdownColor: SystemCorePalette.panel,
+                  decoration: _selectorDecoration(),
+                  items: [
+                    for (final voiceover in availableVoiceovers)
+                      DropdownMenuItem(
+                        value: voiceover,
+                        child: Text(
+                          voiceover,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (voiceover) {
+                    if (voiceover == null || voiceover == _selectedVoiceover) {
+                      return;
+                    }
+                    setState(() => _selectedVoiceover = voiceover);
+                    _loadEpisode(_selectedEpisode);
+                  },
+                );
               },
             ),
           ],
@@ -363,6 +372,30 @@ class _PlayerPageState extends State<PlayerPage> {
         ),
       ),
     );
+  }
+
+  List<String> _availableVoiceoversFor(MediaEpisode? episode) {
+    final episodeSources = episode?.voiceoverVideoUrls ?? const <String, String>{};
+    final sources = episodeSources.isNotEmpty
+        ? episodeSources
+        : widget.item.voiceoverVideoUrls;
+    return [
+      for (final voiceover in widget.item.voiceovers)
+        if (sources.containsKey(voiceover) &&
+            sources[voiceover]!.trim().isNotEmpty)
+          voiceover,
+    ];
+  }
+
+  String? _preferredAvailableVoiceover(List<String> available) {
+    for (final preferred in widget.preferences.voiceDubbing) {
+      for (final voiceover in available) {
+        if (voiceover.toLowerCase() == preferred.trim().toLowerCase()) {
+          return voiceover;
+        }
+      }
+    }
+    return available.first;
   }
 
   InputDecoration _selectorDecoration() => InputDecoration(
