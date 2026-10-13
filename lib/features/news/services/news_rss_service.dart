@@ -104,10 +104,6 @@ class NewsRssService {
   Future<List<NewsArticle>> fetchInternational(
     NewsInterestProfile profile,
   ) async {
-    if (profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) {
-      return const <NewsArticle>[];
-    }
-
     const locales = <List<String>>[
       ['ru', 'RU'],
       ['en', 'US'],
@@ -188,6 +184,13 @@ class NewsRssService {
       languages: const <String>[],
       regions: const <String>[],
     );
+    if (unrestrictedProfile.topics.isEmpty &&
+        !unrestrictedProfile.includeCriticalOutsideInterests) {
+      return List<NewsArticle>.unmodifiable(
+        byTitle.values.toList()
+          ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt)),
+      );
+    }
     return _filter.filter(byTitle.values, unrestrictedProfile);
   }
 
@@ -195,9 +198,8 @@ class NewsRssService {
     NewsInterestProfile profile, {
     bool applyRelevanceFilter = true,
   }) async {
-    if (profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) {
-      return const <NewsArticle>[];
-    }
+    final isDiscoveryFeed =
+        profile.topics.isEmpty && !profile.includeCriticalOutsideInterests;
     final language = profile.languages
         .map((value) => value.trim().toLowerCase())
         .firstWhere((value) => value.isNotEmpty, orElse: () => 'ru');
@@ -215,7 +217,9 @@ class NewsRssService {
     final criticalQuery = profile.includeCriticalOutsideInterests
         ? _criticalNewsKeywords.map((keyword) => '"$keyword"').join(' OR ')
         : '';
-    final query = topicQuery.isEmpty
+    final query = isDiscoveryFeed
+        ? 'news'
+        : topicQuery.isEmpty
         ? criticalQuery
         : criticalQuery.isEmpty
         ? topicQuery
@@ -258,6 +262,12 @@ class NewsRssService {
       final candidates = unique.values.toList(growable: false)
         ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
       return List<NewsArticle>.unmodifiable(candidates);
+    }
+    if (isDiscoveryFeed) {
+      return List<NewsArticle>.unmodifiable(
+        unique.values.toList()
+          ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt)),
+      );
     }
     return _filter.filter(unique.values, canonicalProfile);
   }
