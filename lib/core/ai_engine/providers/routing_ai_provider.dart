@@ -117,19 +117,29 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
     }
 
     final selected = _providerForMode(mode, request.prompt);
+    var emittedToken = false;
+
+    void forwardToken(String token) {
+      if (token.isNotEmpty) emittedToken = true;
+      onToken(token);
+    }
+
     try {
       return await _completeSelectedStreaming(
         selected,
         request,
         cancellationToken: cancellationToken,
-        onToken: onToken,
+        onToken: forwardToken,
       );
     } on Object {
       if (mode != AIExecutionMode.automatic ||
           !identical(selected, cloudProvider) ||
-          cancellationToken.isCancelled) {
+          cancellationToken.isCancelled ||
+          emittedToken) {
         rethrow;
       }
+      // Once cloud text has reached the UI, switching providers would append
+      // a second answer to a partial first answer. Only retry before output.
       return _completeSelectedStreaming(
         localProvider,
         request,
