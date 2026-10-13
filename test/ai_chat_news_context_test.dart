@@ -130,10 +130,15 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     const Duration(seconds: 5),
     onTimeout: () => throw TimeoutException('Orchestrator disposal timed out.'),
   );
-  // The test injects a mock HTTP client and a stateless fake local provider.
-  // AppDependencies does not own those resources, so disposing its AI graph
-  // here is unnecessary; the orchestrator is the owned subscription to drain.
-  // _TestMemoryRepository is stateless and owns no resources to dispose.
+  // The test injects the process service, so AppDependencies leaves it to the
+  // caller. Close its broadcast stream after the recorder subscription drains.
+  await dependencies.processService.dispose().timeout(
+    const Duration(seconds: 5),
+    onTimeout: () => throw TimeoutException('Process service disposal timed out.'),
+  );
+  // The AI graph itself is created by AppDependencies and must be closed even
+  // though its mock HTTP client and fake local provider are caller-owned.
+  await dependencies.ai.dispose();
   return submittedPrompt!;
 }
 
