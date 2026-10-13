@@ -101,7 +101,6 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     }),
   );
 
-  debugPrint('NEWS_TEST checkpoint: before mount');
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(body: AIChatPage(dependencies: dependencies)),
@@ -110,14 +109,12 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 50));
   }
-  debugPrint('NEWS_TEST checkpoint: mounted');
   await tester.enterText(find.byType(TextField), prompt);
   await tester.tap(find.byTooltip('Отправить'));
   for (var i = 0; i < 30; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  debugPrint('NEWS_TEST checkpoint: request pumps completed');
   expect(submittedPrompt, isNotNull);
   expect(
     submittedPrompt,
@@ -126,16 +123,13 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   );
   expect(tester.takeException(), isNull);
 
-  debugPrint('NEWS_TEST checkpoint: assertions passed');
   await tester.pumpWidget(const SizedBox.shrink());
   // Drain widget teardown before disposing the injected dependencies.
   await tester.pump();
-  debugPrint('NEWS_TEST checkpoint: widget unmounted');
   await dependencies.orchestrator.dispose().timeout(
     const Duration(seconds: 5),
     onTimeout: () => throw TimeoutException('Orchestrator disposal timed out.'),
   );
-  debugPrint('NEWS_TEST checkpoint: orchestrator disposed');
   // The test injects a mock HTTP client and a stateless fake local provider.
   // AppDependencies does not own those resources, so disposing its AI graph
   // here is unnecessary; the orchestrator is the owned subscription to drain.
