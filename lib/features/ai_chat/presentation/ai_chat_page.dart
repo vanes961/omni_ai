@@ -231,7 +231,9 @@ class _AIChatPageState extends State<AIChatPage> {
                   Icon(
                     mode == AIExecutionMode.local
                         ? Icons.phone_android
-                        : Icons.cloud_outlined,
+                        : mode == AIExecutionMode.cloud
+                        ? Icons.cloud_outlined
+                        : Icons.alt_route,
                     size: 15,
                     color: SystemCorePalette.green,
                   ),
@@ -240,8 +242,10 @@ class _AIChatPageState extends State<AIChatPage> {
                     _modeLoading
                         ? 'ЗАГРУЗКА РЕЖИМА...'
                         : mode == AIExecutionMode.local
-                        ? 'LOCAL AI — ЗАПРОСЫ ОСТАЮТСЯ НА УСТРОЙСТВЕ'
-                        : 'CLOUD AI — ЯВНО ВЫБРАННЫЙ ОБЛАЧНЫЙ РЕЖИМ',
+                        ? 'LOCAL AI — ТОЛЬКО НА УСТРОЙСТВЕ'
+                        : mode == AIExecutionMode.cloud
+                        ? 'CLOUD AI — ОБЛАЧНЫЕ ЗАПРОСЫ'
+                        : 'AUTO AI — ВЫБОР МОДЕЛИ ПО ЗАДАЧЕ',
                     style: const TextStyle(
                       color: SystemCorePalette.green,
                       fontSize: 10,
@@ -265,7 +269,7 @@ class _AIChatPageState extends State<AIChatPage> {
                   child: Padding(
                     padding: EdgeInsets.all(28),
                     child: Text(
-                      'Задайте вопрос, чтобы начать.\n\nЛокальный режим не переключается в облако автоматически.',
+                      'Задайте вопрос, чтобы начать.\n\nВ автоматическом режиме OMNI AI выбирает локальную модель для простых команд, а онлайн-ИИ — для рекомендаций и сложных запросов.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: SystemCorePalette.muted,
