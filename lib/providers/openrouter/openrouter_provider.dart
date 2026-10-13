@@ -56,8 +56,9 @@ class OpenRouterProvider implements AIProvider {
           {'role': 'system', 'content': request.systemInstruction!.trim()},
         {'role': 'user', 'content': request.prompt},
       ];
-      final apiRequest = http.AbortableRequest(
-        'POST',
+      final apiRequest =
+          http.AbortableRequest(
+            'POST',
         Uri.parse(config.endpoint),
         abortTrigger: cancellationToken.cancelled,
       )
