@@ -133,28 +133,20 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   _checkpoint('[news-context-test] beginning widget teardown');
   await tester.pumpWidget(const SizedBox.shrink());
   _checkpoint('[news-context-test] widget teardown complete');
-  // Drain widget teardown before disposing the injected dependencies.
+  // Dispose resources through the composition root. The injected process
+  // service remains caller-owned and is closed after the recorder drains.
   await tester.pump();
-  _checkpoint('[news-context-test] disposing orchestrator');
-  await dependencies.orchestrator.dispose().timeout(
+  _checkpoint('[news-context-test] disposing dependencies');
+  await dependencies.dispose().timeout(
     const Duration(seconds: 5),
-    onTimeout: () => throw TimeoutException('Orchestrator disposal timed out.'),
+    onTimeout: () => throw TimeoutException('Dependency disposal timed out.'),
   );
-  // The test injects the process service, so AppDependencies leaves it to the
-  // caller. Close its broadcast stream after the recorder subscription drains.
-  _checkpoint('[news-context-test] disposing process service');
-  await tester.runAsync(
-    () => dependencies.processService.dispose().timeout(
-      const Duration(seconds: 5),
-      onTimeout: () =>
-          throw TimeoutException('Process service disposal timed out.'),
-    ),
+  _checkpoint('[news-context-test] dependencies disposed');
+  await dependencies.processService.dispose().timeout(
+    const Duration(seconds: 5),
+    onTimeout: () => throw TimeoutException('Process service disposal timed out.'),
   );
-  // The AI graph itself is created by AppDependencies and must be closed even
-  // though its mock HTTP client and fake local provider are caller-owned.
-  _checkpoint('[news-context-test] disposing AI graph');
-  await tester.runAsync(() => dependencies.ai.dispose());
-  _checkpoint('[news-context-test] AI graph disposed; helper complete');
+  _checkpoint('[news-context-test] helper complete');
   return submittedPrompt!;
 }
 
