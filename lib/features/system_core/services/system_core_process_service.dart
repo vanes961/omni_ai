@@ -153,7 +153,10 @@ class SystemCoreProcessService {
     if (_disposed) return;
     cancel();
     _disposed = true;
-    await _states.close();
+    // Closing a broadcast stream can wait indefinitely if a consumer is paused.
+    // The service no longer emits after disposal, so let listeners receive the
+    // close event without blocking application teardown on their lifecycle.
+    unawaited(_states.close());
   }
 
   void _appendLog(String message, SystemCoreLogLevel level) {
