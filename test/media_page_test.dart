@@ -268,6 +268,41 @@ void main() {
     expect(find.byTooltip('Воспроизвести'), findsOneWidget);
   });
 
+  testWidgets('shows playback errors without hiding the video', (
+    tester,
+  ) async {
+    final controller = _FakePlaybackController(
+      playError: StateError('Playback failed'),
+    );
+    final item = MediaItem(
+      id: 'play-error-test',
+      title: 'Playback Error Test',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const ['Original'],
+      videoUrl: 'https://example.com/video.mp4',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          playerFactory: (_) => controller,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Воспроизвести'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ОШИБКА ВОСПРОИЗВЕДЕНИЯ: StateError'), findsOneWidget);
+    expect(find.byTooltip('Воспроизвести'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('long episode titles do not overflow the player layout', (
     tester,
   ) async {
@@ -315,9 +350,10 @@ void main() {
 }
 
 class _FakePlaybackController implements MediaPlaybackController {
-  _FakePlaybackController({this.initializationError});
+  _FakePlaybackController({this.initializationError, this.playError});
 
   final Object? initializationError;
+  final Object? playError;
   bool _isPlaying = false;
 
   @override
@@ -336,6 +372,7 @@ class _FakePlaybackController implements MediaPlaybackController {
 
   @override
   Future<void> play() async {
+    if (playError case final error?) throw error;
     _isPlaying = true;
   }
 
