@@ -166,6 +166,7 @@ class MediaSearchService {
           }
         }
       }
+      final seasons = parseCatalogSeasons(data['seasons']);
       final b = data['backdrop_path'] as String?;
       return MediaDetails(
         overview: data['overview'] as String? ?? item.description,
@@ -178,6 +179,7 @@ class MediaSearchService {
             '',
         backdropUrl: b == null ? '' : 'https://image.tmdb.org/t/p/w1280$b',
         homepage: data['homepage'] as String? ?? '',
+        seasons: seasons,
       );
     } on Object {
       return null;
@@ -218,6 +220,29 @@ class MediaSearchService {
     } on Object {
       return const [];
     }
+  }
+
+  /// Parses season summaries returned by TMDB series details.
+  static List<MediaCatalogSeason> parseCatalogSeasons(Object? payload) {
+    if (payload is! List) return const [];
+    final seasons = <MediaCatalogSeason>[];
+    for (final raw in payload) {
+      if (raw is! Map<String, dynamic>) continue;
+      final number = raw['season_number'];
+      final name = (raw['name'] as String? ?? '').trim();
+      if (number is! num || number < 0 || name.isEmpty) continue;
+      seasons.add(
+        MediaCatalogSeason(
+          seasonNumber: number.toInt(),
+          name: name,
+          episodeCount: (raw['episode_count'] as num?)?.toInt() ?? 0,
+          airDate: raw['air_date'] as String? ?? '',
+          overview: raw['overview'] as String? ?? '',
+        ),
+      );
+    }
+    seasons.sort((a, b) => a.seasonNumber.compareTo(b.seasonNumber));
+    return seasons;
   }
 
   /// Parses catalog-only episode metadata without inventing stream URLs.
@@ -262,6 +287,22 @@ class MediaSearchService {
   }
 }
 
+class MediaCatalogSeason {
+  const MediaCatalogSeason({
+    required this.seasonNumber,
+    required this.name,
+    required this.episodeCount,
+    required this.airDate,
+    required this.overview,
+  });
+
+  final int seasonNumber;
+  final String name;
+  final int episodeCount;
+  final String airDate;
+  final String overview;
+}
+
 class MediaDetails {
   const MediaDetails({
     required this.overview,
@@ -271,6 +312,7 @@ class MediaDetails {
     required this.releaseDate,
     required this.backdropUrl,
     required this.homepage,
+    this.seasons = const [],
   });
   final String overview;
   final List<String> genres;
