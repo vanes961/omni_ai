@@ -274,6 +274,41 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         : '${position.inMinutes}:$seconds';
   }
 
+  Future<int?> _chooseTorrServerFile(
+    TorrServerFileSelectionRequired selection,
+  ) {
+    return showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('ВЫБЕРИТЕ ВИДЕОФАЙЛ'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: selection.files.length,
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final file = selection.files[index];
+              final parts = file.path.split(RegExp(r'[/\\\\]'));
+              final name = parts.isEmpty ? file.path : parts.last;
+              return ListTile(
+                title: Text(name),
+                subtitle: Text(file.path),
+                onTap: () => Navigator.of(dialogContext).pop(file.id),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('ОТМЕНА'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _loadEpisode(int episodeIndex) async {
     final generation = ++_playerGeneration;
     final oldPlayer = _player;
@@ -364,13 +399,32 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       final resolver =
           widget.torrServerResolver ?? TorrServerPlaybackResolver();
       try {
-        final resolvedUri = await resolver.resolve(
-          endpoint: endpoint,
-          magnetUri: candidateUri!,
-          title: widget.item.title,
-          episodeNumber: episode?.number,
-          seasonNumber: episode?.seasonNumber,
-        );
+        Uri resolvedUri;
+        try {
+          resolvedUri = await resolver.resolve(
+            endpoint: endpoint,
+            magnetUri: candidateUri!,
+            title: widget.item.title,
+            episodeNumber: episode?.number,
+            seasonNumber: episode?.seasonNumber,
+          );
+        } on TorrServerFileSelectionRequired catch (selection) {
+          if (!mounted || generation != _playerGeneration) return;
+          final selectedFileIndex = await _chooseTorrServerFile(selection);
+          if (selectedFileIndex == null) {
+            playerError = StateError('Выбор видеофайла отменён.');
+            continue;
+          }
+          if (!mounted || generation != _playerGeneration) return;
+          resolvedUri = await resolver.resolve(
+            endpoint: endpoint,
+            magnetUri: candidateUri!,
+            title: widget.item.title,
+            episodeNumber: episode?.number,
+            seasonNumber: episode?.seasonNumber,
+            selectedFileIndex: selectedFileIndex,
+          );
+        }
         playableSources.add(resolvedUri.toString());
       } on Object catch (error) {
         playerError = error;
