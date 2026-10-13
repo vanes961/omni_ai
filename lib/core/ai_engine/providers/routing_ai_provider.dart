@@ -47,6 +47,7 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
     };
     return selected.complete(request, cancellationToken: cancellationToken);
   }
+
   @override
   Future<AIResponse> completeStreaming(
     AIRequest request, {
@@ -77,5 +78,4 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
     if (response.text.isNotEmpty) onToken(response.text);
     return response;
   }
-
 }
