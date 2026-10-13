@@ -77,14 +77,12 @@ class MediaStreamSource {
     final isHexHash =
         hash.length == 40 &&
         hash.codeUnits.every(
-          (unit) =>
-              (unit >= 48 && unit <= 57) || (unit >= 97 && unit <= 102),
+          (unit) => (unit >= 48 && unit <= 57) || (unit >= 97 && unit <= 102),
         );
     final isBase32Hash =
         hash.length == 32 &&
         hash.codeUnits.every(
-          (unit) =>
-              (unit >= 97 && unit <= 122) || (unit >= 50 && unit <= 55),
+          (unit) => (unit >= 97 && unit <= 122) || (unit >= 50 && unit <= 55),
         );
     return isHexHash || isBase32Hash;
   }
