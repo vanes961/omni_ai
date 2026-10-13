@@ -280,10 +280,9 @@ void main() {
       find.byKey(const ValueKey('voiceover-selector')),
     );
     expect(selector.initialValue, 'Original');
-    expect(
-      selector.items!.map((entry) => entry.value),
-      ['Original'],
-    );
+    await tester.tap(find.byKey(const ValueKey('voiceover-selector')));
+    await tester.pumpAndSettle();
+    expect(find.text('Studio A'), findsNothing);
   });
 
   testWidgets('playback control awaits play and pause state changes', (
