@@ -37,13 +37,13 @@ void main() {
     expect(result.map((item) => item.id), ['new-anime', 'old-anime']);
   });
 
-  test('empty interests do not fill the feed with unrelated articles', () {
-    expect(
-      filter.filter([
-        article('game', ['games']),
-      ], const NewsInterestProfile()),
-      isEmpty,
-    );
+  test('empty interests allow the discovery feed while keeping restrictions', () {
+    final result = filter.filter([
+      article('game', ['games']),
+      article('anime', ['anime']),
+    ], const NewsInterestProfile());
+
+    expect(result.map((item) => item.id), ['game', 'anime']);
   });
 
   test('critical out-of-interest news requires explicit opt-in', () {
