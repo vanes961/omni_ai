@@ -36,8 +36,7 @@ class AIEngine {
 
     try {
       await beforeExecute?.call();
-      final providerFuture = onToken != null &&
-              provider is AIStreamingProvider
+      final providerFuture = onToken != null && provider is AIStreamingProvider
           ? provider.completeStreaming(
               request,
               cancellationToken: token,
@@ -47,23 +46,22 @@ class AIEngine {
               request,
               cancellationToken: token,
             );
-      final response =
-          await Future.any<AIResponse>([
-            providerFuture,
-            _throwWhenCancelled(token),
-          ]).timeout(
-            timeout,
-            onTimeout: () {
-              token.cancel();
-              throw const AIEngineException(
-                AIError(
-                  code: AIErrorCode.timeout,
-                  message: 'AI provider request timed out.',
-                  retryable: true,
-                ),
-              );
-            },
+      final response = await Future.any<AIResponse>([
+        providerFuture,
+        _throwWhenCancelled(token),
+      ]).timeout(
+        timeout,
+        onTimeout: () {
+          token.cancel();
+          throw const AIEngineException(
+            AIError(
+              code: AIErrorCode.timeout,
+              message: 'AI provider request timed out.',
+              retryable: true,
+            ),
           );
+        },
+      );
 
       if (token.isCancelled) {
         throw const AIEngineException(
