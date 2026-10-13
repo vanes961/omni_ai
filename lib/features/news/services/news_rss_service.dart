@@ -232,16 +232,13 @@ class NewsRssService {
     // than searching for the literal word "news". The latter biases discovery
     // toward headlines that happen to contain that word and can hide ordinary
     // current-affairs headlines from the user's feed.
-    final uri = Uri.https(
-      'news.google.com',
-      isDiscoveryFeed ? '/rss' : '/rss/search',
-      {
-        if (!isDiscoveryFeed) 'q': query,
-        'hl': language == 'ru' ? 'ru' : language,
-        'gl': region,
-        'ceid': '$region:$language',
-      },
-    );
+    final uri =
+        Uri.https('news.google.com', isDiscoveryFeed ? '/rss' : '/rss/search', {
+          if (!isDiscoveryFeed) 'q': query,
+          'hl': language == 'ru' ? 'ru' : language,
+          'gl': region,
+          'ceid': '$region:$language',
+        });
     final response = await _client
         .get(uri, headers: const {'User-Agent': 'OMNI-AI-News/1.0'})
         .timeout(const Duration(seconds: 20));
