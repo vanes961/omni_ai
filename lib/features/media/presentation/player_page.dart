@@ -645,7 +645,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                   ),
                 ),
               ),
-            if (player?.isInitialized ?? false) ...[
+            if (player != null && player.isInitialized) ...[
               if (_activeMarker(MediaSegmentType.intro, player)
                   case final marker?)
                 Positioned(
