@@ -390,6 +390,6 @@ String _cleanAssistantAnswer(String text) {
     }
   }
   return answer
-      .replaceAll(RegExp(r'<\\|(?:im_start|im_end|fim_suffix|endoftext)\\|>'), '')
+      .replaceAll(RegExp(r'<\|(?:im_start|im_end|fim_suffix|endoftext)\|>'), '')
       .trim();
 }
