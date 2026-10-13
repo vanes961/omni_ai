@@ -36,6 +36,7 @@ class AIProcessOrchestrator {
     AICancellationToken? cancellationToken,
     List<AIContextMessage> conversationHistory = const [],
     List<String> explicitMemories = const [],
+    void Function(String token)? onToken,
   }) async {
     if (_disposed) throw StateError('AI process orchestrator is disposed.');
     if (!_processService.state.canStart) {
@@ -69,6 +70,7 @@ class AIProcessOrchestrator {
             response = await engine.execute(
               preparedRequest,
               cancellationToken: engineCancellationToken,
+              onToken: onToken,
             );
             context.log(
               'AI PROVIDER ${response!.providerId}',
