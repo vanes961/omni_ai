@@ -52,8 +52,7 @@ class PlayerPage extends StatefulWidget {
   State<PlayerPage> createState() => _PlayerPageState();
 }
 
-class _PlayerPageState extends State<PlayerPage>
-    with WidgetsBindingObserver {
+class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   late String? _selectedVoiceover;
   MediaPlaybackController? _player;
   Object? _playerError;
@@ -207,7 +206,9 @@ class _PlayerPageState extends State<PlayerPage>
     final hours = position.inHours;
     final minutes = position.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = position.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return hours > 0 ? '$hours:$minutes:$seconds' : '${position.inMinutes}:$seconds';
+    return hours > 0
+        ? '$hours:$minutes:$seconds'
+        : '${position.inMinutes}:$seconds';
   }
 
   Future<void> _loadEpisode(int episodeIndex) async {
@@ -635,3 +636,4 @@ class _VideoPlayerAdapter implements MediaPlaybackController {
   @override
   Widget buildView() => VideoPlayer(_controller);
 }
+import 'dart:convert';
