@@ -6,15 +6,15 @@ import 'package:omni_ai/features/favorites/data/favorite_item.dart';
 /// Stores positive media feedback separately from the user's favorites list.
 /// Likes teach local recommendations without automatically saving an item.
 class MediaLikeRepository {
-  MediaLikeRepository({SharedPreferencesAsync? store})
-    : _store = store ?? SharedPreferencesAsync();
+  MediaLikeRepository({this.store});
 
   static const storageKey = 'omni_ai.media_likes.v1';
-  final SharedPreferencesAsync _store;
+  final SharedPreferencesAsync? store;
+  SharedPreferencesAsync get _preferences => store ?? SharedPreferencesAsync();
 
   Future<List<FavoriteItem>> getAll() async {
     try {
-      final encoded = await _store.getString(storageKey);
+      final encoded = await _preferences.getString(storageKey);
       if (encoded == null || encoded.isEmpty) return const <FavoriteItem>[];
       final decoded = jsonDecode(encoded);
       if (decoded is! List) return const <FavoriteItem>[];
@@ -39,7 +39,7 @@ class MediaLikeRepository {
       items.removeAt(existingIndex);
     }
     try {
-      await _store.setString(
+      await _preferences.setString(
         storageKey,
         jsonEncode(items.map((saved) => saved.toJson()).toList()),
       );
