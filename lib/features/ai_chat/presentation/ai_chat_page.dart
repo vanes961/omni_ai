@@ -93,6 +93,8 @@ class _AIChatPageState extends State<AIChatPage> {
         AIRequest(
           id: DateTime.now().microsecondsSinceEpoch.toString(),
           prompt: requestPrompt,
+          systemInstruction:
+              'Отвечай только готовым ответом для пользователя. Не показывай внутренние рассуждения, черновик анализа или содержимое тегов <think> и <analysis>.',
         ),
         cancellationToken: token,
         conversationHistory: conversationHistory,
@@ -102,7 +104,7 @@ class _AIChatPageState extends State<AIChatPage> {
       );
       if (!mounted) return;
       setState(() {
-        _messages.add(_ChatMessage(text: response.text, isUser: false));
+        _messages.add(_ChatMessage(text: _cleanAssistantAnswer(response.text), isUser: false));
       });
     } on Object catch (error) {
       if (!mounted) return;
@@ -370,4 +372,24 @@ class _ChatMessage {
   final String text;
   final bool isUser;
   final bool isError;
+}
+
+
+String _cleanAssistantAnswer(String text) {
+  var answer = text;
+  for (final tag in ['think', 'analysis', 'reasoning']) {
+    answer = answer.replaceAll(
+      RegExp('<$tag>[\\s\\S]*?</$tag>', caseSensitive: false),
+      '',
+    );
+    final closingTag = RegExp('</$tag>', caseSensitive: false);
+    final closingMatch = closingTag.firstMatch(answer);
+    if (closingMatch != null &&
+        !RegExp('<$tag>', caseSensitive: false).hasMatch(answer)) {
+      answer = answer.substring(closingMatch.end);
+    }
+  }
+  return answer
+      .replaceAll(RegExp(r'<\\|(?:im_start|im_end|fim_suffix|endoftext)\\|>'), '')
+      .trim();
 }
