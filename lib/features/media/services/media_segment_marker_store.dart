@@ -59,8 +59,7 @@ class SharedPreferencesMediaSegmentMarkerStore
 
   final SharedPreferencesAsync? _store;
 
-  SharedPreferencesAsync get _preferences =>
-      _store ?? SharedPreferencesAsync();
+  SharedPreferencesAsync get _preferences => _store ?? SharedPreferencesAsync();
 
   String _key(String mediaId, int episodeIndex) =>
       'omni_ai.media_segments.v1.$mediaId.$episodeIndex';
