@@ -64,7 +64,9 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
     );
     if (cloudIntent.hasMatch(normalized)) return false;
 
-    final words = normalized.split(RegExp(r'\s+')).where((word) => word.isNotEmpty);
+    final words = normalized
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty);
     return words.length <= 3 &&
         !normalized.contains('?') &&
         !normalized.contains('？');
