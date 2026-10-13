@@ -8,12 +8,13 @@ import '../models/ai_request.dart';
 import '../models/ai_response.dart';
 import 'qwen3_prompt_formatter.dart';
 import '../providers/ai_provider.dart';
+import '../providers/ai_streaming_provider.dart';
 
 /// Local inference adapter for an already-downloaded GGUF model.
 ///
 /// The model lifecycle is explicit: call [loadModel] before sending requests.
 /// No prompt is sent to a remote service by this provider.
-class LocalLlamaProvider implements AIProvider {
+class LocalLlamaProvider implements AIProvider, AIStreamingProvider {
   LocalLlamaProvider({
     required this.modelFile,
     LlamaController? controller,
@@ -77,6 +78,17 @@ class LocalLlamaProvider implements AIProvider {
   Future<AIResponse> complete(
     AIRequest request, {
     required AICancellationToken cancellationToken,
+  }) => completeStreaming(
+    request,
+    cancellationToken: cancellationToken,
+    onToken: (_) {},
+  );
+
+  @override
+  Future<AIResponse> completeStreaming(
+    AIRequest request, {
+    required AICancellationToken cancellationToken,
+    required void Function(String token) onToken,
   }) async {
     _ensureNotDisposed();
     if (_loading) {
@@ -142,6 +154,7 @@ class LocalLlamaProvider implements AIProvider {
       )) {
         if (cancellationToken.isCancelled) break;
         output.write(token);
+        onToken(token);
       }
       if (cancelled || cancellationToken.isCancelled) {
         throw const AIEngineException(
