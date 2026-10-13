@@ -24,7 +24,11 @@ class TorrServerStreamResolver {
       );
     }
     if (fileIndex != null && fileIndex < 0) {
-      throw RangeError.value(fileIndex, 'fileIndex', 'Must be zero or greater.');
+      throw RangeError.value(
+        fileIndex,
+        'fileIndex',
+        'Must be zero or greater.',
+      );
     }
 
     final source = MediaStreamSource(
