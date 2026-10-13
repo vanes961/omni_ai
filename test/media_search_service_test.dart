@@ -27,6 +27,20 @@ void main() {
     expect(MediaSearchService.zonaCatalogUri.host, 'w1.zona.im');
   });
 
+  test('parses TMDB season summaries in season-number order', () {
+    final seasons = MediaSearchService.parseCatalogSeasons([
+      {'season_number': 2, 'name': 'Season 2', 'episode_count': 8},
+      {'season_number': 0, 'name': 'Specials', 'episode_count': 1},
+      {'season_number': -1, 'name': 'Invalid'},
+      {'season_number': 3, 'name': ''},
+    ]);
+
+    expect(seasons, hasLength(2));
+    expect(seasons.first.seasonNumber, 0);
+    expect(seasons.last.name, 'Season 2');
+    expect(seasons.last.episodeCount, 8);
+  });
+
   test('parses TMDB season metadata without creating playable stream URLs', () {
     final episodes = MediaSearchService.parseSeasonEpisodes(
       {
