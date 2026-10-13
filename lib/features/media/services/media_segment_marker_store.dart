@@ -55,9 +55,12 @@ abstract interface class MediaSegmentMarkerStore {
 class SharedPreferencesMediaSegmentMarkerStore
     implements MediaSegmentMarkerStore {
   SharedPreferencesMediaSegmentMarkerStore({SharedPreferencesAsync? store})
-    : _store = store ?? SharedPreferencesAsync();
+    : _store = store;
 
-  final SharedPreferencesAsync _store;
+  final SharedPreferencesAsync? _store;
+
+  SharedPreferencesAsync get _preferences =>
+      _store ?? SharedPreferencesAsync();
 
   String _key(String mediaId, int episodeIndex) =>
       'omni_ai.media_segments.v1.$mediaId.$episodeIndex';
@@ -68,7 +71,7 @@ class SharedPreferencesMediaSegmentMarkerStore
     int episodeIndex,
   ) async {
     try {
-      final raw = await _store.getString(_key(mediaId, episodeIndex));
+      final raw = await _preferences.getString(_key(mediaId, episodeIndex));
       if (raw == null || raw.isEmpty) return const [];
       final decoded = jsonDecode(raw);
       if (decoded is! List) return const [];
@@ -89,7 +92,7 @@ class SharedPreferencesMediaSegmentMarkerStore
   ) async {
     final valid = markers.where((marker) => marker.isValid).toList();
     try {
-      await _store.setString(
+      await _preferences.setString(
         _key(mediaId, episodeIndex),
         jsonEncode(valid.map((marker) => marker.toJson()).toList()),
       );
