@@ -62,6 +62,13 @@ void main() {
         label: 'Malformed torrent hash',
         uri: Uri.parse('magnet:?xt=urn:btih:xyz'),
       );
+      final invalidCharacterHash = MediaStreamSource(
+        id: 'magnet-invalid-character',
+        label: 'Torrent hash with invalid character',
+        uri: Uri.parse(
+          'magnet:?xt=urn:btih:012345678901234567890123456789012345678z',
+        ),
+      );
       final base32Hash = MediaStreamSource(
         id: 'magnet-base32',
         label: 'Base32 torrent hash',
@@ -74,6 +81,7 @@ void main() {
       expect(missingHash.isSupportedInput, isFalse);
       expect(wrongHashType.isMagnet, isFalse);
       expect(malformedHash.isMagnet, isFalse);
+      expect(invalidCharacterHash.isMagnet, isFalse);
       expect(base32Hash.isMagnet, isTrue);
     });
   });
