@@ -276,7 +276,9 @@ class _SeasonCatalogSectionState extends State<_SeasonCatalogSection> {
 
   @override
   Widget build(BuildContext context) => ExpansionTile(
-    key: PageStorageKey('season-${widget.item.id}-${widget.season.seasonNumber}'),
+    key: PageStorageKey(
+      'season-${widget.item.id}-${widget.season.seasonNumber}',
+    ),
     title: Text(
       widget.season.name,
       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
@@ -338,7 +340,9 @@ class _SeasonCatalogSectionState extends State<_SeasonCatalogSection> {
                               episode.overview,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: SystemCorePalette.muted),
+                              style: const TextStyle(
+                                color: SystemCorePalette.muted,
+                              ),
                             ),
                     ),
                   )
