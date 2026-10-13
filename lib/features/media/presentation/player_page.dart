@@ -423,6 +423,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
             episodeNumber: episode?.number,
             seasonNumber: episode?.seasonNumber,
             selectedFileIndex: selectedFileIndex,
+            existingTorrentHash: selection.torrentHash,
           );
         }
         playableSources.add(resolvedUri.toString());
