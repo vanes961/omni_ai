@@ -315,7 +315,7 @@ void main() {
     // the empty RSS response should still explain how to personalize the feed.
     expect(requestCount, greaterThan(0));
     expect(
-      find.textContaining('Показываем свежие новости даже без настроек.'),
+      find.textContaining('Выберите интересы ниже'),
       findsOneWidget,
     );
     expect(find.text('НАСТРОИТЬ ИНТЕРЕСЫ'), findsOneWidget);
