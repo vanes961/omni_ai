@@ -8,9 +8,9 @@ import 'package:omni_ai/features/media/services/media_segment_marker_store.dart'
 /// AniSkip requires a MyAnimeList ID and an absolute episode number. Callers
 /// must not pass a TMDB ID as [malId].
 class AniSkipSegmentProvider {
-  AniSkipSegmentProvider({http.Client? client}) : _client = client;
+  AniSkipSegmentProvider({this.client});
 
-  final http.Client? _client;
+  final http.Client? client;
 
   Future<List<MediaSegmentMarker>> load({
     required int malId,
@@ -32,7 +32,7 @@ class AniSkipSegmentProvider {
     );
 
     try {
-      final response = await (_client?.get(uri) ?? http.get(uri)).timeout(
+      final response = await (client?.get(uri) ?? http.get(uri)).timeout(
         const Duration(seconds: 5),
       );
       if (response.statusCode != 200) return const [];
