@@ -11,6 +11,7 @@ import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_resume_position_store.dart';
+import 'package:omni_ai/features/media/services/media_segment_marker_store.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 void main() {
@@ -525,12 +526,27 @@ void main() {
       videoUrl: 'https://example.com/video.mp4',
     );
 
+    final markerStore = _FakeMediaSegmentMarkerStore()
+      ..markers['skip-controls-test:0'] = [
+        MediaSegmentMarker(
+          type: MediaSegmentType.intro,
+          start: const Duration(seconds: 5),
+          end: const Duration(seconds: 20),
+        ),
+        MediaSegmentMarker(
+          type: MediaSegmentType.credits,
+          start: duration - const Duration(minutes: 2),
+          end: duration - const Duration(seconds: 5),
+        ),
+      ];
+
     await tester.pumpWidget(
       MaterialApp(
         home: PlayerPage(
           item: item,
           preferences: UserPreferences(),
           resumePositionStore: _FakeMediaResumePositionStore(),
+          segmentMarkerStore: markerStore,
           playerFactory: (_) => controller,
         ),
       ),
@@ -541,7 +557,7 @@ void main() {
     expect(find.byKey(const ValueKey('skip-credits-button')), findsNothing);
     await tester.tap(find.byKey(const ValueKey('skip-intro-button')));
     await tester.pumpAndSettle();
-    expect(controller.position, const Duration(seconds: 100));
+    expect(controller.position, const Duration(seconds: 20));
 
     controller.position = duration - const Duration(minutes: 1);
     await tester.pump(const Duration(seconds: 5));
@@ -764,5 +780,25 @@ class _FakeMediaResumePositionStore implements MediaResumePositionStore {
   @override
   Future<void> clear(String mediaId, int episodeIndex) async {
     positions.remove(_key(mediaId, episodeIndex));
+  }
+}
+
+class _FakeMediaSegmentMarkerStore implements MediaSegmentMarkerStore {
+  final Map<String, List<MediaSegmentMarker>> markers = {};
+
+  String _key(String mediaId, int episodeIndex) => '$mediaId:$episodeIndex';
+
+  @override
+  Future<List<MediaSegmentMarker>> load(String mediaId, int episodeIndex) async =>
+      List<MediaSegmentMarker>.from(markers[_key(mediaId, episodeIndex)] ?? []);
+
+  @override
+  Future<void> save(
+    String mediaId,
+    int episodeIndex,
+    List<MediaSegmentMarker> markers,
+  ) async {
+    this.markers[_key(mediaId, episodeIndex)] =
+        List<MediaSegmentMarker>.from(markers);
   }
 }
