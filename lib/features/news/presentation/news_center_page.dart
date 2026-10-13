@@ -1291,42 +1291,42 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     ),
                   ),
                 ),
-              const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: SystemCorePalette.panel,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: SystemCorePalette.border),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.health_and_safety_outlined,
-                      color: SystemCorePalette.green,
-                    ),
-                    title: const Text(
-                      'Диагностика системы',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: SystemCorePalette.panel,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: SystemCorePalette.border),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.health_and_safety_outlined,
+                        color: SystemCorePalette.green,
                       ),
-                    ),
-                    subtitle: const Text(
-                      'Проверить ленту и сформировать отчёт для поиска ошибок',
-                      style: TextStyle(
-                        color: SystemCorePalette.muted,
-                        fontSize: 12,
+                      title: const Text(
+                        'Диагностика системы',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
+                      subtitle: const Text(
+                        'Проверить ленту и сформировать отчёт для поиска ошибок',
+                        style: TextStyle(
+                          color: SystemCorePalette.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right,
+                        color: SystemCorePalette.green,
+                      ),
+                      onTap: _runDiagnostics,
                     ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: SystemCorePalette.green,
-                    ),
-                    onTap: _runDiagnostics,
                   ),
                 ),
-              ),
               ],
 
               const SizedBox(height: 24),
