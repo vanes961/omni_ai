@@ -509,6 +509,51 @@ void main() {
     expect(find.text('Studio A'), findsNothing);
   });
 
+  testWidgets('skip intro and credits controls seek to expected positions', (
+    tester,
+  ) async {
+    const duration = Duration(minutes: 90);
+    final controller = _FakePlaybackController(duration: duration)
+      ..position = const Duration(seconds: 10);
+    final item = MediaItem(
+      id: 'skip-controls-test',
+      title: 'Skip Controls Test',
+      type: 'Сериал',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/video.mp4',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          resumePositionStore: _FakeMediaResumePositionStore(),
+          playerFactory: (_) => controller,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('skip-intro-button')), findsOneWidget);
+    expect(find.byKey(const ValueKey('skip-credits-button')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('skip-intro-button')));
+    await tester.pumpAndSettle();
+    expect(controller.position, const Duration(seconds: 100));
+
+    controller.position = duration - const Duration(minutes: 1);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('skip-credits-button')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('skip-credits-button')));
+    await tester.pumpAndSettle();
+    expect(controller.position, duration - const Duration(seconds: 5));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('playback control awaits play and pause state changes', (
     tester,
   ) async {
