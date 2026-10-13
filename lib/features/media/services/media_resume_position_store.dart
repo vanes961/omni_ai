@@ -1,4 +1,53 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:omni_ai/features/favorites/data/favorite_item.dart';
+
+/// Stores positive media feedback separately from the user's favorites list.
+/// Likes teach local recommendations without automatically saving an item.
+class MediaLikeRepository {
+  MediaLikeRepository({SharedPreferencesAsync? store})
+    : _store = store ?? SharedPreferencesAsync();
+
+  static const storageKey = 'omni_ai.media_likes.v1';
+  final SharedPreferencesAsync _store;
+
+  Future<List<FavoriteItem>> getAll() async {
+    try {
+      final encoded = await _store.getString(storageKey);
+      if (encoded == null || encoded.isEmpty) return const <FavoriteItem>[];
+      final decoded = jsonDecode(encoded);
+      if (decoded is! List) return const <FavoriteItem>[];
+      return List<FavoriteItem>.unmodifiable(
+        decoded.map(FavoriteItem.fromJson).whereType<FavoriteItem>(),
+      );
+    } on Object {
+      return const <FavoriteItem>[];
+    }
+  }
+
+  Future<bool> contains(String id) async =>
+      (await getAll()).any((item) => item.id == id);
+
+  Future<bool> toggle(FavoriteItem item) async {
+    final items = (await getAll()).toList();
+    final existingIndex = items.indexWhere((saved) => saved.id == item.id);
+    final isLiked = existingIndex < 0;
+    if (isLiked) {
+      items.add(item);
+    } else {
+      items.removeAt(existingIndex);
+    }
+    try {
+      await _store.setString(
+        storageKey,
+        jsonEncode(items.map((saved) => saved.toJson()).toList()),
+      );
+    } on Object {
+      // Feedback is optional; it must never block the media catalog.
+    }
+    return isLiked;
+  }
+}
+import 'package:shared_preferences/shared_preferences.dart';
 
 abstract interface class MediaResumePositionStore {
   Future<Duration?> load(String mediaId, int episodeIndex);
@@ -48,8 +97,7 @@ class SharedPreferencesMediaResumePositionStore
   ) async {
     final remaining = duration - position;
     if (position < const Duration(seconds: 10)) return;
-    if (duration > Duration.zero &&
-        remaining <= const Duration(seconds: 15)) {
+    if (duration > Duration.zero && remaining <= const Duration(seconds: 15)) {
       await clear(mediaId, episodeIndex);
       await markEpisodeWatched(mediaId, episodeIndex);
       return;
@@ -65,11 +113,7 @@ class SharedPreferencesMediaResumePositionStore
   Future<Set<int>> loadWatchedEpisodes(String mediaId) async {
     try {
       final values = await _store.getStringList(_watchedKey(mediaId));
-      return values
-              ?.map(int.tryParse)
-              .whereType<int>()
-              .toSet() ??
-          <int>{};
+      return values?.map(int.tryParse).whereType<int>().toSet() ?? <int>{};
     } on Object {
       return <int>{};
     }
