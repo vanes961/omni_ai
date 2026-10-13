@@ -249,6 +249,43 @@ void main() {
     );
   });
 
+  testWidgets('voiceover selector excludes voices without a stream', (
+    tester,
+  ) async {
+    final item = MediaItem(
+      id: 'voiceover-availability-test',
+      title: 'Voiceover Availability Test',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const ['Studio A', 'Original'],
+      videoUrl: 'https://example.com/default.mp4',
+      voiceoverVideoUrls: const {
+        'Original': 'https://example.com/original.mp4',
+      },
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          playerFactory: (_) => _FakePlaybackController(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final selector = tester.widget<DropdownButtonFormField<String>>(
+      find.byKey(const ValueKey('voiceover-selector')),
+    );
+    expect(selector.initialValue, 'Original');
+    expect(
+      selector.items!.map((entry) => entry.value),
+      ['Original'],
+    );
+  });
+
   testWidgets('playback control awaits play and pause state changes', (
     tester,
   ) async {
