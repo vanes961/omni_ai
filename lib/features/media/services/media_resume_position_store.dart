@@ -19,10 +19,11 @@ abstract interface class MediaResumePositionStore {
 
 class SharedPreferencesMediaResumePositionStore
     implements MediaResumePositionStore {
-  SharedPreferencesMediaResumePositionStore({SharedPreferencesAsync? store})
-    : _store = store ?? SharedPreferencesAsync();
+  SharedPreferencesMediaResumePositionStore({this.store});
 
-  final SharedPreferencesAsync _store;
+  final SharedPreferencesAsync? store;
+
+  SharedPreferencesAsync get _preferences => store ?? SharedPreferencesAsync();
 
   String _key(String mediaId, int episodeIndex) =>
       'omni_ai.media_resume.v1.$mediaId.$episodeIndex';
@@ -30,7 +31,7 @@ class SharedPreferencesMediaResumePositionStore
   @override
   Future<Duration?> load(String mediaId, int episodeIndex) async {
     try {
-      final milliseconds = await _store.getInt(_key(mediaId, episodeIndex));
+      final milliseconds = await _preferences.getInt(_key(mediaId, episodeIndex));
       if (milliseconds == null || milliseconds <= 0) return null;
       return Duration(milliseconds: milliseconds);
     } on Object {
@@ -54,7 +55,7 @@ class SharedPreferencesMediaResumePositionStore
       return;
     }
     try {
-      await _store.setInt(_key(mediaId, episodeIndex), position.inMilliseconds);
+      await _preferences.setInt(_key(mediaId, episodeIndex), position.inMilliseconds);
     } on Object {
       // A storage error must not interrupt playback.
     }
@@ -63,7 +64,7 @@ class SharedPreferencesMediaResumePositionStore
   @override
   Future<Set<int>> loadWatchedEpisodes(String mediaId) async {
     try {
-      final values = await _store.getStringList(_watchedKey(mediaId));
+      final values = await _preferences.getStringList(_watchedKey(mediaId));
       return values?.map(int.tryParse).whereType<int>().toSet() ?? <int>{};
     } on Object {
       return <int>{};
@@ -75,7 +76,7 @@ class SharedPreferencesMediaResumePositionStore
     try {
       final watched = await loadWatchedEpisodes(mediaId);
       if (watched.add(episodeIndex)) {
-        await _store.setStringList(
+        await _preferences.setStringList(
           _watchedKey(mediaId),
           watched.map((index) => index.toString()).toList(),
         );
@@ -91,7 +92,7 @@ class SharedPreferencesMediaResumePositionStore
   @override
   Future<void> clear(String mediaId, int episodeIndex) async {
     try {
-      await _store.remove(_key(mediaId, episodeIndex));
+      await _preferences.remove(_key(mediaId, episodeIndex));
     } on Object {
       // A storage error must not interrupt playback.
     }
