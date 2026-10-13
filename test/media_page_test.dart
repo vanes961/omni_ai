@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -268,6 +269,77 @@ void main() {
     expect(controllers[2].isDisposed, isFalse);
   });
 
+  testWidgets('disposes a stale player when episode changes during initialization', (
+    tester,
+  ) async {
+    final firstInitialization = Completer<void>();
+    final playerSources = <Uri>[];
+    final controllers = <_FakePlaybackController>[];
+    final item = MediaItem(
+      id: 'stale-player-test',
+      title: 'Stale Player Test',
+      type: 'Сериал',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/first.mp4',
+      episodes: const [
+        MediaEpisode(
+          number: 1,
+          title: 'First',
+          videoUrl: 'https://example.com/first.mp4',
+        ),
+        MediaEpisode(
+          number: 2,
+          title: 'Second',
+          videoUrl: 'https://example.com/second.mp4',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          playerFactory: (source) {
+            playerSources.add(source);
+            final controller = _FakePlaybackController(
+              initializationCompleter: source.path.endsWith('first.mp4')
+                  ? firstInitialization
+                  : null,
+            );
+            controllers.add(controller);
+            return controller;
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(controllers, hasLength(1));
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('episode-selector')),
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.byKey(const ValueKey('episode-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Second').last);
+    await tester.pumpAndSettle();
+
+    expect(playerSources.last, Uri.parse('https://example.com/second.mp4'));
+    expect(controllers, hasLength(2));
+    expect(controllers[1].isDisposed, isFalse);
+
+    firstInitialization.complete();
+    await tester.pumpAndSettle();
+
+    expect(controllers.first.isDisposed, isTrue);
+    expect(controllers[1].isDisposed, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('voiceover selector excludes voices without a stream', (
     tester,
   ) async {
@@ -428,9 +500,14 @@ void main() {
 }
 
 class _FakePlaybackController implements MediaPlaybackController {
-  _FakePlaybackController({this.initializationError, this.playError});
+  _FakePlaybackController({
+    this.initializationError,
+    this.initializationCompleter,
+    this.playError,
+  });
 
   final Object? initializationError;
+  final Completer<void>? initializationCompleter;
   final Object? playError;
   bool _isPlaying = false;
   bool isDisposed = false;
@@ -447,6 +524,7 @@ class _FakePlaybackController implements MediaPlaybackController {
   @override
   Future<void> initialize() async {
     if (initializationError case final error?) throw error;
+    await initializationCompleter?.future;
   }
 
   @override
