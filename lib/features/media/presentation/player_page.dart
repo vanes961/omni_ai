@@ -74,8 +74,15 @@ class _PlayerPageState extends State<PlayerPage> {
     final generation = ++_playerGeneration;
     final oldPlayer = _player;
     final episode = _hasEpisodes ? widget.item.episodes[episodeIndex] : null;
-    final source = episode?.videoUrl ?? widget.item.videoUrl;
+    final defaultSource = episode?.videoUrl ?? widget.item.videoUrl;
+    final selectedVoiceover = _selectedVoiceover;
+    final voiceoverSource = selectedVoiceover == null
+        ? null
+        : episode?.voiceoverVideoUrls[selectedVoiceover] ??
+              widget.item.voiceoverVideoUrls[selectedVoiceover];
+    final source = voiceoverSource ?? defaultSource;
     final fallbackUrls = [
+      if (voiceoverSource != null) defaultSource,
       ...widget.item.videoFallbackUrls,
       if (episode != null) ...episode.videoFallbackUrls,
     ];
@@ -231,9 +238,28 @@ class _PlayerPageState extends State<PlayerPage> {
                   ),
               ],
               onChanged: (voiceover) {
-                if (voiceover != null) {
-                  setState(() => _selectedVoiceover = voiceover);
+                if (voiceover == null || voiceover == _selectedVoiceover) {
+                  return;
                 }
+                final episode = _hasEpisodes
+                    ? widget.item.episodes[_selectedEpisode]
+                    : null;
+                final hasSource =
+                    episode?.voiceoverVideoUrls.containsKey(voiceover) ==
+                        true ||
+                    widget.item.voiceoverVideoUrls.containsKey(voiceover);
+                if (!hasSource) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Для этой озвучки нет отдельного видеопотока.',
+                      ),
+                    ),
+                  );
+                  return;
+                }
+                setState(() => _selectedVoiceover = voiceover);
+                _loadEpisode(_selectedEpisode);
               },
             ),
           ],
