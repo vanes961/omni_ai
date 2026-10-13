@@ -161,7 +161,7 @@ void main() {
     await tester.scrollUntilVisible(
       checkButton,
       200,
-      scrollable: find.byKey(const ValueKey('network-settings-page')),
+      scrollable: find.byType(Scrollable).first,
     );
     await tester.tap(checkButton);
     await tester.pumpAndSettle();
