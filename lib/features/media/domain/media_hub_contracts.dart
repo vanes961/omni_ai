@@ -9,11 +9,8 @@ abstract interface class MediaCatalogProvider {
 /// A provider-independent search request for the OMNI media hub.
 @immutable
 class MediaCatalogQuery {
-  const MediaCatalogQuery({
-    required this.text,
-    this.kind,
-    this.page = 0,
-  }) : assert(page >= 0);
+  const MediaCatalogQuery({required this.text, this.kind, this.page = 0})
+    : assert(page >= 0);
 
   final String text;
   final MediaKind? kind;
