@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:omni_ai/core/network/mirror_resolver.dart';
 import 'package:omni_ai/core/network/network_service.dart';
 import 'package:omni_ai/core/network/proxy_config.dart';
+import 'package:omni_ai/features/media/data/torrserver_client.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
@@ -41,11 +42,16 @@ class _NetworkSettingsPageState extends State<NetworkSettingsPage> {
   late final TextEditingController _portController = TextEditingController(
     text: widget.preferences.proxyPort.toString(),
   );
+  late final TextEditingController _torrServerController =
+      TextEditingController(text: widget.preferences.torrServerUrl);
   Future<void> _saveQueue = Future<void>.value();
   bool _isChecking = false;
   MirrorCheckResult? _currentResult;
   String? _statusMessage;
   bool? _isAvailable;
+  bool _isCheckingTorrServer = false;
+  bool? _torrServerAvailable;
+  String? _torrServerMessage;
 
   ProxyType get _proxyType => ProxyType.values.firstWhere(
     (type) => type.name == widget.preferences.proxyType,
@@ -56,6 +62,7 @@ class _NetworkSettingsPageState extends State<NetworkSettingsPage> {
   void dispose() {
     _hostController.dispose();
     _portController.dispose();
+    _torrServerController.dispose();
     super.dispose();
   }
 
@@ -199,6 +206,73 @@ class _NetworkSettingsPageState extends State<NetworkSettingsPage> {
           ),
         ),
         const SizedBox(height: 20),
+        _sectionTitle('МЕДИА-СЕРВЕР / TORRSERVER'),
+        _settingsGroup(
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Адрес внешнего TorrServer',
+                  style: TextStyle(color: Colors.white, fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  key: const ValueKey('torrserver-url-field'),
+                  controller: _torrServerController,
+                  keyboardType: TextInputType.url,
+                  textInputAction: TextInputAction.done,
+                  autocorrect: false,
+                  decoration: const InputDecoration(
+                    labelText: 'URL сервера',
+                    hintText: 'http://192.168.1.20:8090',
+                    helperText:
+                        'Для домашней сети можно указать локальный IP. Не добавляйте логин или пароль в URL.',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  onChanged: (value) => _updatePreferences(() {
+                    preferences.torrServerUrl = value.trim();
+                  }),
+                ),
+                const SizedBox(height: 10),
+                if (_torrServerMessage != null) ...[
+                  Text(
+                    _torrServerMessage!,
+                    key: const ValueKey('torrserver-status-message'),
+                    style: TextStyle(
+                      color: _torrServerAvailable == true
+                          ? SystemCorePalette.green
+                          : _torrServerAvailable == false
+                          ? SystemCorePalette.red
+                          : SystemCorePalette.muted,
+                      fontSize: 11,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('check-torrserver-button'),
+                    onPressed: _isCheckingTorrServer
+                        ? null
+                        : _checkTorrServerConnection,
+                    icon: _isCheckingTorrServer
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.dns_outlined, size: 18),
+                    label: const Text('Проверить TorrServer'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
         _sectionTitle('СОСТОЯНИЕ СЕТИ'),
         _NetworkStatus(
           checking: _isChecking,
@@ -308,6 +382,34 @@ class _NetworkSettingsPageState extends State<NetworkSettingsPage> {
     } finally {
       service?.close();
       if (mounted) setState(() => _isChecking = false);
+    }
+  }
+
+  Future<void> _checkTorrServerConnection() async {
+    final endpoint = _torrServerController.text.trim();
+    setState(() {
+      _isCheckingTorrServer = true;
+      _torrServerAvailable = null;
+      _torrServerMessage = 'ПРОВЕРКА TORRSERVER';
+    });
+
+    final client = TorrServerClient();
+    try {
+      final result = await client.checkConnection(endpoint);
+      if (!mounted) return;
+      setState(() {
+        _torrServerAvailable = result.isAvailable;
+        _torrServerMessage = result.message;
+      });
+    } on Object {
+      if (!mounted) return;
+      setState(() {
+        _torrServerAvailable = false;
+        _torrServerMessage = 'Не удалось проверить TorrServer';
+      });
+    } finally {
+      client.close();
+      if (mounted) setState(() => _isCheckingTorrServer = false);
     }
   }
 
