@@ -29,7 +29,7 @@ class MediaDetailsPage extends StatelessWidget {
    if(d!=null) SizedBox(height:170,child:ListView.separated(scrollDirection:Axis.horizontal,itemCount:d.cast.length,separatorBuilder:(_,__)=>const SizedBox(width:10),itemBuilder:(context,i){final a=d.cast[i];return SizedBox(width:100,child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     if(a.photoUrl.isEmpty) Container(width:100,height:110,color:SystemCorePalette.panel,child:const Icon(Icons.person,color:SystemCorePalette.muted)) else Image.network(a.photoUrl,width:100,height:110,fit:BoxFit.cover,errorBuilder:(_,__,___)=>Container(width:100,height:110,color:SystemCorePalette.panel,child:const Icon(Icons.person,color:SystemCorePalette.muted))),
     const SizedBox(height:5),Text(a.name,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(color:Colors.white,fontSize:11,fontWeight:FontWeight.bold)),Text(a.character,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(color:SystemCorePalette.muted,fontSize:10))
-   ]));}),
+   ]));})),
    if(d!=null&&d.cast.isEmpty) const Text('Информация об актёрах недоступна.',style:TextStyle(color:Colors.white70)),
    const SizedBox(height:20),
    if(item.videoUrl.isNotEmpty) FilledButton.icon(onPressed:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>PlayerPage(item:item,preferences:preferences,searchService:searchService,playerFactory:playerFactory))),icon:const Icon(Icons.play_arrow),label:const Text('СМОТРЕТЬ'))
