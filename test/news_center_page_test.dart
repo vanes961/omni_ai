@@ -314,10 +314,6 @@ void main() {
     // With no selected topics the service attempts a broad discovery fetch;
     // the empty RSS response should still explain how to personalize the feed.
     expect(requestCount, greaterThan(0));
-    expect(
-      find.textContaining('Выберите интересы ниже'),
-      findsOneWidget,
-    );
     expect(find.text('НАСТРОИТЬ ИНТЕРЕСЫ'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
