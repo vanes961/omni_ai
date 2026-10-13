@@ -72,7 +72,9 @@ void main() {
       expect(local.calls, 1);
     });
 
-    test('falls back to local streaming before any cloud token is emitted', () async {
+    test(
+      'falls back to local streaming before any cloud token is emitted',
+      () async {
       cloud.failure = StateError('network unavailable');
       final tokens = <String>[];
 
@@ -89,9 +91,12 @@ void main() {
       expect(tokens, ['reply from local']);
       expect(cloud.calls, 1);
       expect(local.calls, 1);
-    });
+      },
+    );
 
-    test('does not append local output after partial cloud streaming output', () async {
+    test(
+      'does not append local output after partial cloud streaming output',
+      () async {
       final streamingCloud = _FakeStreamingProvider('cloud')
         ..failure = StateError('connection dropped')
         ..emitBeforeFailure = true;
@@ -116,7 +121,8 @@ void main() {
       expect(tokens, ['partial cloud answer']);
       expect(local.calls, 0);
       expect(streamingCloud.calls, 1);
-    });
+      },
+    );
 
     test('does not fall back when selected local provider fails', () async {
       local.failure = StateError('local model unavailable');
@@ -179,7 +185,6 @@ class _FakeProvider implements AIProvider {
     );
   }
 }
-
 
 class _FakeStreamingProvider extends _FakeProvider
     implements AIStreamingProvider {
