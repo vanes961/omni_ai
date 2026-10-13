@@ -344,6 +344,11 @@ void main() {
     }
 
     expect(requestCount, 6);
+    await tester.dragUntilVisible(
+      find.text('World leaders meet at summit'),
+      find.byType(Scrollable).first,
+      const Offset(0, 300),
+    );
     expect(find.text('World leaders meet at summit'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
