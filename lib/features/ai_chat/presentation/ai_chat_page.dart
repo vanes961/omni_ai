@@ -374,7 +374,6 @@ class _ChatMessage {
   final bool isError;
 }
 
-
 String _cleanAssistantAnswer(String text) {
   var answer = text;
   for (final tag in ['think', 'analysis', 'reasoning']) {
@@ -390,6 +389,9 @@ String _cleanAssistantAnswer(String text) {
     }
   }
   return answer
-      .replaceAll(RegExp(r'<\|(?:im_start|im_end|fim_suffix|endoftext)\|>'), '')
+      .replaceAll(
+        RegExp(r'<\|(?:im_start|im_end|fim_suffix|endoftext)\|>'),
+        '',
+      )
       .trim();
 }
