@@ -323,7 +323,11 @@ void main() {
     expect(requestCount, 3);
 
     final interestsHeading = find.text('ВАШИ ИНТЕРЕСЫ');
-    await tester.ensureVisible(interestsHeading);
+    await tester.dragUntilVisible(
+      interestsHeading,
+      find.byType(Scrollable).first,
+      const Offset(0, -300),
+    );
     await tester.pump(const Duration(milliseconds: 50));
     final chip = find.byType(InputChip);
     expect(chip, findsOneWidget);
