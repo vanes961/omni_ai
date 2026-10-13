@@ -63,8 +63,9 @@ class MediaSearchService {
           .timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       final json = jsonDecode(response.body);
-      if (json is! Map<String, dynamic> || json['results'] is! List)
+      if (json is! Map<String, dynamic> || json['results'] is! List) {
         return const [];
+      }
       final items = <MediaItem>[];
       for (final raw in json['results'] as List) {
         if (raw is! Map<String, dynamic>) continue;
@@ -75,8 +76,9 @@ class MediaSearchService {
         final countries = (raw['origin_country'] as List? ?? const [])
             .whereType<String>();
         final anime = tv && (lang == 'ja' || countries.contains('JP'));
-        if ((type == 'Аниме' && !anime) || (type == 'Сериал' && anime))
+        if ((type == 'Аниме' && !anime) || (type == 'Сериал' && anime)) {
           continue;
+        }
         final title = (raw[tv ? 'name' : 'title'] as String? ?? '').trim();
         final id = raw['id'];
         if (title.isEmpty || id == null) continue;
@@ -113,7 +115,7 @@ class MediaSearchService {
     if (!isConfigured || !item.id.startsWith('tmdb:')) return null;
     final p = item.id.split(':');
     if (p.length != 3 || !{'movie', 'tv'}.contains(p[1])) return null;
-    final uri = Uri.parse('$_api/' + p[1] + '/' + p[2]).replace(
+    final uri = Uri.parse('$_api/${p[1]}/${p[2]}').replace(
       queryParameters: {'language': 'ru-RU', 'append_to_response': 'credits'},
     );
     try {
@@ -135,8 +137,7 @@ class MediaSearchService {
               name: x['name'] as String? ?? '',
               character: x['character'] as String? ?? '',
               photoUrl: x['profile_path'] is String
-                  ? 'https://image.tmdb.org/t/p/w185' +
-                        (x['profile_path'] as String)
+                  ? 'https://image.tmdb.org/t/p/w185${x['profile_path']}'
                   : '',
             ),
           )
@@ -148,8 +149,9 @@ class MediaSearchService {
           .whereType<String>()
           .toList();
       int? runtime;
-      if (data['runtime'] is num)
+      if (data['runtime'] is num) {
         runtime = (data['runtime'] as num).toInt();
+      }
       else {
         for (final x in (data['episode_run_time'] as List? ?? const [])) {
           if (x is num) {
