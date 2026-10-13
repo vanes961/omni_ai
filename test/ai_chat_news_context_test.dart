@@ -143,9 +143,12 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   // The test injects the process service, so AppDependencies leaves it to the
   // caller. Close its broadcast stream after the recorder subscription drains.
   _checkpoint('[news-context-test] disposing process service');
-  await dependencies.processService.dispose().timeout(
-    const Duration(seconds: 5),
-    onTimeout: () => throw TimeoutException('Process service disposal timed out.'),
+  await tester.runAsync(
+    () => dependencies.processService.dispose().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () =>
+          throw TimeoutException('Process service disposal timed out.'),
+    ),
   );
   // The AI graph itself is created by AppDependencies and must be closed even
   // though its mock HTTP client and fake local provider are caller-owned.
