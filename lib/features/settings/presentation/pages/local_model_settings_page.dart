@@ -42,6 +42,12 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
   String? _keyMessage;
 
   @override
+  void dispose() {
+    _cloudKeyController.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     _refreshStatus();
@@ -121,7 +127,11 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
           )
           .timeout(const Duration(seconds: 15));
       if (!mounted) return;
-      setState(() => _keyMessage = 'Облако отвечает (${response.providerId}, ${response.metadata['model'] ?? 'модель не указана'}).');
+      setState(
+        () => _keyMessage =
+            'Облако отвечает (${response.providerId}, '
+            '${response.metadata['model'] ?? 'модель не указана'}).',
+      );
     } on Object catch (error) {
       if (!mounted) return;
       setState(() => _keyMessage = 'Проверка облака не прошла: $error');
@@ -378,7 +388,8 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                   decoration: const InputDecoration(
                     labelText: 'Личный API-ключ OpenRouter',
                     hintText: 'sk-or-…',
-                    helperText: 'Создаётся в аккаунте OpenRouter. Не отправляйте ключ в чат.',
+                    helperText:
+                        'Создаётся в аккаунте OpenRouter. Не отправляйте ключ в чат.',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -394,7 +405,9 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                         icon: _keySaving
                             ? const SizedBox.square(
                                 dimension: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.lock_outline),
                         label: const Text('СОХРАНИТЬ КЛЮЧ'),
@@ -426,7 +439,9 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                           )
                         : const Icon(Icons.cloud_done_outlined),
                     label: Text(
-                      _cloudTesting ? 'ПРОВЕРКА ОБЛАКА…' : 'ПРОВЕРИТЬ ОБЛАЧНЫЙ ИИ',
+                      _cloudTesting
+                          ? 'ПРОВЕРКА ОБЛАКА…'
+                          : 'ПРОВЕРИТЬ ОБЛАЧНЫЙ ИИ',
                     ),
                   ),
                 ),
