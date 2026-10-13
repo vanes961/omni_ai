@@ -29,7 +29,8 @@ class UnconfiguredOpenRouterApiKeySource implements OpenRouterApiKeySource {
 }
 
 /// Mutable key store for a user's own OpenRouter account.
-abstract interface class OpenRouterApiKeyStore implements OpenRouterApiKeySource {
+abstract interface class OpenRouterApiKeyStore
+    implements OpenRouterApiKeySource {
   Future<void> writeApiKey(String apiKey);
   Future<void> deleteApiKey();
 }
