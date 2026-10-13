@@ -4,10 +4,10 @@ import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 
 void main() {
   group('SharedPreferencesAIExecutionModeStore', () {
-    test('defaults to local when no mode is saved', () async {
+    test('defaults to automatic when no mode is saved', () async {
       final store = _MemoryModeStore();
 
-      expect(await store.load(), AIExecutionMode.local);
+      expect(await store.load(), AIExecutionMode.automatic);
     });
 
     test('persists cloud selection and restores it', () async {
@@ -20,10 +20,19 @@ void main() {
       expect(store.savedValue, 'cloud');
     });
 
-    test('unknown stored values safely default to local', () async {
+    test('persists automatic selection and restores it', () async {
+      final store = _MemoryModeStore();
+
+      await store.save(AIExecutionMode.automatic);
+
+      expect(await store.load(), AIExecutionMode.automatic);
+      expect(store.savedValue, 'automatic');
+    });
+
+    test('unknown stored values safely default to automatic', () async {
       final store = _MemoryModeStore()..value = 'unexpected';
 
-      expect(await store.load(), AIExecutionMode.local);
+      expect(await store.load(), AIExecutionMode.automatic);
     });
   });
 }
@@ -42,8 +51,9 @@ class _MemoryModeStore extends SharedPreferencesAIExecutionModeStore {
   Future<AIExecutionMode> load() async {
     return switch (value) {
       'cloud' => AIExecutionMode.cloud,
-      'local' || null => AIExecutionMode.local,
-      _ => AIExecutionMode.local,
+      'local' => AIExecutionMode.local,
+      'automatic' || null => AIExecutionMode.automatic,
+      _ => AIExecutionMode.automatic,
     };
   }
 
