@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
+import 'package:omni_ai/providers/openrouter/openrouter_api_key_source.dart';
 import 'package:omni_ai/features/dashboard/presentation/dashboard_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
@@ -23,7 +24,10 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late final bool _ownsDependencies = widget.dependencies == null;
   late final AppDependencies _dependencies =
-      widget.dependencies ?? AppDependencies();
+      widget.dependencies ??
+      AppDependencies(
+        apiKeySource: SecureStorageOpenRouterApiKeySource(),
+      );
 
   @override
   void dispose() {
