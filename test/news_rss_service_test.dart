@@ -599,13 +599,14 @@ void main() {
   );
 
   test(
-    'requests discovery news when no interests are selected',
+    'requests top stories when no interests are selected',
     () async {
       var requests = 0;
       final service = NewsRssService(
         client: MockClient((request) async {
           requests++;
-          expect(request.url.queryParameters['q'], 'news');
+          expect(request.url.path, '/rss');
+          expect(request.url.queryParameters, isNot(contains('q')));
           return http.Response('', 200);
         }),
       );
@@ -724,7 +725,7 @@ void main() {
   });
 
   test(
-    'loads a broad discovery query when no interests are configured',
+    'loads broad top stories when no interests are configured',
     () async {
       final service = NewsRssService(
         client: MockClient((request) async {
