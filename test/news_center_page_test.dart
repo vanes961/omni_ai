@@ -328,7 +328,11 @@ void main() {
     expect(chip, findsOneWidget);
     tester.widget<InputChip>(chip).onDeleted!();
     await tester.pump();
-    await tester.ensureVisible(find.text('СОХРАНИТЬ ИНТЕРЕСЫ'));
+    await tester.dragUntilVisible(
+      find.text('СОХРАНИТЬ ИНТЕРЕСЫ'),
+      find.byType(Scrollable).first,
+      const Offset(0, -300),
+    );
     await tester.tap(find.text('СОХРАНИТЬ ИНТЕРЕСЫ'));
     for (var i = 0; i < 30; i++) {
       await tester.pump(const Duration(milliseconds: 100));
