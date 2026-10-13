@@ -391,6 +391,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         setState(() {
           _player = nextPlayer;
           _isLoading = false;
+          _playerError = null;
         });
         unawaited(_loadAniSkipMarkers(nextPlayer, episodeIndex, generation));
         await _offerResumeIfAvailable(nextPlayer, episodeIndex, generation);
