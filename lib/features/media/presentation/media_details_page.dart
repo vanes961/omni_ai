@@ -203,6 +203,19 @@ class MediaDetailsPage extends StatelessWidget {
                 'Информация об актёрах недоступна.',
                 style: TextStyle(color: Colors.white70),
               ),
+            if ((item.type == 'Сериал' || item.type == 'Аниме') &&
+                d?.seasons.isNotEmpty == true) ...[
+              const SizedBox(height: 20),
+              const _Label('СЕЗОНЫ И СЕРИИ'),
+              const SizedBox(height: 8),
+              ...d!.seasons.map(
+                (season) => _SeasonCatalogSection(
+                  item: item,
+                  season: season,
+                  searchService: searchService,
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             if (item.videoUrl.isNotEmpty)
               FilledButton.icon(
@@ -239,6 +252,101 @@ class MediaDetailsPage extends StatelessWidget {
         );
       },
     ),
+  );
+}
+
+class _SeasonCatalogSection extends StatefulWidget {
+  const _SeasonCatalogSection({
+    required this.item,
+    required this.season,
+    required this.searchService,
+  });
+
+  final MediaItem item;
+  final MediaCatalogSeason season;
+  final MediaSearchService searchService;
+
+  @override
+  State<_SeasonCatalogSection> createState() => _SeasonCatalogSectionState();
+}
+
+class _SeasonCatalogSectionState extends State<_SeasonCatalogSection> {
+  Future<List<MediaCatalogEpisode>>? _episodesFuture;
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) => ExpansionTile(
+    key: PageStorageKey('season-${widget.item.id}-${widget.season.seasonNumber}'),
+    title: Text(
+      widget.season.name,
+      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+    ),
+    subtitle: Text(
+      '${widget.season.episodeCount} серий'
+      '${widget.season.airDate.isEmpty ? '' : ' • ${widget.season.airDate}'}',
+      style: const TextStyle(color: SystemCorePalette.muted),
+    ),
+    iconColor: SystemCorePalette.green,
+    collapsedIconColor: SystemCorePalette.muted,
+    onExpansionChanged: (expanded) {
+      setState(() {
+        _expanded = expanded;
+        if (expanded && _episodesFuture == null) {
+          _episodesFuture = widget.searchService.loadSeasonEpisodes(
+            widget.item,
+            widget.season.seasonNumber,
+          );
+        }
+      });
+    },
+    children: [
+      if (_expanded)
+        FutureBuilder<List<MediaCatalogEpisode>>(
+          future: _episodesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final episodes = snapshot.data ?? const <MediaCatalogEpisode>[];
+            if (episodes.isEmpty) {
+              return const ListTile(
+                title: Text(
+                  'Список серий пока недоступен',
+                  style: TextStyle(color: SystemCorePalette.muted),
+                ),
+              );
+            }
+            return Column(
+              children: episodes
+                  .map(
+                    (episode) => ListTile(
+                      dense: true,
+                      leading: Text(
+                        episode.episodeNumber.toString().padLeft(2, '0'),
+                        style: const TextStyle(color: SystemCorePalette.green),
+                      ),
+                      title: Text(
+                        episode.title,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      subtitle: episode.overview.isEmpty
+                          ? null
+                          : Text(
+                              episode.overview,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: SystemCorePalette.muted),
+                            ),
+                    ),
+                  )
+                  .toList(),
+            );
+          },
+        ),
+    ],
   );
 }
 
