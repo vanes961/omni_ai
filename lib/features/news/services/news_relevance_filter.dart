@@ -13,6 +13,8 @@ class NewsRelevanceFilter {
     final languages = profile.languages.map(_normalize).toSet();
     final regions = profile.regions.map(_normalize).toSet();
 
+    final isDiscoveryFeed =
+        topics.isEmpty && !profile.includeCriticalOutsideInterests;
     final matching = <NewsArticle>[];
     for (final article in articles) {
       if (languages.isNotEmpty &&
@@ -28,7 +30,8 @@ class NewsRelevanceFilter {
       final matchesTopic = article.topics.any(
         (topic) => topics.contains(_normalize(topic)),
       );
-      if (matchesTopic ||
+      if (isDiscoveryFeed ||
+          matchesTopic ||
           (article.isCritical && profile.includeCriticalOutsideInterests)) {
         matching.add(article);
       }
