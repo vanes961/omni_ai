@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/data/torrserver_playback_resolver.dart';
 import 'package:omni_ai/features/media/services/ani_skip_segment_provider.dart';
@@ -1096,4 +1098,3 @@ class _VideoPlayerAdapter implements MediaPlaybackController {
   @override
   Widget buildView() => VideoPlayer(_controller);
 }
-Formatted 3 files (2 changed) in 0.04 seconds.
