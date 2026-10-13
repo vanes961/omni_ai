@@ -384,6 +384,12 @@ void main() {
     // the empty RSS response should still explain how to personalize the feed.
     expect(requestCount, greaterThan(0));
     expect(find.text('НАСТРОИТЬ ИНТЕРЕСЫ'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Не удалось загрузить новости: International news sources returned no usable articles.',
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
