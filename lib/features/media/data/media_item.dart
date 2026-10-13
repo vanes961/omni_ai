@@ -13,6 +13,7 @@ class MediaItem {
     this.categories = const [],
     this.episodes = const [],
     this.description = '',
+    this.malId,
   });
 
   final String id;
@@ -28,6 +29,8 @@ class MediaItem {
   final List<String> categories;
   final List<MediaEpisode> episodes;
   final String description;
+  /// MyAnimeList ID required by AniSkip; never populate with a TMDB ID.
+  final int? malId;
 }
 
 class MediaEpisode {
