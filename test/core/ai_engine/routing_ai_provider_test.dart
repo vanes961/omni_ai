@@ -75,52 +75,52 @@ void main() {
     test(
       'falls back to local streaming before any cloud token is emitted',
       () async {
-      cloud.failure = StateError('network unavailable');
-      final tokens = <String>[];
+        cloud.failure = StateError('network unavailable');
+        final tokens = <String>[];
 
-      final response = await router.completeStreaming(
-        AIRequest(
-          id: 'stream-offline',
-          prompt: 'Посоветуй фильм с неожиданной концовкой',
-        ),
-        cancellationToken: AICancellationToken(),
-        onToken: tokens.add,
-      );
+        final response = await router.completeStreaming(
+          AIRequest(
+            id: 'stream-offline',
+            prompt: 'Посоветуй фильм с неожиданной концовкой',
+          ),
+          cancellationToken: AICancellationToken(),
+          onToken: tokens.add,
+        );
 
-      expect(response.providerId, 'local');
-      expect(tokens, ['reply from local']);
-      expect(cloud.calls, 1);
-      expect(local.calls, 1);
+        expect(response.providerId, 'local');
+        expect(tokens, ['reply from local']);
+        expect(cloud.calls, 1);
+        expect(local.calls, 1);
       },
     );
 
     test(
       'does not append local output after partial cloud streaming output',
       () async {
-      final streamingCloud = _FakeStreamingProvider('cloud')
-        ..failure = StateError('connection dropped')
-        ..emitBeforeFailure = true;
-      final streamingRouter = RoutingAIProvider(
-        localProvider: local,
-        cloudProvider: streamingCloud,
-      );
-      final tokens = <String>[];
+        final streamingCloud = _FakeStreamingProvider('cloud')
+          ..failure = StateError('connection dropped')
+          ..emitBeforeFailure = true;
+        final streamingRouter = RoutingAIProvider(
+          localProvider: local,
+          cloudProvider: streamingCloud,
+        );
+        final tokens = <String>[];
 
-      await expectLater(
-        streamingRouter.completeStreaming(
-          AIRequest(
-            id: 'stream-partial',
-            prompt: 'Посоветуй фильм с неожиданной концовкой',
+        await expectLater(
+          streamingRouter.completeStreaming(
+            AIRequest(
+              id: 'stream-partial',
+              prompt: 'Посоветуй фильм с неожиданной концовкой',
+            ),
+            cancellationToken: AICancellationToken(),
+            onToken: tokens.add,
           ),
-          cancellationToken: AICancellationToken(),
-          onToken: tokens.add,
-        ),
-        throwsA(isA<StateError>()),
-      );
+          throwsA(isA<StateError>()),
+        );
 
-      expect(tokens, ['partial cloud answer']);
-      expect(local.calls, 0);
-      expect(streamingCloud.calls, 1);
+        expect(tokens, ['partial cloud answer']);
+        expect(local.calls, 0);
+        expect(streamingCloud.calls, 1);
       },
     );
 
