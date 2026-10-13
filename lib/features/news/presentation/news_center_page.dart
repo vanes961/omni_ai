@@ -958,94 +958,6 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Container(
-                decoration: BoxDecoration(
-                  color: SystemCorePalette.panel,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: profile.topics.isEmpty
-                        ? SystemCorePalette.green
-                        : SystemCorePalette.border,
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.tune,
-                      color: SystemCorePalette.green,
-                    ),
-                    title: const Text(
-                      'Настроить интересы новостей',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Text(
-                      profile.topics.isEmpty
-                          ? 'Темы не выбраны — обычная лента будет пустой'
-                          : 'Выбрано тем: ${profile.topics.length}',
-                      style: const TextStyle(
-                        color: SystemCorePalette.muted,
-                        fontSize: 12,
-                      ),
-                    ),
-                    trailing: const Icon(
-                      Icons.arrow_downward,
-                      color: SystemCorePalette.green,
-                    ),
-                    onTap: () {
-                      final target = _interestsSectionKey.currentContext;
-                      if (target != null) {
-                        Scrollable.ensureVisible(
-                          target,
-                          duration: const Duration(milliseconds: 350),
-                          curve: Curves.easeInOut,
-                          alignment: 0.05,
-                        );
-                      }
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: SystemCorePalette.panel,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: SystemCorePalette.border),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.health_and_safety_outlined,
-                      color: SystemCorePalette.green,
-                    ),
-                    title: const Text(
-                      'Диагностика системы',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: const Text(
-                      'Проверить ленту и сформировать отчёт для поиска ошибок',
-                      style: TextStyle(
-                        color: SystemCorePalette.muted,
-                        fontSize: 12,
-                      ),
-                    ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: SystemCorePalette.green,
-                    ),
-                    onTap: _runDiagnostics,
-                  ),
-                ),
-              ),
               const SizedBox(height: 8),
               FilledButton.icon(
                 onPressed: (_refreshingNews || _loadingNewsCache)
@@ -1326,6 +1238,95 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     ),
                   ),
                 ),
+
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: SystemCorePalette.panel,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: profile.topics.isEmpty
+                        ? SystemCorePalette.green
+                        : SystemCorePalette.border,
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.tune,
+                      color: SystemCorePalette.green,
+                    ),
+                    title: const Text(
+                      'Настроить интересы новостей',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      profile.topics.isEmpty
+                          ? 'Пока показываем общий обзор новостей'
+                          : 'Выбрано тем: ${profile.topics.length}',
+                      style: const TextStyle(
+                        color: SystemCorePalette.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    trailing: const Icon(
+                      Icons.arrow_downward,
+                      color: SystemCorePalette.green,
+                    ),
+                    onTap: () {
+                      final target = _interestsSectionKey.currentContext;
+                      if (target != null) {
+                        Scrollable.ensureVisible(
+                          target,
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeInOut,
+                          alignment: 0.05,
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: SystemCorePalette.panel,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: SystemCorePalette.border),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.health_and_safety_outlined,
+                      color: SystemCorePalette.green,
+                    ),
+                    title: const Text(
+                      'Диагностика системы',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Проверить ленту и сформировать отчёт для поиска ошибок',
+                      style: TextStyle(
+                        color: SystemCorePalette.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: SystemCorePalette.green,
+                    ),
+                    onTap: _runDiagnostics,
+                  ),
+                ),
+              ),
               ],
 
               const SizedBox(height: 24),
