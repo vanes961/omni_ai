@@ -120,11 +120,11 @@ class _PlayerPageState extends State<PlayerPage>
     int generation,
   ) async {
     if (_resumePromptedEpisodes.contains(episodeIndex)) return;
-    _resumePromptedEpisodes.add(episodeIndex);
     final savedPosition = await _resumeStore.load(widget.item.id, episodeIndex);
     if (!mounted || generation != _playerGeneration || savedPosition == null) {
       return;
     }
+    _resumePromptedEpisodes.add(episodeIndex);
     final remaining = player.duration - savedPosition;
     if (savedPosition < const Duration(seconds: 10) ||
         (player.duration > Duration.zero &&
@@ -199,7 +199,7 @@ class _PlayerPageState extends State<PlayerPage>
     }.where((url) => url.isNotEmpty).toList(growable: false);
     final playerFactory = widget.playerFactory ?? _videoPlayerFactory;
 
-    await _saveProgress(player: oldPlayer, episodeIndex: _selectedEpisode);
+    unawaited(_saveProgress(player: oldPlayer, episodeIndex: _selectedEpisode));
     setState(() {
       _selectedEpisode = episodeIndex;
       if (selectedVoiceover != null) {
