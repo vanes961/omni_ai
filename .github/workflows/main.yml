@@ -76,11 +76,23 @@ jobs:
       - name: Analyze Flutter code
         run: flutter analyze
 
-      - name: Isolate news-context chat tests (diagnostic)
+      - name: Isolate each news-context chat test (diagnostic)
         timeout-minutes: 4
         run: |
-          set -o pipefail
-          timeout --signal=TERM --kill-after=10s 210s flutter test test/ai_chat_news_context_test.dart --reporter expanded --timeout=30s
+          set +e
+          timeout --signal=TERM --kill-after=5s 80s flutter test test/ai_chat_news_context_test.dart --plain-name 'passes cached personalized news to the provider for news questions' --reporter expanded --timeout=30s > /tmp/news-context-first.log 2>&1
+          first_status=$?
+          cat /tmp/news-context-first.log
+          echo "FIRST_NEWS_CONTEXT_TEST_EXIT=$first_status"
+
+          timeout --signal=TERM --kill-after=5s 80s flutter test test/ai_chat_news_context_test.dart --plain-name 'does not add cached news to unrelated chat questions' --reporter expanded --timeout=30s > /tmp/news-context-second.log 2>&1
+          second_status=$?
+          cat /tmp/news-context-second.log
+          echo "SECOND_NEWS_CONTEXT_TEST_EXIT=$second_status"
+
+          if [ "$first_status" -ne 0 ] || [ "$second_status" -ne 0 ]; then
+            exit 1
+          fi
 
       - name: Run full test suite with per-test timeout and expanded diagnostics
         timeout-minutes: 22
