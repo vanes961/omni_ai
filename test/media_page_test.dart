@@ -632,7 +632,6 @@ class _FakePlaybackController implements MediaPlaybackController {
     this.initializationError,
     this.initializationCompleter,
     this.playError,
-    this.position = Duration.zero,
     this.duration = const Duration(minutes: 90),
   });
 
@@ -643,7 +642,7 @@ class _FakePlaybackController implements MediaPlaybackController {
   bool isDisposed = false;
 
   @override
-  Duration position;
+  Duration position = Duration.zero;
 
   @override
   final Duration duration;
