@@ -147,6 +147,11 @@ void main() {
               store: _MemoryStringStore(),
             ),
             mirrors: [Uri.https('mirror.example', '/')],
+            networkServiceFactory: (proxyConfig) {
+              throw UnsupportedError(
+                '${proxyConfig!.type.name} proxy transport is not implemented yet.',
+              );
+            },
           ),
         ),
       ),
