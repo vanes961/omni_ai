@@ -40,7 +40,7 @@ class OpenRouterProvider implements AIProvider {
         throw const AIEngineException(
           AIError(
             code: AIErrorCode.invalidRequest,
-            message: 'OpenRouter API key is not configured. Local AI remains available.',
+            message: 'Облачный AI не настроен: отсутствует API-ключ OpenRouter. Выберите локальный режим или настройте безопасное подключение облачного провайдера.',
           ),
         );
       }
