@@ -1365,6 +1365,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   ),
                 ),
 
+              ],
+
                 const SizedBox(height: 16),
                 Container(
                   decoration: BoxDecoration(
@@ -1453,7 +1455,6 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     ),
                   ),
                 ),
-              ],
 
               const SizedBox(height: 24),
               Text(
