@@ -1,4 +1,4 @@
-import 'dart:async';
+Z import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -277,7 +277,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
             : all.indexWhere((chapter) => chapter.id == savedChapterId);
         final found = foundById >= 0
             ? foundById
-            : all.indexWhere((chapter) => chapter.chapter == saved.chapterLabel);
+            : all.indexWhere(
+                (chapter) => chapter.chapter == saved.chapterLabel,
+              );
         if (found >= 0) initial = found;
       }
       setState(() {
@@ -970,3 +972,4 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     );
   }
 }
+Formatted 2 files (1 changed) in 0.04 seconds.
