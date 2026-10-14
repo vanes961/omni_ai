@@ -17,7 +17,7 @@ class VerifiedMangaAnimeBoundary {
   final int? safeTargetEpisode;
 
   bool get isValid =>
-      sourceChapter >= 0 &&
+      sourceChapter >= 1 &&
       (safeTargetEpisode == null || safeTargetEpisode! >= 1);
 }
 
