@@ -96,14 +96,17 @@ class MangaReaderProgressOverlay extends StatelessWidget {
                               color: Color(0xFF9BE6B4),
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              chapterText,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFFF1F7F2),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 94),
+                              child: Text(
+                                chapterText,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xFFF1F7F2),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                             if (chapters.isNotEmpty) ...[
@@ -118,19 +121,19 @@ class MangaReaderProgressOverlay extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (_safeTotalPages > 0) ...[
-                      const SizedBox(width: 7),
-                      Text(
-                        '$_safeCurrentPage/$_safeTotalPages',
-                        style: const TextStyle(
-                          color: Color(0xFFB9C9BE),
-                          fontSize: 9,
-                          fontFeatures: [FontFeature.tabularFigures()],
-                        ),
-                      ),
-                    ],
                   ],
                 ),
+                if (_safeTotalPages > 0) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    '$_safeCurrentPage/$_safeTotalPages',
+                    style: const TextStyle(
+                      color: Color(0xFFB9C9BE),
+                      fontSize: 9,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
                 if (_safeTotalPages > 0) ...[
                   const SizedBox(height: 5),
                   SizedBox(
