@@ -271,7 +271,13 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       final saved = await _progress.getById(widget.manga.canonicalId);
       var initial = 0;
       if (saved != null) {
-        final found = all.indexWhere((c) => c.chapter == saved.chapterLabel);
+        final savedChapterId = saved.chapterId;
+        final foundById = savedChapterId == null
+            ? -1
+            : all.indexWhere((chapter) => chapter.id == savedChapterId);
+        final found = foundById >= 0
+            ? foundById
+            : all.indexWhere((chapter) => chapter.chapter == saved.chapterLabel);
         if (found >= 0) initial = found;
       }
       setState(() {
@@ -554,6 +560,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       mangaId: widget.manga.canonicalId,
       chapterIndex: _chapterIndex,
       chapterLabel: _chapters[_chapterIndex].chapter,
+      chapterId: _chapters[_chapterIndex].id,
       page: _pageIndex + 1,
       pageOffset: _pageOffset,
       updatedAt: DateTime.now().toUtc(),
