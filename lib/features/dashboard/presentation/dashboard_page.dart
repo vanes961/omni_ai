@@ -4,6 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
+import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
+import 'package:omni_ai/features/media/services/franchise_chronology_coordinator.dart';
+import 'package:omni_ai/features/media/services/media_search_service.dart';
+import 'package:omni_ai/features/media/services/openrouter_franchise_chronology_researcher.dart';
+import 'package:omni_ai/features/media/services/shared_preferences_franchise_chronology_cache.dart';
 import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
@@ -41,6 +46,7 @@ class _DashboardPageState extends State<DashboardPage> {
   late final AIDependencies _aiDependencies;
   late final AppDependencies _chatDependencies;
   late final UserPreferencesStore _preferencesStore;
+  late final FranchiseChronologyResolver _franchiseChronologyResolver;
 
   @override
   void initState() {
@@ -59,6 +65,18 @@ class _DashboardPageState extends State<DashboardPage> {
     }
     _preferencesStore =
         widget.preferencesStore ?? SharedPreferencesUserPreferencesStore();
+    final chronologyResearcher = OpenRouterFranchiseChronologyResearcher(
+      engine: AIEngine(
+        provider: _aiDependencies.cloudProvider,
+        timeout: _aiDependencies.timeout,
+      ),
+    );
+    final chronologyCoordinator = FranchiseChronologyCoordinator(
+      cache: const SharedPreferencesFranchiseChronologyCache(),
+      research: chronologyResearcher.research,
+      verifyEvidence: chronologyResearcher.verifyEvidence,
+    );
+    _franchiseChronologyResolver = chronologyCoordinator.resolve;
   }
 
   @override
@@ -201,7 +219,12 @@ class _DashboardPageState extends State<DashboardPage> {
         preferencesStore: _preferencesStore,
       ),
       1 => AIChatPage(dependencies: _chatDependencies),
-      2 => MediaPage(preferences: widget.preferences),
+      2 => MediaPage(
+        preferences: widget.preferences,
+        searchService: MediaSearchService(
+          franchiseChronologyResolver: _franchiseChronologyResolver,
+        ),
+      ),
       3 => FavoritesPage(),
       _ => _buildSettings(),
     };

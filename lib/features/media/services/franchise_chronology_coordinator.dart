@@ -9,12 +9,19 @@ class FranchiseChronologyProposal {
     required this.order,
     required this.sourceUrl,
     this.spoilerRisk = false,
+    this.sourceTitle,
+    this.sourceExcerpt,
   });
 
   final String itemId;
   final int order;
   final String sourceUrl;
   final bool spoilerRisk;
+
+  /// Title and excerpt copied from the provider's returned URL-citation
+  /// annotation, never accepted directly from model-generated JSON.
+  final String? sourceTitle;
+  final String? sourceExcerpt;
 }
 
 typedef FranchiseChronologyResearcher =
