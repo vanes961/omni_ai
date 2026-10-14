@@ -122,7 +122,6 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   bool _restoring = false;
   String? _error;
   String? _pageError;
-  int _nextOffset = 0;
   bool _hasMoreChapters = true;
 
   @override
@@ -154,7 +153,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         final found = all.indexWhere((c) => c.chapter == saved.chapterLabel);
         if (found >= 0) initial = found;
       }
-      setState(() { _chapters = all; _chapterIndex = initial; _loadingChapters = false; _nextOffset = offset + (all.length % 100); _hasMoreChapters = all.length >= 100; });
+      setState(() { _chapters = all; _chapterIndex = initial; _loadingChapters = false; _hasMoreChapters = all.length >= 500; });
       await _loadChapterPages(initial, restore: saved);
     } on Object catch (e) {
       if (!mounted) return;
@@ -189,7 +188,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         if (!mounted || !_scroll.hasClients) return;
         _restoring = true;
         final target = _pageIndex * MediaQuery.sizeOf(context).height * 0.82 + (restore?.pageOffset ?? 0) * MediaQuery.sizeOf(context).height * 0.82;
-        _scroll.jumpTo(target.clamp(0.0, _scroll.position.maxScrollExtent));
+        _scroll.jumpTo(target.clamp(0.0, _scroll.position.maxScrollExtent).toDouble());
         _restoring = false;
       });
     } on Object catch (e) {
@@ -201,12 +200,14 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   void _onScroll() {
     if (!_scroll.hasClients || _restoring) return;
     final extent = MediaQuery.sizeOf(context).height * 0.82;
-    final page = (_scroll.offset / extent).floor().clamp(0, (_pages.length - 1).clamp(0, 1 << 30));
+    final page = (_scroll.offset / extent).floor().clamp(0, (_pages.length - 1).clamp(0, 1 << 30)).toInt();
     if (_pages.isNotEmpty) {
-      _pageIndex = page;
+      var visibleChapter = _chapterIndex;
       for (final entry in _chapterStartPages.entries) {
-        if (entry.value <= page && entry.key > _chapterIndex) _chapterIndex = entry.key;
+        if (entry.value <= page && entry.value >= (_chapterStartPages[visibleChapter] ?? 0)) visibleChapter = entry.key;
       }
+      _chapterIndex = visibleChapter;
+      _pageIndex = page - (_chapterStartPages[_chapterIndex] ?? 0);
       _saveProgress();
     }
     if (_scroll.position.maxScrollExtent - _scroll.position.pixels < extent * 2) {
@@ -216,7 +217,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
 
   Future<void> _saveProgress() async {
     if (_chapters.isEmpty) return;
-    final pageOffset = ((_scroll.hasClients ? _scroll.offset % (MediaQuery.sizeOf(context).height * 0.82) : 0) / (MediaQuery.sizeOf(context).height * 0.82)).clamp(0.0, 1.0);
+    final pageOffset = ((_scroll.hasClients ? _scroll.offset % (MediaQuery.sizeOf(context).height * 0.82) : 0) / (MediaQuery.sizeOf(context).height * 0.82)).clamp(0.0, 1.0).toDouble();
     try {
       await _progress.save(MangaReadingProgress(
         mangaId: widget.manga.canonicalId,
