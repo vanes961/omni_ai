@@ -16,6 +16,7 @@ void main() {
           chapterIndex: 12,
           chapterLabel: '12.5',
           page: 7,
+          pageOffset: 0.35,
           updatedAt: updatedAt,
         ),
       );
@@ -29,7 +30,40 @@ void main() {
       expect(restored.chapterIndex, 12);
       expect(restored.chapterLabel, '12.5');
       expect(restored.page, 7);
+      expect(restored.pageOffset, 0.35);
       expect(restored.updatedAt, updatedAt);
+    });
+
+    test('restores older records without a page offset at the top of the page', () {
+      final record = MangaReadingProgress.fromJson({
+        'mangaId': 'mangadex:old-record',
+        'chapterIndex': 1,
+        'chapterLabel': '1',
+        'page': 4,
+        'updatedAt': '2026-10-14T12:00:00.000Z',
+      });
+
+      expect(record, isNotNull);
+      expect(record!.page, 4);
+      expect(record.pageOffset, 0);
+    });
+
+    test('rejects out-of-range normalized page offsets', () async {
+      final repository = MangaReadingProgressRepository(
+        store: _MemoryMangaProgressStore(),
+      );
+      expect(
+        () => repository.save(
+          MangaReadingProgress(
+            mangaId: 'mangadex:abc',
+            chapterIndex: 1,
+            page: 2,
+            pageOffset: 1.1,
+            updatedAt: DateTime.utc(2026),
+          ),
+        ),
+        throwsArgumentError,
+      );
     });
 
     test('adapts saved manga progress to spoiler-aware recommendations', () async {

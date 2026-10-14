@@ -1,5 +1,3 @@
-import 'dart:ui' show FontFeature;
-
 import 'package:flutter/material.dart';
 
 /// Compact chapter selector and progress overlay for a continuous manga reader.

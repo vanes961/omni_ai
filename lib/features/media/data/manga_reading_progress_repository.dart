@@ -13,6 +13,7 @@ class MangaReadingProgress {
     required this.updatedAt,
     this.chapterLabel = '',
     this.page,
+    this.pageOffset = 0,
   });
 
   /// Stable catalogue ID, for example `mangadex:<uuid>`.
@@ -26,6 +27,10 @@ class MangaReadingProgress {
 
   /// One-based page position within the chapter, when known.
   final int? page;
+
+  /// Normalized vertical offset within [page], from 0.0 to 1.0.
+  /// Older records without this field restore to the top of their saved page.
+  final double pageOffset;
 
   final DateTime updatedAt;
 
@@ -41,6 +46,7 @@ class MangaReadingProgress {
     'chapterIndex': chapterIndex,
     'chapterLabel': chapterLabel,
     'page': page,
+    'pageOffset': pageOffset,
     'updatedAt': updatedAt.toUtc().toIso8601String(),
   };
 
@@ -50,6 +56,8 @@ class MangaReadingProgress {
     final chapterIndex = value['chapterIndex'];
     final chapterLabel = value['chapterLabel'];
     final page = value['page'];
+    final pageOffsetRaw = value['pageOffset'];
+    final pageOffset = pageOffsetRaw is num ? pageOffsetRaw.toDouble() : 0.0;
     final updatedAt = value['updatedAt'];
     if (mangaId is! String ||
         !mangaId.startsWith('mangadex:') ||
@@ -57,6 +65,10 @@ class MangaReadingProgress {
         chapterIndex is! int ||
         chapterIndex < 0 ||
         (page != null && (page is! int || page < 1)) ||
+        (pageOffsetRaw != null && pageOffsetRaw is! num) ||
+        !pageOffset.isFinite ||
+        pageOffset < 0 ||
+        pageOffset > 1 ||
         (chapterLabel != null && chapterLabel is! String) ||
         updatedAt is! String) {
       return null;
@@ -68,6 +80,7 @@ class MangaReadingProgress {
       chapterIndex: chapterIndex,
       chapterLabel: chapterLabel as String? ?? '',
       page: page as int?,
+      pageOffset: pageOffset,
       updatedAt: parsedDate.toUtc(),
     );
   }
@@ -120,6 +133,15 @@ class MangaReadingProgressRepository {
     if (progress.page != null && progress.page! < 1) {
       throw ArgumentError.value(progress.page, 'page', 'Must be one-based.');
     }
+    if (!progress.pageOffset.isFinite ||
+        progress.pageOffset < 0 ||
+        progress.pageOffset > 1) {
+      throw ArgumentError.value(
+        progress.pageOffset,
+        'pageOffset',
+        'Must be a finite normalized offset between 0 and 1.',
+      );
+    }
     return _serialize(() async {
       final records = await _readAll();
       records.removeWhere((record) => record.mangaId == progress.mangaId);
@@ -129,6 +151,7 @@ class MangaReadingProgressRepository {
           chapterIndex: progress.chapterIndex,
           chapterLabel: progress.chapterLabel,
           page: progress.page,
+          pageOffset: progress.pageOffset,
           updatedAt: progress.updatedAt.toUtc(),
         ),
       );
