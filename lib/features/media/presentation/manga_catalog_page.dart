@@ -303,11 +303,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || !_scroll.hasClients) return;
         _restoring = true;
-        final target =
-            _pageIndex * MediaQuery.sizeOf(context).height * 0.82 +
-            (restore?.pageOffset ?? 0) *
-                MediaQuery.sizeOf(context).height *
-                0.82;
+        final extent = _viewportExtent > 0 ? _viewportExtent : 1.0;
+        final target = _pageIndex * extent + (restore?.pageOffset ?? 0) * extent;
         _scroll.jumpTo(
           target.clamp(0.0, _scroll.position.maxScrollExtent).toDouble(),
         );
@@ -324,7 +321,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
 
   void _onScroll() {
     if (!_scroll.hasClients || _restoring) return;
-    final extent = MediaQuery.sizeOf(context).height * 0.82;
+    final extent = _viewportExtent > 0 ? _viewportExtent : 1.0;
     final page = (_scroll.offset / extent)
         .floor()
         .clamp(0, (_pages.length - 1).clamp(0, 1 << 30))
@@ -442,7 +439,6 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
 
   @override
   Widget build(BuildContext context) {
-    _viewportExtent = MediaQuery.sizeOf(context).height * 0.82;
     return Scaffold(
     backgroundColor: Colors.black,
     appBar: AppBar(
@@ -475,49 +471,59 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
               ),
             ),
           )
-        : Stack(
-            children: [
-              if (_pages.isNotEmpty)
-                ListView.builder(
-                  controller: _scroll,
-                  itemCount: _pages.length + (_loadingNext ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index >= _pages.length) {
-                      return const Padding(
-                        padding: EdgeInsets.all(28),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFF74D69A),
-                          ),
-                        ),
-                      );
-                    }
-                    return CachedNetworkImage(
-                      imageUrl: _pages[index].toString(),
-                      fit: BoxFit.fitWidth,
-                      width: double.infinity,
-                      placeholder: (_, _) => const SizedBox(
-                        height: 220,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFF74D69A),
+        : LayoutBuilder(
+            builder: (context, constraints) {
+              _viewportExtent = constraints.maxHeight;
+              return Stack(
+                children: [
+                  if (_pages.isNotEmpty)
+                    Positioned.fill(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 900),
+                          child: ListView.builder(
+                            controller: _scroll,
+                            itemCount: _pages.length + (_loadingNext ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index >= _pages.length) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(28),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFF74D69A),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return CachedNetworkImage(
+                                imageUrl: _pages[index].toString(),
+                                fit: BoxFit.fitWidth,
+                                width: double.infinity,
+                                placeholder: (_, _) => const SizedBox(
+                                  height: 220,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFF74D69A),
+                                    ),
+                                  ),
+                                ),
+                                errorWidget: (_, _, _) => Container(
+                                  height: 180,
+                                  alignment: Alignment.center,
+                                  color: const Color(0xFF111714),
+                                  child: const Text(
+                                    'Страница не загрузилась',
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                         ),
                       ),
-                      errorWidget: (_, _, _) => Container(
-                        height: 180,
-                        alignment: Alignment.center,
-                        color: const Color(0xFF111714),
-                        child: const Text(
-                          'Страница не загрузилась',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                      ),
-                    );
-                  },
-                )
-              else if (_pageError != null)
+                    )
+                  else if (_pageError != null)
                 Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -554,7 +560,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                   ],
                   onChapterSelected: _pickChapter,
                 ),
-            ],
+                ],
+              );
+            },
           ),
     );
   }
