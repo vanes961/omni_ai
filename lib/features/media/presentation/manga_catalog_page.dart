@@ -102,8 +102,25 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
         if (_loading) const LinearProgressIndicator(color: Color(0xFF74D69A)),
         if (_error != null)
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(_error!, style: const TextStyle(color: Colors.white70)),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    key: const ValueKey('manga-catalog-retry'),
+                    onPressed: _loading ? null : () => _search(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Повторить поиск'),
+                  ),
+                ),
+              ],
+            ),
           ),
         Expanded(
           child: _results.isEmpty
