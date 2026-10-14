@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:omni_ai/features/media/data/cross_content_recommendation.dart';
 import 'package:omni_ai/features/media/data/manga_reading_progress_repository.dart';
 
 void main() {
@@ -29,6 +30,44 @@ void main() {
       expect(restored.chapterLabel, '12.5');
       expect(restored.page, 7);
       expect(restored.updatedAt, updatedAt);
+    });
+
+    test('adapts saved manga progress to spoiler-aware recommendations', () async {
+      final saved = _progress('mangadex:source', 8, 1);
+      final progress = saved.toCrossContentProgress();
+      const relation = CrossContentRelation(
+        sourceId: 'mangadex:source',
+        targetId: 'tmdb:tv:anime',
+        sourceType: CrossContentType.manga,
+        targetType: CrossContentType.anime,
+        kind: CrossContentRelationKind.adaptation,
+        sourceName: 'Verified catalog',
+        sourceUrl: 'https://catalog.example/relation',
+        confidence: 0.95,
+        requiredSourceChapter: 8,
+        safeTargetEpisode: 1,
+      );
+
+      final recommendations = const CrossContentRecommendationEngine().recommend(
+        progress: progress,
+        relations: [relation],
+      );
+      final lockedRecommendations =
+          const CrossContentRecommendationEngine().recommend(
+            progress: CrossContentProgress(
+              contentId: 'mangadex:source',
+              type: CrossContentType.manga,
+              chapter: 7,
+            ),
+            relations: [relation],
+          );
+
+      expect(progress.contentId, 'mangadex:source');
+      expect(progress.type, CrossContentType.manga);
+      expect(progress.position, 8);
+      expect(recommendations.map((item) => item.targetId), ['tmdb:tv:anime']);
+      expect(recommendations.single.safeStartPosition, 1);
+      expect(lockedRecommendations, isEmpty);
     });
 
     test('updates one record per manga and sorts by most recent progress', () async {
