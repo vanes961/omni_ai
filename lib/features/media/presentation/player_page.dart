@@ -355,8 +355,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
           );
     final voiceoverSource = selectedVoiceover == null
         ? null
-        : episode?.voiceoverVideoUrls[selectedVoiceover] ??
-              widget.item.voiceoverVideoUrls[selectedVoiceover];
+        : episode == null
+        ? widget.item.voiceoverVideoUrls[selectedVoiceover]
+        : episode.voiceoverVideoUrls[selectedVoiceover];
     final source = selectedVariant?.url ?? voiceoverSource ?? defaultSource;
     final fallbackUrls = [
       ...matchingVariants
@@ -1046,10 +1047,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   }
 
   List<MediaVideoSource> _availableVideoSourcesFor(MediaEpisode? episode) {
-    final episodeSources = episode?.videoSources ?? const <MediaVideoSource>[];
-    return episodeSources.isNotEmpty
-        ? episodeSources
-        : widget.item.videoSources;
+    return episode == null ? widget.item.videoSources : episode.videoSources;
   }
 
   List<String> _availableQualitiesFor(MediaEpisode? episode) {
@@ -1077,11 +1075,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   }
 
   List<String> _availableVoiceoversFor(MediaEpisode? episode) {
-    final episodeSources =
-        episode?.voiceoverVideoUrls ?? const <String, String>{};
-    final sources = episodeSources.isNotEmpty
-        ? episodeSources
-        : widget.item.voiceoverVideoUrls;
+    final sources = episode == null
+        ? widget.item.voiceoverVideoUrls
+        : episode.voiceoverVideoUrls;
     final variants = _availableVideoSourcesFor(episode);
     return [
       for (final voiceover in widget.item.voiceovers)
