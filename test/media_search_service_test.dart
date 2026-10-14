@@ -54,6 +54,81 @@ void main() {
     expect(films.first.id, 'tmdb:movie:10');
   });
 
+  test('smart franchise order falls back when chronology is unverified', () {
+    final entries = [
+      const MediaFranchiseEntry(
+        id: 'later',
+        title: 'Later release',
+        overview: '',
+        releaseDate: '2020-01-01',
+        posterUrl: '',
+      ),
+      const MediaFranchiseEntry(
+        id: 'earlier',
+        title: 'Earlier release',
+        overview: '',
+        releaseDate: '2010-01-01',
+        posterUrl: '',
+      ),
+    ];
+
+    expect(
+      MediaSearchService.orderFranchiseItems(
+        entries,
+        FranchiseViewingOrder.smart,
+      ).map((entry) => entry.id),
+      ['earlier', 'later'],
+    );
+  });
+
+  test('chronology order is used only with verified positions', () {
+    final entries = [
+      const MediaFranchiseEntry(
+        id: 'release-first',
+        title: 'Release first',
+        overview: '',
+        releaseDate: '2010-01-01',
+        posterUrl: '',
+        chronologyOrder: 2,
+      ),
+      const MediaFranchiseEntry(
+        id: 'story-first',
+        title: 'Story first',
+        overview: '',
+        releaseDate: '2020-01-01',
+        posterUrl: '',
+        chronologyOrder: 1,
+      ),
+    ];
+
+    expect(
+      MediaSearchService.orderFranchiseItems(
+        entries,
+        FranchiseViewingOrder.chronology,
+      ).map((entry) => entry.id),
+      ['story-first', 'release-first'],
+    );
+    expect(
+      MediaSearchService.orderFranchiseItems(
+        entries
+            .map(
+              (entry) => MediaFranchiseEntry(
+                id: entry.id,
+                title: entry.title,
+                overview: entry.overview,
+                releaseDate: entry.releaseDate,
+                posterUrl: entry.posterUrl,
+                chronologyOrder: entry.chronologyOrder,
+                chronologySpoilerRisk: entry.id == 'story-first',
+              ),
+            )
+            .toList(),
+        FranchiseViewingOrder.smart,
+      ).map((entry) => entry.id),
+      ['release-first', 'story-first'],
+    );
+  });
+
   test('parses TMDB season metadata without creating playable stream URLs', () {
     final episodes = MediaSearchService.parseSeasonEpisodes(
       {
