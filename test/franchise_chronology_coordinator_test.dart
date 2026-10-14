@@ -84,6 +84,25 @@ void main() {
     expect(result.every((entry) => entry.chronologyOrder == null), isTrue);
   });
 
+  test('falls back to release metadata when cloud research fails',
+      () async {
+    final coordinator = FranchiseChronologyCoordinator(
+      cache: _MemoryChronologyCache(),
+      research: ({required franchiseId, required entries}) async {
+        throw Exception('Cloud provider unavailable');
+      },
+      verifyEvidence: ({required proposal, required entry}) async => false,
+    );
+
+    final result = await coordinator.resolve(
+      franchiseId: 'franchise:example',
+      entries: entries,
+    );
+
+    expect(result.map((entry) => entry.id), entries.map((entry) => entry.id));
+    expect(result.every((entry) => entry.chronologyOrder == null), isTrue);
+  });
+
   test('rejects duplicate chronology positions and non-HTTPS sources',
       () async {
     final cache = _MemoryChronologyCache();
