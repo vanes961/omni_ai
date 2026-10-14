@@ -204,6 +204,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   bool _loadingChapters = true;
   bool _loadingPages = false;
   bool _loadingNext = false;
+  bool _loadingPrevious = false;
   bool _restoring = false;
   String? _error;
   String? _pageError;
@@ -473,6 +474,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         extent * 2) {
       _loadNextChapter();
     }
+    if (_scroll.position.pixels < extent * 1.5) {
+      _loadPreviousChapter();
+    }
   }
 
   void _scheduleProgressSave() {
@@ -541,6 +545,108 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       // A failed prefetch is retried on the next near-end scroll.
     } finally {
       if (generation == _readerGeneration) _loadingNext = false;
+    }
+  }
+
+  Future<void> _loadPreviousChapter() async {
+    if (_loadingPrevious ||
+        _loadingPages ||
+        !_scroll.hasClients ||
+        _pages.isEmpty ||
+        _loadedChapterIndexes.isEmpty) {
+      return;
+    }
+
+    final firstLoadedIndex = _loadedChapterIndexes.reduce(
+      (a, b) => a < b ? a : b,
+    );
+    final previousIndex = firstLoadedIndex - 1;
+    if (previousIndex < 0) return;
+
+    final viewportObject = _viewportKey.currentContext?.findRenderObject();
+    if (viewportObject is! RenderBox || !viewportObject.hasSize) return;
+
+    // Keep a visible page as an anchor; its measured position determines the
+    // offset correction after prepending pages of unknown heights.
+    GlobalKey? anchorKey;
+    double? anchorTop;
+    for (final entry in _pageKeys.entries) {
+      final pageObject = entry.value.currentContext?.findRenderObject();
+      if (pageObject is! RenderBox || !pageObject.hasSize) continue;
+      final top = pageObject
+          .localToGlobal(Offset.zero, ancestor: viewportObject)
+          .dy;
+      if (top + pageObject.size.height > 0 &&
+          top < viewportObject.size.height) {
+        anchorKey = entry.value;
+        anchorTop = top;
+        break;
+      }
+    }
+    if (anchorKey == null || anchorTop == null) return;
+
+    final generation = _readerGeneration;
+    final oldOffset = _scroll.offset;
+    _loadingPrevious = true;
+    try {
+      final manifest = await _service.fetchPages(_chapters[previousIndex].id);
+      if (!mounted || generation != _readerGeneration) return;
+      final previousPages = manifest?.imageUrls ?? const <Uri>[];
+      if (previousPages.isEmpty) {
+        _loadedChapterIndexes.add(previousIndex);
+        return;
+      }
+
+      final count = previousPages.length;
+      setState(() {
+        final shiftedKeys = <int, GlobalKey>{};
+        for (final entry in _pageKeys.entries) {
+          shiftedKeys[entry.key + count] = entry.value;
+        }
+        _pageKeys
+          ..clear()
+          ..addAll(shiftedKeys);
+
+        for (final entry in _chapterStartPages.entries.toList()) {
+          _chapterStartPages[entry.key] = entry.value + count;
+        }
+        _chapterStartPages[previousIndex] = 0;
+        _pages.insertAll(0, previousPages);
+        _loadedChapterIndexes.add(previousIndex);
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted ||
+            generation != _readerGeneration ||
+            !_scroll.hasClients) {
+          return;
+        }
+        final updatedViewport = _viewportKey.currentContext?.findRenderObject();
+        final anchorObject = anchorKey?.currentContext?.findRenderObject();
+        if (updatedViewport is! RenderBox ||
+            !updatedViewport.hasSize ||
+            anchorObject is! RenderBox ||
+            !anchorObject.hasSize) {
+          return;
+        }
+        final newTop = anchorObject
+            .localToGlobal(Offset.zero, ancestor: updatedViewport)
+            .dy;
+        final corrected = oldOffset + (newTop - anchorTop);
+        _restoring = true;
+        _scroll.jumpTo(
+          corrected.clamp(0.0, _scroll.position.maxScrollExtent).toDouble(),
+        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _restoring = false;
+          _syncVisiblePage();
+        });
+      });
+    } on Object {
+      // Retry when the reader returns to the start of the loaded content.
+    } finally {
+      if (generation == _readerGeneration) _loadingPrevious = false;
     }
   }
 
