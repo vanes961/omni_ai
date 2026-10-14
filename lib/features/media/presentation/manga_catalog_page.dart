@@ -50,7 +50,9 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
         _results = results;
         _loading = false;
       });
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      debugPrint('MangaDex catalogue search failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
       if (!mounted || generation != _searchGeneration) return;
       setState(() {
         _loading = false;
