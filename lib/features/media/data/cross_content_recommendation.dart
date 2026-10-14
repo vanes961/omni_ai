@@ -129,15 +129,13 @@ class CrossContentRecommendationEngine {
     required Iterable<CrossContentRelation> relations,
     Set<String> alreadySavedIds = const <String>{},
   }) {
-    final candidates = <CrossContentRecommendation>[];
-    final seenTargets = <String>{};
+    final bestByTarget = <String, CrossContentRecommendation>{};
     for (final relation in relations) {
       if (!relation.isUnlockedBy(progress) ||
           relation.confidence < minimumConfidence ||
           relation.targetId.trim().isEmpty ||
           relation.targetId == progress.contentId ||
-          alreadySavedIds.contains(relation.targetId) ||
-          !seenTargets.add(relation.targetId)) {
+          alreadySavedIds.contains(relation.targetId)) {
         continue;
       }
       // Confidence is the baseline; relation type adds a small, explainable
@@ -150,17 +148,20 @@ class CrossContentRecommendationEngine {
         CrossContentRelationKind.sameFranchise => 0.04,
         CrossContentRelationKind.spinOff => 0.02,
       };
-      candidates.add(
-        CrossContentRecommendation(
-          relation: relation,
-          score: relation.confidence + kindBonus,
-        ),
+      final candidate = CrossContentRecommendation(
+        relation: relation,
+        score: relation.confidence + kindBonus,
       );
+      final previous = bestByTarget[relation.targetId];
+      if (previous == null || candidate.score > previous.score) {
+        bestByTarget[relation.targetId] = candidate;
+      }
     }
-    candidates.sort((a, b) {
-      final byScore = b.score.compareTo(a.score);
-      return byScore != 0 ? byScore : a.targetId.compareTo(b.targetId);
-    });
+    final candidates = bestByTarget.values.toList()
+      ..sort((a, b) {
+        final byScore = b.score.compareTo(a.score);
+        return byScore != 0 ? byScore : a.targetId.compareTo(b.targetId);
+      });
     return List<CrossContentRecommendation>.unmodifiable(candidates);
   }
 }
