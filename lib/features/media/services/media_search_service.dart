@@ -29,15 +29,13 @@ class MediaSearchService {
     client: _client,
   );
 
-  Future<http.Response> _get(
-    Uri uri, {
-    required Map<String, String> headers,
-  }) {
+  Future<http.Response> _get(Uri uri, {required Map<String, String> headers}) {
     final client = _client;
     return client == null
         ? http.get(uri, headers: headers)
         : client.get(uri, headers: headers);
   }
+
   static const tmdbAttribution =
       'This product uses the TMDB API but is not endorsed or certified by TMDB.';
   static const _api = 'https://api.themoviedb.org/3';
