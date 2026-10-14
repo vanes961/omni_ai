@@ -28,11 +28,13 @@ class NewsCenterPage extends StatefulWidget {
     this.repository,
     this.aiEngine,
     this.newsService,
+    this.newsCache,
   });
 
   final NewsInterestRepository? repository;
   final AIEngine? aiEngine;
   final NewsRssService? newsService;
+  final SharedPreferencesNewsCache? newsCache;
 
   @override
   State<NewsCenterPage> createState() => _NewsCenterPageState();
@@ -55,7 +57,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       const FavoriteInterestAnalytics();
   NewsSourceLocalizationService get _sourceLocalizationService =>
       NewsSourceLocalizationService(aiEngine: widget.aiEngine);
-  final SharedPreferencesNewsCache _newsCache = SharedPreferencesNewsCache();
+  late final SharedPreferencesNewsCache _newsCache;
   final NewsFeedbackRepository _newsFeedback = NewsFeedbackRepository();
   Map<String, double> _reactionWeights = const <String, double>{};
   bool _loadingNewsCache = true;
@@ -86,6 +88,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     _repository =
         widget.repository ?? SharedPreferencesNewsInterestRepository();
     _newsService = widget.newsService ?? NewsRssService();
+    _newsCache = widget.newsCache ?? SharedPreferencesNewsCache();
     _profileFuture = _repository.load();
     unawaited(_loadReactionWeights());
     unawaited(_loadReminderSettings());
