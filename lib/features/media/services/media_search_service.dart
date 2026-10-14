@@ -424,6 +424,7 @@ class MediaFranchiseEntry {
     required this.posterUrl,
     this.chronologyOrder,
     this.chronologySpoilerRisk = false,
+    this.chronologySourceUrl = '',
   });
 
   final String id;
@@ -437,6 +438,9 @@ class MediaFranchiseEntry {
 
   /// True when the chronology position is known to reveal a major plot point.
   final bool chronologySpoilerRisk;
+
+  /// HTTPS evidence used to verify this in-universe chronology position.
+  final String chronologySourceUrl;
 }
 
 enum FranchiseViewingOrder { release, chronology, smart }
