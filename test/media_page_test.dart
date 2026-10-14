@@ -378,9 +378,18 @@ void main() {
       type: 'Сериал',
       posterUrl: '',
       rating: 8,
-      voiceovers: const [],
+      voiceovers: const ['Studio A'],
       videoUrl: 'https://example.com/series-default.mp4',
       videoFallbackUrls: const [unrelatedFallback],
+      voiceoverVideoUrls: const {
+        'Studio A': 'https://example.com/unrelated-voiceover.mp4',
+      },
+      videoSources: const [
+        MediaVideoSource(
+          url: 'https://example.com/unrelated-quality-variant.mp4',
+          quality: '1080p',
+        ),
+      ],
       episodes: const [
         MediaEpisode(
           number: 1,
