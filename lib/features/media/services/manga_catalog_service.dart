@@ -53,12 +53,15 @@ class MangaCatalogService {
         'limit': '$boundedLimit',
         'offset': '0',
         'contentRating[]': 'safe',
-        'includes[]': 'cover_art',
+        'includes[]': ['cover_art', 'author'],
       },
     );
     try {
       final response = await _client
-          .get(uri, headers: const {'accept': 'application/json'})
+          .get(uri, headers: const {
+            'accept': 'application/json',
+            'User-Agent': 'OMNI_AI/1.0 (MangaDex catalogue client)',
+          })
           .timeout(timeout);
       if (response.statusCode != 200) return const <MangaCatalogItem>[];
       return parseSearchResponse(jsonDecode(response.body));
