@@ -112,6 +112,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   final ScrollController _scroll = ScrollController();
   List<MangaChapterOption> _chapters = const [];
   final List<Uri> _pages = [];
+  final Set<int> _loadedChapterIndexes = <int>{};
+  final Map<int, int> _chapterStartPages = <int, int>{};
   int _chapterIndex = 0;
   int _pageIndex = 0;
   bool _loadingChapters = true;
@@ -174,6 +176,12 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         _pages
           ..clear()
           ..addAll(manifest.imageUrls);
+        _loadedChapterIndexes
+          ..clear()
+          ..add(index);
+        _chapterStartPages
+          ..clear()
+          ..[index] = 0;
         _pageIndex = restore?.page == null ? 0 : (restore!.page! - 1).clamp(0, manifest.imageUrls.length - 1);
         _loadingPages = false;
       });
@@ -193,9 +201,12 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   void _onScroll() {
     if (!_scroll.hasClients || _restoring) return;
     final extent = MediaQuery.sizeOf(context).height * 0.82;
-    final page = ( _scroll.offset / extent).floor().clamp(0, (_pages.length - 1).clamp(0, 1 << 30));
-    if (page != _pageIndex && _pages.isNotEmpty) {
+    final page = (_scroll.offset / extent).floor().clamp(0, (_pages.length - 1).clamp(0, 1 << 30));
+    if (_pages.isNotEmpty) {
       _pageIndex = page;
+      for (final entry in _chapterStartPages.entries) {
+        if (entry.value <= page && entry.key > _chapterIndex) _chapterIndex = entry.key;
+      }
       _saveProgress();
     }
     if (_scroll.position.maxScrollExtent - _scroll.position.pixels < extent * 2) {
@@ -221,15 +232,22 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   }
 
   Future<void> _loadNextChapter() async {
-    if (_loadingNext || _loadingPages || !_hasMoreChapters || _chapterIndex + 1 >= _chapters.length) return;
+    if (_loadingNext || _loadingPages || !_hasMoreChapters) return;
+    final nextIndex = List<int>.generate(_chapters.length, (i) => i).firstWhere((i) => !_loadedChapterIndexes.contains(i), orElse: () => -1);
+    if (nextIndex < 0) { _hasMoreChapters = false; return; }
     _loadingNext = true;
-    final nextIndex = _chapterIndex + 1;
     try {
       final manifest = await _service.fetchPages(_chapters[nextIndex].id);
       if (!mounted) return;
       if (manifest != null && manifest.imageUrls.isNotEmpty) {
-        setState(() { _pages.addAll(manifest.imageUrls); });
-        // Keep the current chapter label until the reader reaches the next chapter.
+        setState(() {
+          _chapterStartPages[nextIndex] = _pages.length;
+          _pages.addAll(manifest.imageUrls);
+          _loadedChapterIndexes.add(nextIndex);
+          if (_loadedChapterIndexes.length >= _chapters.length) _hasMoreChapters = false;
+        });
+      } else {
+        _loadedChapterIndexes.add(nextIndex);
       }
     } on Object {
       // A failed prefetch is retried on the next near-end scroll.
