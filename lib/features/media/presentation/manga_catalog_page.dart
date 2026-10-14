@@ -106,10 +106,7 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _error!,
-                  style: const TextStyle(color: Colors.white70),
-                ),
+                Text(_error!, style: const TextStyle(color: Colors.white70)),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton.icon(
