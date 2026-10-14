@@ -265,7 +265,9 @@ class _InterestSummary extends StatelessWidget {
                     ),
                     visualDensity: VisualDensity.compact,
                     side: BorderSide.none,
-                    backgroundColor: SystemCorePalette.green.withValues(alpha: 0.12),
+                    backgroundColor: SystemCorePalette.green.withValues(
+                      alpha: 0.12,
+                    ),
                     labelStyle: const TextStyle(color: SystemCorePalette.green),
                   ),
               ],
@@ -385,16 +387,13 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
-Widget _categoryIcon(FavoriteCategory category) => Icon(
-  switch (category) {
-    FavoriteCategory.movie => Icons.movie_outlined,
-    FavoriteCategory.series => Icons.tv_outlined,
-    FavoriteCategory.anime => Icons.auto_awesome_outlined,
-    FavoriteCategory.manga => Icons.menu_book_outlined,
-    FavoriteCategory.trailer => Icons.play_circle_outline,
-  },
-  color: SystemCorePalette.green,
-);
+Widget _categoryIcon(FavoriteCategory category) => Icon(switch (category) {
+  FavoriteCategory.movie => Icons.movie_outlined,
+  FavoriteCategory.series => Icons.tv_outlined,
+  FavoriteCategory.anime => Icons.auto_awesome_outlined,
+  FavoriteCategory.manga => Icons.menu_book_outlined,
+  FavoriteCategory.trailer => Icons.play_circle_outline,
+}, color: SystemCorePalette.green);
 
 class _FavoriteTile extends StatelessWidget {
   const _FavoriteTile({
