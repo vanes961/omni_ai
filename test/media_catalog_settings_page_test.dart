@@ -39,7 +39,9 @@ void main() {
     final store = _FakeMediaCatalogTokenStore()..token = 'saved-token';
 
     await tester.pumpWidget(
-      MaterialApp(home: MediaCatalogSettingsPage(tokenStore: store)),
+      MaterialApp(
+        home: Scaffold(body: MediaCatalogSettingsPage(tokenStore: store)),
+      ),
     );
     await tester.pumpAndSettle();
 
