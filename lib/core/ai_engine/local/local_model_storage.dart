@@ -97,9 +97,11 @@ class LocalModelStorage {
       'expectedSha256': model.expectedSha256 ?? '',
     });
 
-    if (!await isValid(model)) {
+    // MainActivity verifies the SHA-256 while streaming the asset. Avoid
+    // hashing the entire model a second time on Dart after that trusted result.
+    if (!await isDownloaded(model)) {
       throw const FormatException(
-        'The bundled model failed integrity validation. Reinstall the app.',
+        'The bundled model failed its size validation. Reinstall the app.',
       );
     }
     return destination;
