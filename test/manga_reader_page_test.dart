@@ -58,6 +58,47 @@ void main() {
     expect(find.text('Страницы этой главы недоступны.'), findsOneWidget);
   });
 
+  testWidgets('restores a saved chapter beyond the initial 500-chapter window', (
+    tester,
+  ) async {
+    final store = _MemoryProgressStore();
+    final progress = MangaReadingProgressRepository(store: store);
+    await progress.save(
+      MangaReadingProgress(
+        mangaId: 'mangadex:test-manga',
+        chapterIndex: 500,
+        chapterLabel: '501',
+        chapterId: 'ch-501',
+        page: 1,
+        updatedAt: DateTime.utc(2026, 10, 14),
+      ),
+    );
+    final chapters = _FakeChapterService(totalChapters: 600);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MangaReaderPage(
+          manga: const MangaCatalogItem(
+            id: 'test-manga',
+            title: 'Тестовая манга',
+            description: '',
+            status: 'ongoing',
+            sourceUrl: 'https://mangadex.org/title/test-manga',
+            coverUrl: '',
+            authors: [],
+          ),
+          chapterService: chapters,
+          progressRepository: progress,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Гл. 501'), findsOneWidget);
+    expect(chapters.requestedOffsets, contains(500));
+    expect(chapters.requestedChapterIds, contains('ch-501'));
+  });
+
   testWidgets('chapter picker switches the active chapter after page error', (
     tester,
   ) async {
@@ -97,8 +138,12 @@ void main() {
 }
 
 class _FakeChapterService extends MangaChapterService {
+  _FakeChapterService({this.totalChapters = 2});
+
+  final int totalChapters;
   int pageRequests = 0;
   final List<String> requestedChapterIds = [];
+  final List<int> requestedOffsets = [];
 
   @override
   Future<List<MangaChapterOption>> fetchRussianChapters(
@@ -106,24 +151,23 @@ class _FakeChapterService extends MangaChapterService {
     int offset = 0,
     int limit = 100,
   }) async {
-    if (offset > 0) return const [];
-    return const [
-      MangaChapterOption(
-        id: 'ch-1',
-        mangaId: 'test-manga',
-        chapter: '1',
-        title: 'Первая глава',
-        pageCount: 12,
-        language: 'ru',
-      ),
-      MangaChapterOption(
-        id: 'ch-2',
-        mangaId: 'test-manga',
-        chapter: '2',
-        title: 'Вторая глава',
-        pageCount: 10,
-        language: 'ru',
-      ),
+    requestedOffsets.add(offset);
+    if (offset >= totalChapters) return const [];
+    final end = (offset + limit).clamp(0, totalChapters);
+    return [
+      for (var index = offset; index < end; index++)
+        MangaChapterOption(
+          id: 'ch-${index + 1}',
+          mangaId: 'test-manga',
+          chapter: '${index + 1}',
+          title: index == 0
+              ? 'Первая глава'
+              : index == 1
+              ? 'Вторая глава'
+              : 'Глава ${index + 1}',
+          pageCount: index == 1 ? 10 : 12,
+          language: 'ru',
+        ),
     ];
   }
 
