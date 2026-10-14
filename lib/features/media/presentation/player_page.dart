@@ -855,6 +855,29 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                 );
               },
             ),
+            if (_selectedVoiceover != null &&
+                _availableVoiceoversFor(
+                  _hasEpisodes ? episodes[_selectedEpisode] : null,
+                ).contains(_selectedVoiceover))
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  key: const ValueKey('voiceover-like-button'),
+                  onPressed: () => _toggleVoiceoverLike(_selectedVoiceover!),
+                  icon: Icon(
+                    _likedVoiceovers.contains(_selectedVoiceover)
+                        ? Icons.thumb_up
+                        : Icons.thumb_up_outlined,
+                    size: 18,
+                  ),
+                  label: Text(
+                    _likedVoiceovers.contains(_selectedVoiceover)
+                        ? 'Озвучка нравится'
+                        : 'Нравится эта озвучка',
+                  ),
+                ),
+              ),
+          ],
             if (_availableQualitiesFor(
               _hasEpisodes ? episodes[_selectedEpisode] : null,
             ).isNotEmpty) ...[
@@ -885,29 +908,6 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                 },
               ),
             ],
-            if (_selectedVoiceover != null &&
-                _availableVoiceoversFor(
-                  _hasEpisodes ? episodes[_selectedEpisode] : null,
-                ).contains(_selectedVoiceover))
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  key: const ValueKey('voiceover-like-button'),
-                  onPressed: () => _toggleVoiceoverLike(_selectedVoiceover!),
-                  icon: Icon(
-                    _likedVoiceovers.contains(_selectedVoiceover)
-                        ? Icons.thumb_up
-                        : Icons.thumb_up_outlined,
-                    size: 18,
-                  ),
-                  label: Text(
-                    _likedVoiceovers.contains(_selectedVoiceover)
-                        ? 'Озвучка нравится'
-                        : 'Нравится эта озвучка',
-                  ),
-                ),
-              ),
-          ],
         ],
       ),
     );
