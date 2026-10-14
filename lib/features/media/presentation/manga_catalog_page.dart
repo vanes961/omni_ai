@@ -183,9 +183,16 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
 }
 
 class MangaReaderPage extends StatefulWidget {
-  const MangaReaderPage({required this.manga, this.chapterService, super.key});
+  const MangaReaderPage({
+    required this.manga,
+    this.chapterService,
+    this.progressRepository,
+    super.key,
+  });
+
   final MangaCatalogItem manga;
   final MangaChapterService? chapterService;
+  final MangaReadingProgressRepository? progressRepository;
 
   @override
   State<MangaReaderPage> createState() => _MangaReaderPageState();
@@ -194,8 +201,8 @@ class MangaReaderPage extends StatefulWidget {
 class _MangaReaderPageState extends State<MangaReaderPage> {
   late final MangaChapterService _service =
       widget.chapterService ?? MangaChapterService();
-  final MangaReadingProgressRepository _progress =
-      MangaReadingProgressRepository();
+  late final MangaReadingProgressRepository _progress =
+      widget.progressRepository ?? MangaReadingProgressRepository();
   final ScrollController _scroll = ScrollController();
   final GlobalKey _viewportKey = GlobalKey();
   final Map<int, GlobalKey> _pageKeys = <int, GlobalKey>{};
