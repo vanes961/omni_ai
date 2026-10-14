@@ -948,4 +948,31 @@ void main() {
       expect(articles.single.topics, isEmpty);
     },
   );
+
+  test(
+    'preserves query-matched articles when only unrelated built-in keywords are detected',
+    () async {
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          expect(request.url.queryParameters['q'], 'anime');
+          return http.Response('''<rss><channel><item>
+          <title>Japanese animation studio announces a new series</title>
+          <link>https://publisher.example/animation-series</link>
+          <description>The studio has confirmed production of another series.</description>
+          <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+          <source>Animation News</source>
+        </item></channel></rss>''', 200);
+        }),
+      );
+      addTearDown(service.dispose);
+
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: ['anime']),
+      );
+
+      expect(articles, hasLength(1));
+      expect(articles.single.topics, contains('anime'));
+    },
+  );
+
 }
