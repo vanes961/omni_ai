@@ -411,6 +411,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
 
     // Keep the same fractional position inside the visible page when a phone
     // rotates or a foldable changes its available viewport dimensions.
+    final generationAtResize = _readerGeneration;
     final chapterAtResize = _chapterIndex;
     final localPageAtResize = _pageIndex;
     final offsetAtResize = _pageOffset;
@@ -419,7 +420,12 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     _geometryRestoreScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _geometryRestoreScheduled = false;
-      if (!mounted || !_scroll.hasClients || _pages.isEmpty) return;
+      if (!mounted ||
+          generationAtResize != _readerGeneration ||
+          !_scroll.hasClients ||
+          _pages.isEmpty) {
+        return;
+      }
       final pageContext = _pageKeys[globalPageAtResize]?.currentContext;
       final pageObject = pageContext?.findRenderObject();
       final viewportObject = _viewportKey.currentContext?.findRenderObject();
@@ -444,7 +450,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       _pageIndex = localPageAtResize;
       _pageOffset = offsetAtResize;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _restoring = false;
+        if (mounted && generationAtResize == _readerGeneration) {
+          _restoring = false;
+        }
       });
     });
   }
