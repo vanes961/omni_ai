@@ -464,16 +464,18 @@ Future<void> _chooseAndPlaySource(
     posterUrl: item.posterUrl,
     posterFallbackUrls: item.posterFallbackUrls,
     rating: item.rating,
-    voiceovers: item.voiceovers,
+    // The user explicitly selected this URL, so stale catalog variants,
+    // voiceover URLs, and fallbacks must not override it in the player.
+    voiceovers: const [],
     videoUrl: uri.toString(),
-    videoFallbackUrls: item.videoFallbackUrls,
-    voiceoverVideoUrls: item.voiceoverVideoUrls,
+    videoFallbackUrls: const [],
+    voiceoverVideoUrls: const {},
     categories: item.categories,
     description: item.description,
     malId: item.malId,
-    videoSources: item.videoSources,
+    videoSources: const [],
     episodes: episode == null
-        ? item.episodes
+        ? const []
         : [
             MediaEpisode(
               number: episode.episodeNumber,
