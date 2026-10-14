@@ -54,6 +54,97 @@ void main() {
     expect(films.first.id, 'tmdb:movie:10');
   });
 
+  test('franchise chronology resolver can enrich catalog entries', () async {
+    var requestedId = '';
+    final entries = [
+      const MediaFranchiseEntry(
+        id: 'tmdb:movie:10',
+        title: 'Film A',
+        overview: '',
+        releaseDate: '2020-01-01',
+        posterUrl: '',
+      ),
+    ];
+    final service = MediaSearchService(
+      franchiseChronologyResolver: ({required franchiseId, required entries}) async {
+        requestedId = franchiseId;
+        return [
+          MediaFranchiseEntry(
+            id: entries.single.id,
+            title: entries.single.title,
+            overview: entries.single.overview,
+            releaseDate: entries.single.releaseDate,
+            posterUrl: entries.single.posterUrl,
+            chronologyOrder: 1,
+            chronologySourceUrl: 'https://example.org/film-a',
+          ),
+        ];
+      },
+    );
+
+    final result = await service.resolveFranchiseChronology(
+      franchiseId: 'tmdb:collection:99',
+      entries: entries,
+    );
+
+    expect(requestedId, 'tmdb:collection:99');
+    expect(result.single.chronologyOrder, 1);
+  });
+
+  test('franchise chronology resolver cannot change franchise membership',
+      () async {
+    const original = MediaFranchiseEntry(
+      id: 'tmdb:movie:10',
+      title: 'Film A',
+      overview: '',
+      releaseDate: '2020-01-01',
+      posterUrl: '',
+    );
+    final service = MediaSearchService(
+      franchiseChronologyResolver: ({required franchiseId, required entries}) async => [
+        const MediaFranchiseEntry(
+          id: 'tmdb:movie:999',
+          title: 'Unrelated film',
+          overview: '',
+          releaseDate: '2000-01-01',
+          posterUrl: '',
+          chronologyOrder: 1,
+        ),
+      ],
+    );
+
+    final result = await service.resolveFranchiseChronology(
+      franchiseId: 'tmdb:collection:99',
+      entries: const [original],
+    );
+
+    expect(result.single.id, original.id);
+    expect(result.single.chronologyOrder, isNull);
+  });
+
+  test('franchise chronology resolver failure falls back safely', () async {
+    const original = MediaFranchiseEntry(
+      id: 'tmdb:movie:10',
+      title: 'Film A',
+      overview: '',
+      releaseDate: '2020-01-01',
+      posterUrl: '',
+    );
+    final service = MediaSearchService(
+      franchiseChronologyResolver: ({required franchiseId, required entries}) async {
+        throw Exception('Cloud unavailable');
+      },
+    );
+
+    final result = await service.resolveFranchiseChronology(
+      franchiseId: 'tmdb:collection:99',
+      entries: const [original],
+    );
+
+    expect(result.single.id, original.id);
+    expect(result.single.chronologyOrder, isNull);
+  });
+
   test('smart franchise order falls back when chronology is unverified', () {
     final entries = [
       const MediaFranchiseEntry(
