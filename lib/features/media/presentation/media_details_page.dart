@@ -388,6 +388,60 @@ class _SeasonCatalogSectionState extends State<_SeasonCatalogSection> {
   );
 }
 
+class _MediaSourceDialog extends StatefulWidget {
+  const _MediaSourceDialog({this.episodeNumber});
+
+  final int? episodeNumber;
+
+  @override
+  State<_MediaSourceDialog> createState() => _MediaSourceDialogState();
+}
+
+class _MediaSourceDialogState extends State<_MediaSourceDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    backgroundColor: SystemCorePalette.panel,
+    title: Text(
+      widget.episodeNumber == null
+          ? 'Источник видео'
+          : 'Источник серии ${widget.episodeNumber}',
+      style: const TextStyle(color: Colors.white),
+    ),
+    content: TextField(
+      controller: _controller,
+      autofocus: true,
+      keyboardType: TextInputType.url,
+      style: const TextStyle(color: Colors.white),
+      decoration: const InputDecoration(
+        hintText: 'https://… или magnet:?xt=urn:btih:…',
+        hintStyle: TextStyle(color: SystemCorePalette.muted),
+        helperText:
+            'Вставьте ссылку на доступный вам видеоисточник или magnet-ссылку.',
+        helperMaxLines: 3,
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('ОТМЕНА'),
+      ),
+      FilledButton(
+        onPressed: () =>
+            Navigator.of(context).pop(_controller.text.trim()),
+        child: const Text('ОТКРЫТЬ'),
+      ),
+    ],
+  );
+}
+
 Future<void> _chooseAndPlaySource(
   BuildContext context,
   MediaItem item,
@@ -396,44 +450,12 @@ Future<void> _chooseAndPlaySource(
   MediaPlayerFactory? playerFactory, {
   MediaCatalogEpisode? episode,
 }) async {
-  final controller = TextEditingController();
   final raw = await showDialog<String>(
     context: context,
-    builder: (dialogContext) => AlertDialog(
-      backgroundColor: SystemCorePalette.panel,
-      title: Text(
-        episode == null
-            ? 'Источник видео'
-            : 'Источник серии ${episode.episodeNumber}',
-        style: const TextStyle(color: Colors.white),
-      ),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        keyboardType: TextInputType.url,
-        style: const TextStyle(color: Colors.white),
-        decoration: const InputDecoration(
-          hintText: 'https://… или magnet:?xt=urn:btih:…',
-          hintStyle: TextStyle(color: SystemCorePalette.muted),
-          helperText:
-              'Вставьте ссылку на доступный вам видеоисточник или magnet-ссылку.',
-          helperMaxLines: 3,
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('ОТМЕНА'),
-        ),
-        FilledButton(
-          onPressed: () =>
-              Navigator.of(dialogContext).pop(controller.text.trim()),
-          child: const Text('ОТКРЫТЬ'),
-        ),
-      ],
+    builder: (_) => _MediaSourceDialog(
+      episodeNumber: episode?.episodeNumber,
     ),
   );
-  controller.dispose();
   if (!context.mounted || raw == null || raw.isEmpty) return;
 
   final uri = Uri.tryParse(raw);
