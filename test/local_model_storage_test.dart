@@ -89,7 +89,7 @@ void main() {
       client: MockClient((_) async => http.Response.bytes(bytes, 200)),
       supportDirectoryProvider: () async => temporaryDirectory,
     );
-    final model = spec(expectedSha256: '0' * 64);
+    final model = spec(expectedSha256: List<String>.filled(64, '0').join());
 
     await expectLater(storage.download(model), throwsA(isA<FormatException>()));
 
