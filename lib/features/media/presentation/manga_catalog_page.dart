@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:omni_ai/features/favorites/data/favorite_item.dart';
+import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:omni_ai/features/media/data/manga_reading_progress_repository.dart';
 import 'package:omni_ai/features/media/presentation/manga_reader_progress_overlay.dart';
@@ -10,10 +12,11 @@ import 'package:omni_ai/features/media/services/manga_chapter_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MangaCatalogPage extends StatefulWidget {
-  const MangaCatalogPage({super.key, this.catalogService, this.chapterService});
+  const MangaCatalogPage({super.key, this.catalogService, this.chapterService, this.favoritesRepository});
 
   final MangaCatalogService? catalogService;
   final MangaChapterService? chapterService;
+  final FavoritesRepository? favoritesRepository;
 
   @override
   State<MangaCatalogPage> createState() => _MangaCatalogPageState();
@@ -22,6 +25,9 @@ class MangaCatalogPage extends StatefulWidget {
 class _MangaCatalogPageState extends State<MangaCatalogPage> {
   late final MangaCatalogService _catalog =
       widget.catalogService ?? MangaCatalogService();
+  late final FavoritesRepository _favorites =
+      widget.favoritesRepository ?? FavoritesRepository();
+  final Set<String> _favoriteIds = <String>{};
   final _query = TextEditingController();
   List<MangaCatalogItem> _results = const [];
   bool _loading = false;
@@ -46,8 +52,18 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
     try {
       final results = await _catalog.search(query);
       if (!mounted || generation != _searchGeneration) return;
+      final favoriteIds = <String>{};
+      for (final manga in results) {
+        if (await _favorites.contains(manga.canonicalId)) {
+          favoriteIds.add(manga.canonicalId);
+        }
+      }
+      if (!mounted || generation != _searchGeneration) return;
       setState(() {
         _results = results;
+        _favoriteIds
+          ..clear()
+          ..addAll(favoriteIds);
         _loading = false;
       });
     } on Object catch (error, stackTrace) {
@@ -60,6 +76,36 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
             'Не удалось загрузить каталог. Проверьте подключение и повторите поиск.';
       });
     }
+  }
+
+  Future<void> _toggleFavorite(MangaCatalogItem manga) async {
+    final id = manga.canonicalId;
+    if (_favoriteIds.contains(id)) {
+      await _favorites.remove(id);
+      if (!mounted) return;
+      setState(() => _favoriteIds.remove(id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('«${manga.title}» удалена из избранного.')),
+      );
+      return;
+    }
+    await _favorites.add(
+      FavoriteItem(
+        id: id,
+        title: manga.title,
+        category: FavoriteCategory.manga,
+        addedAt: DateTime.now().toUtc(),
+        description: manga.description,
+        interests: manga.authors,
+        imageUrl: manga.coverUrl.isEmpty ? null : manga.coverUrl,
+        sourceUrl: manga.sourceUrl,
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _favoriteIds.add(id));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('«${manga.title}» добавлена в избранное.')),
+    );
   }
 
   @override
@@ -169,9 +215,18 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
                         ].join(' • '),
                         style: const TextStyle(color: Colors.white60),
                       ),
-                      trailing: const Icon(
-                        Icons.chevron_right,
-                        color: Color(0xFF74D69A),
+                      trailing: IconButton(
+                        key: ValueKey('manga-favorite-${manga.id}'),
+                        tooltip: _favoriteIds.contains(manga.canonicalId)
+                            ? 'Удалить из избранного'
+                            : 'Добавить в избранное',
+                        onPressed: () => _toggleFavorite(manga),
+                        icon: Icon(
+                          _favoriteIds.contains(manga.canonicalId)
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: const Color(0xFF74D69A),
+                        ),
                       ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
