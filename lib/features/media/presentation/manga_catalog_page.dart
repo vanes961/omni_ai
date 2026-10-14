@@ -599,6 +599,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
 
       final oldOffset = _scroll.offset;
       final count = previousPages.length;
+      // Suppress scroll-driven progress updates while the prepended layout is
+      // settling; otherwise the temporary offset can overwrite saved progress.
+      _restoring = true;
       setState(() {
         final shiftedKeys = <int, GlobalKey>{};
         for (final entry in _pageKeys.entries) {
@@ -617,9 +620,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       });
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted ||
-            generation != _readerGeneration ||
-            !_scroll.hasClients) {
+        if (!mounted || generation != _readerGeneration) return;
+        if (!_scroll.hasClients) {
+          _restoring = false;
           return;
         }
         final updatedViewport = _viewportKey.currentContext?.findRenderObject();
@@ -628,18 +631,18 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
             !updatedViewport.hasSize ||
             anchorObject is! RenderBox ||
             !anchorObject.hasSize) {
+          _restoring = false;
           return;
         }
         final newTop = anchorObject
             .localToGlobal(Offset.zero, ancestor: updatedViewport)
             .dy;
         final corrected = oldOffset + (newTop - anchorTop!);
-        _restoring = true;
         _scroll.jumpTo(
           corrected.clamp(0.0, _scroll.position.maxScrollExtent).toDouble(),
         );
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
+          if (!mounted || generation != _readerGeneration) return;
           _restoring = false;
           _syncVisiblePage();
         });
