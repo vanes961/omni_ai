@@ -1384,23 +1384,36 @@ void main() {
     );
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
+    tester.testTextInput.hide();
+    await tester.pumpAndSettle();
 
     expect(find.text('Comedy Movie'), findsOneWidget);
     expect(find.text('Thriller Movie'), findsOneWidget);
     expect(find.byKey(const ValueKey('media-genre-Комедия')), findsOneWidget);
 
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('media-genre-Комедия')),
+    );
     await tester.tap(find.byKey(const ValueKey('media-genre-Комедия')));
     await tester.pumpAndSettle();
     expect(find.text('Comedy Movie'), findsOneWidget);
     expect(find.text('Thriller Movie'), findsNothing);
 
+    await tester.ensureVisible(find.byKey(const ValueKey('media-genre-all')));
     await tester.tap(find.byKey(const ValueKey('media-genre-all')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('media-sort-rating')));
+    final ratingFilter = find.byKey(const ValueKey('media-sort-rating'));
+    await tester.ensureVisible(ratingFilter);
+    await tester.tap(ratingFilter);
     await tester.pumpAndSettle();
+    expect(ratingFilter, findsOneWidget);
     expect(find.text('Сначала высокий рейтинг'), findsOneWidget);
     expect(find.text('Comedy Movie'), findsOneWidget);
     expect(find.text('Thriller Movie'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Thriller Movie')).dy,
+      lessThan(tester.getTopLeft(find.text('Comedy Movie')).dy),
+    );
   });
 
 }
