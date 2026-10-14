@@ -128,112 +128,14 @@ class MediaDetailsPage extends StatelessWidget {
                   )
                   .toList(),
             ),
-            if (d?.franchiseItems.isNotEmpty == true) ...[
-              const SizedBox(height: 20),
-              _Label(
-                d!.franchiseName.isEmpty
-                    ? 'ФИЛЬМЫ ФРАНШИЗЫ'
-                    : d.franchiseName.toUpperCase(),
+            if (d?.franchiseItems.isNotEmpty == true)
+              _FranchiseSection(
+                name: d!.franchiseName,
+                items: d.franchiseItems,
+                searchService: searchService,
+                preferences: preferences,
+                playerFactory: playerFactory,
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Подтверждённые фильмы этой коллекции · порядок выхода',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 184,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: d.franchiseItems.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 10),
-                  itemBuilder: (context, index) {
-                    final related = d.franchiseItems[index];
-                    final year = related.releaseDate.length >= 4
-                        ? related.releaseDate.substring(0, 4)
-                        : '';
-                    return SizedBox(
-                      width: 104,
-                      child: InkWell(
-                        key: ValueKey('franchise-film-${related.id}'),
-                        borderRadius: BorderRadius.circular(8),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => MediaDetailsPage(
-                              item: MediaItem(
-                                id: related.id,
-                                title: related.title,
-                                type: 'Фильм',
-                                posterUrl: related.posterUrl,
-                                rating: 0,
-                                voiceovers: const [],
-                                videoUrl: '',
-                                description: related.overview,
-                              ),
-                              searchService: searchService,
-                              preferences: preferences,
-                              playerFactory: playerFactory,
-                            ),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: related.posterUrl.isEmpty
-                                  ? Container(
-                                      width: 104,
-                                      height: 132,
-                                      color: SystemCorePalette.panel,
-                                      child: const Icon(
-                                        Icons.movie_outlined,
-                                        color: SystemCorePalette.muted,
-                                      ),
-                                    )
-                                  : Image.network(
-                                      related.posterUrl,
-                                      width: 104,
-                                      height: 132,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, _, _) => Container(
-                                        width: 104,
-                                        height: 132,
-                                        color: SystemCorePalette.panel,
-                                        child: const Icon(
-                                          Icons.movie_outlined,
-                                          color: SystemCorePalette.muted,
-                                        ),
-                                      ),
-                                    ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              related.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            if (year.isNotEmpty)
-                              Text(
-                                year,
-                                style: const TextStyle(
-                                  color: SystemCorePalette.muted,
-                                  fontSize: 10,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
             const SizedBox(height: 20),
             const _Label('АКТЁРСКИЙ СОСТАВ'),
             const SizedBox(height: 8),
@@ -372,6 +274,236 @@ class MediaDetailsPage extends StatelessWidget {
       },
     ),
   );
+}
+
+class _FranchiseSection extends StatefulWidget {
+  const _FranchiseSection({
+    required this.name,
+    required this.items,
+    required this.searchService,
+    required this.preferences,
+    required this.playerFactory,
+  });
+
+  final String name;
+  final List<MediaFranchiseEntry> items;
+  final MediaSearchService searchService;
+  final UserPreferences preferences;
+  final MediaPlayerFactory? playerFactory;
+
+  @override
+  State<_FranchiseSection> createState() => _FranchiseSectionState();
+}
+
+class _FranchiseSectionState extends State<_FranchiseSection> {
+  FranchiseViewingOrder _order = FranchiseViewingOrder.release;
+
+  bool get _hasVerifiedChronology =>
+      widget.items.isNotEmpty &&
+      widget.items.every((entry) => entry.chronologyOrder != null);
+
+  Future<void> _selectChronology() async {
+    if (!_hasVerifiedChronology) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Подтверждённая хронология этой франшизы пока недоступна. '
+            'Можно выбрать порядок выхода или умный порядок.',
+          ),
+        ),
+      );
+      return;
+    }
+    final hasSpoilers = widget.items.any((entry) => entry.chronologySpoilerRisk);
+    if (hasSpoilers) {
+      final accepted = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: SystemCorePalette.panel,
+          title: const Text(
+            'Возможны спойлеры',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            'Хронологический порядок может раскрыть события или тайны '
+            'раньше, чем они раскрывались при выходе произведений. '
+            'Продолжить всё равно?',
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('ПОРЯДОК ВЫХОДА'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('ПРОДОЛЖИТЬ'),
+            ),
+          ],
+        ),
+      );
+      if (accepted != true || !mounted) return;
+    }
+    setState(() => _order = FranchiseViewingOrder.chronology);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ordered = MediaSearchService.orderFranchiseItems(
+      widget.items,
+      _order,
+    );
+    final heading = widget.name.isEmpty
+        ? 'ФРАНШИЗА'
+        : widget.name.toUpperCase();
+    final note = switch (_order) {
+      FranchiseViewingOrder.release => 'Порядок выхода',
+      FranchiseViewingOrder.chronology when _hasVerifiedChronology =>
+        'Хронология событий · подтверждённые данные',
+      FranchiseViewingOrder.chronology =>
+        'Хронология пока не подтверждена',
+      FranchiseViewingOrder.smart when _hasVerifiedChronology &&
+          !widget.items.any((entry) => entry.chronologySpoilerRisk) =>
+        'Умный порядок · без известных сюжетных спойлеров',
+      FranchiseViewingOrder.smart =>
+        'Умный порядок пока использует порядок выхода: хронология и риск спойлеров не подтверждены',
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        _Label(heading),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            ChoiceChip(
+              key: const ValueKey('franchise-order-release'),
+              label: const Text('По выходу'),
+              selected: _order == FranchiseViewingOrder.release,
+              onSelected: (_) => setState(
+                () => _order = FranchiseViewingOrder.release,
+              ),
+            ),
+            ChoiceChip(
+              key: const ValueKey('franchise-order-chronology'),
+              label: const Text('По сюжету'),
+              selected: _order == FranchiseViewingOrder.chronology,
+              onSelected: (_) => _selectChronology(),
+            ),
+            ChoiceChip(
+              key: const ValueKey('franchise-order-smart'),
+              label: const Text('Умный порядок'),
+              selected: _order == FranchiseViewingOrder.smart,
+              onSelected: (_) => setState(
+                () => _order = FranchiseViewingOrder.smart,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          note,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 184,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: ordered.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final related = ordered[index];
+              final year = related.releaseDate.length >= 4
+                  ? related.releaseDate.substring(0, 4)
+                  : '';
+              return SizedBox(
+                width: 104,
+                child: InkWell(
+                  key: ValueKey('franchise-film-${related.id}'),
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => MediaDetailsPage(
+                        item: MediaItem(
+                          id: related.id,
+                          title: related.title,
+                          type: 'Фильм',
+                          posterUrl: related.posterUrl,
+                          rating: 0,
+                          voiceovers: const [],
+                          videoUrl: '',
+                          description: related.overview,
+                        ),
+                        searchService: widget.searchService,
+                        preferences: widget.preferences,
+                        playerFactory: widget.playerFactory,
+                      ),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: related.posterUrl.isEmpty
+                            ? Container(
+                                width: 104,
+                                height: 132,
+                                color: SystemCorePalette.panel,
+                                child: const Icon(
+                                  Icons.movie_outlined,
+                                  color: SystemCorePalette.muted,
+                                ),
+                              )
+                            : Image.network(
+                                related.posterUrl,
+                                width: 104,
+                                height: 132,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => Container(
+                                  width: 104,
+                                  height: 132,
+                                  color: SystemCorePalette.panel,
+                                  child: const Icon(
+                                    Icons.movie_outlined,
+                                    color: SystemCorePalette.muted,
+                                  ),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        related.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (year.isNotEmpty)
+                        Text(
+                          year,
+                          style: const TextStyle(
+                            color: SystemCorePalette.muted,
+                            fontSize: 10,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _SeasonCatalogSection extends StatefulWidget {
