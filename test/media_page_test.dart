@@ -15,6 +15,7 @@ import 'package:omni_ai/features/media/data/torrserver_playback_resolver.dart';
 import 'package:omni_ai/features/media/presentation/media_details_page.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
+import 'package:omni_ai/features/media/services/media_catalog_token_store.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_playback_settings_store.dart';
@@ -366,6 +367,48 @@ void main() {
     expect(find.text('Cyberpunk: Edgerunners'), findsNothing);
     expect(find.text('Интерстеллар'), findsNothing);
     expect(find.byType(PlayerPage), findsNothing);
+  });
+
+  testWidgets('secure catalog token overrides build-time token for online search', (
+    tester,
+  ) async {
+    String? authorization;
+    final client = MockClient((request) async {
+      authorization = request.headers['Authorization'];
+      return http.Response(
+        '{"results":[{"id":123,"media_type":"movie","title":"Secure Token Film","original_language":"en","poster_path":null,"vote_average":7.8,"genre_ids":[],"overview":"Real catalog result"}]}',
+        200,
+        headers: const {'content-type': 'application/json; charset=utf-8'},
+      );
+    });
+    final tokenStore = _FakeCatalogTokenStore()..token = 'secure-device-token';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaPage(
+          preferences: UserPreferences(),
+          searchService: MediaSearchService(
+            accessToken: 'build-time-token',
+            client: client,
+          ),
+          catalogTokenStore: tokenStore,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('media-search')),
+      'Secure Token Film',
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(authorization, 'Bearer secure-device-token');
+    expect(find.text('Secure Token Film'), findsOneWidget);
+    expect(find.textContaining('отсутствует TMDB_ACCESS_TOKEN'), findsNothing);
+    expect(tester.takeException(), isNull);
+    client.close();
   });
 
   testWidgets('shows persistent watched history for series and anime', (
@@ -1615,5 +1658,23 @@ class _FileSelectionRequiredResolver extends TorrServerPlaybackResolver {
       ],
       torrentHash: 'test-hash',
     );
+  }
+}
+
+
+class _FakeCatalogTokenStore implements MediaCatalogTokenStore {
+  String? token;
+
+  @override
+  Future<String?> readToken() async => token;
+
+  @override
+  Future<void> saveToken(String value) async {
+    token = value.trim();
+  }
+
+  @override
+  Future<void> deleteToken() async {
+    token = null;
   }
 }
