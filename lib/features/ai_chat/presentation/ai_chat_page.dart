@@ -432,9 +432,7 @@ String? _localPerformanceLabel(
   final durationMs = metadata['generationDurationMs'];
   final tokensPerSecond = metadata['tokensPerSecond'];
   final firstTokenMs = metadata['timeToFirstTokenMs'];
-  if (tokenCount is! num ||
-      durationMs is! num ||
-      tokensPerSecond is! num) {
+  if (tokenCount is! num || durationMs is! num || tokensPerSecond is! num) {
     return 'LOCAL AI  •  скорость не измерена';
   }
 
