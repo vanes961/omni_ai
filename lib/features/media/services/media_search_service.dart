@@ -278,14 +278,12 @@ class MediaSearchService {
   ) {
     final result = List<MediaFranchiseEntry>.of(entries);
     if (order == FranchiseViewingOrder.release) return result;
-    final hasVerifiedChronology = result.isNotEmpty &&
+    final hasVerifiedChronology =
+        result.isNotEmpty &&
         result.every((entry) => entry.chronologyOrder != null);
     final hasSpoilerRisk = result.any((entry) => entry.chronologySpoilerRisk);
-    if (order == FranchiseViewingOrder.chronology &&
-        hasVerifiedChronology) {
-      result.sort(
-        (a, b) => a.chronologyOrder!.compareTo(b.chronologyOrder!),
-      );
+    if (order == FranchiseViewingOrder.chronology && hasVerifiedChronology) {
+      result.sort((a, b) => a.chronologyOrder!.compareTo(b.chronologyOrder!));
     } else if (order == FranchiseViewingOrder.smart &&
         hasVerifiedChronology &&
         !hasSpoilerRisk) {
