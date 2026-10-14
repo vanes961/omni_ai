@@ -359,6 +359,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(
+      find.textContaining('отсутствует TMDB_ACCESS_TOKEN'),
+      findsOneWidget,
+    );
     expect(find.text('Cyberpunk: Edgerunners'), findsNothing);
     expect(find.text('Интерстеллар'), findsNothing);
     expect(find.byType(PlayerPage), findsNothing);
