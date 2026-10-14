@@ -118,9 +118,7 @@ class CrossContentRecommendation {
 /// verified catalog relations and observed progress; this class does no
 /// network calls and never invents anime/manga connections.
 class CrossContentRecommendationEngine {
-  const CrossContentRecommendationEngine({
-    this.minimumConfidence = 0.7,
-  });
+  const CrossContentRecommendationEngine({this.minimumConfidence = 0.7});
 
   final double minimumConfidence;
 
