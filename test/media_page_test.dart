@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/core/network/widgets/network_image_with_fallback.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/media/data/torrserver_client.dart';
+import 'package:omni_ai/features/media/data/torrserver_playback_resolver.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
@@ -65,6 +67,48 @@ void main() {
             as CachedNetworkImage;
     expect(fallback.imageUrl, 'https://backup.example/poster.jpg');
     expect(fallback.httpHeaders, primary.httpHeaders);
+  });
+
+  testWidgets('cancelling torrent file selection does not start fallback playback', (
+    tester,
+  ) async {
+    final playerSources = <Uri>[];
+    final item = MediaItem(
+      id: 'torrent-cancel-test',
+      title: 'Torrent Cancel Test',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'magnet:?xt=urn:btih:0123456789abcdef',
+      videoFallbackUrls: const ['https://fallback.example/video.mp4'],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences()
+            ..torrServerUrl = 'http://torrserver.example',
+          torrServerResolver: _FileSelectionRequiredResolver(),
+          playerFactory: (source) {
+            playerSources.add(source);
+            return _FakePlaybackController();
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('ВЫБЕРИТЕ ВИДЕОФАЙЛ'), findsOneWidget);
+    await tester.tap(find.text('ОТМЕНА'));
+    await tester.pumpAndSettle();
+
+    expect(playerSources, isEmpty);
+    expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsOneWidget);
+    expect(find.text('StateError'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('retries a fallback video URL after PlatformException', (
@@ -1024,5 +1068,35 @@ class _FakeMediaPlaybackSettingsStore implements MediaPlaybackSettingsStore {
     if (likedVoiceovers.remove(voiceover)) return false;
     likedVoiceovers.add(voiceover);
     return true;
+  }
+}
+class _FileSelectionRequiredResolver extends TorrServerPlaybackResolver {
+  @override
+  Future<Uri> resolve({
+    required String endpoint,
+    required Uri magnetUri,
+    String? title,
+    int? episodeNumber,
+    int? seasonNumber,
+    int? selectedFileIndex,
+    String? existingTorrentHash,
+    Duration metadataTimeout = const Duration(seconds: 30),
+    Duration pollInterval = const Duration(seconds: 1),
+  }) async {
+    throw const TorrServerFileSelectionRequired(
+      [
+        TorrServerFileStat(
+          id: 1,
+          path: 'Season 1/Episode 1.mkv',
+          length: 1024,
+        ),
+        TorrServerFileStat(
+          id: 2,
+          path: 'Season 1/Episode 2.mkv',
+          length: 2048,
+        ),
+      ],
+      torrentHash: 'test-hash',
+    );
   }
 }
