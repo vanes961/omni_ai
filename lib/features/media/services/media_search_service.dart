@@ -69,7 +69,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
+              'Authorization': '***',
               'accept': 'application/json',
             },
           )
@@ -136,7 +136,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
+              'Authorization': '***',
               'accept': 'application/json',
             },
           )
@@ -263,7 +263,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
+              'Authorization': '***',
               'accept': 'application/json',
             },
           )
@@ -335,9 +335,7 @@ class MediaSearchService {
         result.isNotEmpty &&
         result.every((entry) => entry.chronologyOrder != null) &&
         chronologyOrders.length == result.length &&
-        chronologyOrders.every(
-          (order) => order >= 1 && order <= result.length,
-        );
+        chronologyOrders.every((order) => order >= 1 && order <= result.length);
     final hasSpoilerRisk = result.any((entry) => entry.chronologySpoilerRisk);
     if (order == FranchiseViewingOrder.chronology && hasVerifiedChronology) {
       result.sort((a, b) => a.chronologyOrder!.compareTo(b.chronologyOrder!));
@@ -376,7 +374,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
+              'Authorization': '***',
               'accept': 'application/json',
             },
           )
