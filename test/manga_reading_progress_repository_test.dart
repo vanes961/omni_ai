@@ -15,6 +15,7 @@ void main() {
           mangaId: 'mangadex:abc-123',
           chapterIndex: 12,
           chapterLabel: '12.5',
+          chapterId: 'chapter-stable-id',
           page: 7,
           pageOffset: 0.35,
           updatedAt: updatedAt,
@@ -29,6 +30,7 @@ void main() {
       expect(restored!.mangaId, 'mangadex:abc-123');
       expect(restored.chapterIndex, 12);
       expect(restored.chapterLabel, '12.5');
+      expect(restored.chapterId, 'chapter-stable-id');
       expect(restored.page, 7);
       expect(restored.pageOffset, 0.35);
       expect(restored.updatedAt, updatedAt);
