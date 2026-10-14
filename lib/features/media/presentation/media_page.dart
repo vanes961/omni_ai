@@ -70,7 +70,11 @@ class _MediaPageState extends State<MediaPage> {
       final token = await _catalogTokenStore.readToken();
       if (!mounted || token == null || token.isEmpty) return;
       setState(() {
-        _searchService = MediaSearchService(accessToken: token);
+        _searchService = MediaSearchService(
+          accessToken: token,
+          franchiseChronologyResolver:
+              _searchService.franchiseChronologyResolver,
+        );
         if (_query.trim().isNotEmpty) {
           _onlineSearch = _searchService.searchOnline(
             _query,
