@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:omni_ai/features/media/data/manga_reading_progress_repository.dart';
@@ -190,6 +192,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   final MangaReadingProgressRepository _progress =
       MangaReadingProgressRepository();
   final ScrollController _scroll = ScrollController();
+  Timer? _saveDebounce;
   List<MangaChapterOption> _chapters = const [];
   final List<Uri> _pages = [];
   final Set<int> _loadedChapterIndexes = <int>{};
@@ -326,30 +329,32 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         .clamp(0, (_pages.length - 1).clamp(0, 1 << 30))
         .toInt();
     if (_pages.isNotEmpty) {
-      var visibleChapter = _chapterStartPages.keys.isEmpty
-          ? _chapterIndex
-          : _chapterStartPages.keys.reduce(
-              (a, b) =>
-                  (_chapterStartPages[a] ?? 0) <= page &&
-                      (_chapterStartPages[a] ?? 0) >=
-                          (_chapterStartPages[b] ?? 0)
-                  ? a
-                  : b,
-            );
+      var visibleChapter = _chapterIndex;
+      var latestStartPage = -1;
       for (final entry in _chapterStartPages.entries) {
-        if (entry.value <= page &&
-            entry.value >= (_chapterStartPages[visibleChapter] ?? 0)) {
+        if (entry.value <= page && entry.value > latestStartPage) {
           visibleChapter = entry.key;
+          latestStartPage = entry.value;
         }
       }
-      _chapterIndex = visibleChapter;
-      _pageIndex = page - (_chapterStartPages[_chapterIndex] ?? 0);
-      _saveProgress();
+      final nextPageIndex = page - (_chapterStartPages[visibleChapter] ?? 0);
+      if (visibleChapter != _chapterIndex || nextPageIndex != _pageIndex) {
+        _chapterIndex = visibleChapter;
+        _pageIndex = nextPageIndex;
+        _scheduleProgressSave();
+      }
     }
     if (_scroll.position.maxScrollExtent - _scroll.position.pixels <
         extent * 2) {
       _loadNextChapter();
     }
+  }
+
+  void _scheduleProgressSave() {
+    _saveDebounce?.cancel();
+    _saveDebounce = Timer(const Duration(milliseconds: 450), () {
+      if (mounted) _saveProgress();
+    });
   }
 
   Future<void> _saveProgress() async {
@@ -426,6 +431,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
 
   @override
   void dispose() {
+    _saveDebounce?.cancel();
     _scroll.removeListener(_onScroll);
     _scroll.dispose();
     if (widget.chapterService == null) _service.close();
@@ -533,7 +539,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                 MangaReaderProgressOverlay(
                   chapterLabel: _chapters[_chapterIndex].displayLabel,
                   currentPage: _pageIndex + 1,
-                  totalPages: _pages.length,
+                  totalPages: _chapters[_chapterIndex].pageCount,
                   chapters: [
                     for (final c in _chapters)
                       MangaReaderChapterOption(
