@@ -132,6 +132,100 @@ void main() {
     expect(cache.values, isEmpty);
   });
 
+  test('invalidates cached chronology when franchise membership changes', () async {
+    final cache = _MemoryChronologyCache()
+      ..stored['franchise:example'] = [
+        const MediaFranchiseEntry(
+          id: 'tmdb:movie:1',
+          title: 'Film One',
+          overview: '',
+          releaseDate: '',
+          posterUrl: '',
+          chronologyOrder: 2,
+          chronologySourceUrl: 'https://example.org/film-one',
+        ),
+        const MediaFranchiseEntry(
+          id: 'tmdb:movie:2',
+          title: 'Film Two',
+          overview: '',
+          releaseDate: '',
+          posterUrl: '',
+          chronologyOrder: 1,
+          chronologySourceUrl: 'https://example.org/film-two',
+        ),
+      ];
+    var researched = false;
+    final updatedEntries = [
+      ...entries,
+      const MediaFranchiseEntry(
+        id: 'tmdb:movie:3',
+        title: 'Newly added film',
+        overview: '',
+        releaseDate: '2022-01-01',
+        posterUrl: '',
+      ),
+    ];
+    final coordinator = FranchiseChronologyCoordinator(
+      cache: cache,
+      research: ({required franchiseId, required entries}) async {
+        researched = true;
+        return const [];
+      },
+      verifyEvidence: ({required proposal, required entry}) async => false,
+    );
+
+    final result = await coordinator.resolve(
+      franchiseId: 'franchise:example',
+      entries: updatedEntries,
+    );
+
+    expect(researched, isTrue);
+    expect(result.length, 3);
+    expect(result.every((entry) => entry.chronologyOrder == null), isTrue);
+  });
+
+  test('invalidates cache when a franchise entry was removed', () async {
+    final cache = _MemoryChronologyCache()
+      ..stored['franchise:example'] = [
+        const MediaFranchiseEntry(
+          id: 'tmdb:movie:1',
+          title: 'Film One',
+          overview: '',
+          releaseDate: '',
+          posterUrl: '',
+          chronologyOrder: 1,
+          chronologySourceUrl: 'https://example.org/film-one',
+        ),
+        const MediaFranchiseEntry(
+          id: 'tmdb:movie:2',
+          title: 'Film Two',
+          overview: '',
+          releaseDate: '',
+          posterUrl: '',
+          chronologyOrder: 2,
+          chronologySourceUrl: 'https://example.org/film-two',
+        ),
+      ];
+    var researched = false;
+    final coordinator = FranchiseChronologyCoordinator(
+      cache: cache,
+      research: ({required franchiseId, required entries}) async {
+        researched = true;
+        return const [];
+      },
+      verifyEvidence: ({required proposal, required entry}) async => false,
+    );
+
+    final result = await coordinator.resolve(
+      franchiseId: 'franchise:example',
+      entries: [entries.first],
+    );
+
+    expect(researched, isTrue);
+    expect(result, hasLength(1));
+    expect(result.single.chronologyOrder, isNull);
+  });
+
   test('uses cached verified chronology without calling cloud research',
       () async {
     final cache = _MemoryChronologyCache()
