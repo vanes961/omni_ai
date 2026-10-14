@@ -121,6 +121,12 @@ void main() {
     }
 
     expect(requestCount, 3);
+    // The interests controls are below the feed; return to the top so the
+    // lazy list builds the article card before asserting its visibility.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 1600));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
     expect(find.text('Anime: Saved during cache restoration'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
