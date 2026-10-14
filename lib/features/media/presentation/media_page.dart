@@ -385,13 +385,14 @@ class _MediaPageState extends State<MediaPage> {
             }
           }
 
-          final availableGenres = combined
-              .expand((item) => item.categories)
-              .map((genre) => genre.trim())
-              .where((genre) => genre.isNotEmpty)
-              .toSet()
-              .toList()
-            ..sort();
+          final availableGenres =
+              combined
+                  .expand((item) => item.categories)
+                  .map((genre) => genre.trim())
+                  .where((genre) => genre.isNotEmpty)
+                  .toSet()
+                  .toList()
+                ..sort();
           final filtered = combined
               .where(
                 (item) =>
@@ -454,8 +455,9 @@ class _MediaPageState extends State<MediaPage> {
                           label: Text(genre),
                           selected: _selectedGenre == genre,
                           onSelected: (_) => setState(
-                            () => _selectedGenre =
-                                _selectedGenre == genre ? null : genre,
+                            () => _selectedGenre = _selectedGenre == genre
+                                ? null
+                                : genre,
                           ),
                         ),
                     ],
