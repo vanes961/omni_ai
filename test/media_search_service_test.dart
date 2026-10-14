@@ -82,15 +82,15 @@ void main() {
 
   group('MediaStreamSource validation', () {
     test('accepts HTTP(S) URLs with a host and no embedded credentials', () {
-      const http = MediaStreamSource(
+      final http = MediaStreamSource(
         id: 'http',
         label: 'HTTP source',
-        uri: Uri(scheme: 'http', host: 'media.example', path: '/film.mp4'),
+        uri: Uri.parse('http://media.example/film.mp4'),
       );
-      const https = MediaStreamSource(
+      final https = MediaStreamSource(
         id: 'https',
         label: 'HTTPS source',
-        uri: Uri(scheme: 'https', host: 'media.example', path: '/film.mp4'),
+        uri: Uri.parse('https://media.example/film.mp4'),
       );
 
       expect(http.isSupportedInput, isTrue);
@@ -98,12 +98,11 @@ void main() {
     });
 
     test('accepts magnet links with a valid hexadecimal BitTorrent hash', () {
-      const source = MediaStreamSource(
+      final source = MediaStreamSource(
         id: 'magnet',
         label: 'Magnet source',
-        uri: Uri(
-          scheme: 'magnet',
-          query: 'xt=urn:btih:0123456789abcdef0123456789abcdef01234567',
+        uri: Uri.parse(
+          'magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567',
         ),
       );
 
@@ -112,30 +111,25 @@ void main() {
     });
 
     test('rejects unsupported, malformed, and credential-bearing URLs', () {
-      const file = MediaStreamSource(
+      final file = MediaStreamSource(
         id: 'file',
         label: 'Local file',
-        uri: Uri(scheme: 'file', path: '/film.mp4'),
+        uri: Uri.parse('file:///film.mp4'),
       );
-      const missingHost = MediaStreamSource(
+      final missingHost = MediaStreamSource(
         id: 'missing-host',
         label: 'Invalid HTTPS',
-        uri: Uri(scheme: 'https', path: '/film.mp4'),
+        uri: Uri.parse('https:/film.mp4'),
       );
-      const malformedMagnet = MediaStreamSource(
+      final malformedMagnet = MediaStreamSource(
         id: 'bad-magnet',
         label: 'Invalid magnet',
-        uri: Uri(scheme: 'magnet', query: 'xt=urn:btih:not-a-valid-hash'),
+        uri: Uri.parse('magnet:?xt=urn:btih:not-a-valid-hash'),
       );
-      const credentials = MediaStreamSource(
+      final credentials = MediaStreamSource(
         id: 'credentials',
         label: 'Credential URL',
-        uri: Uri(
-          scheme: 'https',
-          userInfo: 'user:password',
-          host: 'media.example',
-          path: '/film.mp4',
-        ),
+        uri: Uri.parse('https://user:password@media.example/film.mp4'),
       );
 
       expect(file.isSupportedInput, isFalse);
