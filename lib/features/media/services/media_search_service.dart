@@ -59,7 +59,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
+              'Authorization': '***',
               'accept': 'application/json',
             },
           )
@@ -126,7 +126,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
+              'Authorization': '***',
               'accept': 'application/json',
             },
           )
@@ -214,7 +214,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
+              'Authorization': '***',
               'accept': 'application/json',
             },
           )
@@ -287,9 +287,7 @@ class MediaSearchService {
     } else if (order == FranchiseViewingOrder.smart &&
         hasVerifiedChronology &&
         !hasSpoilerRisk) {
-      result.sort(
-        (a, b) => a.chronologyOrder!.compareTo(b.chronologyOrder!),
-      );
+      result.sort((a, b) => a.chronologyOrder!.compareTo(b.chronologyOrder!));
     } else {
       result.sort((a, b) {
         if (a.releaseDate.isEmpty && b.releaseDate.isNotEmpty) return 1;
@@ -321,7 +319,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
+              'Authorization': '***',
               'accept': 'application/json',
             },
           )
@@ -433,8 +431,10 @@ class MediaFranchiseEntry {
   final String overview;
   final String releaseDate;
   final String posterUrl;
+
   /// Only populated by a source that verifies in-universe chronology.
   final int? chronologyOrder;
+
   /// True when the chronology position is known to reveal a major plot point.
   final bool chronologySpoilerRisk;
 }
