@@ -150,32 +150,75 @@ class TorrServerPlaybackResolver {
       throw TorrServerFileSelectionRequired(videos, torrentHash: torrentHash);
     }
 
-    final episode = episodeNumber.toString().padLeft(2, '0');
-    final season = seasonNumber?.toString().padLeft(2, '0');
-    final patterns = <RegExp>[
+    final normalizedPaths = {
+      for (final file in videos)
+        file: file.path.replaceAll(r'\\', '/'),
+    };
+    final episode = episodeNumber.toString();
+    final season = seasonNumber?.toString();
+    final seasonEpisodePatterns = <RegExp>[
       if (season != null)
         RegExp(
-          r'(?:s|season\s*)' +
+          r'(?:^|[/\\s._-])s0*' +
               season +
-              r'[^0-9]{0,4}(?:e|episode\s*)' +
+              r'\\s*e0*' +
               episode +
-              r'(?:\D|$)',
+              r'(?:\\D|$)',
           caseSensitive: false,
         ),
+      if (season != null)
+        RegExp(
+          r'(?:^|[/\\s._-])0*' +
+              season +
+              r'x0*' +
+              episode +
+              r'(?:\\D|$)',
+          caseSensitive: false,
+        ),
+      if (season != null)
+        RegExp(
+          r'season\\s*0*' +
+              season +
+              r'[^0-9]{0,8}(?:episode|ep\\.?|e)\\s*0*' +
+              episode +
+              r'(?:\\D|$)',
+          caseSensitive: false,
+        ),
+    ];
+    final episodePatterns = <RegExp>[
       RegExp(
-        r'(?:s\d{1,2}e|episode\s*|ep\.?\s*)' + episode + r'(?:\D|$)',
+        r'(?:episode\\s*|ep\\.?\\s*|e)0*' + episode + r'(?:\\D|$)',
         caseSensitive: false,
       ),
-      RegExp(r'(?<!\d)' + episodeNumber.toString() + r'(?!\d)'),
+      RegExp(
+        r'(?:^|[/\\s._-])0*' + episode + r'(?:[/\\s._-]|$)',
+        caseSensitive: false,
+      ),
     ];
-    final matches = videos
-        .where((file) => patterns.any((pattern) => pattern.hasMatch(file.path)))
-        .toList(growable: false);
-    if (matches.length == 1) return matches.single;
-    if (matches.length != 1) {
+
+    final seasonMatches = seasonEpisodePatterns.isEmpty
+        ? <TorrServerFileStat>[]
+        : videos
+              .where(
+                (file) => seasonEpisodePatterns.any(
+                  (pattern) => pattern.hasMatch(normalizedPaths[file]!),
+                ),
+              )
+              .toList(growable: false);
+    if (seasonMatches.length == 1) return seasonMatches.single;
+    if (seasonMatches.length > 1) {
       throw TorrServerFileSelectionRequired(videos, torrentHash: torrentHash);
     }
-    return matches.single;
+
+    final episodeMatches = videos
+        .where((file) {
+          final path = normalizedPaths[file]!;
+          final basename = path.split('/').last;
+          return episodePatterns.any((pattern) => pattern.hasMatch(basename));
+        })
+        .toList(growable: false);
+    if (episodeMatches.length == 1) return episodeMatches.single;
+    throw TorrServerFileSelectionRequired(videos, torrentHash: torrentHash);
   }
 
   void close() {
