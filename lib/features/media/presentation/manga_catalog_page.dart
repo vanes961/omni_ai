@@ -318,10 +318,25 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       _error = null;
     });
     try {
+      final saved = await _progress.getById(widget.manga.canonicalId);
       final all = <MangaChapterOption>[];
       var offset = 0;
       var hasMore = true;
-      while (offset < 500) {
+
+      bool savedChapterIsLoaded() {
+        if (saved == null) return true;
+        final savedChapterId = saved.chapterId;
+        if (savedChapterId != null &&
+            all.any((chapter) => chapter.id == savedChapterId)) {
+          return true;
+        }
+        return all.any((chapter) => chapter.chapter == saved.chapterLabel);
+      }
+
+      // Keep the first 500 chapters available to the picker, but continue
+      // pagination when needed to restore a saved chapter beyond that window.
+      while (offset < 500 ||
+          (saved != null && hasMore && !savedChapterIsLoaded())) {
         final batch = await _service.fetchRussianChapters(
           widget.manga.id,
           offset: offset,
@@ -344,8 +359,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         });
         return;
       }
-      final saved = await _progress.getById(widget.manga.canonicalId);
       var initial = 0;
+      var savedChapterFound = false;
       if (saved != null) {
         final savedChapterId = saved.chapterId;
         final foundById = savedChapterId == null
@@ -356,7 +371,10 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
             : all.indexWhere(
                 (chapter) => chapter.chapter == saved.chapterLabel,
               );
-        if (found >= 0) initial = found;
+        if (found >= 0) {
+          initial = found;
+          savedChapterFound = true;
+        }
       }
       setState(() {
         _chapters = all;
@@ -365,7 +383,10 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         _nextChapterOffset = offset;
         _hasMoreChapters = hasMore;
       });
-      await _loadChapterPages(initial, restore: saved);
+      await _loadChapterPages(
+        initial,
+        restore: savedChapterFound ? saved : null,
+      );
     } on Object catch (e) {
       if (!mounted) return;
       setState(() {
