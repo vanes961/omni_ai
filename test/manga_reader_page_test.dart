@@ -17,7 +17,9 @@ void main() {
       MangaReadingProgress(
         mangaId: 'mangadex:test-manga',
         chapterIndex: 1,
-        chapterLabel: '2',
+        // The stable ID must win even if a legacy display label is stale.
+        chapterLabel: '1',
+        chapterId: 'ch-2',
         page: 2,
         pageOffset: 0.4,
         updatedAt: DateTime.utc(2026, 10, 14),
