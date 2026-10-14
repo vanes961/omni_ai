@@ -429,7 +429,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       final top = pageObject
           .localToGlobal(Offset.zero, ancestor: viewportObject)
           .dy;
-      final corrected = _scroll.offset +
+      final corrected =
+          _scroll.offset +
           top +
           (offsetAtResize.clamp(0.0, 1.0) * pageObject.size.height);
       _scroll.jumpTo(
