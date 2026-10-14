@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:omni_ai/features/media/data/manga_reading_progress_repository.dart';
 import 'package:omni_ai/features/media/presentation/manga_reader_progress_overlay.dart';
@@ -192,6 +193,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   final MangaReadingProgressRepository _progress =
       MangaReadingProgressRepository();
   final ScrollController _scroll = ScrollController();
+  final GlobalKey _viewportKey = GlobalKey();
+  final Map<int, GlobalKey> _pageKeys = <int, GlobalKey>{};
   Timer? _saveDebounce;
   List<MangaChapterOption> _chapters = const [];
   final List<Uri> _pages = [];
@@ -207,6 +210,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   String? _pageError;
   bool _hasMoreChapters = true;
   double _viewportExtent = 1;
+  double _pageOffset = 0;
 
   @override
   void initState() {
@@ -298,6 +302,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         _pageIndex = restore?.page == null
             ? 0
             : (restore!.page! - 1).clamp(0, manifest.imageUrls.length - 1);
+        _pageOffset = restore?.pageOffset ?? 0;
+        _pageKeys.clear();
         _loadingPages = false;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -309,7 +315,27 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         _scroll.jumpTo(
           target.clamp(0.0, _scroll.position.maxScrollExtent).toDouble(),
         );
-        _restoring = false;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !_scroll.hasClients) return;
+          final pageContext = _pageKeys[_pageIndex]?.currentContext;
+          final pageObject = pageContext?.findRenderObject();
+          final viewportObject = _viewportKey.currentContext?.findRenderObject();
+          if (pageObject is RenderBox &&
+              pageObject.hasSize &&
+              viewportObject is RenderBox &&
+              viewportObject.hasSize) {
+            final top = pageObject.localToGlobal(
+              Offset.zero,
+              ancestor: viewportObject,
+            ).dy;
+            final corrected = _scroll.offset + top +
+                (_pageOffset * pageObject.size.height);
+            _scroll.jumpTo(
+              corrected.clamp(0.0, _scroll.position.maxScrollExtent).toDouble(),
+            );
+          }
+          _restoring = false;
+        });
       });
     } on Object catch (e) {
       if (!mounted) return;
@@ -320,14 +346,56 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     }
   }
 
+  bool _syncVisiblePage({bool scheduleSave = true}) {
+    final viewportObject = _viewportKey.currentContext?.findRenderObject();
+    if (viewportObject is! RenderBox || !viewportObject.hasSize) return false;
+
+    var visibleIndex = -1;
+    var visibleTop = double.infinity;
+    var visibleHeight = 0.0;
+    for (final entry in _pageKeys.entries) {
+      final pageObject = entry.value.currentContext?.findRenderObject();
+      if (pageObject is! RenderBox || !pageObject.hasSize) continue;
+      final top = pageObject.localToGlobal(
+        Offset.zero,
+        ancestor: viewportObject,
+      ).dy;
+      final bottom = top + pageObject.size.height;
+      if (bottom > 0 && top < viewportObject.size.height && top < visibleTop) {
+        visibleIndex = entry.key;
+        visibleTop = top;
+        visibleHeight = pageObject.size.height;
+      }
+    }
+    if (visibleIndex < 0 || visibleHeight <= 0) return false;
+
+    var visibleChapter = _chapterIndex;
+    var latestStartPage = -1;
+    for (final entry in _chapterStartPages.entries) {
+      if (entry.value <= visibleIndex && entry.value > latestStartPage) {
+        visibleChapter = entry.key;
+        latestStartPage = entry.value;
+      }
+    }
+    final nextPageIndex = visibleIndex - (_chapterStartPages[visibleChapter] ?? 0);
+    final nextOffset = ((-visibleTop) / visibleHeight).clamp(0.0, 1.0).toDouble();
+    final pageChanged = visibleChapter != _chapterIndex || nextPageIndex != _pageIndex;
+    final offsetChanged = (nextOffset - _pageOffset).abs() >= 0.15;
+    _chapterIndex = visibleChapter;
+    _pageIndex = nextPageIndex;
+    _pageOffset = nextOffset;
+    if (scheduleSave && (pageChanged || offsetChanged)) _scheduleProgressSave();
+    return true;
+  }
+
   void _onScroll() {
     if (!_scroll.hasClients || _restoring) return;
     final extent = _viewportExtent > 0 ? _viewportExtent : 1.0;
-    final page = (_scroll.offset / extent)
-        .floor()
-        .clamp(0, (_pages.length - 1).clamp(0, 1 << 30))
-        .toInt();
-    if (_pages.isNotEmpty) {
+    if (!_syncVisiblePage()) {
+      final page = (_scroll.offset / extent)
+          .floor()
+          .clamp(0, (_pages.length - 1).clamp(0, 1 << 30))
+          .toInt();
       var visibleChapter = _chapterIndex;
       var latestStartPage = -1;
       for (final entry in _chapterStartPages.entries) {
@@ -340,11 +408,11 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       if (visibleChapter != _chapterIndex || nextPageIndex != _pageIndex) {
         _chapterIndex = visibleChapter;
         _pageIndex = nextPageIndex;
+        _pageOffset = (_scroll.offset % extent / extent).clamp(0.0, 1.0);
         _scheduleProgressSave();
       }
     }
-    if (_scroll.position.maxScrollExtent - _scroll.position.pixels <
-        extent * 2) {
+    if (_scroll.position.maxScrollExtent - _scroll.position.pixels < extent * 2) {
       _loadNextChapter();
     }
   }
@@ -356,24 +424,26 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     });
   }
 
+  MangaReadingProgress? _captureProgress({bool measureVisible = true}) {
+    if (_chapters.isEmpty || _chapterIndex < 0 || _chapterIndex >= _chapters.length) {
+      return null;
+    }
+    if (measureVisible) _syncVisiblePage(scheduleSave: false);
+    return MangaReadingProgress(
+      mangaId: widget.manga.canonicalId,
+      chapterIndex: _chapterIndex,
+      chapterLabel: _chapters[_chapterIndex].chapter,
+      page: _pageIndex + 1,
+      pageOffset: _pageOffset,
+      updatedAt: DateTime.now().toUtc(),
+    );
+  }
+
   Future<void> _saveProgress() async {
-    if (_chapters.isEmpty) return;
-    final extent = _viewportExtent > 0 ? _viewportExtent : 1.0;
-    final pageOffset =
-        ((_scroll.hasClients ? _scroll.offset % extent : 0) / extent)
-            .clamp(0.0, 1.0)
-            .toDouble();
+    final progress = _captureProgress();
+    if (progress == null) return;
     try {
-      await _progress.save(
-        MangaReadingProgress(
-          mangaId: widget.manga.canonicalId,
-          chapterIndex: _chapterIndex,
-          chapterLabel: _chapters[_chapterIndex].chapter,
-          page: _pageIndex + 1,
-          pageOffset: pageOffset,
-          updatedAt: DateTime.now().toUtc(),
-        ),
-      );
+      await _progress.save(progress);
     } on Object {
       // Reading remains usable if local progress storage is temporarily unavailable.
     }
@@ -381,10 +451,11 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
 
   Future<void> _loadNextChapter() async {
     if (_loadingNext || _loadingPages || !_hasMoreChapters) return;
-    final nextIndex = List<int>.generate(
-      _chapters.length,
-      (i) => i,
-    ).firstWhere((i) => !_loadedChapterIndexes.contains(i), orElse: () => -1);
+    var nextIndex = _chapterIndex + 1;
+    while (nextIndex < _chapters.length &&
+        _loadedChapterIndexes.contains(nextIndex)) {
+      nextIndex++;
+    }
     if (nextIndex < 0) {
       _hasMoreChapters = false;
       return;
@@ -418,9 +489,11 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     _saveDebounce?.cancel();
     await _saveProgress();
     if (!mounted) return;
+    _pageKeys.clear();
     setState(() {
       _pages.clear();
       _pageIndex = 0;
+      _pageOffset = 0;
       _chapterIndex = index;
       _pageError = null;
     });
@@ -431,7 +504,10 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   @override
   void dispose() {
     _saveDebounce?.cancel();
-    unawaited(_saveProgress());
+    final progress = _captureProgress(measureVisible: false);
+    if (progress != null) {
+      unawaited(_progress.save(progress).catchError((Object _) {}));
+    }
     _scroll.removeListener(_onScroll);
     _scroll.dispose();
     if (widget.chapterService == null) _service.close();
@@ -483,6 +559,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 900),
                             child: ListView.builder(
+                              key: _viewportKey,
                               controller: _scroll,
                               itemCount: _pages.length + (_loadingNext ? 1 : 0),
                               itemBuilder: (context, index) {
@@ -496,8 +573,10 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                                     ),
                                   );
                                 }
-                                return CachedNetworkImage(
-                                  imageUrl: _pages[index].toString(),
+                                return KeyedSubtree(
+                                  key: _pageKeys.putIfAbsent(index, GlobalKey.new),
+                                  child: CachedNetworkImage(
+                                    imageUrl: _pages[index].toString(),
                                   fit: BoxFit.fitWidth,
                                   width: double.infinity,
                                   placeholder: (_, _) => const SizedBox(
@@ -517,6 +596,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                                       'Страница не загрузилась',
                                       style: TextStyle(color: Colors.white70),
                                     ),
+                                  ),
                                   ),
                                 );
                               },
