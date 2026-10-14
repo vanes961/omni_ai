@@ -314,7 +314,9 @@ class _FranchiseSectionState extends State<_FranchiseSection> {
       );
       return;
     }
-    final hasSpoilers = widget.items.any((entry) => entry.chronologySpoilerRisk);
+    final hasSpoilers = widget.items.any(
+      (entry) => entry.chronologySpoilerRisk,
+    );
     if (hasSpoilers) {
       final accepted = await showDialog<bool>(
         context: context,
@@ -360,10 +362,10 @@ class _FranchiseSectionState extends State<_FranchiseSection> {
       FranchiseViewingOrder.release => 'Порядок выхода',
       FranchiseViewingOrder.chronology when _hasVerifiedChronology =>
         'Хронология событий · подтверждённые данные',
-      FranchiseViewingOrder.chronology =>
-        'Хронология пока не подтверждена',
-      FranchiseViewingOrder.smart when _hasVerifiedChronology &&
-          !widget.items.any((entry) => entry.chronologySpoilerRisk) =>
+      FranchiseViewingOrder.chronology => 'Хронология пока не подтверждена',
+      FranchiseViewingOrder.smart
+          when _hasVerifiedChronology &&
+              !widget.items.any((entry) => entry.chronologySpoilerRisk) =>
         'Умный порядок · без известных сюжетных спойлеров',
       FranchiseViewingOrder.smart =>
         'Умный порядок пока использует порядок выхода: хронология и риск спойлеров не подтверждены',
@@ -383,9 +385,8 @@ class _FranchiseSectionState extends State<_FranchiseSection> {
               key: const ValueKey('franchise-order-release'),
               label: const Text('По выходу'),
               selected: _order == FranchiseViewingOrder.release,
-              onSelected: (_) => setState(
-                () => _order = FranchiseViewingOrder.release,
-              ),
+              onSelected: (_) =>
+                  setState(() => _order = FranchiseViewingOrder.release),
             ),
             ChoiceChip(
               key: const ValueKey('franchise-order-chronology'),
@@ -397,17 +398,13 @@ class _FranchiseSectionState extends State<_FranchiseSection> {
               key: const ValueKey('franchise-order-smart'),
               label: const Text('Умный порядок'),
               selected: _order == FranchiseViewingOrder.smart,
-              onSelected: (_) => setState(
-                () => _order = FranchiseViewingOrder.smart,
-              ),
+              onSelected: (_) =>
+                  setState(() => _order = FranchiseViewingOrder.smart),
             ),
           ],
         ),
         const SizedBox(height: 4),
-        Text(
-          note,
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
-        ),
+        Text(note, style: const TextStyle(color: Colors.white70, fontSize: 12)),
         const SizedBox(height: 10),
         SizedBox(
           height: 184,
