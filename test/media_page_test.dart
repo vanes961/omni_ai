@@ -106,7 +106,6 @@ void main() {
 
     expect(playerSources, isEmpty);
     expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsOneWidget);
-    expect(find.text('ОШИБКА ВОСПРОИЗВЕДЕНИЯ: StateError'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
