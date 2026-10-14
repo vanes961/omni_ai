@@ -843,7 +843,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                               key: _viewportKey,
                               controller: _scroll,
                               // Keep decoded/laid-out off-screen pages bounded to one viewport.
-                              scrollCacheExtent: constraints.maxHeight,
+                              scrollCacheExtent: const ScrollCacheExtent.viewport(1.0),
                               itemCount: _pages.length + (_loadingNext ? 1 : 0),
                               itemBuilder: (context, index) {
                                 if (index >= _pages.length) {
