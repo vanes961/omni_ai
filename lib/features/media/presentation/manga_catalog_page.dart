@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:omni_ai/features/media/data/manga_reading_progress_repository.dart';
 import 'package:omni_ai/features/media/presentation/manga_reader_progress_overlay.dart';
