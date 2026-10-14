@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -23,13 +24,14 @@ void main() {
     }
   });
 
-  LocalModelSpec spec({int expectedBytes = 10}) {
+  LocalModelSpec spec({int expectedBytes = 10, String? expectedSha256}) {
     return LocalModelSpec(
       id: 'test-model',
       displayName: 'Test model',
       fileName: 'test.gguf',
       downloadUri: 'https://example.test/test.gguf',
       expectedBytesApprox: expectedBytes,
+      expectedSha256: expectedSha256,
     );
   }
 
@@ -49,6 +51,50 @@ void main() {
     expect(await file.readAsBytes(), bytes);
     expect(lastProgress, 10);
     expect(await storage.isDownloaded(spec()), isTrue);
+    expect(await File('${file.path}.part').exists(), isFalse);
+  });
+
+  test('rejects a same-size model with an invalid checksum', () async {
+    final fileBytes = Uint8List.fromList(List<int>.filled(10, 1));
+    storage = LocalModelStorage(
+      client: MockClient((_) async => http.Response.bytes(fileBytes, 200)),
+      supportDirectoryProvider: () async => temporaryDirectory,
+    );
+    final model = spec(expectedSha256: sha256.convert(List<int>.filled(10, 2)).toString());
+    final file = await storage.modelFile(model);
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(fileBytes);
+
+    expect(await storage.isDownloaded(model), isTrue);
+    expect(await storage.isValid(model), isFalse);
+  });
+
+  test('validates checksum before accepting a downloaded model', () async {
+    final bytes = Uint8List.fromList(List<int>.generate(10, (i) => i));
+    storage = LocalModelStorage(
+      client: MockClient((_) async => http.Response.bytes(bytes, 200)),
+      supportDirectoryProvider: () async => temporaryDirectory,
+    );
+    final model = spec(expectedSha256: sha256.convert(bytes).toString());
+
+    final file = await storage.download(model);
+
+    expect(await file.readAsBytes(), bytes);
+    expect(await storage.isValid(model), isTrue);
+  });
+
+  test('rejects a downloaded model with an invalid checksum', () async {
+    final bytes = Uint8List.fromList(List<int>.generate(10, (i) => i));
+    storage = LocalModelStorage(
+      client: MockClient((_) async => http.Response.bytes(bytes, 200)),
+      supportDirectoryProvider: () async => temporaryDirectory,
+    );
+    final model = spec(expectedSha256: '0' * 64);
+
+    await expectLater(storage.download(model), throwsA(isA<FormatException>()));
+
+    final file = await storage.modelFile(model);
+    expect(await file.exists(), isFalse);
     expect(await File('${file.path}.part').exists(), isFalse);
   });
 
