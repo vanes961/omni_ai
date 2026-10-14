@@ -195,8 +195,7 @@ class MangaReadingProgressRepository {
   }
 }
 
-class _SharedPreferencesMangaProgressStore
-    implements MangaProgressStringStore {
+class _SharedPreferencesMangaProgressStore implements MangaProgressStringStore {
   SharedPreferencesAsync? _instance;
 
   SharedPreferencesAsync get _preferences =>
