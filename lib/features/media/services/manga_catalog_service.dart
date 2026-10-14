@@ -15,6 +15,7 @@ class MangaCatalogItem {
     required this.coverUrl,
     required this.authors,
     this.year,
+    this.anilistId,
   });
 
   final String id;
@@ -25,6 +26,9 @@ class MangaCatalogItem {
   final String coverUrl;
   final List<String> authors;
   final int? year;
+
+  /// Optional AniList cross-reference supplied by MangaDex metadata.
+  final int? anilistId;
 
   String get canonicalId => 'mangadex:$id';
 }
@@ -111,6 +115,13 @@ class MangaCatalogService {
       }
       final yearRaw = attributes['year'];
       final year = yearRaw is num ? yearRaw.toInt() : null;
+      final links = attributes['links'];
+      final anilistRaw = links is Map<String, dynamic> ? links['al'] : null;
+      final anilistId = anilistRaw is int
+          ? anilistRaw
+          : anilistRaw is String
+          ? int.tryParse(anilistRaw)
+          : null;
       final status = (attributes['status'] as String? ?? '').trim();
       final coverUrl = coverFile == null || coverFile.trim().isEmpty
           ? ''
@@ -125,6 +136,7 @@ class MangaCatalogService {
           coverUrl: coverUrl,
           authors: List<String>.unmodifiable(authors.toSet()),
           year: year,
+          anilistId: anilistId != null && anilistId > 0 ? anilistId : null,
         ),
       );
     }
