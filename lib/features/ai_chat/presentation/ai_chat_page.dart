@@ -7,6 +7,7 @@ import 'package:omni_ai/core/ai_engine/services/ai_context_manager.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/ai_memory/presentation/ai_memory_manager_dialog.dart';
+import 'package:omni_ai/features/news/models/news_article.dart';
 import 'package:omni_ai/features/news/data/news_interest_repository.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_cache.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_interest_repository.dart';
@@ -102,13 +103,13 @@ class _AIChatPageState extends State<AIChatPage> {
           .getAll();
       var requestPrompt = prompt;
       if (_newsContextBuilder.isNewsRequest(prompt)) {
-        var cachedArticles = const <dynamic>[];
+        var cachedArticles = const <NewsArticle>[];
         try {
           cachedArticles = await _newsCache.loadArticles();
         } on Object {
           // Fresh RSS retrieval below remains available if local cache fails.
         }
-        var freshArticles = const <dynamic>[];
+        var freshArticles = const <NewsArticle>[];
         var includesFreshResults = false;
         try {
           final profile = await _newsRepository.load();
@@ -121,8 +122,8 @@ class _AIChatPageState extends State<AIChatPage> {
           // A network/source failure falls back to the cached personalized feed.
         }
         final articles = _newsContextBuilder.mergeArticles(
-          fresh: freshArticles.cast(),
-          cached: cachedArticles.cast(),
+          fresh: freshArticles,
+          cached: cachedArticles,
         );
         requestPrompt = _newsContextBuilder.buildPrompt(
           prompt,
