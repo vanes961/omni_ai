@@ -326,11 +326,18 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         .clamp(0, (_pages.length - 1).clamp(0, 1 << 30))
         .toInt();
     if (_pages.isNotEmpty) {
-      var visibleChapter = _chapterIndex;
+      var visibleChapter = _chapterStartPages.keys.isEmpty
+          ? _chapterIndex
+          : _chapterStartPages.keys.reduce((a, b) =>
+              (_chapterStartPages[a] ?? 0) <= page &&
+                      (_chapterStartPages[a] ?? 0) >= (_chapterStartPages[b] ?? 0)
+                  ? a
+                  : b);
       for (final entry in _chapterStartPages.entries) {
         if (entry.value <= page &&
-            entry.value >= (_chapterStartPages[visibleChapter] ?? 0))
+            entry.value >= (_chapterStartPages[visibleChapter] ?? 0)) {
           visibleChapter = entry.key;
+        }
       }
       _chapterIndex = visibleChapter;
       _pageIndex = page - (_chapterStartPages[_chapterIndex] ?? 0);
@@ -387,8 +394,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
           _chapterStartPages[nextIndex] = _pages.length;
           _pages.addAll(manifest.imageUrls);
           _loadedChapterIndexes.add(nextIndex);
-          if (_loadedChapterIndexes.length >= _chapters.length)
+          if (_loadedChapterIndexes.length >= _chapters.length) {
             _hasMoreChapters = false;
+          }
         });
       } else {
         _loadedChapterIndexes.add(nextIndex);
@@ -459,10 +467,10 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
               if (_pages.isNotEmpty)
                 ListView.builder(
                   controller: _scroll,
-                  cacheExtent: MediaQuery.sizeOf(context).height * 1.5,
+                  scrollCacheExtent: MediaQuery.sizeOf(context).height * 1.5,
                   itemCount: _pages.length + (_loadingNext ? 1 : 0),
                   itemBuilder: (context, index) {
-                    if (index >= _pages.length)
+                    if (index >= _pages.length) {
                       return const Padding(
                         padding: EdgeInsets.all(28),
                         child: Center(
@@ -471,6 +479,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                           ),
                         ),
                       );
+                    }
                     return CachedNetworkImage(
                       imageUrl: _pages[index].toString(),
                       fit: BoxFit.fitWidth,
