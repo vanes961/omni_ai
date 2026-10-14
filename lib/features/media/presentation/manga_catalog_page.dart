@@ -826,6 +826,10 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
             )
           : LayoutBuilder(
               builder: (context, constraints) {
+                final pageDecodeWidth =
+                    (constraints.maxWidth.clamp(1.0, 900.0) *
+                            MediaQuery.devicePixelRatioOf(context))
+                        .round();
                 _viewportExtent = constraints.maxHeight;
                 _scheduleGeometryRestore(constraints.biggest);
                 return Stack(
@@ -861,6 +865,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                                     imageUrl: _pages[index].toString(),
                                     fit: BoxFit.fitWidth,
                                     width: double.infinity,
+                                    memCacheWidth: pageDecodeWidth,
+                                    maxWidthDiskCache: pageDecodeWidth,
                                     placeholder: (_, _) => const SizedBox(
                                       height: 220,
                                       child: Center(
