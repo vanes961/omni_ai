@@ -152,46 +152,46 @@ class TorrServerPlaybackResolver {
 
     final normalizedPaths = {
       for (final file in videos)
-        file: file.path.replaceAll(r'\\', '/'),
+        file: file.path.replaceAll(String.fromCharCode(92), '/'),
     };
     final episode = episodeNumber.toString();
     final season = seasonNumber?.toString();
     final seasonEpisodePatterns = <RegExp>[
       if (season != null)
         RegExp(
-          r'(?:^|[/\\s._-])s0*' +
+          r'(?:^|[/\s._-])s0*' +
               season +
-              r'\\s*e0*' +
+              r'\s*e0*' +
               episode +
-              r'(?:\\D|$)',
+              r'(?:\D|$)',
           caseSensitive: false,
         ),
       if (season != null)
         RegExp(
-          r'(?:^|[/\\s._-])0*' +
+          r'(?:^|[/\s._-])0*' +
               season +
               r'x0*' +
               episode +
-              r'(?:\\D|$)',
+              r'(?:\D|$)',
           caseSensitive: false,
         ),
       if (season != null)
         RegExp(
-          r'season\\s*0*' +
+          r'season\s*0*' +
               season +
-              r'[^0-9]{0,8}(?:episode|ep\\.?|e)\\s*0*' +
+              r'[^0-9]{0,8}(?:episode|ep\.?|e)\s*0*' +
               episode +
-              r'(?:\\D|$)',
+              r'(?:\D|$)',
           caseSensitive: false,
         ),
     ];
     final episodePatterns = <RegExp>[
       RegExp(
-        r'(?:episode\\s*|ep\\.?\\s*|e)0*' + episode + r'(?:\\D|$)',
+        r'(?:episode\s*|ep\.?\s*|e)0*' + episode + r'(?:\D|$)',
         caseSensitive: false,
       ),
       RegExp(
-        r'(?:^|[/\\s._-])0*' + episode + r'(?:[/\\s._-]|$)',
+        r'(?:^|[/\s._-])0*' + episode + r'(?:[/\s._-]|$)',
         caseSensitive: false,
       ),
     ];
