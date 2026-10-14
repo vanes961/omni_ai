@@ -60,21 +60,24 @@ class MangaCatalogService {
         'includes[]': ['cover_art', 'author'],
       },
     );
-    try {
-      final response = await _client
-          .get(
-            uri,
-            headers: const {
-              'accept': 'application/json',
-              'User-Agent': 'OMNI_AI/1.0 (MangaDex catalogue client)',
-            },
-          )
-          .timeout(timeout);
-      if (response.statusCode != 200) return const <MangaCatalogItem>[];
-      return parseSearchResponse(jsonDecode(response.body));
-    } on Object {
-      return const <MangaCatalogItem>[];
+    final response = await _client
+        .get(
+          uri,
+          headers: const {
+            'accept': 'application/json',
+            'User-Agent': 'OMNI-AI/1.0 (MangaDex catalogue client)',
+          },
+        )
+        .timeout(timeout);
+    if (response.statusCode != 200) {
+      throw http.ClientException(
+        'MangaDex returned HTTP ${response.statusCode}.',
+        uri,
+      );
     }
+    // Keep malformed JSON distinguishable from a valid empty search. The UI
+    // can then show its retry/error state instead of implying no results exist.
+    return parseSearchResponse(jsonDecode(response.body));
   }
 
   /// Public parser kept separate for deterministic tests and cache migration.

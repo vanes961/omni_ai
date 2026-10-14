@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:omni_ai/features/media/services/manga_catalog_service.dart';
 
 void main() {
@@ -91,5 +95,38 @@ void main() {
   test('returns empty for invalid top-level payloads', () {
     expect(MangaCatalogService.parseSearchResponse(null), isEmpty);
     expect(MangaCatalogService.parseSearchResponse({'data': 'wrong'}), isEmpty);
+  });
+
+  test('returns empty results for a valid empty MangaDex response', () async {
+    final service = MangaCatalogService(
+      client: MockClient((_) async => http.Response(jsonEncode({'data': []}), 200)),
+    );
+    expect(await service.search('no such manga'), isEmpty);
+    service.close();
+  });
+
+  test('throws a useful error for a non-success MangaDex response', () async {
+    final service = MangaCatalogService(
+      client: MockClient((_) async => http.Response('unavailable', 503)),
+    );
+    await expectLater(
+      service.search('Berserk'),
+      throwsA(
+        isA<http.ClientException>().having(
+          (error) => error.message,
+          'message',
+          contains('HTTP 503'),
+        ),
+      ),
+    );
+    service.close();
+  });
+
+  test('propagates network failures so the screen can offer retry', () async {
+    final service = MangaCatalogService(
+      client: MockClient((_) async => throw http.ClientException('offline')),
+    );
+    await expectLater(service.search('Berserk'), throwsA(isA<http.ClientException>()));
+    service.close();
   });
 }
