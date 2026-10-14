@@ -37,6 +37,23 @@ void main() {
     expect(seasons.last.episodeCount, 8);
   });
 
+  test('parses TMDB collection parts and excludes the current movie', () {
+    final films = MediaSearchService.parseCollectionParts(
+      [
+        {'id': 20, 'title': 'Second film', 'release_date': '2020-01-01'},
+        {'id': 10, 'title': 'First film', 'release_date': '2010-01-01'},
+        {'id': 30, 'title': 'Current film', 'release_date': '2015-01-01'},
+        {'id': 40, 'title': '   '},
+        'invalid entry',
+      ],
+      currentMovieId: 30,
+    );
+
+    expect(films, hasLength(2));
+    expect(films.map((film) => film.title), ['First film', 'Second film']);
+    expect(films.first.id, 'tmdb:movie:10');
+  });
+
   test('parses TMDB season metadata without creating playable stream URLs', () {
     final episodes = MediaSearchService.parseSeasonEpisodes(
       {
