@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
+import 'package:omni_ai/features/news/data/shared_preferences_news_cache.dart';
 import 'package:omni_ai/features/news/data/news_interest_repository.dart';
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/presentation/news_center_page.dart';
@@ -61,6 +62,56 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+
+  testWidgets('keeps fetched articles visible when cache persistence fails', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response(
+        '<rss><channel><item>'
+        '<title>Anime: Cache failure regression</title>'
+        '<link>https://publisher.example/cache-failure</link>'
+        '<description>A feed item remains usable without offline persistence.</description>'
+        '<pubDate>Mon, 12 Oct 2026 09:00:00 GMT</pubDate>'
+        '<source>Anime News</source>'
+        '</item></channel></rss>',
+        200,
+        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+      )),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(
+          repository: repository,
+          newsService: service,
+          newsCache: SharedPreferencesNewsCache(
+            store: _FailingNewsCacheStore(),
+          ),
+        ),
+      ),
+    );
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('Anime: Cache failure regression'), findsOneWidget);
+    expect(
+      find.text(
+        'Новости загружены, но не удалось сохранить их для офлайн-доступа.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   testWidgets('restores the saved personalized articles without refetching', (
     WidgetTester tester,
@@ -411,4 +462,24 @@ class _MemoryNewsInterestRepository implements NewsInterestRepository {
 
   @override
   Future<void> dispose() async {}
+}
+
+
+class _FailingNewsCacheStore implements NewsCacheStringStore {
+  @override
+  Future<String?> read(String key) async {
+    if (key == SharedPreferencesNewsCache.topicsKey) return '["anime"]';
+    if (key == SharedPreferencesNewsCache.criticalSettingKey) return 'false';
+    return null;
+  }
+
+  @override
+  Future<void> write(String key, String value) async {}
+
+  @override
+  Future<void> remove(String key) async {
+    if (key == SharedPreferencesNewsCache.digestKey) {
+      throw StateError('Simulated local cache write failure.');
+    }
+  }
 }
