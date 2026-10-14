@@ -42,7 +42,10 @@ class MangaChapterPageSet {
   List<Uri> urls({bool dataSaver = false}) =>
       dataSaver ? dataSaverImageUrls : imageUrls;
 
-  static MangaChapterPageSet? parse(Object? payload, {required String chapterId}) {
+  static MangaChapterPageSet? parse(
+    Object? payload, {
+    required String chapterId,
+  }) {
     if (payload is! Map<String, dynamic>) return null;
     final baseUrlRaw = payload['baseUrl'];
     final chapter = payload['chapter'];
@@ -136,7 +139,13 @@ class MangaChapterService {
     );
 
     final response = await _client
-        .get(uri, headers: const {'accept': 'application/json', 'User-Agent': _userAgent})
+        .get(
+          uri,
+          headers: const {
+            'accept': 'application/json',
+            'User-Agent': _userAgent,
+          },
+        )
         .timeout(timeout);
     if (response.statusCode != 200) {
       throw MangaChapterServiceException(
@@ -212,7 +221,10 @@ class MangaChapterService {
         final response = await _client
             .get(
               Uri.parse('$apiBase/at-home/server/$id'),
-              headers: const {'accept': 'application/json', 'User-Agent': _userAgent},
+              headers: const {
+                'accept': 'application/json',
+                'User-Agent': _userAgent,
+              },
             )
             .timeout(timeout);
         if (response.statusCode != 200) {
