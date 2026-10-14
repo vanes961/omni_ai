@@ -518,6 +518,72 @@ void main() {
     expect(controllers[2].isDisposed, isFalse);
   });
 
+  testWidgets('saves the previous episode position before switching', (
+    tester,
+  ) async {
+    final resumeStore = _FakeMediaResumePositionStore();
+    final controllers = <_FakePlaybackController>[];
+    final item = MediaItem(
+      id: 'switch-progress-test',
+      title: 'Switch Progress Test',
+      type: 'Сериал',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/episode-1.mp4',
+      episodes: const [
+        MediaEpisode(
+          number: 1,
+          title: 'First',
+          videoUrl: 'https://example.com/episode-1.mp4',
+        ),
+        MediaEpisode(
+          number: 2,
+          title: 'Second',
+          videoUrl: 'https://example.com/episode-2.mp4',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          resumePositionStore: resumeStore,
+          playerFactory: (_) {
+            final controller = _FakePlaybackController();
+            controllers.add(controller);
+            return controller;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    controllers.first.position = const Duration(minutes: 12, seconds: 34);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('episode-selector')),
+      160,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('episode-selector')));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.textContaining('Second').last);
+    await tester.pumpAndSettle();
+
+    expect(
+      resumeStore.positions['switch-progress-test:0'],
+      const Duration(minutes: 12, seconds: 34),
+    );
+    expect(controllers.first.isDisposed, isTrue);
+    expect(controllers.last.isDisposed, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('disposes a stale player when episode changes during initialization', (
     tester,
   ) async {
