@@ -488,7 +488,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     } on Object {
       // A failed prefetch is retried on the next near-end scroll.
     } finally {
-      _loadingNext = false;
+      if (generation == _readerGeneration) _loadingNext = false;
     }
   }
 
