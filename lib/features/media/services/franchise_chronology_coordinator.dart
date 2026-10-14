@@ -134,7 +134,8 @@ class FranchiseChronologyCoordinator {
       final uri = Uri.tryParse(proposal.sourceUrl);
       if (entry == null ||
           byId.containsKey(proposal.itemId) ||
-          proposal.order < 0 ||
+          proposal.order < 1 ||
+          proposal.order > entries.length ||
           !usedOrders.add(proposal.order) ||
           uri == null ||
           uri.scheme.toLowerCase() != 'https' ||
@@ -162,7 +163,9 @@ class FranchiseChronologyCoordinator {
       final saved = cachedById[entry.id];
       final source = Uri.tryParse(saved?.chronologySourceUrl ?? '');
       if (saved?.chronologyOrder == null ||
-          !orders.add(saved!.chronologyOrder!) ||
+          saved!.chronologyOrder! < 1 ||
+          saved.chronologyOrder! > entries.length ||
+          !orders.add(saved.chronologyOrder!) ||
           source == null ||
           source.scheme.toLowerCase() != 'https' ||
           source.host.isEmpty) {

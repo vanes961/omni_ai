@@ -226,6 +226,75 @@ void main() {
     expect(result.single.chronologyOrder, isNull);
   });
 
+  test('rejects chronology positions outside the contiguous 1..N range',
+      () async {
+    final coordinator = FranchiseChronologyCoordinator(
+      cache: _MemoryChronologyCache(),
+      research: ({required franchiseId, required entries}) async => [
+        const FranchiseChronologyProposal(
+          itemId: 'tmdb:movie:1',
+          order: 1,
+          sourceUrl: 'https://example.org/film-one',
+        ),
+        const FranchiseChronologyProposal(
+          itemId: 'tmdb:movie:2',
+          order: 3,
+          sourceUrl: 'https://example.org/film-two',
+        ),
+      ],
+      verifyEvidence: ({required proposal, required entry}) async => true,
+    );
+
+    final result = await coordinator.resolve(
+      franchiseId: 'franchise:example',
+      entries: entries,
+    );
+
+    expect(result.every((entry) => entry.chronologyOrder == null), isTrue);
+  });
+
+  test('rejects cached chronology positions outside the contiguous 1..N range',
+      () async {
+    final cache = _MemoryChronologyCache()
+      ..stored['franchise:example'] = [
+        const MediaFranchiseEntry(
+          id: 'tmdb:movie:1',
+          title: 'Film One',
+          overview: '',
+          releaseDate: '',
+          posterUrl: '',
+          chronologyOrder: 0,
+          chronologySourceUrl: 'https://example.org/film-one',
+        ),
+        const MediaFranchiseEntry(
+          id: 'tmdb:movie:2',
+          title: 'Film Two',
+          overview: '',
+          releaseDate: '',
+          posterUrl: '',
+          chronologyOrder: 2,
+          chronologySourceUrl: 'https://example.org/film-two',
+        ),
+      ];
+    var researched = false;
+    final coordinator = FranchiseChronologyCoordinator(
+      cache: cache,
+      research: ({required franchiseId, required entries}) async {
+        researched = true;
+        return const [];
+      },
+      verifyEvidence: ({required proposal, required entry}) async => false,
+    );
+
+    final result = await coordinator.resolve(
+      franchiseId: 'franchise:example',
+      entries: entries,
+    );
+
+    expect(researched, isTrue);
+    expect(result.every((entry) => entry.chronologyOrder == null), isTrue);
+  });
+
   test('uses cached verified chronology without calling cloud research',
       () async {
     final cache = _MemoryChronologyCache()
