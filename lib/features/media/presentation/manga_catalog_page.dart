@@ -23,13 +23,16 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
   final _query = TextEditingController();
   List<MangaCatalogItem> _results = const [];
   bool _loading = false;
+  int _searchGeneration = 0;
   String? _error;
 
   Future<void> _search([String? value]) async {
+    final generation = ++_searchGeneration;
     final query = (value ?? _query.text).trim();
     if (query.isEmpty) {
       setState(() {
         _results = const [];
+        _loading = false;
         _error = null;
       });
       return;
@@ -40,13 +43,13 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
     });
     try {
       final results = await _catalog.search(query);
-      if (!mounted) return;
+      if (!mounted || generation != _searchGeneration) return;
       setState(() {
         _results = results;
         _loading = false;
       });
     } on Object {
-      if (!mounted) return;
+      if (!mounted || generation != _searchGeneration) return;
       setState(() {
         _loading = false;
         _error =
