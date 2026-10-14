@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/media/domain/media_hub_contracts.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
@@ -213,6 +214,8 @@ class MediaDetailsPage extends StatelessWidget {
                   item: item,
                   season: season,
                   searchService: searchService,
+                  preferences: preferences,
+                  playerFactory: playerFactory,
                 ),
               ),
             ],
@@ -231,15 +234,25 @@ class MediaDetailsPage extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('СМОТРЕТЬ'),
-              )
-            else
-              OutlinedButton.icon(
-                onPressed: d?.homepage.isNotEmpty == true
-                    ? () => launchUrl(
-                        Uri.parse(d!.homepage),
-                        mode: LaunchMode.externalApplication,
-                      )
-                    : null,
+              ),
+            OutlinedButton.icon(
+              key: const ValueKey('choose-media-source'),
+              onPressed: () => _chooseAndPlaySource(
+                context,
+                item,
+                preferences,
+                searchService,
+                playerFactory,
+              ),
+              icon: const Icon(Icons.link),
+              label: const Text('УКАЗАТЬ ИСТОЧНИК ВИДЕО'),
+            ),
+            if (d?.homepage.isNotEmpty == true)
+              TextButton.icon(
+                onPressed: () => launchUrl(
+                  Uri.parse(d!.homepage),
+                  mode: LaunchMode.externalApplication,
+                ),
                 icon: const Icon(Icons.open_in_new),
                 label: const Text('ОФИЦИАЛЬНАЯ СТРАНИЦА'),
               ),
@@ -260,11 +273,15 @@ class _SeasonCatalogSection extends StatefulWidget {
     required this.item,
     required this.season,
     required this.searchService,
+    required this.preferences,
+    required this.playerFactory,
   });
 
   final MediaItem item;
   final MediaCatalogSeason season;
   final MediaSearchService searchService;
+  final UserPreferences preferences;
+  final MediaPlayerFactory? playerFactory;
 
   @override
   State<_SeasonCatalogSection> createState() => _SeasonCatalogSectionState();
@@ -325,6 +342,18 @@ class _SeasonCatalogSectionState extends State<_SeasonCatalogSection> {
               children: episodes
                   .map(
                     (episode) => ListTile(
+                      key: ValueKey(
+                        'episode-source-${widget.item.id}-'
+                        '${widget.season.seasonNumber}-${episode.episodeNumber}',
+                      ),
+                      onTap: () => _chooseAndPlaySource(
+                        context,
+                        widget.item,
+                        widget.preferences,
+                        widget.searchService,
+                        widget.playerFactory,
+                        episode: episode,
+                      ),
                       dense: true,
                       leading: Text(
                         episode.episodeNumber.toString().padLeft(2, '0'),
@@ -333,6 +362,11 @@ class _SeasonCatalogSectionState extends State<_SeasonCatalogSection> {
                       title: Text(
                         episode.title,
                         style: const TextStyle(color: Colors.white),
+                      ),
+                      trailing: const Icon(
+                        Icons.play_circle_outline,
+                        color: SystemCorePalette.green,
+                        size: 20,
                       ),
                       subtitle: episode.overview.isEmpty
                           ? null
@@ -351,6 +385,103 @@ class _SeasonCatalogSectionState extends State<_SeasonCatalogSection> {
           },
         ),
     ],
+  );
+}
+
+
+Future<void> _chooseAndPlaySource(
+  BuildContext context,
+  MediaItem item,
+  UserPreferences preferences,
+  MediaSearchService searchService,
+  MediaPlayerFactory? playerFactory, {
+  MediaCatalogEpisode? episode,
+}) async {
+  final controller = TextEditingController();
+  final raw = await showDialog<String>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      backgroundColor: SystemCorePalette.panel,
+      title: Text(
+        episode == null ? 'Источник видео' : 'Источник серии ${episode.episodeNumber}',
+        style: const TextStyle(color: Colors.white),
+      ),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        keyboardType: TextInputType.url,
+        style: const TextStyle(color: Colors.white),
+        decoration: const InputDecoration(
+          hintText: 'https://… или magnet:?xt=urn:btih:…',
+          hintStyle: TextStyle(color: SystemCorePalette.muted),
+          helperText: 'Вставьте ссылку на доступный вам видеоисточник или magnet-ссылку.',
+          helperMaxLines: 3,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('ОТМЕНА'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(controller.text.trim()),
+          child: const Text('ОТКРЫТЬ'),
+        ),
+      ],
+    ),
+  );
+  controller.dispose();
+  if (!context.mounted || raw == null || raw.isEmpty) return;
+
+  final uri = Uri.tryParse(raw);
+  final source = uri == null
+      ? null
+      : MediaStreamSource(id: 'user-supplied', label: 'Пользовательский источник', uri: uri);
+  if (source == null || !source.isSupportedInput) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Нужна корректная HTTP(S)-ссылка или magnet-ссылка с BitTorrent hash.'),
+      ),
+    );
+    return;
+  }
+
+  final playableItem = MediaItem(
+    id: item.id,
+    title: item.title,
+    type: item.type,
+    posterUrl: item.posterUrl,
+    posterFallbackUrls: item.posterFallbackUrls,
+    rating: item.rating,
+    voiceovers: item.voiceovers,
+    videoUrl: uri.toString(),
+    videoFallbackUrls: item.videoFallbackUrls,
+    voiceoverVideoUrls: item.voiceoverVideoUrls,
+    categories: item.categories,
+    description: item.description,
+    malId: item.malId,
+    videoSources: item.videoSources,
+    episodes: episode == null
+        ? item.episodes
+        : [
+            MediaEpisode(
+              number: episode.episodeNumber,
+              seasonNumber: episode.seasonNumber,
+              title: episode.title,
+              videoUrl: uri.toString(),
+            ),
+          ],
+  );
+
+  await Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => PlayerPage(
+        item: playableItem,
+        preferences: preferences,
+        searchService: searchService,
+        playerFactory: playerFactory,
+      ),
+    ),
   );
 }
 
