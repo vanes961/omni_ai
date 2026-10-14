@@ -563,30 +563,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     final previousIndex = firstLoadedIndex - 1;
     if (previousIndex < 0) return;
 
-    final viewportObject = _viewportKey.currentContext?.findRenderObject();
-    if (viewportObject is! RenderBox || !viewportObject.hasSize) return;
-
-    // Keep a visible page as an anchor; its measured position determines the
-    // offset correction after prepending pages of unknown heights.
-    GlobalKey? anchorKey;
-    double? anchorTop;
-    for (final entry in _pageKeys.entries) {
-      final pageObject = entry.value.currentContext?.findRenderObject();
-      if (pageObject is! RenderBox || !pageObject.hasSize) continue;
-      final top = pageObject
-          .localToGlobal(Offset.zero, ancestor: viewportObject)
-          .dy;
-      if (top + pageObject.size.height > 0 &&
-          top < viewportObject.size.height) {
-        anchorKey = entry.value;
-        anchorTop = top;
-        break;
-      }
-    }
-    if (anchorKey == null || anchorTop == null) return;
-
     final generation = _readerGeneration;
-    final oldOffset = _scroll.offset;
     _loadingPrevious = true;
     try {
       final manifest = await _service.fetchPages(_chapters[previousIndex].id);
@@ -597,6 +574,30 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         return;
       }
 
+      // Measure the anchor after the network wait, so scrolling while the
+      // request is in flight does not restore an obsolete position.
+      if (!_scroll.hasClients) return;
+      final viewportObject = _viewportKey.currentContext?.findRenderObject();
+      if (viewportObject is! RenderBox || !viewportObject.hasSize) return;
+
+      GlobalKey? anchorKey;
+      double? anchorTop;
+      for (final entry in _pageKeys.entries) {
+        final pageObject = entry.value.currentContext?.findRenderObject();
+        if (pageObject is! RenderBox || !pageObject.hasSize) continue;
+        final top = pageObject
+            .localToGlobal(Offset.zero, ancestor: viewportObject)
+            .dy;
+        if (top + pageObject.size.height > 0 &&
+            top < viewportObject.size.height) {
+          anchorKey = entry.value;
+          anchorTop = top;
+          break;
+        }
+      }
+      if (anchorKey == null || anchorTop == null) return;
+
+      final oldOffset = _scroll.offset;
       final count = previousPages.length;
       setState(() {
         final shiftedKeys = <int, GlobalKey>{};
