@@ -210,6 +210,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   bool _hasMoreChapters = true;
   int _readerGeneration = 0;
   double _viewportExtent = 1;
+  Size? _lastViewportSize;
+  bool _geometryRestoreScheduled = false;
   double _pageOffset = 0;
 
   @override
@@ -393,6 +395,55 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     return true;
   }
 
+  void _scheduleGeometryRestore(Size nextSize) {
+    final previousSize = _lastViewportSize;
+    _lastViewportSize = nextSize;
+    if (previousSize == null ||
+        previousSize == nextSize ||
+        _geometryRestoreScheduled ||
+        _pages.isEmpty) {
+      return;
+    }
+
+    // Keep the same fractional position inside the visible page when a phone
+    // rotates or a foldable changes its available viewport dimensions.
+    final chapterAtResize = _chapterIndex;
+    final localPageAtResize = _pageIndex;
+    final offsetAtResize = _pageOffset;
+    final globalPageAtResize =
+        (_chapterStartPages[chapterAtResize] ?? 0) + localPageAtResize;
+    _geometryRestoreScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _geometryRestoreScheduled = false;
+      if (!mounted || !_scroll.hasClients || _pages.isEmpty) return;
+      final pageContext = _pageKeys[globalPageAtResize]?.currentContext;
+      final pageObject = pageContext?.findRenderObject();
+      final viewportObject = _viewportKey.currentContext?.findRenderObject();
+      if (pageObject is! RenderBox ||
+          !pageObject.hasSize ||
+          viewportObject is! RenderBox ||
+          !viewportObject.hasSize) {
+        return;
+      }
+      _restoring = true;
+      final top = pageObject
+          .localToGlobal(Offset.zero, ancestor: viewportObject)
+          .dy;
+      final corrected = _scroll.offset +
+          top +
+          (offsetAtResize.clamp(0.0, 1.0) * pageObject.size.height);
+      _scroll.jumpTo(
+        corrected.clamp(0.0, _scroll.position.maxScrollExtent).toDouble(),
+      );
+      _chapterIndex = chapterAtResize;
+      _pageIndex = localPageAtResize;
+      _pageOffset = offsetAtResize;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _restoring = false;
+      });
+    });
+  }
+
   void _onScroll() {
     if (!_scroll.hasClients || _restoring) return;
     final extent = _viewportExtent > 0 ? _viewportExtent : 1.0;
@@ -565,6 +616,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
           : LayoutBuilder(
               builder: (context, constraints) {
                 _viewportExtent = constraints.maxHeight;
+                _scheduleGeometryRestore(constraints.biggest);
                 return Stack(
                   children: [
                     if (_pages.isNotEmpty)
