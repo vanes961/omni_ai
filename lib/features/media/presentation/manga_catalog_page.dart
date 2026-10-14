@@ -661,14 +661,17 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     final index = _chapters.indexWhere((c) => c.id == option.id);
     if (index < 0) return;
     _saveDebounce?.cancel();
-    await _saveProgress();
-    if (!mounted) return;
-    // Ignore any in-flight page/prefetch response from the previous selection.
-    // Otherwise a slow request could append the old chapter to the newly picked one.
-    _readerGeneration++;
+
+    // Capture and start saving the old position before invalidating its pending
+    // requests. Do not await here: a slow local write must not let an old page
+    // prefetch append to the reader after the user has chosen another chapter.
+    final saveFuture = _saveProgress();
+    final generation = ++_readerGeneration;
     _pageKeys.clear();
     setState(() {
       _pages.clear();
+      _loadedChapterIndexes.clear();
+      _chapterStartPages.clear();
       _pageIndex = 0;
       _pageOffset = 0;
       _chapterIndex = index;
@@ -681,6 +684,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       _pageError = null;
     });
     if (_scroll.hasClients) _scroll.jumpTo(0);
+
+    await saveFuture;
+    if (!mounted || generation != _readerGeneration) return;
     await _loadChapterPages(index);
   }
 
