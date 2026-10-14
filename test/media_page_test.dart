@@ -13,6 +13,8 @@ import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/data/torrserver_client.dart';
 import 'package:omni_ai/features/media/data/torrserver_playback_resolver.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
+import 'package:omni_ai/features/media/presentation/media_details_page.dart';
+import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_playback_settings_store.dart';
@@ -1270,6 +1272,66 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 }
+
+
+  testWidgets('user-selected source overrides catalog variants and fallbacks', (
+    tester,
+  ) async {
+    final playerSources = <Uri>[];
+    const item = MediaItem(
+      id: 'manual-source-priority-test',
+      title: 'Manual Source Priority',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: ['Existing dub'],
+      videoUrl: 'https://catalog.example/original.mp4',
+      videoFallbackUrls: ['https://catalog.example/fallback.mp4'],
+      voiceoverVideoUrls: {
+        'Existing dub': 'https://catalog.example/dub.mp4',
+      },
+      videoSources: [
+        MediaVideoSource(
+          url: 'https://catalog.example/4k.mp4',
+          quality: '4K',
+          voiceover: 'Existing dub',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaDetailsPage(
+          item: item,
+          searchService: const MediaSearchService(),
+          preferences: UserPreferences(),
+          playerFactory: (source) {
+            playerSources.add(source);
+            return _FakePlaybackController();
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('choose-media-source')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextField),
+      'https://selected.example/film.mp4',
+    );
+    await tester.tap(find.text('ОТКРЫТЬ'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(playerSources, isNotEmpty);
+    expect(playerSources.first, Uri.parse('https://selected.example/film.mp4'));
+    expect(playerSources, isNot(contains(Uri.parse('https://catalog.example/4k.mp4'))));
+    expect(playerSources, isNot(contains(Uri.parse('https://catalog.example/dub.mp4'))));
+    expect(playerSources, isNot(contains(Uri.parse('https://catalog.example/fallback.mp4'))));
+    expect(tester.takeException(), isNull);
+  });
+
 
 class _FakePlaybackController implements MediaPlaybackController {
   _FakePlaybackController({
