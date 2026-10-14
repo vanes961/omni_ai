@@ -1271,8 +1271,6 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
-}
-
 
   testWidgets('user-selected source overrides catalog variants and fallbacks', (
     tester,
@@ -1325,13 +1323,26 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(playerSources, isNotEmpty);
-    expect(playerSources.first, Uri.parse('https://selected.example/film.mp4'));
-    expect(playerSources, isNot(contains(Uri.parse('https://catalog.example/4k.mp4'))));
-    expect(playerSources, isNot(contains(Uri.parse('https://catalog.example/dub.mp4'))));
-    expect(playerSources, isNot(contains(Uri.parse('https://catalog.example/fallback.mp4'))));
+    expect(
+      playerSources.first,
+      Uri.parse('https://selected.example/film.mp4'),
+    );
+    expect(
+      playerSources,
+      isNot(contains(Uri.parse('https://catalog.example/4k.mp4'))),
+    );
+    expect(
+      playerSources,
+      isNot(contains(Uri.parse('https://catalog.example/dub.mp4'))),
+    );
+    expect(
+      playerSources,
+      isNot(contains(Uri.parse('https://catalog.example/fallback.mp4'))),
+    );
     expect(tester.takeException(), isNull);
   });
 
+}
 
 class _FakePlaybackController implements MediaPlaybackController {
   _FakePlaybackController({
