@@ -194,7 +194,8 @@ class LocalLlamaProvider implements AIProvider, AIStreamingProvider {
           'generationDurationMs': generationStopwatch.elapsedMilliseconds,
           'tokensPerSecond': generationStopwatch.elapsedMicroseconds == 0
               ? 0.0
-              : generatedTokenCount * Duration.microsecondsPerSecond /
+              : generatedTokenCount *
+                    Duration.microsecondsPerSecond /
                     generationStopwatch.elapsedMicroseconds,
           'timeToFirstTokenMs': timeToFirstToken?.inMilliseconds,
         },
