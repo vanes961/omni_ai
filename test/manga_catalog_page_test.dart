@@ -55,7 +55,13 @@ void main() {
 
     expect(requests, 2);
     expect(find.byKey(const ValueKey('manga-catalog-berserk-id')), findsOneWidget);
-    expect(find.text('Berserk'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('manga-catalog-berserk-id')),
+        matching: find.text('Berserk'),
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('Не удалось загрузить каталог'), findsNothing);
     service.close();
   });
