@@ -268,6 +268,40 @@ class MediaSearchService {
     return List<MediaFranchiseEntry>.unmodifiable(entries);
   }
 
+  /// Orders franchise entries without inventing chronology metadata.
+  /// Chronology is used only when every entry has a verified position and no
+  /// entry is marked as spoiler-risky. Smart mode otherwise falls back to the
+  /// intended release order.
+  static List<MediaFranchiseEntry> orderFranchiseItems(
+    List<MediaFranchiseEntry> entries,
+    FranchiseViewingOrder order,
+  ) {
+    final result = List<MediaFranchiseEntry>.of(entries);
+    if (order == FranchiseViewingOrder.release) return result;
+    final hasVerifiedChronology = result.isNotEmpty &&
+        result.every((entry) => entry.chronologyOrder != null);
+    final hasSpoilerRisk = result.any((entry) => entry.chronologySpoilerRisk);
+    if (order == FranchiseViewingOrder.chronology &&
+        hasVerifiedChronology) {
+      result.sort(
+        (a, b) => a.chronologyOrder!.compareTo(b.chronologyOrder!),
+      );
+    } else if (order == FranchiseViewingOrder.smart &&
+        hasVerifiedChronology &&
+        !hasSpoilerRisk) {
+      result.sort(
+        (a, b) => a.chronologyOrder!.compareTo(b.chronologyOrder!),
+      );
+    } else {
+      result.sort((a, b) {
+        if (a.releaseDate.isEmpty && b.releaseDate.isNotEmpty) return 1;
+        if (b.releaseDate.isEmpty && a.releaseDate.isNotEmpty) return -1;
+        return a.releaseDate.compareTo(b.releaseDate);
+      });
+    }
+    return List<MediaFranchiseEntry>.unmodifiable(result);
+  }
+
   /// Loads episode metadata for a TMDB TV season. These entries deliberately
   /// contain no playable URLs; a stream resolver must supply real sources.
   Future<List<MediaCatalogEpisode>> loadSeasonEpisodes(
@@ -392,6 +426,8 @@ class MediaFranchiseEntry {
     required this.overview,
     required this.releaseDate,
     required this.posterUrl,
+    this.chronologyOrder,
+    this.chronologySpoilerRisk = false,
   });
 
   final String id;
@@ -399,7 +435,13 @@ class MediaFranchiseEntry {
   final String overview;
   final String releaseDate;
   final String posterUrl;
+  /// Only populated by a source that verifies in-universe chronology.
+  final int? chronologyOrder;
+  /// True when the chronology position is known to reveal a major plot point.
+  final bool chronologySpoilerRisk;
 }
+
+enum FranchiseViewingOrder { release, chronology, smart }
 
 class MediaDetails {
   const MediaDetails({
