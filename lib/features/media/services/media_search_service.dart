@@ -58,7 +58,10 @@ class MediaSearchService {
       final response = await http
           .get(
             uri,
-            headers: {'Authorization': '***', 'accept': 'application/json'},
+            headers: {
+              'Authorization': 'Bearer ${accessToken.trim()}',
+              'accept': 'application/json',
+            },
           )
           .timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
@@ -122,7 +125,10 @@ class MediaSearchService {
       final r = await http
           .get(
             uri,
-            headers: {'Authorization': '***', 'accept': 'application/json'},
+            headers: {
+              'Authorization': 'Bearer ${accessToken.trim()}',
+              'accept': 'application/json',
+            },
           )
           .timeout(const Duration(seconds: 12));
       if (r.statusCode != 200) return null;
@@ -199,7 +205,10 @@ class MediaSearchService {
       final response = await http
           .get(
             uri,
-            headers: {'Authorization': '***', 'accept': 'application/json'},
+            headers: {
+              'Authorization': 'Bearer ${accessToken.trim()}',
+              'accept': 'application/json',
+            },
           )
           .timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
