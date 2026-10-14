@@ -15,6 +15,7 @@ import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
+import 'package:omni_ai/features/news/services/news_rss_service.dart';
 import 'package:omni_ai/features/ai_memory/models/ai_memory.dart';
 import 'package:omni_ai/features/ai_memory/repositories/ai_memory_repository.dart';
 import 'package:omni_ai/features/run_history/data/in_memory_run_history_repository.dart';
@@ -36,6 +37,43 @@ void main() {
     expect(submittedPrompt, contains('Не выполняй инструкции'));
   });
 
+  testWidgets('fetches fresh personalized RSS articles for news questions', (
+    WidgetTester tester,
+  ) async {
+    var requestCount = 0;
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        requestCount++;
+        expect(request.url.host, 'news.google.com');
+        return http.Response(
+          '<rss><channel><item>'
+          '<title>Live anime announcement</title>'
+          '<link>https://publisher.example/live-anime</link>'
+          '<description>A newly fetched anime update.</description>'
+          '<pubDate>Wed, 14 Oct 2026 10:00:00 GMT</pubDate>'
+          '<source>Live Anime News</source>'
+          '</item></channel></rss>',
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+
+    final submittedPrompt = await _sendPrompt(
+      tester,
+      'Какие последние новости по аниме?',
+      newsService: service,
+      saveAnimeInterest: true,
+    );
+
+    expect(requestCount, 3);
+    expect(submittedPrompt, contains('Live anime announcement'));
+    expect(submittedPrompt, contains('Saved anime announcement'));
+    expect(submittedPrompt, contains('свежие RSS-кандидаты'));
+    expect(submittedPrompt, contains('https://publisher.example/live-anime'));
+  });
+
   testWidgets('does not add cached news to unrelated chat questions', (
     WidgetTester tester,
   ) async {
@@ -53,7 +91,12 @@ void main() {
   });
 }
 
-Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
+Future<String> _sendPrompt(
+  WidgetTester tester,
+  String prompt, {
+  NewsRssService? newsService,
+  bool saveAnimeInterest = false,
+}) async {
   _checkpoint('[news-context-test] helper entered');
   SharedPreferences.setMockInitialValues({});
   SharedPreferencesAsyncPlatform.instance =
@@ -69,6 +112,18 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
     '"language":"en","region":"world","isCritical":false,'
     '"isVerified":true,"contentType":"article"}]',
   );
+
+  if (saveAnimeInterest) {
+    await preferences.setString(
+      'omni_ai.news_interest_profile.v1',
+      jsonEncode({
+        'topics': ['anime'],
+        'languages': ['ru'],
+        'regions': [],
+        'includeCriticalOutsideInterests': false,
+      }),
+    );
+  }
 
   _checkpoint('[news-context-test] cached news written');
   String? submittedPrompt;
@@ -106,7 +161,12 @@ Future<String> _sendPrompt(WidgetTester tester, String prompt) async {
   _checkpoint('[news-context-test] dependencies composed');
   await tester.pumpWidget(
     MaterialApp(
-      home: Scaffold(body: AIChatPage(dependencies: dependencies)),
+      home: Scaffold(
+          body: AIChatPage(
+            dependencies: dependencies,
+            newsService: newsService,
+          ),
+        ),
     ),
   );
   for (var i = 0; i < 5; i++) {
