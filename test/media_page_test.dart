@@ -287,6 +287,54 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('marks an episode watched when stale resume progress is near its end', (
+    tester,
+  ) async {
+    final resumeStore = _FakeMediaResumePositionStore()
+      ..positions['near-end-resume-test:0'] = const Duration(
+        minutes: 89,
+        seconds: 50,
+      );
+    final item = MediaItem(
+      id: 'near-end-resume-test',
+      title: 'Near End Resume Test',
+      type: 'Сериал',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/episode-1.mp4',
+      episodes: const [
+        MediaEpisode(
+          number: 1,
+          title: 'First',
+          videoUrl: 'https://example.com/episode-1.mp4',
+        ),
+        MediaEpisode(
+          number: 2,
+          title: 'Second',
+          videoUrl: 'https://example.com/episode-2.mp4',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          resumePositionStore: resumeStore,
+          playerFactory: (_) => _FakePlaybackController(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Продолжить просмотр?'), findsNothing);
+    expect(resumeStore.positions.containsKey('near-end-resume-test:0'), isFalse);
+    expect(resumeStore.watchedEpisodes['near-end-resume-test'], contains(0));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shows an honest empty state instead of demo media', (
     tester,
   ) async {

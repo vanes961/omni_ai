@@ -238,6 +238,17 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         (player.duration > Duration.zero &&
             remaining <= const Duration(seconds: 15))) {
       await _resumeStore.clear(widget.item.id, episodeIndex);
+      if (player.duration > Duration.zero &&
+          remaining <= const Duration(seconds: 15) &&
+          _tracksEpisodeHistory &&
+          _hasEpisodes &&
+          episodeIndex >= 0 &&
+          episodeIndex < widget.item.episodes.length) {
+        await _resumeStore.markEpisodeWatched(widget.item.id, episodeIndex);
+        if (mounted && _watchedEpisodes.add(episodeIndex)) {
+          setState(() {});
+        }
+      }
       return;
     }
     final shouldResume = await showDialog<bool>(
