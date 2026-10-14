@@ -9,7 +9,6 @@ class MediaSearchService {
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
   static const tmdbAttribution =
       'This product uses the TMDB API but is not endorsed or certified by TMDB.';
-  static final Uri zonaCatalogUri = Uri.parse('https://w1.zona.im/');
   static const _api = 'https://api.themoviedb.org/3';
   static const _poster = 'https://image.tmdb.org/t/p/w500';
   final String accessToken;
