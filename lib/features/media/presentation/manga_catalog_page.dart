@@ -838,6 +838,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                             child: ListView.builder(
                               key: _viewportKey,
                               controller: _scroll,
+                              // Keep decoded/laid-out off-screen pages bounded to one viewport.
+                              cacheExtent: constraints.maxHeight,
                               itemCount: _pages.length + (_loadingNext ? 1 : 0),
                               itemBuilder: (context, index) {
                                 if (index >= _pages.length) {
