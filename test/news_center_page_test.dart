@@ -61,9 +61,19 @@ void main() {
     expect(requestCount, greaterThan(0));
     expect(find.byType(NewsCenterPage), findsOneWidget);
     expect(find.text('Anime: New season announced'), findsOneWidget);
+    expect(find.textContaining('ANIME NEWS'), findsWidgets);
+    await tester.scrollUntilVisible(
+      find.text('Anime: Second story in the feed'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Anime: Second story in the feed'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Диагностика системы'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Диагностика системы'), findsOneWidget);
-    expect(find.textContaining('ANIME NEWS'), findsOneWidget);
     expect(find.text('Не удалось загрузить новости.'), findsNothing);
     expect(tester.takeException(), isNull);
 
