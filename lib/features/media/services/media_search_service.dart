@@ -206,9 +206,9 @@ class MediaSearchService {
     int? currentMovieId,
   }) async {
     if (!isConfigured || collectionId <= 0) return const [];
-    final uri = Uri.parse('$_api/collection/$collectionId').replace(
-      queryParameters: {'language': 'ru-RU'},
-    );
+    final uri = Uri.parse(
+      '$_api/collection/$collectionId',
+    ).replace(queryParameters: {'language': 'ru-RU'});
     try {
       final response = await http
           .get(
@@ -243,7 +243,9 @@ class MediaSearchService {
       if (raw is! Map<String, dynamic>) continue;
       final id = raw['id'];
       final title = (raw['title'] as String? ?? '').trim();
-      if (id is! num || id <= 0 || title.isEmpty ||
+      if (id is! num ||
+          id <= 0 ||
+          title.isEmpty ||
           id.toInt() == currentMovieId) {
         continue;
       }
