@@ -6,6 +6,7 @@ import 'package:omni_ai/features/media/data/manga_reading_progress_repository.da
 import 'package:omni_ai/features/media/presentation/manga_reader_progress_overlay.dart';
 import 'package:omni_ai/features/media/services/manga_catalog_service.dart';
 import 'package:omni_ai/features/media/services/manga_chapter_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MangaCatalogPage extends StatefulWidget {
   const MangaCatalogPage({super.key, this.catalogService, this.chapterService});
@@ -212,6 +213,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   String? _error;
   String? _pageError;
   bool _hasMoreChapters = true;
+  bool _loadingMoreChapters = false;
+  int _nextChapterOffset = 0;
   int _readerGeneration = 0;
   double _viewportExtent = 1;
   Size? _lastViewportSize;
@@ -233,6 +236,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     try {
       final all = <MangaChapterOption>[];
       var offset = 0;
+      var hasMore = true;
       while (offset < 500) {
         final batch = await _service.fetchRussianChapters(
           widget.manga.id,
@@ -240,8 +244,11 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
           limit: 100,
         );
         all.addAll(batch);
-        if (batch.length < 100) break;
-        offset += batch.length;
+        offset += 100;
+        if (batch.length < 100) {
+          hasMore = false;
+          break;
+        }
       }
       if (!mounted) return;
       if (all.isEmpty) {
@@ -263,7 +270,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         _chapters = all;
         _chapterIndex = initial;
         _loadingChapters = false;
-        _hasMoreChapters = all.length >= 500;
+        _nextChapterOffset = offset;
+        _hasMoreChapters = hasMore;
       });
       await _loadChapterPages(initial, restore: saved);
     } on Object catch (e) {
@@ -272,6 +280,36 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         _loadingChapters = false;
         _error = 'Не удалось загрузить русские главы: $e';
       });
+    }
+  }
+
+  Future<void> _loadMoreChapterOptions() async {
+    if (_loadingMoreChapters || !_hasMoreChapters) return;
+    _loadingMoreChapters = true;
+    final generation = _readerGeneration;
+    try {
+      final batch = await _service.fetchRussianChapters(
+        widget.manga.id,
+        offset: _nextChapterOffset,
+        limit: 100,
+      );
+      if (!mounted || generation != _readerGeneration) return;
+
+      final knownIds = _chapters.map((chapter) => chapter.id).toSet();
+      final additions = batch
+          .where((chapter) => knownIds.add(chapter.id))
+          .toList();
+      if (additions.isNotEmpty) {
+        setState(() => _chapters.addAll(additions));
+      }
+      _nextChapterOffset += 100;
+      if (batch.length < 100 || additions.isEmpty) {
+        _hasMoreChapters = false;
+      }
+    } on Object {
+      // Keep the current reader usable; the next near-end scroll retries.
+    } finally {
+      _loadingMoreChapters = false;
     }
   }
 
@@ -525,15 +563,23 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   }
 
   Future<void> _loadNextChapter() async {
-    if (_loadingNext || _loadingPages || !_hasMoreChapters) return;
+    if (_loadingNext || _loadingPages) return;
     var nextIndex = _chapterIndex + 1;
     while (nextIndex < _chapters.length &&
         _loadedChapterIndexes.contains(nextIndex)) {
       nextIndex++;
     }
     if (nextIndex >= _chapters.length) {
-      _hasMoreChapters = false;
-      return;
+      if (!_hasMoreChapters) return;
+      final previousLength = _chapters.length;
+      await _loadMoreChapterOptions();
+      if (!mounted || _chapters.length == previousLength) return;
+      nextIndex = _chapterIndex + 1;
+      while (nextIndex < _chapters.length &&
+          _loadedChapterIndexes.contains(nextIndex)) {
+        nextIndex++;
+      }
+      if (nextIndex >= _chapters.length) return;
     }
     _loadingNext = true;
     final generation = _readerGeneration;
@@ -698,6 +744,42 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     await _loadChapterPages(index);
   }
 
+  Future<void> _openSource() async {
+    final uri = Uri.tryParse(widget.manga.sourceUrl);
+    if (uri == null ||
+        uri.scheme != 'https' ||
+        uri.host != 'mangadex.org' ||
+        !uri.path.startsWith('/title/')) {
+      return;
+    }
+    try {
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Не удалось открыть MangaDex.')),
+        );
+      }
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Не удалось открыть MangaDex.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _retryPageImage(Uri uri) async {
+    try {
+      await CachedNetworkImage.evictFromCache(uri.toString());
+    } on Object {
+      // A rebuild still gives the image provider another chance to load.
+    }
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     _saveDebounce?.cancel();
@@ -725,7 +807,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         actions: [
           IconButton(
             tooltip: 'Открыть источник MangaDex',
-            onPressed: () {},
+            onPressed: _openSource,
             icon: const Icon(Icons.menu_book, color: Color(0xFF74D69A)),
           ),
         ],
@@ -793,9 +875,25 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                                       height: 180,
                                       alignment: Alignment.center,
                                       color: const Color(0xFF111714),
-                                      child: const Text(
-                                        'Страница не загрузилась',
-                                        style: TextStyle(color: Colors.white70),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Text(
+                                            'Страница не загрузилась',
+                                            style: TextStyle(
+                                              color: Colors.white70,
+                                            ),
+                                          ),
+                                          TextButton.icon(
+                                            onPressed: () =>
+                                                _retryPageImage(_pages[index]),
+                                            icon: const Icon(
+                                              Icons.refresh,
+                                              size: 18,
+                                            ),
+                                            label: const Text('Повторить'),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
