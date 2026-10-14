@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'cross_content_recommendation.dart';
+
 /// Last known manga reading position, independent from the catalogue UI.
 class MangaReadingProgress {
   const MangaReadingProgress({
@@ -26,6 +28,13 @@ class MangaReadingProgress {
   final int? page;
 
   final DateTime updatedAt;
+
+  /// Adapts persisted manga progress to the shared spoiler-aware engine.
+  CrossContentProgress toCrossContentProgress() => CrossContentProgress(
+    contentId: mangaId,
+    type: CrossContentType.manga,
+    chapter: chapterIndex,
+  );
 
   Map<String, Object?> toJson() => {
     'mangaId': mangaId,
