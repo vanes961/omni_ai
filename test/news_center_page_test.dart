@@ -336,7 +336,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('refreshes broad discovery after all interests are removed', (
+  testWidgets('stops loading a generic feed after all interests are removed', (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -394,13 +394,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    expect(requestCount, 6);
-    await tester.dragUntilVisible(
-      find.text('World leaders meet at summit'),
-      find.byType(Scrollable).first,
-      const Offset(0, 300),
+    expect(requestCount, 3);
+    expect(find.text('World leaders meet at summit'), findsNothing);
+    expect(
+      find.textContaining('Общий поток без персонализации не показывается.'),
+      findsOneWidget,
     );
-    expect(find.text('World leaders meet at summit'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -431,14 +430,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    // With no selected topics the service attempts a broad discovery fetch;
-    // the empty RSS response should still explain how to personalize the feed.
-    expect(requestCount, greaterThan(0));
+    // No interests means no generic RSS request and no unpersonalized stories.
+    expect(requestCount, 0);
     expect(find.text('НАСТРОИТЬ ИНТЕРЕСЫ'), findsOneWidget);
     expect(
-      find.textContaining(
-        'Не удалось загрузить новости: International news sources returned no usable articles.',
-      ),
+      find.textContaining('Общий поток без персонализации не показывается.'),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
