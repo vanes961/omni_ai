@@ -751,8 +751,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('quality-selector')), findsOneWidget);
-    expect(sources.first, Uri.parse('https://example.com/720.mp4'));
     await tester.dragUntilVisible(
       find.byKey(const ValueKey('quality-selector')),
       find.descendant(
@@ -762,6 +760,8 @@ void main() {
       const Offset(0, -160),
     );
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('quality-selector')), findsOneWidget);
+    expect(sources.first, Uri.parse('https://example.com/720.mp4'));
     await tester.tap(find.byKey(const ValueKey('quality-selector')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('1080p').last);
