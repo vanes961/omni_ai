@@ -104,7 +104,8 @@ class NewsRssService {
   Future<List<NewsArticle>> fetchInternational(
     NewsInterestProfile profile,
   ) async {
-    if (profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) {
+    if (profile.topics.every((topic) => topic.trim().isEmpty) &&
+        !profile.includeCriticalOutsideInterests) {
       return const <NewsArticle>[];
     }
     const locales = <List<String>>[
