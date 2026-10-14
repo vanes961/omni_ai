@@ -667,6 +667,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       _chapterIndex = index;
       _loadingPages = false;
       _loadingNext = false;
+      _loadingPrevious = false;
       _pageError = null;
     });
     if (_scroll.hasClients) _scroll.jumpTo(0);
