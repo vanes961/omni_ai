@@ -80,12 +80,12 @@ class StoredLocalLlamaProvider implements AIProvider, AIStreamingProvider {
   Future<LocalLlamaProvider> _initialize() async {
     LocalLlamaProvider? provider;
     try {
-      var isInstalled = await storage.isDownloaded(model);
+      var isInstalled = await storage.isValid(model);
       _ensureNotDisposed();
       if (!isInstalled && autoInstallBundledModel) {
         await storage.installBundled(model);
         _ensureNotDisposed();
-        isInstalled = await storage.isDownloaded(model);
+        isInstalled = await storage.isValid(model);
       }
       if (!isInstalled) {
         throw AIEngineException(
