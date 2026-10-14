@@ -4,14 +4,24 @@ import 'package:http/http.dart' as http;
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
+typedef FranchiseChronologyResolver =
+    Future<List<MediaFranchiseEntry>> Function({
+      required String franchiseId,
+      required List<MediaFranchiseEntry> entries,
+    });
+
 class MediaSearchService {
-  const MediaSearchService({this.accessToken = _token});
+  const MediaSearchService({
+    this.accessToken = _token,
+    this.franchiseChronologyResolver,
+  });
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
   static const tmdbAttribution =
       'This product uses the TMDB API but is not endorsed or certified by TMDB.';
   static const _api = 'https://api.themoviedb.org/3';
   static const _poster = 'https://image.tmdb.org/t/p/w500';
   final String accessToken;
+  final FranchiseChronologyResolver? franchiseChronologyResolver;
   bool get isConfigured => accessToken.trim().isNotEmpty;
   static const Map<int, String> _genres = {
     28: 'Боевик',
@@ -177,6 +187,12 @@ class MediaSearchService {
               currentMovieId: p[1] == 'movie' ? int.tryParse(p[2]) : null,
             )
           : const <MediaFranchiseEntry>[];
+      final resolvedFranchiseItems = await resolveFranchiseChronology(
+        franchiseId: collectionId is num
+            ? 'tmdb:collection:${collectionId.toInt()}'
+            : 'tmdb:item:${item.id}',
+        entries: franchiseItems,
+      );
       final b = data['backdrop_path'] as String?;
       return MediaDetails(
         overview: data['overview'] as String? ?? item.description,
@@ -191,10 +207,39 @@ class MediaSearchService {
         homepage: data['homepage'] as String? ?? '',
         seasons: seasons,
         franchiseName: collectionMap['name'] as String? ?? '',
-        franchiseItems: franchiseItems,
+        franchiseItems: resolvedFranchiseItems,
       );
     } on Object {
       return null;
+    }
+  }
+
+  /// Resolves cached/researched chronology without allowing the resolver
+  /// to add or remove catalog entries. Any resolver failure safely falls back
+  /// to the catalog's release-sorted collection.
+  Future<List<MediaFranchiseEntry>> resolveFranchiseChronology({
+    required String franchiseId,
+    required List<MediaFranchiseEntry> entries,
+  }) async {
+    final resolver = franchiseChronologyResolver;
+    if (resolver == null || entries.isEmpty) {
+      return List<MediaFranchiseEntry>.unmodifiable(entries);
+    }
+    try {
+      final resolved = await resolver(
+        franchiseId: franchiseId,
+        entries: List<MediaFranchiseEntry>.unmodifiable(entries),
+      );
+      final originalIds = entries.map((entry) => entry.id).toSet();
+      final resolvedIds = resolved.map((entry) => entry.id).toSet();
+      if (resolved.length != entries.length ||
+          resolvedIds.length != resolved.length ||
+          !resolvedIds.containsAll(originalIds)) {
+        return List<MediaFranchiseEntry>.unmodifiable(entries);
+      }
+      return List<MediaFranchiseEntry>.unmodifiable(resolved);
+    } on Object {
+      return List<MediaFranchiseEntry>.unmodifiable(entries);
     }
   }
 
