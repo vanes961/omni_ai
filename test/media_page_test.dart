@@ -711,6 +711,67 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('quality selector is available without voiceovers', (
+    tester,
+  ) async {
+    final sources = <Uri>[];
+    final settings = _FakeMediaPlaybackSettingsStore();
+    final item = MediaItem(
+      id: 'quality-without-voiceover-test',
+      title: 'Quality Without Voiceover',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/default.mp4',
+      videoSources: const [
+        MediaVideoSource(
+          url: 'https://example.com/720.mp4',
+          quality: '720p',
+        ),
+        MediaVideoSource(
+          url: 'https://example.com/1080.mp4',
+          quality: '1080p',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          playbackSettingsStore: settings,
+          playerFactory: (source) {
+            sources.add(source);
+            return _FakePlaybackController();
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('quality-selector')), findsOneWidget);
+    expect(sources.first, Uri.parse('https://example.com/720.mp4'));
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('quality-selector')),
+      find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
+      const Offset(0, -160),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('quality-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1080p').last);
+    await tester.pumpAndSettle();
+
+    expect(sources.last, Uri.parse('https://example.com/1080.mp4'));
+    expect(settings.savedQuality, '1080p');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('player selects real quality variants and likes voiceovers', (
     tester,
   ) async {
