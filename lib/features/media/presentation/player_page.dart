@@ -433,7 +433,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
           final selectedFileIndex = await _chooseTorrServerFile(selection);
           if (selectedFileIndex == null) {
             playerError = StateError('Выбор видеофайла отменён.');
-            continue;
+            break;
           }
           if (!mounted || generation != _playerGeneration) return;
           resolvedUri = await resolver.resolve(
