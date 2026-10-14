@@ -14,7 +14,7 @@ class MediaSearchService {
   const MediaSearchService({
     this.accessToken = _token,
     this.franchiseChronologyResolver,
-    http.Client? this._client,
+    this._client,
   });
 
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
