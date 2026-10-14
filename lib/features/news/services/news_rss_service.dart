@@ -202,7 +202,8 @@ class NewsRssService {
     NewsInterestProfile profile, {
     bool applyRelevanceFilter = true,
   }) async {
-    if (profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) {
+    if (profile.topics.every((topic) => topic.trim().isEmpty) &&
+        !profile.includeCriticalOutsideInterests) {
       return const <NewsArticle>[];
     }
     final isDiscoveryFeed =
