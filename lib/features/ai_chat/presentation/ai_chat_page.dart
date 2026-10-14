@@ -64,6 +64,7 @@ class _AIChatPageState extends State<AIChatPage> {
         .toList(growable: false);
     _input.clear();
     final token = AICancellationToken();
+    final requestStopwatch = Stopwatch()..start();
     final streamedOutput = StringBuffer();
     late int assistantMessageIndex;
     setState(() {
@@ -118,6 +119,7 @@ class _AIChatPageState extends State<AIChatPage> {
           _scrollToBottom();
         },
       );
+      requestStopwatch.stop();
       if (!mounted) return;
       setState(() {
         _messages[assistantMessageIndex] = _ChatMessage(
@@ -126,6 +128,7 @@ class _AIChatPageState extends State<AIChatPage> {
           performance: _localPerformanceLabel(
             response.providerId,
             response.metadata,
+            totalDurationMs: requestStopwatch.elapsedMilliseconds,
           ),
         );
       });
@@ -420,8 +423,9 @@ class _ChatMessage {
 
 String? _localPerformanceLabel(
   String providerId,
-  Map<String, Object?> metadata,
-) {
+  Map<String, Object?> metadata, {
+  required int totalDurationMs,
+}) {
   if (providerId != 'local-llama' && metadata['local'] != true) return null;
 
   final tokenCount = metadata['generatedTokenCount'];
@@ -437,9 +441,11 @@ String? _localPerformanceLabel(
   String decimal(num value) => value.toStringAsFixed(1).replaceAll('.', ',');
   final details = <String>[
     'LOCAL AI',
-    '\${decimal(tokensPerSecond)} ток/с',
-    '\${decimal(durationMs / 1000)} с',
-    if (firstTokenMs is num) 'первый токен \${decimal(firstTokenMs / 1000)} с',
+    '${decimal(tokensPerSecond)} ток/с',
+    '${tokenCount.toInt()} токенов',
+    'генерация ${decimal(durationMs / 1000)} с',
+    'ответ за ${decimal(totalDurationMs / 1000)} с',
+    if (firstTokenMs is num) 'первый токен ${decimal(firstTokenMs / 1000)} с',
   ];
   return details.join('  •  ');
 }
