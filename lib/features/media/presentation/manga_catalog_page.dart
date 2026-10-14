@@ -972,4 +972,3 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     );
   }
 }
-Formatted 2 files (1 changed) in 0.04 seconds.
