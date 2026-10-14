@@ -82,8 +82,7 @@ class MangaReadingProgressRepository {
   final MangaProgressStringStore _store;
   Future<void> _operations = Future<void>.value();
 
-  Future<List<MangaReadingProgress>> getAll() =>
-      _serialize(_readAll);
+  Future<List<MangaReadingProgress>> getAll() => _serialize(_readAll);
 
   Future<MangaReadingProgress?> getById(String mangaId) async {
     final records = await getAll();
