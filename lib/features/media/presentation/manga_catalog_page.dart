@@ -470,7 +470,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
               if (_pages.isNotEmpty)
                 ListView.builder(
                   controller: _scroll,
-                  scrollCacheExtent: MediaQuery.sizeOf(context).height * 1.5,
+                  scrollCacheExtent: const ScrollCacheExtent.viewport(1.5),
                   itemCount: _pages.length + (_loadingNext ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index >= _pages.length) {
