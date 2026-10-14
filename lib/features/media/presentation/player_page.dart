@@ -72,6 +72,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   int _selectedEpisode = 0;
   int _playerGeneration = 0;
   Timer? _progressTimer;
+  Timer? _positionTimer;
   final Set<int> _resumePromptedEpisodes = <int>{};
   final Set<int> _watchedEpisodes = <int>{};
   List<MediaSegmentMarker> _segmentMarkers = const [];
@@ -126,7 +127,13 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     unawaited(_loadLikedVoiceovers());
     _progressTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       unawaited(_saveProgress());
-      if (mounted) setState(() {});
+    });
+    // Refresh overlay controls more often than we persist progress so skip
+    // buttons appear promptly when playback enters a marked segment.
+    _positionTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
+      if (mounted && (_player?.isInitialized ?? false)) {
+        setState(() {});
+      }
     });
     _selectedVoiceover = widget.searchService.preferredVoiceover(
       widget.item,
@@ -175,6 +182,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     _playerGeneration++;
     WidgetsBinding.instance.removeObserver(this);
     _progressTimer?.cancel();
+    _positionTimer?.cancel();
     unawaited(_saveProgress());
     _player?.dispose();
     super.dispose();
