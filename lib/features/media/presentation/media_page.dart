@@ -65,7 +65,6 @@ class _MediaPageState extends State<MediaPage> {
   }
 
   Future<void> _loadCatalogToken() async {
-    if (widget.searchService.isConfigured) return;
     try {
       final token = await _catalogTokenStore.readToken();
       if (!mounted || token == null || token.isEmpty) return;
