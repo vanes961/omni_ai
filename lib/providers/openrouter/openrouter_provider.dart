@@ -229,4 +229,3 @@ class OpenRouterProvider implements AIProvider {
     if (_ownsClient) _client.close();
   }
 }
-Formatted 3 files (1 changed) in 0.05 seconds.
