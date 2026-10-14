@@ -5,6 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:omni_ai/features/media/services/ani_skip_segment_provider.dart';
 import 'package:omni_ai/core/network/widgets/network_image_with_fallback.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/data/torrserver_client.dart';
@@ -468,6 +471,77 @@ void main() {
 
     expect(sources, [Uri.parse(episodeUrl)]);
     expect(sources, isNot(contains(Uri.parse(unrelatedFallback))));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('AniSkip uses absolute episode numbering across seasons', (
+    tester,
+  ) async {
+    final requestedPaths = <String>[];
+    final aniSkip = AniSkipSegmentProvider(
+      client: MockClient((request) async {
+        requestedPaths.add(request.url.path);
+        return http.Response('{"found":false,"results":[]}', 200);
+      }),
+    );
+    final item = MediaItem(
+      id: 'aniskip-season-numbering-test',
+      title: 'AniSkip Season Numbering Test',
+      type: 'Аниме',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/season-1-episode-1.mp4',
+      malId: 9253,
+      episodes: const [
+        MediaEpisode(
+          number: 1,
+          seasonNumber: 1,
+          title: 'Season one episode one',
+          videoUrl: 'https://example.com/season-1-episode-1.mp4',
+        ),
+        MediaEpisode(
+          number: 2,
+          seasonNumber: 1,
+          title: 'Season one episode two',
+          videoUrl: 'https://example.com/season-1-episode-2.mp4',
+        ),
+        MediaEpisode(
+          number: 1,
+          seasonNumber: 2,
+          title: 'Season two episode one',
+          videoUrl: 'https://example.com/season-2-episode-1.mp4',
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          aniSkipSegmentProvider: aniSkip,
+          playerFactory: (_) => _FakePlaybackController(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(requestedPaths, contains('/v2/skip-times/9253/1'));
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('season-selector')),
+      160,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('player-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('season-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('СЕЗОН 02').last);
+    await tester.pumpAndSettle();
+
+    expect(requestedPaths, contains('/v2/skip-times/9253/3'));
     expect(tester.takeException(), isNull);
   });
 
