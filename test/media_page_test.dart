@@ -102,7 +102,8 @@ void main() {
 
     expect(find.text('ВЫБЕРИТЕ ВИДЕОФАЙЛ'), findsOneWidget);
     await tester.tap(find.text('ОТМЕНА'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(playerSources, isEmpty);
     expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsOneWidget);
