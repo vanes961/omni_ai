@@ -402,6 +402,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
     Object? playerError;
     final playableSources = <String>[];
+    var torrentFileSelectionCancelled = false;
     for (final candidate in sources) {
       final candidateUri = Uri.tryParse(candidate);
       if (candidateUri?.scheme.toLowerCase() != 'magnet') {
@@ -433,6 +434,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
           final selectedFileIndex = await _chooseTorrServerFile(selection);
           if (selectedFileIndex == null) {
             playerError = StateError('Выбор видеофайла отменён.');
+            torrentFileSelectionCancelled = true;
             break;
           }
           if (!mounted || generation != _playerGeneration) return;
@@ -452,6 +454,15 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       } finally {
         if (widget.torrServerResolver == null) resolver.close();
       }
+    }
+
+    if (torrentFileSelectionCancelled) {
+      if (!mounted || generation != _playerGeneration) return;
+      setState(() {
+        _playerError = playerError;
+        _isLoading = false;
+      });
+      return;
     }
 
     for (var index = 0; index < playableSources.length; index++) {
