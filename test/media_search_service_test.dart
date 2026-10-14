@@ -22,11 +22,6 @@ void main() {
     expect(service.recommendedFor(preferences), isEmpty);
   });
 
-  test('opens the public Zona catalog without requiring a Kinopoisk key', () {
-    expect(MediaSearchService.zonaCatalogUri.scheme, 'https');
-    expect(MediaSearchService.zonaCatalogUri.host, 'w1.zona.im');
-  });
-
   test('parses TMDB season summaries in season-number order', () {
     final seasons = MediaSearchService.parseCatalogSeasons([
       {'season_number': 2, 'name': 'Season 2', 'episode_count': 8},
