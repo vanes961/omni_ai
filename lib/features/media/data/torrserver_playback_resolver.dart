@@ -159,16 +159,12 @@ class TorrServerPlaybackResolver {
     final seasonEpisodePatterns = <RegExp>[
       if (season != null)
         RegExp(
-          r'(?:^|[/\s._-])0*' + season + r'x0*' + episode + r'(?:\D|$)',
+          r'(?:^|[/\s._-])s0*' + season + r'\s*e0*' + episode + r'(?:\D|$)',
           caseSensitive: false,
         ),
       if (season != null)
         RegExp(
-          r'(?:^|[/\s._-])0*' +
-              season +
-              r'x0*' +
-              episode +
-              r'(?:\D|$)',
+          r'(?:^|[/\s._-])0*' + season + r'x0*' + episode + r'(?:\D|$)',
           caseSensitive: false,
         ),
       if (season != null)
