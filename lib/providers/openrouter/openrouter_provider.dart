@@ -9,8 +9,9 @@ import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
 import 'openrouter_api_config.dart';
 import 'openrouter_api_key_source.dart';
 
-/// OpenAI-compatible OpenRouter chat completions. It deliberately does not
-/// request any paid web-search tool and never selects a paid fallback itself.
+/// OpenAI-compatible OpenRouter chat completions. Web search is requested
+/// only when the caller explicitly opts in; this provider never selects a paid
+/// fallback by itself.
 class OpenRouterProvider implements AIProvider {
   OpenRouterProvider({
     required this.apiKeySource,

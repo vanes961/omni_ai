@@ -38,14 +38,16 @@ class OpenRouterFranchiseChronologyResearcher {
         .toList(growable: false);
     final response = await engine.execute(
       AIRequest(
-        id: 'franchise-chronology-${Uri.encodeComponent(franchiseId)}-'
+        id:
+            'franchise-chronology-${Uri.encodeComponent(franchiseId)}-'
             '${DateTime.now().millisecondsSinceEpoch}',
         systemInstruction:
             'Ты исследователь хронологии кинофраншиз. Используй веб-поиск, '
             'не выдумывай источники и не подменяй порядок выхода порядком '
             'просмотра. Если надёжно установить полный порядок нельзя, '
             'верни пустой JSON-массив. Ответ — только валидный JSON-массив.',
-        prompt: '''
+        prompt:
+            '''
 Определи рекомендуемый сюжетный порядок просмотра только для перечисленных
 элементов одной франшизы. Используй веб-поиск. У каждого элемента должен
 быть источник, подтверждающий его участие во франшизе или его место в
@@ -104,8 +106,9 @@ ${jsonEncode(payload)}
         ),
       );
     }
-    final cloudProposals =
-        List<FranchiseChronologyProposal>.unmodifiable(proposals);
+    final cloudProposals = List<FranchiseChronologyProposal>.unmodifiable(
+      proposals,
+    );
     final local = localEngine;
     if (local == null || cloudProposals.length != entries.length) {
       return cloudProposals;
@@ -129,32 +132,36 @@ ${jsonEncode(payload)}
         entries.any((entry) => !byId.containsKey(entry.id))) {
       return proposals;
     }
-    final evidence = entries.map((entry) {
-      final proposal = byId[entry.id]!;
-      return <String, Object?>{
-        'id': entry.id,
-        'title': entry.title,
-        'releaseDate': entry.releaseDate,
-        'overview': entry.overview,
-        'sourceUrl': proposal.sourceUrl,
-        'sourceTitle': proposal.sourceTitle,
-        'sourceExcerpt': proposal.sourceExcerpt,
-        'cloudSuggestedOrder': proposal.order,
-        'cloudSpoilerRisk': proposal.spoilerRisk,
-      };
-    }).toList(growable: false);
+    final evidence = entries
+        .map((entry) {
+          final proposal = byId[entry.id]!;
+          return <String, Object?>{
+            'id': entry.id,
+            'title': entry.title,
+            'releaseDate': entry.releaseDate,
+            'overview': entry.overview,
+            'sourceUrl': proposal.sourceUrl,
+            'sourceTitle': proposal.sourceTitle,
+            'sourceExcerpt': proposal.sourceExcerpt,
+            'cloudSuggestedOrder': proposal.order,
+            'cloudSpoilerRisk': proposal.spoilerRisk,
+          };
+        })
+        .toList(growable: false);
 
     try {
       final response = await engine.execute(
         AIRequest(
-          id: 'franchise-local-order-${Uri.encodeComponent(franchiseId)}-'
+          id:
+              'franchise-local-order-${Uri.encodeComponent(franchiseId)}-'
               '${DateTime.now().millisecondsSinceEpoch}',
           systemInstruction:
               'Ты локальный помощник по хронологии кинофраншиз. Используй '
               'только переданные названия, даты и найденные источники. '
               'Не выдумывай элементы или факты. Если данные неоднозначны, '
               'сохрани предложенный облаком порядок и отметь риск спойлеров.',
-          prompt: '''
+          prompt:
+              '''
 Определи умный сюжетный порядок просмотра для всех элементов ниже.
 Облачный AI уже выполнил поиск. Источники и выдержки — реальные URL citations,
 полученные от провайдера. Используй их вместе с датами и описаниями; не
@@ -230,8 +237,7 @@ ${jsonEncode(evidence)}
         proposal.sourceTitle?.trim().isNotEmpty != true) {
       return false;
     }
-    final evidence =
-        '${proposal.sourceTitle} ${proposal.sourceExcerpt ?? ''}';
+    final evidence = '${proposal.sourceTitle} ${proposal.sourceExcerpt ?? ''}';
     final normalizedEvidence = _normalize(evidence);
     final normalizedTitle = _normalize(entry.title);
     if (normalizedTitle.isEmpty) return false;
