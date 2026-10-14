@@ -98,7 +98,8 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('ВЫБЕРИТЕ ВИДЕОФАЙЛ'), findsOneWidget);
     await tester.tap(find.text('ОТМЕНА'));
