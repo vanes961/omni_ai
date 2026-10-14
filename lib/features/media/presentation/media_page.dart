@@ -416,12 +416,17 @@ class _MediaPageState extends State<MediaPage> {
             );
           }
           if (rankedCombined.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(24),
+            final message = _query.trim().isNotEmpty &&
+                    !widget.searchService.isConfigured
+                ? 'ОНЛАЙН-КАТАЛОГ НЕ НАСТРОЕН: отсутствует TMDB_ACCESS_TOKEN. Реальный поиск недоступен.'
+                : 'КАТАЛОГ И ИСТОЧНИКИ ВОСПРОИЗВЕДЕНИЯ ПОКА НЕ ПОДКЛЮЧЕНЫ.';
+            return Padding(
+              padding: const EdgeInsets.all(24),
               child: Center(
                 child: Text(
-                  'КАТАЛОГ И ИСТОЧНИКИ ВОСПРОИЗВЕДЕНИЯ ПОКА НЕ ПОДКЛЮЧЕНЫ.',
-                  style: TextStyle(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
                     color: SystemCorePalette.muted,
                     fontSize: 12,
                   ),
