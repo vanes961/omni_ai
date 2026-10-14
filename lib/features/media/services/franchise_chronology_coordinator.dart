@@ -33,10 +33,7 @@ typedef FranchiseChronologyEvidenceVerifier =
 abstract interface class FranchiseChronologyCache {
   Future<List<MediaFranchiseEntry>?> read(String franchiseId);
 
-  Future<void> write(
-    String franchiseId,
-    List<MediaFranchiseEntry> entries,
-  );
+  Future<void> write(String franchiseId, List<MediaFranchiseEntry> entries);
 }
 
 /// Coordinates cache -> cloud research -> independent evidence verification.
@@ -79,19 +76,21 @@ class FranchiseChronologyCoordinator {
       return List<MediaFranchiseEntry>.unmodifiable(entries);
     }
 
-    final result = entries.map((entry) {
-      final proposal = verified[entry.id]!;
-      return MediaFranchiseEntry(
-        id: entry.id,
-        title: entry.title,
-        overview: entry.overview,
-        releaseDate: entry.releaseDate,
-        posterUrl: entry.posterUrl,
+    final result = entries
+        .map((entry) {
+          final proposal = verified[entry.id]!;
+          return MediaFranchiseEntry(
+            id: entry.id,
+            title: entry.title,
+            overview: entry.overview,
+            releaseDate: entry.releaseDate,
+            posterUrl: entry.posterUrl,
         chronologyOrder: proposal.order,
         chronologySpoilerRisk: proposal.spoilerRisk,
         chronologySourceUrl: proposal.sourceUrl,
-      );
-    }).toList(growable: false);
+          );
+        })
+        .toList(growable: false);
 
     await cache.write(
       franchiseId,
@@ -122,10 +121,7 @@ class FranchiseChronologyCoordinator {
           uri.host.isEmpty) {
         return null;
       }
-      final isVerified = await verifyEvidence(
-        proposal: proposal,
-        entry: entry,
-      );
+      final isVerified = await verifyEvidence(proposal: proposal, entry: entry);
       if (!isVerified) return null;
       byId[proposal.itemId] = proposal;
     }
