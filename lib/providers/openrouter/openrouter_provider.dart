@@ -82,6 +82,7 @@ class OpenRouterProvider implements AIProvider {
                     'type': 'openrouter:web_search',
                     'parameters': {
                       'engine': 'parallel',
+                      'mode': 'turbo',
                       'max_results': 3,
                       'max_total_results': 5,
                       'max_uses': 1,
