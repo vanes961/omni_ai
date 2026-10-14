@@ -53,13 +53,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(requests, 2);
-    expect(
-      find.descendant(
-        of: find.byType(ListView),
-        matching: find.text('Berserk'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('manga-catalog-berserk-id')), findsOneWidget);
+    expect(find.text('Berserk'), findsOneWidget);
     expect(find.textContaining('Не удалось загрузить каталог'), findsNothing);
     service.close();
   });
