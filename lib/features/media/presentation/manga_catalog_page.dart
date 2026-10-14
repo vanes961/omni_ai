@@ -12,7 +12,12 @@ import 'package:omni_ai/features/media/services/manga_chapter_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MangaCatalogPage extends StatefulWidget {
-  const MangaCatalogPage({super.key, this.catalogService, this.chapterService, this.favoritesRepository});
+  const MangaCatalogPage({
+    super.key,
+    this.catalogService,
+    this.chapterService,
+    this.favoritesRepository,
+  });
 
   final MangaCatalogService? catalogService;
   final MangaChapterService? chapterService;
