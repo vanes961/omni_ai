@@ -484,25 +484,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (mounted) {
         setState(() => _lastRankedCandidateCount = rankedArticles.length);
       }
-      // A digest describes a specific set of articles. Never keep showing a
-      // digest generated from the previous feed after a successful refresh.
-      await _newsCache.saveDigest(null);
-      if (revisionAtStart != _interestRevision) {
-        await _newsCache.clear();
-        return;
-      }
-      await _newsCache.saveArticles(
-        rankedArticles,
-        selectedTopics: profile.topics,
-        includeCriticalOutsideInterests:
-            profile.includeCriticalOutsideInterests,
-      );
-      if (revisionAtStart != _interestRevision) {
-        // Topic changes clear the cache too, but an in-flight write may finish
-        // afterward. Clear again so stale results cannot survive that race.
-        await _newsCache.clear();
-        return;
-      }
+      // The network feed is usable independently of local cache persistence.
+      // Publish the fresh articles first so a storage failure cannot turn a
+      // successful RSS refresh into an empty screen.
       if (!mounted) return;
       setState(() {
         _articles = rankedArticles;
@@ -512,6 +496,37 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _digestError = null;
         _newsError = null;
       });
+
+      // A digest describes a specific set of articles. Never keep showing a
+      // digest generated from the previous feed after a successful refresh.
+      // Cache writes are best-effort: report a storage warning, but keep the
+      // freshly fetched articles visible if persistence fails.
+      try {
+        await _newsCache.saveDigest(null);
+        if (revisionAtStart != _interestRevision) {
+          await _newsCache.clear();
+          return;
+        }
+        await _newsCache.saveArticles(
+          rankedArticles,
+          selectedTopics: profile.topics,
+          includeCriticalOutsideInterests:
+              profile.includeCriticalOutsideInterests,
+        );
+        if (revisionAtStart != _interestRevision) {
+          // Topic changes clear the cache too, but an in-flight write may finish
+          // afterward. Clear again so stale results cannot survive that race.
+          await _newsCache.clear();
+          return;
+        }
+      } catch (_) {
+        if (mounted && revisionAtStart == _interestRevision) {
+          setState(() {
+            _newsError =
+                'Новости загружены, но не удалось сохранить их для офлайн-доступа.';
+          });
+        }
+      }
     } catch (error) {
       // A failed request for an old topic selection must not surface an error
       // in the newly selected feed.
