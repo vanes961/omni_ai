@@ -42,6 +42,8 @@ class _MediaPageState extends State<MediaPage> {
   Set<String> _likedIds = <String>{};
   String _query = '';
   String? _selectedType;
+  String? _selectedGenre;
+  bool _sortByRating = false;
   Timer? _searchDebounce;
   Future<List<MediaItem>>? _onlineSearch;
 
@@ -88,7 +90,8 @@ class _MediaPageState extends State<MediaPage> {
     final results = _rankByFavoriteInterests(
       widget.searchService.search(_query, type: _selectedType),
     );
-    final isFiltering = _query.isNotEmpty || _selectedType != null;
+    final isFiltering =
+        _query.isNotEmpty || _selectedType != null || _selectedGenre != null;
 
     return Material(
       color: Colors.transparent,
@@ -330,7 +333,7 @@ class _MediaPageState extends State<MediaPage> {
                   _TypeFilter(
                     label: type,
                     selected: _selectedType == type,
-                    onTap: () => setState(() => _selectedType = type),
+                    onTap: () => _selectMediaType(type),
                   ),
               ],
             ),
@@ -338,6 +341,24 @@ class _MediaPageState extends State<MediaPage> {
         ],
       ),
     );
+  }
+
+  void _selectMediaType(String? type) {
+    setState(() {
+      _selectedType = type;
+      _onlineSearch = null;
+    });
+    if (_query.trim().isEmpty) return;
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      setState(() {
+        _onlineSearch = widget.searchService.searchOnline(
+          _query,
+          type: _selectedType,
+        );
+      });
+    });
   }
 
   OutlineInputBorder _searchBorder() => OutlineInputBorder(
@@ -364,7 +385,27 @@ class _MediaPageState extends State<MediaPage> {
             }
           }
 
-          final rankedCombined = _rankByFavoriteInterests(combined);
+          final availableGenres = combined
+              .expand((item) => item.categories)
+              .map((genre) => genre.trim())
+              .where((genre) => genre.isNotEmpty)
+              .toSet()
+              .toList()
+            ..sort();
+          final filtered = combined
+              .where(
+                (item) =>
+                    _selectedGenre == null ||
+                    item.categories.any(
+                      (genre) =>
+                          genre.toLowerCase() == _selectedGenre!.toLowerCase(),
+                    ),
+              )
+              .toList();
+          final rankedCombined = _rankByFavoriteInterests(filtered);
+          if (_sortByRating) {
+            rankedCombined.sort((a, b) => b.rating.compareTo(a.rating));
+          }
 
           if (rankedCombined.isEmpty &&
               snapshot.connectionState == ConnectionState.waiting) {
@@ -389,9 +430,50 @@ class _MediaPageState extends State<MediaPage> {
           }
 
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (snapshot.connectionState == ConnectionState.waiting)
                 const LinearProgressIndicator(minHeight: 2),
+              if (availableGenres.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ChoiceChip(
+                        key: const ValueKey('media-genre-all'),
+                        label: const Text('Все жанры'),
+                        selected: _selectedGenre == null,
+                        onSelected: (_) =>
+                            setState(() => _selectedGenre = null),
+                      ),
+                      for (final genre in availableGenres)
+                        ChoiceChip(
+                          key: ValueKey('media-genre-$genre'),
+                          label: Text(genre),
+                          selected: _selectedGenre == genre,
+                          onSelected: (_) => setState(
+                            () => _selectedGenre =
+                                _selectedGenre == genre ? null : genre,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: FilterChip(
+                    key: const ValueKey('media-sort-rating'),
+                    label: const Text('Сначала высокий рейтинг'),
+                    selected: _sortByRating,
+                    onSelected: (selected) =>
+                        setState(() => _sortByRating = selected),
+                  ),
+                ),
+              ),
               ListView.separated(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 shrinkWrap: true,
