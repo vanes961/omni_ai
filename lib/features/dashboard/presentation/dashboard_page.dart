@@ -195,7 +195,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildTab() {
     return switch (_selectedTab) {
-      0 => NewsCenterPage(aiEngine: _aiDependencies.engine),
+      0 => NewsCenterPage(
+        aiEngine: _aiDependencies.engine,
+        legacyPreferences: widget.preferences,
+        preferencesStore: _preferencesStore,
+      ),
       1 => AIChatPage(dependencies: _chatDependencies),
       2 => MediaPage(preferences: widget.preferences),
       3 => FavoritesPage(),

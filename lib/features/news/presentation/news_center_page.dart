@@ -21,6 +21,7 @@ import 'package:omni_ai/features/news/services/news_digest_service.dart';
 import 'package:omni_ai/features/news/services/news_source_localization_service.dart';
 import 'package:omni_ai/features/news/services/news_reminder_service.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
+import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 class NewsCenterPage extends StatefulWidget {
   const NewsCenterPage({
@@ -29,12 +30,16 @@ class NewsCenterPage extends StatefulWidget {
     this.aiEngine,
     this.newsService,
     this.newsCache,
+    this.legacyPreferences,
+    this.preferencesStore,
   });
 
   final NewsInterestRepository? repository;
   final AIEngine? aiEngine;
   final NewsRssService? newsService;
   final SharedPreferencesNewsCache? newsCache;
+  final UserPreferences? legacyPreferences;
+  final UserPreferencesStore? preferencesStore;
 
   @override
   State<NewsCenterPage> createState() => _NewsCenterPageState();
@@ -89,7 +94,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         widget.repository ?? SharedPreferencesNewsInterestRepository();
     _newsService = widget.newsService ?? NewsRssService();
     _newsCache = widget.newsCache ?? SharedPreferencesNewsCache();
-    _profileFuture = _repository.load();
+    _profileFuture = _loadProfile();
     unawaited(_loadReactionWeights());
     unawaited(_loadReminderSettings());
     unawaited(_loadNewsCache());
@@ -101,6 +106,88 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     _newsService.dispose();
     _customTopicController.dispose();
     super.dispose();
+  }
+
+
+  Future<NewsInterestProfile> _loadProfile() async {
+    final profile = await _repository.load();
+    final legacy = widget.legacyPreferences;
+    if (legacy == null || legacy.newsInterestsMigrated) return profile;
+
+    // Preserve the user's previously selected categories when the dedicated
+    // news-interest profile is first introduced. Do not restore retired
+    // categories such as "life" or Telegram channels as news topics.
+    final migratedTopics = profile.topics.isNotEmpty
+        ? profile.topics
+        : _legacyNewsTopics(legacy.categories);
+    var result = profile;
+    if (profile.topics.isEmpty && migratedTopics.isNotEmpty) {
+      result = profile.copyWith(topics: migratedTopics);
+      try {
+        await _repository.save(result);
+      } catch (_) {
+        // Keep the migration retryable if the new profile cannot be saved.
+        return profile;
+      }
+    }
+
+    legacy.newsInterestsMigrated = true;
+    final preferencesStore = widget.preferencesStore;
+    if (preferencesStore != null) {
+      try {
+        await preferencesStore.save(legacy);
+      } catch (_) {
+        // The migrated news profile is already saved; a later launch can
+        // safely mark the migration complete without re-importing topics.
+      }
+    }
+    return result;
+  }
+
+  List<String> _legacyNewsTopics(List<String> categories) {
+    const aliases = <String, String>{
+      'anime': 'anime',
+      'аниме': 'anime',
+      'manga': 'manga',
+      'манга': 'manga',
+      'games': 'games',
+      'gaming': 'games',
+      'video games': 'games',
+      'игры': 'games',
+      'гейминг': 'games',
+      'видеоигры': 'games',
+      'movies': 'movies',
+      'movie': 'movies',
+      'films': 'movies',
+      'film': 'movies',
+      'кино': 'movies',
+      'фильмы': 'movies',
+      'series': 'series',
+      'tv series': 'series',
+      'сериалы': 'series',
+      'technology': 'technology',
+      'tech': 'technology',
+      'технологии': 'technology',
+      'технология': 'technology',
+      'artificial intelligence': 'artificial intelligence',
+      'ai': 'artificial intelligence',
+      'ии': 'artificial intelligence',
+      'нейросети': 'artificial intelligence',
+      'искусственный интеллект': 'artificial intelligence',
+      'science': 'science',
+      'наука': 'science',
+      'space': 'space',
+      'космос': 'space',
+      'gadgets': 'gadgets',
+      'гаджеты': 'gadgets',
+    };
+    final topics = <String>{};
+    for (final category in categories) {
+      final normalized = category.trim().toLowerCase();
+      final topic = aliases[normalized];
+      if (topic != null) topics.add(topic);
+    }
+    return topics.toList()..sort();
   }
 
   Future<void> _loadNewsCache() async {

@@ -10,6 +10,8 @@ class UserPreferences {
   List<String> voiceDubbing = [];
   List<String> tgChannels = [];
   bool autoMirrorEnabled = true;
+  // Prevent legacy category migration from re-adding topics after the user edits them.
+  bool newsInterestsMigrated = false;
   bool proxyEnabled = false;
   String proxyType = 'http';
   String proxyHost = '';
@@ -22,6 +24,7 @@ class UserPreferences {
     'voiceDubbing': voiceDubbing,
     'tgChannels': tgChannels,
     'autoMirrorEnabled': autoMirrorEnabled,
+    'newsInterestsMigrated': newsInterestsMigrated,
     'proxyEnabled': proxyEnabled,
     'proxyType': proxyType,
     'proxyHost': proxyHost,
@@ -35,6 +38,9 @@ class UserPreferences {
       ..favoriteTitles = _stringList(json['favoriteTitles'])
       ..voiceDubbing = _stringList(json['voiceDubbing'])
       ..tgChannels = _stringList(json['tgChannels'])
+      ..newsInterestsMigrated = json['newsInterestsMigrated'] is bool
+          ? json['newsInterestsMigrated'] as bool
+          : false
       ..autoMirrorEnabled = json['autoMirrorEnabled'] is bool
           ? json['autoMirrorEnabled'] as bool
           : true
