@@ -1,13 +1,3 @@
-import 'dart:async';
-
-import 'package:flutter/material.dart';
-import 'package:omni_ai/core/network/widgets/network_image_with_fallback.dart';
-import 'package:omni_ai/features/media/data/media_item.dart';
-import 'package:omni_ai/features/favorites/data/favorite_item.dart';
-import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
-import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
-import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
-import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/presentation/media_details_page.dart';
 import 'package:omni_ai/features/media/presentation/manga_catalog_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
@@ -300,13 +290,17 @@ class _MediaPageState extends State<MediaPage> {
             child: OutlinedButton.icon(
               key: const ValueKey('open-manga-catalog'),
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const MangaCatalogPage()),
+                MaterialPageRoute<void>(
+                  builder: (_) => const MangaCatalogPage(),
+                ),
               ),
               icon: const Icon(Icons.menu_book_rounded, size: 17),
               label: const Text('МАНГА • РУССКАЯ ЧИТАЛКА'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: SystemCorePalette.green,
-                side: BorderSide(color: SystemCorePalette.green.withValues(alpha: 0.45)),
+                side: BorderSide(
+                  color: SystemCorePalette.green.withValues(alpha: 0.45),
+                ),
               ),
             ),
           ),
