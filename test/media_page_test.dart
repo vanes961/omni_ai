@@ -640,6 +640,49 @@ void main() {
     expect(controllers[2].isDisposed, isFalse);
   });
 
+  testWidgets('saves playback progress when the app is backgrounded', (
+    tester,
+  ) async {
+    final resumeStore = _FakeMediaResumePositionStore();
+    late _FakePlaybackController controller;
+    final item = MediaItem(
+      id: 'background-progress-test',
+      title: 'Background Progress Test',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/background-progress.mp4',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          resumePositionStore: resumeStore,
+          playerFactory: (_) {
+            controller = _FakePlaybackController();
+            return controller;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    controller.position = const Duration(minutes: 8, seconds: 17);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+
+    expect(
+      resumeStore.positions['background-progress-test:0'],
+      const Duration(minutes: 8, seconds: 17),
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('saves the previous episode position before switching', (
     tester,
   ) async {
