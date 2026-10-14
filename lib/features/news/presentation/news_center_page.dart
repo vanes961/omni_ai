@@ -108,7 +108,6 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     super.dispose();
   }
 
-
   Future<NewsInterestProfile> _loadProfile() async {
     final profile = await _repository.load();
     final legacy = widget.legacyPreferences;
