@@ -34,6 +34,12 @@ void main() {
           '<description>A publisher announced the next anime season.</description>'
           '<pubDate>Mon, 12 Oct 2026 09:00:00 GMT</pubDate>'
           '<source>Anime News</source>'
+          '</item><item>'
+          '<title>Anime: Second story in the feed</title>'
+          '<link>https://publisher.example/anime-second</link>'
+          '<description>Another relevant anime announcement.</description>'
+          '<pubDate>Mon, 12 Oct 2026 08:00:00 GMT</pubDate>'
+          '<source>Anime News</source>'
           '</item></channel></rss>',
           200,
           headers: {'content-type': 'application/rss+xml; charset=utf-8'},
@@ -55,6 +61,8 @@ void main() {
     expect(requestCount, greaterThan(0));
     expect(find.byType(NewsCenterPage), findsOneWidget);
     expect(find.text('Anime: New season announced'), findsOneWidget);
+    expect(find.text('Anime: Second story in the feed'), findsOneWidget);
+    expect(find.text('Диагностика системы'), findsOneWidget);
     expect(find.textContaining('ANIME NEWS'), findsOneWidget);
     expect(find.text('Не удалось загрузить новости.'), findsNothing);
     expect(tester.takeException(), isNull);
