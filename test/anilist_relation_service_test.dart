@@ -136,6 +136,6 @@ Map<String, Object?> _edge(
   'node': {
     'id': id,
     'type': type,
-    'siteUrl': url ?? 'https://anilist.co/' + type.toLowerCase() + '/' + id.toString(),
+    'siteUrl': url ?? 'https://anilist.co/${type.toLowerCase()}/$id',
   },
 };
