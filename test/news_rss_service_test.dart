@@ -636,21 +636,19 @@ void main() {
   );
 
   test(
-    'requests top stories when no interests are selected',
+    'does not request top stories when no interests are selected',
     () async {
       var requests = 0;
       final service = NewsRssService(
         client: MockClient((request) async {
           requests++;
-          expect(request.url.path, '/rss');
-          expect(request.url.queryParameters, isNot(contains('q')));
           return http.Response('', 200);
         }),
       );
       addTearDown(service.dispose);
 
       expect(await service.fetch(const NewsInterestProfile()), isEmpty);
-      expect(requests, 1);
+      expect(requests, 0);
     },
   );
 
@@ -762,36 +760,19 @@ void main() {
   });
 
   test(
-    'loads broad top stories when no interests are configured',
+    'does not load broad top stories without configured interests',
     () async {
+      var requests = 0;
       final service = NewsRssService(
-        client: MockClient((request) async {
-          expect(request.url.path, '/rss');
-          expect(request.url.queryParameters, isNot(contains('q')));
-          return http.Response('''<rss><channel>
-            <item>
-              <title>International science update</title>
-              <link>https://publisher.example/science</link>
-              <description>A new scientific discovery was announced.</description>
-              <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
-              <source>Science News</source>
-            </item>
-            <item>
-              <title>International technology update</title>
-              <link>https://publisher.example/technology</link>
-              <description>A new technology was announced.</description>
-              <pubDate>Sat, 10 Oct 2026 11:00:00 GMT</pubDate>
-              <source>Technology News</source>
-            </item>
-          </channel></rss>''', 200);
+        client: MockClient((_) async {
+          requests++;
+          return http.Response('<rss><channel /></rss>', 200);
         }),
       );
       addTearDown(service.dispose);
 
-      final articles = await service.fetch(const NewsInterestProfile());
-
-      expect(articles, hasLength(2));
-      expect(articles.first.title, 'International science update');
+      expect(await service.fetch(const NewsInterestProfile()), isEmpty);
+      expect(requests, 0);
     },
   );
 
