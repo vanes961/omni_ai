@@ -519,9 +519,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         player.duration <= Duration.zero) {
       return;
     }
-    final episodeNumber = _hasEpisodes
-        ? widget.item.episodes[episodeIndex].number
-        : episodeIndex + 1;
+    // AniSkip uses absolute episode numbering across seasons. MediaEpisode.number
+    // is season-local in many catalogs, so use the ordered list index instead.
+    final episodeNumber = episodeIndex + 1;
     final markers = await _aniSkipProvider.load(
       malId: malId,
       episodeNumber: episodeNumber,
