@@ -128,6 +128,112 @@ class MediaDetailsPage extends StatelessWidget {
                   )
                   .toList(),
             ),
+            if (d?.franchiseItems.isNotEmpty == true) ...[
+              const SizedBox(height: 20),
+              _Label(
+                d!.franchiseName.isEmpty
+                    ? 'ФИЛЬМЫ ФРАНШИЗЫ'
+                    : d.franchiseName.toUpperCase(),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Подтверждённые фильмы этой коллекции · порядок выхода',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 184,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: d.franchiseItems.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 10),
+                  itemBuilder: (context, index) {
+                    final related = d.franchiseItems[index];
+                    final year = related.releaseDate.length >= 4
+                        ? related.releaseDate.substring(0, 4)
+                        : '';
+                    return SizedBox(
+                      width: 104,
+                      child: InkWell(
+                        key: ValueKey('franchise-film-${related.id}'),
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => MediaDetailsPage(
+                              item: MediaItem(
+                                id: related.id,
+                                title: related.title,
+                                type: 'Фильм',
+                                posterUrl: related.posterUrl,
+                                rating: 0,
+                                voiceovers: const [],
+                                videoUrl: '',
+                                description: related.overview,
+                              ),
+                              searchService: searchService,
+                              preferences: preferences,
+                              playerFactory: playerFactory,
+                            ),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: related.posterUrl.isEmpty
+                                  ? Container(
+                                      width: 104,
+                                      height: 132,
+                                      color: SystemCorePalette.panel,
+                                      child: const Icon(
+                                        Icons.movie_outlined,
+                                        color: SystemCorePalette.muted,
+                                      ),
+                                    )
+                                  : Image.network(
+                                      related.posterUrl,
+                                      width: 104,
+                                      height: 132,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, _, _) => Container(
+                                        width: 104,
+                                        height: 132,
+                                        color: SystemCorePalette.panel,
+                                        child: const Icon(
+                                          Icons.movie_outlined,
+                                          color: SystemCorePalette.muted,
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              related.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (year.isNotEmpty)
+                              Text(
+                                year,
+                                style: const TextStyle(
+                                  color: SystemCorePalette.muted,
+                                  fontSize: 10,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             const _Label('АКТЁРСКИЙ СОСТАВ'),
             const SizedBox(height: 8),
