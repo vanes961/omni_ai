@@ -12,6 +12,7 @@ import 'package:omni_ai/features/media/presentation/media_details_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_like_repository.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
+import 'package:omni_ai/features/media/services/media_catalog_token_store.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
@@ -19,12 +20,14 @@ class MediaPage extends StatefulWidget {
   const MediaPage({
     required this.preferences,
     this.searchService = const MediaSearchService(),
+    this.catalogTokenStore,
     this.playerFactory,
     super.key,
   });
 
   final UserPreferences preferences;
   final MediaSearchService searchService;
+  final MediaCatalogTokenStore? catalogTokenStore;
   final MediaPlayerFactory? playerFactory;
 
   @override
@@ -33,6 +36,8 @@ class MediaPage extends StatefulWidget {
 
 class _MediaPageState extends State<MediaPage> {
   final TextEditingController _searchController = TextEditingController();
+  late MediaSearchService _searchService;
+  late final MediaCatalogTokenStore _catalogTokenStore;
   final FavoritesRepository _favoritesRepository = FavoritesRepository();
   final MediaLikeRepository _likeRepository = MediaLikeRepository();
   final FavoriteInterestAnalytics _interestAnalytics =
@@ -52,7 +57,31 @@ class _MediaPageState extends State<MediaPage> {
   @override
   void initState() {
     super.initState();
+    _searchService = widget.searchService;
+    _catalogTokenStore =
+        widget.catalogTokenStore ?? SecureMediaCatalogTokenStore();
+    unawaited(_loadCatalogToken());
     _loadFavoriteInterests();
+  }
+
+  Future<void> _loadCatalogToken() async {
+    if (widget.searchService.isConfigured) return;
+    try {
+      final token = await _catalogTokenStore.readToken();
+      if (!mounted || token == null || token.isEmpty) return;
+      setState(() {
+        _searchService = MediaSearchService(accessToken: token);
+        if (_query.trim().isNotEmpty) {
+          _onlineSearch = _searchService.searchOnline(
+            _query,
+            type: _selectedType,
+          );
+        }
+      });
+    } on Object {
+      // Keep the explicit missing-token message visible if secure storage is
+      // unavailable; a storage failure must not crash the media page.
+    }
   }
 
   Future<void> _loadFavoriteInterests() async {
@@ -88,7 +117,7 @@ class _MediaPageState extends State<MediaPage> {
   @override
   Widget build(BuildContext context) {
     final results = _rankByFavoriteInterests(
-      widget.searchService.search(_query, type: _selectedType),
+      _searchService.search(_query, type: _selectedType),
     );
     final isFiltering =
         _query.isNotEmpty || _selectedType != null || _selectedGenre != null;
@@ -104,7 +133,7 @@ class _MediaPageState extends State<MediaPage> {
           ),
           if (isFiltering)
             _buildSearchResults(results)
-          else if (widget.searchService.trending.isEmpty)
+          else if (_searchService.trending.isEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
@@ -200,11 +229,11 @@ class _MediaPageState extends State<MediaPage> {
               ),
             )
           else ...[
-            _buildCarouselSection('ТРЕНДЫ', widget.searchService.trending),
+            _buildCarouselSection('ТРЕНДЫ', _searchService.trending),
             _buildCarouselSection(
               'РЕКОМЕНДОВАНО ДЛЯ ТЕБЯ',
               _rankByFavoriteInterests(
-                widget.searchService.recommendedFor(widget.preferences),
+                _searchService.recommendedFor(widget.preferences),
               ),
             ),
           ],
@@ -278,7 +307,7 @@ class _MediaPageState extends State<MediaPage> {
               _searchDebounce = Timer(const Duration(milliseconds: 350), () {
                 if (mounted) {
                   setState(() {
-                    _onlineSearch = widget.searchService.searchOnline(
+                    _onlineSearch = _searchService.searchOnline(
                       value,
                       type: _selectedType,
                     );
@@ -353,7 +382,7 @@ class _MediaPageState extends State<MediaPage> {
     _searchDebounce = Timer(const Duration(milliseconds: 250), () {
       if (!mounted) return;
       setState(() {
-        _onlineSearch = widget.searchService.searchOnline(
+        _onlineSearch = _searchService.searchOnline(
           _query,
           type: _selectedType,
         );
@@ -417,7 +446,7 @@ class _MediaPageState extends State<MediaPage> {
           }
           if (rankedCombined.isEmpty) {
             final message =
-                _query.trim().isNotEmpty && !widget.searchService.isConfigured
+                _query.trim().isNotEmpty && !_searchService.isConfigured
                 ? 'ОНЛАЙН-КАТАЛОГ НЕ НАСТРОЕН: отсутствует TMDB_ACCESS_TOKEN. Реальный поиск недоступен.'
                 : 'КАТАЛОГ И ИСТОЧНИКИ ВОСПРОИЗВЕДЕНИЯ ПОКА НЕ ПОДКЛЮЧЕНЫ.';
             return Padding(
@@ -620,7 +649,7 @@ class _MediaPageState extends State<MediaPage> {
       MaterialPageRoute<void>(
         builder: (_) => MediaDetailsPage(
           item: item,
-          searchService: widget.searchService,
+          searchService: _searchService,
           preferences: widget.preferences,
           playerFactory: widget.playerFactory,
         ),
@@ -634,7 +663,7 @@ class _MediaPageState extends State<MediaPage> {
         builder: (context) => PlayerPage(
           item: item,
           preferences: widget.preferences,
-          searchService: widget.searchService,
+          searchService: _searchService,
           playerFactory: widget.playerFactory,
         ),
       ),
