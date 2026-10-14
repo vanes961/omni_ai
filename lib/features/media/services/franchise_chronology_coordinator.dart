@@ -85,9 +85,9 @@ class FranchiseChronologyCoordinator {
             overview: entry.overview,
             releaseDate: entry.releaseDate,
             posterUrl: entry.posterUrl,
-        chronologyOrder: proposal.order,
-        chronologySpoilerRisk: proposal.spoilerRisk,
-        chronologySourceUrl: proposal.sourceUrl,
+            chronologyOrder: proposal.order,
+            chronologySpoilerRisk: proposal.spoilerRisk,
+            chronologySourceUrl: proposal.sourceUrl,
           );
         })
         .toList(growable: false);
