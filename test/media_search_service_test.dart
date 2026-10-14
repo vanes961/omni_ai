@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/media/domain/media_hub_contracts.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 void main() {
@@ -78,4 +79,70 @@ void main() {
 
     expect(service.preferredVoiceover(item, preferences), isNull);
   });
+
+  group('MediaStreamSource validation', () {
+    test('accepts HTTP(S) URLs with a host and no embedded credentials', () {
+      const http = MediaStreamSource(
+        id: 'http',
+        label: 'HTTP source',
+        uri: Uri(scheme: 'http', host: 'media.example', path: '/film.mp4'),
+      );
+      const https = MediaStreamSource(
+        id: 'https',
+        label: 'HTTPS source',
+        uri: Uri(scheme: 'https', host: 'media.example', path: '/film.mp4'),
+      );
+
+      expect(http.isSupportedInput, isTrue);
+      expect(https.isSupportedInput, isTrue);
+    });
+
+    test('accepts magnet links with a valid hexadecimal BitTorrent hash', () {
+      const source = MediaStreamSource(
+        id: 'magnet',
+        label: 'Magnet source',
+        uri: Uri(
+          scheme: 'magnet',
+          query: 'xt=urn:btih:0123456789abcdef0123456789abcdef01234567',
+        ),
+      );
+
+      expect(source.isMagnet, isTrue);
+      expect(source.isSupportedInput, isTrue);
+    });
+
+    test('rejects unsupported, malformed, and credential-bearing URLs', () {
+      const file = MediaStreamSource(
+        id: 'file',
+        label: 'Local file',
+        uri: Uri(scheme: 'file', path: '/film.mp4'),
+      );
+      const missingHost = MediaStreamSource(
+        id: 'missing-host',
+        label: 'Invalid HTTPS',
+        uri: Uri(scheme: 'https', path: '/film.mp4'),
+      );
+      const malformedMagnet = MediaStreamSource(
+        id: 'bad-magnet',
+        label: 'Invalid magnet',
+        uri: Uri(scheme: 'magnet', query: 'xt=urn:btih:not-a-valid-hash'),
+      );
+      const credentials = MediaStreamSource(
+        id: 'credentials',
+        label: 'Credential URL',
+        uri: Uri(
+          scheme: 'https',
+          userInfo: 'user:password',
+          host: 'media.example',
+          path: '/film.mp4',
+        ),
+      );
+
+      expect(file.isSupportedInput, isFalse);
+      expect(missingHost.isSupportedInput, isFalse);
+      expect(malformedMagnet.isSupportedInput, isFalse);
+      expect(credentials.isSupportedInput, isFalse);
+    });
+  });
+
 }
