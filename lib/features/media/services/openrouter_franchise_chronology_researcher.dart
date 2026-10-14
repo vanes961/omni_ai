@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
-import 'package:omni_ai/core/ai_engine/models/ai_response.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 import 'package:omni_ai/features/media/services/franchise_chronology_coordinator.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
