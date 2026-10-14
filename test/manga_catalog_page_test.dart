@@ -54,16 +54,25 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.search);
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Не удалось загрузить каталог'), findsOneWidget);
+    expect(
+      find.textContaining('Не удалось загрузить каталог'),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('manga-catalog-retry')), findsOneWidget);
-    expect(find.byKey(const ValueKey('manga-catalog-berserk-id')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('manga-catalog-berserk-id')),
+      findsNothing,
+    );
     expect(requests, 1);
 
     await tester.tap(find.byKey(const ValueKey('manga-catalog-retry')));
     await tester.pumpAndSettle();
 
     expect(requests, 2);
-    expect(find.byKey(const ValueKey('manga-catalog-berserk-id')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('manga-catalog-berserk-id')),
+      findsOneWidget,
+    );
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('manga-catalog-berserk-id')),
@@ -73,11 +82,15 @@ void main() {
     );
     expect(find.textContaining('Не удалось загрузить каталог'), findsNothing);
 
-    final favoriteButton = find.byKey(const ValueKey('manga-favorite-berserk-id'));
+    final favoriteButton = find.byKey(
+      const ValueKey('manga-favorite-berserk-id'),
+    );
     expect(favoriteButton, findsOneWidget);
     await tester.tap(favoriteButton);
     await tester.pumpAndSettle();
-    final saved = (await favorites.getByCategory(FavoriteCategory.manga)).single;
+    final saved = (await favorites.getByCategory(
+      FavoriteCategory.manga,
+    )).single;
     expect(saved.id, 'mangadex:berserk-id');
     expect(saved.title, 'Berserk');
     expect(saved.description, 'Описание');
@@ -90,7 +103,6 @@ void main() {
     service.close();
   });
 }
-
 
 class _MemoryFavoriteStore implements FavoriteStringStore {
   final values = <String, String>{};
