@@ -363,7 +363,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
           .where((variant) => variant.url != source)
           .map((variant) => variant.url),
       if (voiceoverSource != null) defaultSource,
-      ...widget.item.videoFallbackUrls,
+      if (episode == null) ...widget.item.videoFallbackUrls,
       if (episode != null) ...episode.videoFallbackUrls,
     ];
     if (selectedVariant != null &&
