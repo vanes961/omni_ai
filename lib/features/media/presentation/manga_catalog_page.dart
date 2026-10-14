@@ -304,7 +304,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         if (!mounted || !_scroll.hasClients) return;
         _restoring = true;
         final extent = _viewportExtent > 0 ? _viewportExtent : 1.0;
-        final target = _pageIndex * extent + (restore?.pageOffset ?? 0) * extent;
+        final target =
+            _pageIndex * extent + (restore?.pageOffset ?? 0) * extent;
         _scroll.jumpTo(
           target.clamp(0.0, _scroll.position.maxScrollExtent).toDouble(),
         );
@@ -440,130 +441,132 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    backgroundColor: Colors.black,
-    appBar: AppBar(
-      backgroundColor: const Color(0xFF111714),
-      title: Text(
-        widget.manga.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      actions: [
-        IconButton(
-          tooltip: 'Открыть источник MangaDex',
-          onPressed: () {},
-          icon: const Icon(Icons.menu_book, color: Color(0xFF74D69A)),
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF111714),
+        title: Text(
+          widget.manga.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-      ],
-    ),
-    body: _loadingChapters
-        ? const Center(
-            child: CircularProgressIndicator(color: Color(0xFF74D69A)),
-          )
-        : _error != null
-        ? Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white70),
+        actions: [
+          IconButton(
+            tooltip: 'Открыть источник MangaDex',
+            onPressed: () {},
+            icon: const Icon(Icons.menu_book, color: Color(0xFF74D69A)),
+          ),
+        ],
+      ),
+      body: _loadingChapters
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF74D69A)),
+            )
+          : _error != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70),
+                ),
               ),
-            ),
-          )
-        : LayoutBuilder(
-            builder: (context, constraints) {
-              _viewportExtent = constraints.maxHeight;
-              return Stack(
-                children: [
-                  if (_pages.isNotEmpty)
-                    Positioned.fill(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 900),
-                          child: ListView.builder(
-                            controller: _scroll,
-                            itemCount: _pages.length + (_loadingNext ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              if (index >= _pages.length) {
-                                return const Padding(
-                                  padding: EdgeInsets.all(28),
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      color: Color(0xFF74D69A),
+            )
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                _viewportExtent = constraints.maxHeight;
+                return Stack(
+                  children: [
+                    if (_pages.isNotEmpty)
+                      Positioned.fill(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 900),
+                            child: ListView.builder(
+                              controller: _scroll,
+                              itemCount: _pages.length + (_loadingNext ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index >= _pages.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.all(28),
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: Color(0xFF74D69A),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return CachedNetworkImage(
+                                  imageUrl: _pages[index].toString(),
+                                  fit: BoxFit.fitWidth,
+                                  width: double.infinity,
+                                  placeholder: (_, _) => const SizedBox(
+                                    height: 220,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Color(0xFF74D69A),
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (_, _, _) => Container(
+                                    height: 180,
+                                    alignment: Alignment.center,
+                                    color: const Color(0xFF111714),
+                                    child: const Text(
+                                      'Страница не загрузилась',
+                                      style: TextStyle(color: Colors.white70),
                                     ),
                                   ),
                                 );
-                              }
-                              return CachedNetworkImage(
-                                imageUrl: _pages[index].toString(),
-                                fit: BoxFit.fitWidth,
-                                width: double.infinity,
-                                placeholder: (_, _) => const SizedBox(
-                                  height: 220,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Color(0xFF74D69A),
-                                    ),
-                                  ),
-                                ),
-                                errorWidget: (_, _, _) => Container(
-                                  height: 180,
-                                  alignment: Alignment.center,
-                                  color: const Color(0xFF111714),
-                                  child: const Text(
-                                    'Страница не загрузилась',
-                                    style: TextStyle(color: Colors.white70),
-                                  ),
-                                ),
-                              );
-                            },
+                              },
+                            ),
                           ),
                         ),
+                      )
+                    else if (_pageError != null)
+                      Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _pageError!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                            const SizedBox(height: 12),
+                            FilledButton(
+                              onPressed: () => _loadChapterPages(_chapterIndex),
+                              child: const Text('Повторить'),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF74D69A),
+                        ),
                       ),
-                    )
-                  else if (_pageError != null)
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _pageError!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-                      const SizedBox(height: 12),
-                      FilledButton(
-                        onPressed: () => _loadChapterPages(_chapterIndex),
-                        child: const Text('Повторить'),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF74D69A)),
-                ),
-              if (_chapters.isNotEmpty)
-                MangaReaderProgressOverlay(
-                  chapterLabel: _chapters[_chapterIndex].displayLabel,
-                  currentPage: _pageIndex + 1,
-                  totalPages: _chapters[_chapterIndex].pageCount,
-                  chapters: [
-                    for (final c in _chapters)
-                      MangaReaderChapterOption(
-                        id: c.id,
-                        label: c.displayLabel,
-                        title: c.title,
+                    if (_chapters.isNotEmpty)
+                      MangaReaderProgressOverlay(
+                        chapterLabel: _chapters[_chapterIndex].displayLabel,
+                        currentPage: _pageIndex + 1,
+                        totalPages: _chapters[_chapterIndex].pageCount,
+                        chapters: [
+                          for (final c in _chapters)
+                            MangaReaderChapterOption(
+                              id: c.id,
+                              label: c.displayLabel,
+                              title: c.title,
+                            ),
+                        ],
+                        onChapterSelected: _pickChapter,
                       ),
                   ],
-                  onChapterSelected: _pickChapter,
-                ),
-                ],
-              );
-            },
-          ),
+                );
+              },
+            ),
     );
   }
 }
