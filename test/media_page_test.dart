@@ -12,8 +12,8 @@ import 'package:omni_ai/core/network/widgets/network_image_with_fallback.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/data/torrserver_client.dart';
 import 'package:omni_ai/features/media/data/torrserver_playback_resolver.dart';
-import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/media/presentation/media_details_page.dart';
+import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
@@ -1341,7 +1341,6 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
-
 }
 
 class _FakePlaybackController implements MediaPlaybackController {
