@@ -46,14 +46,14 @@ void main() {
 
     expect(find.textContaining('Не удалось загрузить каталог'), findsOneWidget);
     expect(find.byKey(const ValueKey('manga-catalog-retry')), findsOneWidget);
-    expect(find.text('Berserk'), findsNothing);
+    expect(find.byKey(const ValueKey('manga-catalog-berserk-id')), findsNothing);
     expect(requests, 1);
 
     await tester.tap(find.byKey(const ValueKey('manga-catalog-retry')));
     await tester.pumpAndSettle();
 
     expect(requests, 2);
-    expect(find.text('Berserk'), findsOneWidget);
+    expect(find.byKey(const ValueKey('manga-catalog-berserk-id')), findsOneWidget);
     expect(find.textContaining('Не удалось загрузить каталог'), findsNothing);
     service.close();
   });
