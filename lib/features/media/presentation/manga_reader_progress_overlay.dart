@@ -69,10 +69,7 @@ class MangaReaderProgressOverlay extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xE6111714),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: const Color(0x6674D69A),
-                width: 0.7,
-              ),
+              border: Border.all(color: const Color(0x6674D69A), width: 0.7),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -206,10 +203,7 @@ class _ChapterPickerSheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
             child: Row(
               children: [
-                const Icon(
-                  Icons.menu_book_rounded,
-                  color: Color(0xFF9BE6B4),
-                ),
+                const Icon(Icons.menu_book_rounded, color: Color(0xFF9BE6B4)),
                 const SizedBox(width: 10),
                 const Expanded(
                   child: Text(
@@ -250,11 +244,11 @@ class _ChapterPickerSheet extends StatelessWidget {
                           ? const Color(0xFF9BE6B4)
                           : const Color(0xFFF1F7F2),
                       fontSize: 14,
-                      fontWeight:
-                          isCurrent ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
                     ),
                   ),
-                  subtitle: chapter.title == null || chapter.title!.trim().isEmpty
+                  subtitle:
+                      chapter.title == null || chapter.title!.trim().isEmpty
                       ? null
                       : Text(
                           chapter.title!,
