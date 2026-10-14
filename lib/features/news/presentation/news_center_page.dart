@@ -130,7 +130,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         ),
       );
       final selectedTopics = _normalizeTopics(profile.topics);
+      final hasFeedInterests =
+          profile.topics.isNotEmpty || profile.includeCriticalOutsideInterests;
       final cacheMatchesProfile =
+          hasFeedInterests &&
           savedTopics != null &&
           savedCriticalSetting == profile.includeCriticalOutsideInterests &&
           _sameTopics(savedTopics, selectedTopics);
@@ -146,9 +149,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         }
         _loadingNewsCache = false;
       });
-      // When no valid cached feed exists, load the discovery or personalized
-      // feed on entry instead of waiting for a manual refresh.
-      final hasFeedInterests = _profile != null;
+      // Do not fetch a generic feed when the user has not selected interests.
       if (hasFeedInterests && _articles.isEmpty) {
         unawaited(_refreshNews());
       }
@@ -159,7 +160,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // cached payload cannot be read, still attempt a fresh feed rather than
       // leaving users with a blank screen until they manually tap Refresh.
       final activeProfile = loadedProfile ?? _profile;
-      final hasFeedInterests = activeProfile != null;
+      final hasFeedInterests = activeProfile != null &&
+          (activeProfile.topics.isNotEmpty ||
+              activeProfile.includeCriticalOutsideInterests);
       if (hasFeedInterests && _articles.isEmpty) {
         unawaited(_refreshNews());
       }
@@ -190,9 +193,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     final hasNoTopics = profile.topics.isEmpty;
     final criticalNewsDisabled = !profile.includeCriticalOutsideInterests;
     if (hasNoTopics && criticalNewsDisabled) {
-      return _hasCompletedNewsFetch
-          ? 'Обзор свежих новостей. Выберите интересы ниже, чтобы персонализировать ленту.'
-          : 'Загружаем обзор свежих новостей. Выберите интересы ниже, чтобы персонализировать ленту.';
+      return 'Выберите интересы ниже, чтобы наполнить ленту подходящими новостями. Общий поток без персонализации не показывается.';
     }
     if (_hasCompletedNewsFetch) {
       return 'По выбранным темам сейчас не найдено подходящих публикаций. Попробуйте добавить более широкую тему или обновить ленту позже.';
@@ -451,6 +452,18 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   Future<void> _refreshNews() async {
     final profile = _profile;
     if (profile == null || _refreshingNews || _loadingNewsCache) return;
+    if (profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) {
+      setState(() {
+        _articles = const [];
+        _digest = null;
+        _digestError = null;
+        _newsError = null;
+        _hasCompletedNewsFetch = false;
+        _showingCachedNews = false;
+      });
+      await _newsCache.clear();
+      return;
+    }
     final revisionAtStart = _interestRevision;
     setState(() {
       _refreshingNews = true;
