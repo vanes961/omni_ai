@@ -220,6 +220,35 @@ void main() {
     );
   });
 
+  test('invalid chronology positions fall back to release order', () {
+    final entries = [
+      const MediaFranchiseEntry(
+        id: 'first-release',
+        title: 'First release',
+        overview: '',
+        releaseDate: '2010-01-01',
+        posterUrl: '',
+        chronologyOrder: 1,
+      ),
+      const MediaFranchiseEntry(
+        id: 'second-release',
+        title: 'Second release',
+        overview: '',
+        releaseDate: '2020-01-01',
+        posterUrl: '',
+        chronologyOrder: 1,
+      ),
+    ];
+
+    expect(
+      MediaSearchService.orderFranchiseItems(
+        entries,
+        FranchiseViewingOrder.chronology,
+      ).map((entry) => entry.id),
+      ['first-release', 'second-release'],
+    );
+  });
+
   test('parses TMDB season metadata without creating playable stream URLs', () {
     final episodes = MediaSearchService.parseSeasonEpisodes(
       {
