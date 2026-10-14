@@ -328,11 +328,14 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     if (_pages.isNotEmpty) {
       var visibleChapter = _chapterStartPages.keys.isEmpty
           ? _chapterIndex
-          : _chapterStartPages.keys.reduce((a, b) =>
-              (_chapterStartPages[a] ?? 0) <= page &&
-                      (_chapterStartPages[a] ?? 0) >= (_chapterStartPages[b] ?? 0)
+          : _chapterStartPages.keys.reduce(
+              (a, b) =>
+                  (_chapterStartPages[a] ?? 0) <= page &&
+                      (_chapterStartPages[a] ?? 0) >=
+                          (_chapterStartPages[b] ?? 0)
                   ? a
-                  : b);
+                  : b,
+            );
       for (final entry in _chapterStartPages.entries) {
         if (entry.value <= page &&
             entry.value >= (_chapterStartPages[visibleChapter] ?? 0)) {
@@ -546,3 +549,4 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
           ),
   );
 }
+import 'dart:async';
