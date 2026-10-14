@@ -181,23 +181,20 @@ class MediaSearchService {
           ? collection
           : const <String, dynamic>{};
       final collectionId = collectionMap['id'];
-      // Include the currently opened movie while researching chronology so
-      // every position is relative to the full franchise. It is removed from
-      // the related-items carousel only after the complete order is resolved.
+      // Load the catalog collection without waiting for AI research. The
+      // details screen can render immediately in release order while the
+      // franchise section resolves chronology in the background.
+      final franchiseId = collectionId is num
+          ? 'tmdb:collection:${collectionId.toInt()}'
+          : 'tmdb:item:${item.id}';
       final franchiseEntries = collectionId is num
           ? await loadCollectionItems(collectionId.toInt())
           : const <MediaFranchiseEntry>[];
-      final resolvedFranchiseEntries = await resolveFranchiseChronology(
-        franchiseId: collectionId is num
-            ? 'tmdb:collection:${collectionId.toInt()}'
-            : 'tmdb:item:${item.id}',
-        entries: franchiseEntries,
-      );
-      final resolvedFranchiseItems = p[1] == 'movie'
-          ? resolvedFranchiseEntries
+      final franchiseItems = p[1] == 'movie'
+          ? franchiseEntries
                 .where((entry) => entry.id != 'tmdb:movie:${p[2]}')
                 .toList(growable: false)
-          : resolvedFranchiseEntries;
+          : franchiseEntries;
       final b = data['backdrop_path'] as String?;
       return MediaDetails(
         overview: data['overview'] as String? ?? item.description,
@@ -212,7 +209,9 @@ class MediaSearchService {
         homepage: data['homepage'] as String? ?? '',
         seasons: seasons,
         franchiseName: collectionMap['name'] as String? ?? '',
-        franchiseItems: resolvedFranchiseItems,
+        franchiseId: franchiseId,
+        franchiseChronologyEntries: franchiseEntries,
+        franchiseItems: franchiseItems,
       );
     } on Object {
       return null;
@@ -506,6 +505,8 @@ class MediaDetails {
     required this.homepage,
     this.seasons = const [],
     this.franchiseName = '',
+    this.franchiseId = '',
+    this.franchiseChronologyEntries = const [],
     this.franchiseItems = const [],
   });
   final String overview;
@@ -515,6 +516,11 @@ class MediaDetails {
   final String releaseDate, backdropUrl, homepage;
   final List<MediaCatalogSeason> seasons;
   final String franchiseName;
+  final String franchiseId;
+
+  /// Full catalog membership used for chronology research, including the
+  /// currently opened movie; never displayed directly in the related carousel.
+  final List<MediaFranchiseEntry> franchiseChronologyEntries;
   final List<MediaFranchiseEntry> franchiseItems;
 }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
@@ -132,6 +134,8 @@ class MediaDetailsPage extends StatelessWidget {
               _FranchiseSection(
                 name: d!.franchiseName,
                 items: d.franchiseItems,
+                chronologyEntries: d.franchiseChronologyEntries,
+                franchiseId: d.franchiseId,
                 searchService: searchService,
                 preferences: preferences,
                 playerFactory: playerFactory,
@@ -280,6 +284,8 @@ class _FranchiseSection extends StatefulWidget {
   const _FranchiseSection({
     required this.name,
     required this.items,
+    this.chronologyEntries = const [],
+    this.franchiseId = '',
     required this.searchService,
     required this.preferences,
     required this.playerFactory,
@@ -287,6 +293,8 @@ class _FranchiseSection extends StatefulWidget {
 
   final String name;
   final List<MediaFranchiseEntry> items;
+  final List<MediaFranchiseEntry> chronologyEntries;
+  final String franchiseId;
   final MediaSearchService searchService;
   final UserPreferences preferences;
   final MediaPlayerFactory? playerFactory;
@@ -297,10 +305,42 @@ class _FranchiseSection extends StatefulWidget {
 
 class _FranchiseSectionState extends State<_FranchiseSection> {
   FranchiseViewingOrder _order = FranchiseViewingOrder.smart;
+  late List<MediaFranchiseEntry> _items;
+  bool _isResolvingChronology = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = List<MediaFranchiseEntry>.of(widget.items);
+    if (widget.franchiseId.isNotEmpty && widget.chronologyEntries.isNotEmpty) {
+      _isResolvingChronology = true;
+      unawaited(_resolveChronology());
+    }
+  }
+
+  Future<void> _resolveChronology() async {
+    try {
+      final resolved = await widget.searchService.resolveFranchiseChronology(
+        franchiseId: widget.franchiseId,
+        entries: widget.chronologyEntries,
+      );
+      final visibleIds = widget.items.map((entry) => entry.id).toSet();
+      if (!mounted) return;
+      setState(() {
+        _items = resolved
+            .where((entry) => visibleIds.contains(entry.id))
+            .toList(growable: false);
+        _isResolvingChronology = false;
+      });
+    } on Object {
+      if (!mounted) return;
+      setState(() => _isResolvingChronology = false);
+    }
+  }
 
   bool get _hasVerifiedChronology =>
-      widget.items.isNotEmpty &&
-      widget.items.every((entry) => entry.chronologyOrder != null);
+      _items.isNotEmpty &&
+      _items.every((entry) => entry.chronologyOrder != null);
 
   Future<void> _selectChronology() async {
     if (!_hasVerifiedChronology) {
@@ -314,7 +354,7 @@ class _FranchiseSectionState extends State<_FranchiseSection> {
       );
       return;
     }
-    final hasSpoilers = widget.items.any(
+    final hasSpoilers = _items.any(
       (entry) => entry.chronologySpoilerRisk,
     );
     if (hasSpoilers) {
@@ -352,7 +392,7 @@ class _FranchiseSectionState extends State<_FranchiseSection> {
   @override
   Widget build(BuildContext context) {
     final ordered = MediaSearchService.orderFranchiseItems(
-      widget.items,
+      _items,
       _order,
     );
     final heading = widget.name.isEmpty
@@ -363,9 +403,11 @@ class _FranchiseSectionState extends State<_FranchiseSection> {
       FranchiseViewingOrder.chronology when _hasVerifiedChronology =>
         'Хронология событий · подтверждённые данные',
       FranchiseViewingOrder.chronology => 'Хронология пока не подтверждена',
+      FranchiseViewingOrder.smart when _isResolvingChronology =>
+        'Проверяем источники и собираем хронологию…',
       FranchiseViewingOrder.smart
           when _hasVerifiedChronology &&
-              !widget.items.any((entry) => entry.chronologySpoilerRisk) =>
+              !_items.any((entry) => entry.chronologySpoilerRisk) =>
         'Умный порядок · без известных сюжетных спойлеров',
       FranchiseViewingOrder.smart =>
         'Умный порядок пока использует порядок выхода: хронология и риск спойлеров не подтверждены',
