@@ -672,6 +672,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       _loadingPages = false;
       _loadingNext = false;
       _loadingPrevious = false;
+      // A pending post-frame geometry callback from the old chapter must not
+      // leave scroll/progress synchronization disabled for the new selection.
+      _restoring = false;
       _pageError = null;
     });
     if (_scroll.hasClients) _scroll.jumpTo(0);
