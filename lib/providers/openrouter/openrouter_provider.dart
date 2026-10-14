@@ -75,6 +75,18 @@ class OpenRouterProvider implements AIProvider {
               'model': config.model,
               'messages': messages,
               'stream': false,
+              if (request.metadata['enableWebSearch'] == true)
+                'tools': [
+                  {
+                    'type': 'openrouter:web_search',
+                    'parameters': {
+                      'engine': 'parallel',
+                      'max_results': 3,
+                      'max_total_results': 5,
+                      'search_context_size': 'low',
+                    },
+                  },
+                ],
             });
 
       final streamedResponse = await _client.send(apiRequest);
@@ -101,6 +113,14 @@ class OpenRouterProvider implements AIProvider {
         throw _malformedResponse('Response contains no text content.');
       }
 
+      final annotations = message['annotations'];
+      final citations = _extractCitations(annotations);
+      final usage = payload['usage'];
+      final serverToolUse = usage is Map ? usage['server_tool_use'] : null;
+      final searchRequests = serverToolUse is Map
+          ? serverToolUse['web_search_requests']
+          : null;
+
       return AIResponse(
         requestId: request.id,
         text: text,
@@ -109,6 +129,10 @@ class OpenRouterProvider implements AIProvider {
         metadata: {
           'model': payload['model'] is String ? payload['model'] : config.model,
           if (payload['id'] is String) 'responseId': payload['id'],
+          'webSearchEnabled': request.metadata['enableWebSearch'] == true,
+          if (request.metadata['enableWebSearch'] == true)
+            'webSearchCitations': citations,
+          if (searchRequests is num) 'webSearchRequests': searchRequests,
         },
       );
     } on AIEngineException {
@@ -136,6 +160,29 @@ class OpenRouterProvider implements AIProvider {
           .map((part) => part['text']).whereType<String>().join();
     }
     return '';
+  }
+
+  List<Map<String, Object?>> _extractCitations(Object? annotations) {
+    if (annotations is! List) return const [];
+    final citations = <Map<String, Object?>>[];
+    for (final annotation in annotations.whereType<Map>()) {
+      if (annotation['type'] != 'url_citation') continue;
+      final citation = annotation['url_citation'];
+      if (citation is! Map) continue;
+      final url = citation['url'];
+      final uri = url is String ? Uri.tryParse(url) : null;
+      if (uri == null ||
+          uri.scheme.toLowerCase() != 'https' ||
+          uri.host.isEmpty) {
+        continue;
+      }
+      citations.add({
+        'url': url,
+        if (citation['title'] is String) 'title': citation['title'],
+        if (citation['content'] is String) 'content': citation['content'],
+      });
+    }
+    return List<Map<String, Object?>>.unmodifiable(citations);
   }
 
   AIEngineException _apiError(http.Response response) {

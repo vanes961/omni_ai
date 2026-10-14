@@ -38,6 +38,65 @@ void main() {
     expect(result.metadata['responseId'], 'chatcmpl-test');
   });
 
+  test('web search is explicit opt-in and exposes only returned HTTPS citations', () async {
+    http.Request? captured;
+    final provider = _provider((request) async {
+      captured = request;
+      return http.Response(jsonEncode({
+        'choices': [{
+          'message': {
+            'content': 'A sourced answer.',
+            'annotations': [
+              {
+                'type': 'url_citation',
+                'url_citation': {
+                  'url': 'https://example.org/source',
+                  'title': 'Example source',
+                  'content': 'Evidence excerpt',
+                },
+              },
+              {
+                'type': 'url_citation',
+                'url_citation': {'url': 'http://insecure.example/source'},
+              },
+            ],
+          },
+        }],
+        'usage': {'server_tool_use': {'web_search_requests': 1}},
+      }), 200);
+    });
+    addTearDown(provider.close);
+
+    final ordinary = await _engine(provider).execute(_request());
+    expect(jsonDecode(captured!.body).containsKey('tools'), isFalse);
+    expect(ordinary.metadata['webSearchEnabled'], isFalse);
+
+    final researched = await _engine(provider).execute(
+      _request().copyWith(metadata: {'enableWebSearch': true}),
+    );
+    final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+    expect(body['tools'], [
+      {
+        'type': 'openrouter:web_search',
+        'parameters': {
+          'engine': 'parallel',
+          'max_results': 3,
+          'max_total_results': 5,
+          'search_context_size': 'low',
+        },
+      },
+    ]);
+    expect(researched.metadata['webSearchEnabled'], isTrue);
+    expect(researched.metadata['webSearchRequests'], 1);
+    expect(researched.metadata['webSearchCitations'], [
+      {
+        'url': 'https://example.org/source',
+        'title': 'Example source',
+        'content': 'Evidence excerpt',
+      },
+    ]);
+  });
+
   test('includes optional system instruction', () async {
     http.Request? captured;
     final provider = _provider((request) async {
