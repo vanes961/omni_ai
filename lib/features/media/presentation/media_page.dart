@@ -403,7 +403,7 @@ class _MediaPageState extends State<MediaPage> {
                     ),
               )
               .toList();
-          final rankedCombined = _rankByFavoriteInterests(filtered);
+          final rankedCombined = _rankByFavoriteInterests(filtered).toList();
           if (_sortByRating) {
             rankedCombined.sort((a, b) => b.rating.compareTo(a.rating));
           }
