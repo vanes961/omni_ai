@@ -1292,7 +1292,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                       ),
                       subtitle: Text(
                         profile.topics.isEmpty
-                            ? 'Пока показываем общий обзор новостей'
+                            ? 'Выберите темы, чтобы включить ленту'
                             : 'Выбрано тем: ${profile.topics.length}',
                         style: const TextStyle(
                           color: SystemCorePalette.muted,
@@ -1367,7 +1367,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Показываем свежие новости даже без настроек. Выберите интересы, чтобы сделать ленту персональной.',
+                'Лента показывает новости только по выбранным интересам. Добавьте темы ниже, чтобы начать.',
                 style: TextStyle(color: Colors.white70, height: 1.4),
               ),
               Row(
