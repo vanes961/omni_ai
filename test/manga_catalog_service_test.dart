@@ -12,6 +12,7 @@ void main() {
             'description': {'en': 'English description', 'ru': 'Описание'},
             'status': 'completed',
             'year': 2022,
+            'links': {'al': '12345'},
           },
           'relationships': [
             {
@@ -31,6 +32,7 @@ void main() {
     expect(items.single.description, 'Описание');
     expect(items.single.status, 'completed');
     expect(items.single.year, 2022);
+    expect(items.single.anilistId, 12345);
     expect(
       items.single.coverUrl,
       'https://uploads.mangadex.org/covers/abc-123/cover-file.jpg.256.jpg',
@@ -83,6 +85,7 @@ void main() {
     expect(items.single.coverUrl, isEmpty);
     expect(items.single.authors, isEmpty);
     expect(items.single.year, isNull);
+    expect(items.single.anilistId, isNull);
   });
 
   test('returns empty for invalid top-level payloads', () {
