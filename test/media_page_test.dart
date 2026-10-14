@@ -366,6 +366,54 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('episode playback does not fall back to another item URL', (
+    tester,
+  ) async {
+    const episodeUrl = 'https://example.com/season-1-episode-1.mp4';
+    const unrelatedFallback = 'https://example.com/unrelated-series-fallback.mp4';
+    final sources = <Uri>[];
+    final item = MediaItem(
+      id: 'episode-fallback-isolation-test',
+      title: 'Episode fallback isolation',
+      type: 'Сериал',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/series-default.mp4',
+      videoFallbackUrls: const [unrelatedFallback],
+      episodes: const [
+        MediaEpisode(
+          number: 1,
+          title: 'Episode one',
+          videoUrl: episodeUrl,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          playerFactory: (source) {
+            sources.add(source);
+            if (source.toString() == episodeUrl) {
+              return _FakePlaybackController(
+                initializationError: StateError('Episode stream unavailable'),
+              );
+            }
+            return _FakePlaybackController();
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(sources, [Uri.parse(episodeUrl)]);
+    expect(sources, isNot(contains(Uri.parse(unrelatedFallback))));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('player changes episode source and selects preferred voiceover', (
     tester,
   ) async {
