@@ -94,9 +94,8 @@ class CrossContentRelation {
     return currentPosition != null && currentPosition >= requiredPosition;
   }
 
-  int? get safeTargetPosition => targetType == CrossContentType.manga
-      ? safeTargetChapter
-      : safeTargetEpisode;
+  int? get safeTargetPosition =>
+      targetType == CrossContentType.manga ? safeTargetChapter : safeTargetEpisode;
 }
 
 class CrossContentRecommendation {
