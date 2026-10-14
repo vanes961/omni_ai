@@ -354,9 +354,7 @@ class _FranchiseSectionState extends State<_FranchiseSection> {
       );
       return;
     }
-    final hasSpoilers = _items.any(
-      (entry) => entry.chronologySpoilerRisk,
-    );
+    final hasSpoilers = _items.any((entry) => entry.chronologySpoilerRisk);
     if (hasSpoilers) {
       final accepted = await showDialog<bool>(
         context: context,
@@ -391,10 +389,7 @@ class _FranchiseSectionState extends State<_FranchiseSection> {
 
   @override
   Widget build(BuildContext context) {
-    final ordered = MediaSearchService.orderFranchiseItems(
-      _items,
-      _order,
-    );
+    final ordered = MediaSearchService.orderFranchiseItems(_items, _order);
     final heading = widget.name.isEmpty
         ? 'ФРАНШИЗА'
         : widget.name.toUpperCase();
