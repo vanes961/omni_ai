@@ -82,6 +82,7 @@ void main() {
           'engine': 'parallel',
           'max_results': 3,
           'max_total_results': 5,
+          'max_uses': 1,
           'search_context_size': 'low',
         },
       },
