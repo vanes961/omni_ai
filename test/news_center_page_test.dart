@@ -63,6 +63,69 @@ void main() {
   });
 
 
+  testWidgets('refreshes interests saved while news cache is loading', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(),
+    );
+    final cacheStore = _DelayedNewsCacheStore();
+    var requestCount = 0;
+    final service = NewsRssService(
+      client: MockClient((_) async {
+        requestCount++;
+        return http.Response(
+          '<rss><channel><item>'
+          '<title>Anime: Saved during cache restoration</title>'
+          '<link>https://publisher.example/cache-race</link>'
+          '<description>A story fetched after saving interests.</description>'
+          '<pubDate>Mon, 12 Oct 2026 09:00:00 GMT</pubDate>'
+          '<source>Anime News</source>'
+          '</item></channel></rss>',
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(
+          repository: repository,
+          newsService: service,
+          newsCache: SharedPreferencesNewsCache(store: cacheStore),
+        ),
+      ),
+    );
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(requestCount, 0);
+
+    await tester.ensureVisible(find.text('ВАШИ ИНТЕРЕСЫ'));
+    await tester.pump();
+    await tester.enterText(find.byType(TextField).first, 'anime');
+    await tester.tap(find.byTooltip('Добавить тему'));
+    await tester.pump();
+    await tester.ensureVisible(find.text('СОХРАНИТЬ ИНТЕРЕСЫ'));
+    await tester.tap(find.text('СОХРАНИТЬ ИНТЕРЕСЫ'));
+    await tester.pump();
+
+    // Let cache restoration finish only after the new profile is saved.
+    cacheStore.releaseReads.complete();
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(requestCount, 3);
+    expect(find.text('Anime: Saved during cache restoration'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('keeps fetched articles visible when cache persistence fails', (
     WidgetTester tester,
   ) async {
@@ -465,6 +528,22 @@ class _MemoryNewsInterestRepository implements NewsInterestRepository {
   Future<void> dispose() async {}
 }
 
+
+class _DelayedNewsCacheStore implements NewsCacheStringStore {
+  final Completer<void> releaseReads = Completer<void>();
+
+  @override
+  Future<String?> read(String key) async {
+    await releaseReads.future;
+    return null;
+  }
+
+  @override
+  Future<void> write(String key, String value) async {}
+
+  @override
+  Future<void> remove(String key) async {}
+}
 
 class _FailingNewsCacheStore implements NewsCacheStringStore {
   @override

@@ -72,6 +72,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _refreshingNews = false;
   bool _hasCompletedNewsFetch = false;
   bool _refreshPendingAfterCurrent = false;
+  bool _refreshPendingAfterCacheLoad = false;
   int? _lastRssCandidateCount;
   int? _lastLocalizedCandidateCount;
   int? _lastRankedCandidateCount;
@@ -235,8 +236,13 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         }
         _loadingNewsCache = false;
       });
-      // Do not fetch a generic feed when the user has not selected interests.
-      if (hasFeedInterests && _articles.isEmpty) {
+      // Saving interests while cache restoration is in flight must not lose
+      // the refresh request. Use the current profile, not the older snapshot.
+      if (_refreshPendingAfterCacheLoad) {
+        _refreshPendingAfterCacheLoad = false;
+        unawaited(_refreshNews());
+      } else if (hasFeedInterests && _articles.isEmpty) {
+        // Do not fetch a generic feed when no interests are selected.
         unawaited(_refreshNews());
       }
     } catch (_) {
@@ -250,7 +256,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           activeProfile != null &&
           (activeProfile.topics.isNotEmpty ||
               activeProfile.includeCriticalOutsideInterests);
-      if (hasFeedInterests && _articles.isEmpty) {
+      if (_refreshPendingAfterCacheLoad) {
+        _refreshPendingAfterCacheLoad = false;
+        unawaited(_refreshNews());
+      } else if (hasFeedInterests && _articles.isEmpty) {
         unawaited(_refreshNews());
       }
     }
@@ -525,8 +534,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     // cleared the old cache but left the news list empty until Refresh was
     // tapped manually.
     final activeProfile = _profile;
-    if (saved && mounted && !_loadingNewsCache && activeProfile != null) {
-      if (_refreshingNews) {
+    if (saved && mounted && activeProfile != null) {
+      if (_loadingNewsCache) {
+        // Cache restoration may hold a stale profile snapshot. Queue refresh
+        // until it completes so newly saved interests are not left unapplied.
+        _refreshPendingAfterCacheLoad = true;
+      } else if (_refreshingNews) {
         // A request for the previous topic selection may still be unwinding.
         // Queue one refresh so saving the new profile cannot leave the feed blank.
         _refreshPendingAfterCurrent = true;
