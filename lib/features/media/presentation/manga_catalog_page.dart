@@ -350,6 +350,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     final viewportObject = _viewportKey.currentContext?.findRenderObject();
     if (viewportObject is! RenderBox || !viewportObject.hasSize) return false;
 
+    _pageKeys.removeWhere((_, key) => key.currentContext == null);
     var visibleIndex = -1;
     var visibleTop = double.infinity;
     var visibleHeight = 0.0;
@@ -456,7 +457,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         _loadedChapterIndexes.contains(nextIndex)) {
       nextIndex++;
     }
-    if (nextIndex < 0) {
+    if (nextIndex >= _chapters.length) {
       _hasMoreChapters = false;
       return;
     }
