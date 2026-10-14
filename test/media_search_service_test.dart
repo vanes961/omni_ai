@@ -144,5 +144,4 @@ void main() {
       expect(credentials.isSupportedInput, isFalse);
     });
   });
-
 }
