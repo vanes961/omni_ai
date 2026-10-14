@@ -12,6 +12,7 @@ class MangaReadingProgress {
     required this.chapterIndex,
     required this.updatedAt,
     this.chapterLabel = '',
+    this.chapterId,
     this.page,
     this.pageOffset = 0,
   });
@@ -24,6 +25,9 @@ class MangaReadingProgress {
 
   /// Optional provider-specific display label (for example "12.5" or "Extra").
   final String chapterLabel;
+
+  /// Stable MangaDex chapter ID; used before the display-label fallback.
+  final String? chapterId;
 
   /// One-based page position within the chapter, when known.
   final int? page;
@@ -45,6 +49,7 @@ class MangaReadingProgress {
     'mangaId': mangaId,
     'chapterIndex': chapterIndex,
     'chapterLabel': chapterLabel,
+    'chapterId': chapterId,
     'page': page,
     'pageOffset': pageOffset,
     'updatedAt': updatedAt.toUtc().toIso8601String(),
@@ -55,6 +60,7 @@ class MangaReadingProgress {
     final mangaId = value['mangaId'];
     final chapterIndex = value['chapterIndex'];
     final chapterLabel = value['chapterLabel'];
+    final chapterId = value['chapterId'];
     final page = value['page'];
     final pageOffsetRaw = value['pageOffset'];
     final pageOffset = pageOffsetRaw is num ? pageOffsetRaw.toDouble() : 0.0;
@@ -70,6 +76,8 @@ class MangaReadingProgress {
         pageOffset < 0 ||
         pageOffset > 1 ||
         (chapterLabel != null && chapterLabel is! String) ||
+        (chapterId != null &&
+            (chapterId is! String || chapterId.trim().isEmpty)) ||
         updatedAt is! String) {
       return null;
     }
@@ -79,6 +87,7 @@ class MangaReadingProgress {
       mangaId: mangaId,
       chapterIndex: chapterIndex,
       chapterLabel: chapterLabel as String? ?? '',
+      chapterId: chapterId as String?,
       page: page as int?,
       pageOffset: pageOffset,
       updatedAt: parsedDate.toUtc(),
@@ -150,6 +159,7 @@ class MangaReadingProgressRepository {
           mangaId: progress.mangaId,
           chapterIndex: progress.chapterIndex,
           chapterLabel: progress.chapterLabel,
+          chapterId: progress.chapterId,
           page: progress.page,
           pageOffset: progress.pageOffset,
           updatedAt: progress.updatedAt.toUtc(),
