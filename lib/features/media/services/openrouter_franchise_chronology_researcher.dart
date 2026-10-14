@@ -10,9 +10,13 @@ import 'package:omni_ai/features/media/services/media_search_service.dart';
 /// Model-written URLs are discarded unless they exactly match a URL citation
 /// returned by the provider for this same response.
 class OpenRouterFranchiseChronologyResearcher {
-  const OpenRouterFranchiseChronologyResearcher({required this.engine});
+  const OpenRouterFranchiseChronologyResearcher({
+    required this.engine,
+    this.localEngine,
+  });
 
   final AIEngine engine;
+  final AIEngine? localEngine;
 
   Future<List<FranchiseChronologyProposal>> research({
     required String franchiseId,
@@ -100,7 +104,115 @@ ${jsonEncode(payload)}
         ),
       );
     }
-    return List<FranchiseChronologyProposal>.unmodifiable(proposals);
+    final cloudProposals =
+        List<FranchiseChronologyProposal>.unmodifiable(proposals);
+    final local = localEngine;
+    if (local == null || cloudProposals.length != entries.length) {
+      return cloudProposals;
+    }
+    return _orderLocally(
+      engine: local,
+      franchiseId: franchiseId,
+      entries: entries,
+      proposals: cloudProposals,
+    );
+  }
+
+  Future<List<FranchiseChronologyProposal>> _orderLocally({
+    required AIEngine engine,
+    required String franchiseId,
+    required List<MediaFranchiseEntry> entries,
+    required List<FranchiseChronologyProposal> proposals,
+  }) async {
+    final byId = {for (final proposal in proposals) proposal.itemId: proposal};
+    if (byId.length != entries.length ||
+        entries.any((entry) => !byId.containsKey(entry.id))) {
+      return proposals;
+    }
+    final evidence = entries.map((entry) {
+      final proposal = byId[entry.id]!;
+      return <String, Object?>{
+        'id': entry.id,
+        'title': entry.title,
+        'releaseDate': entry.releaseDate,
+        'overview': entry.overview,
+        'sourceUrl': proposal.sourceUrl,
+        'sourceTitle': proposal.sourceTitle,
+        'sourceExcerpt': proposal.sourceExcerpt,
+        'cloudSuggestedOrder': proposal.order,
+        'cloudSpoilerRisk': proposal.spoilerRisk,
+      };
+    }).toList(growable: false);
+
+    try {
+      final response = await engine.execute(
+        AIRequest(
+          id: 'franchise-local-order-${Uri.encodeComponent(franchiseId)}-'
+              '${DateTime.now().millisecondsSinceEpoch}',
+          systemInstruction:
+              'Ты локальный помощник по хронологии кинофраншиз. Используй '
+              'только переданные названия, даты и найденные источники. '
+              'Не выдумывай элементы или факты. Если данные неоднозначны, '
+              'сохрани предложенный облаком порядок и отметь риск спойлеров.',
+          prompt: '''
+Определи умный сюжетный порядок просмотра для всех элементов ниже.
+Облачный AI уже выполнил поиск. Источники и выдержки — реальные URL citations,
+полученные от провайдера. Используй их вместе с датами и описаниями; не
+создавай новые ссылки. При сомнении сохраняй cloudSuggestedOrder.
+
+Верни только JSON-массив:
+[{"itemId":"исходный ID","order":1,"spoilerRisk":false}]
+Каждый исходный ID должен встретиться ровно один раз, order должен быть
+уникальным целым числом от 1 до N. spoilerRisk отмечает риск раскрытия сюжета.
+Не добавляй markdown или пояснения.
+
+Франшиза: $franchiseId
+Данные:
+${jsonEncode(evidence)}
+''',
+          metadata: const {'purpose': 'franchise_chronology_local_order'},
+        ),
+      );
+      final decoded = _decodeJson(response.text);
+      if (decoded is! List || decoded.length != entries.length) {
+        return proposals;
+      }
+      final orders = <int>{};
+      final reordered = <String, Map>{};
+      for (final raw in decoded) {
+        if (raw is! Map ||
+            raw['itemId'] is! String ||
+            raw['order'] is! int ||
+            raw['spoilerRisk'] is! bool ||
+            (raw['order'] as int) < 1 ||
+            !orders.add(raw['order'] as int) ||
+            reordered.containsKey(raw['itemId'] as String)) {
+          return proposals;
+        }
+        reordered[raw['itemId'] as String] = raw;
+      }
+      if (reordered.length != entries.length ||
+          entries.any((entry) => !reordered.containsKey(entry.id))) {
+        return proposals;
+      }
+      return List<FranchiseChronologyProposal>.unmodifiable(
+        entries.map((entry) {
+          final ordered = reordered[entry.id]!;
+          final source = byId[entry.id]!;
+          return FranchiseChronologyProposal(
+            itemId: source.itemId,
+            order: ordered['order'] as int,
+            sourceUrl: source.sourceUrl,
+            spoilerRisk: ordered['spoilerRisk'] as bool,
+            sourceTitle: source.sourceTitle,
+            sourceExcerpt: source.sourceExcerpt,
+          );
+        }),
+      );
+    } on Object {
+      // If the local model is not ready, keep the cloud's cited proposal.
+      return proposals;
+    }
   }
 
   /// Checks that the URL is provider-cited and the citation mentions the

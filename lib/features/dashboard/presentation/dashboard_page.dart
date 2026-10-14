@@ -70,6 +70,10 @@ class _DashboardPageState extends State<DashboardPage> {
         provider: _aiDependencies.cloudProvider,
         timeout: _aiDependencies.timeout,
       ),
+      localEngine: AIEngine(
+        provider: _aiDependencies.localProvider,
+        timeout: _aiDependencies.timeout,
+      ),
     );
     final chronologyCoordinator = FranchiseChronologyCoordinator(
       cache: const SharedPreferencesFranchiseChronologyCache(),

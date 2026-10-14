@@ -59,6 +59,50 @@ void main() {
     );
   });
 
+  test('uses the local model to reorder cloud-sourced evidence', () async {
+    const second = MediaFranchiseEntry(
+      id: 'tmdb:movie:2',
+      title: 'Film Two',
+      overview: 'A sequel.',
+      releaseDate: '2021-01-01',
+      posterUrl: '',
+    );
+    const secondUrl = 'https://example.org/film-two';
+    final cloud = _FakeProvider(
+      text: jsonEncode([
+        {'itemId': entry.id, 'order': 1, 'sourceUrl': url, 'spoilerRisk': false},
+        {'itemId': second.id, 'order': 2, 'sourceUrl': secondUrl, 'spoilerRisk': false},
+      ]),
+      citations: const [
+        {'url': url, 'title': 'Film One chronology', 'content': 'Film One story.'},
+        {'url': secondUrl, 'title': 'Film Two chronology', 'content': 'Film Two story.'},
+      ],
+    );
+    final local = _FakeProvider(
+      expectedWebSearch: false,
+      text: jsonEncode([
+        {'itemId': second.id, 'order': 1, 'spoilerRisk': true},
+        {'itemId': entry.id, 'order': 2, 'spoilerRisk': false},
+      ]),
+      citations: const [],
+    );
+    final researcher = OpenRouterFranchiseChronologyResearcher(
+      engine: AIEngine(provider: cloud),
+      localEngine: AIEngine(provider: local),
+    );
+
+    final proposals = await researcher.research(
+      franchiseId: 'franchise:film-one',
+      entries: const [entry, second],
+    );
+
+    expect(proposals.map((proposal) => proposal.itemId), [entry.id, second.id]);
+    expect(proposals.map((proposal) => proposal.order), [2, 1]);
+    expect(proposals.last.spoilerRisk, isTrue);
+    expect(proposals.first.sourceUrl, url);
+    expect(proposals.last.sourceUrl, secondUrl);
+  });
+
   test('drops model-invented URLs not present in provider citations', () async {
     final researcher = OpenRouterFranchiseChronologyResearcher(
       engine: AIEngine(
@@ -123,10 +167,15 @@ void main() {
 }
 
 class _FakeProvider implements AIProvider {
-  _FakeProvider({required this.text, required this.citations});
+  _FakeProvider({
+    required this.text,
+    required this.citations,
+    this.expectedWebSearch = true,
+  });
 
   final String text;
   final List<Map<String, Object?>> citations;
+  final bool expectedWebSearch;
 
   @override
   String get id => 'openrouter';
@@ -136,7 +185,7 @@ class _FakeProvider implements AIProvider {
     AIRequest request, {
     required AICancellationToken cancellationToken,
   }) async {
-    expect(request.metadata['enableWebSearch'], isTrue);
+    expect(request.metadata['enableWebSearch'] == true, expectedWebSearch);
     return AIResponse(
       requestId: request.id,
       text: text,
