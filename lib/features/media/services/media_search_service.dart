@@ -86,13 +86,12 @@ class MediaSearchService {
     );
     try {
       final response = await _get(
-          uri,
-          headers: {
-            'Authorization': 'Bearer ${accessToken.trim()}',
-            'accept': 'application/json',
-          },
-        )
-          .timeout(const Duration(seconds: 12));
+        uri,
+        headers: {
+          'Authorization': 'Bearer ${accessToken.trim()}',
+          'accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       final json = jsonDecode(response.body);
       if (json is! Map<String, dynamic> || json['results'] is! List) {
@@ -152,13 +151,12 @@ class MediaSearchService {
     );
     try {
       final r = await _get(
-          uri,
-          headers: {
-            'Authorization': 'Bearer ${accessToken.trim()}',
-            'accept': 'application/json',
-          },
-        )
-          .timeout(const Duration(seconds: 12));
+        uri,
+        headers: {
+          'Authorization': 'Bearer ${accessToken.trim()}',
+          'accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 12));
       if (r.statusCode != 200) return null;
       final data = jsonDecode(r.body);
       if (data is! Map<String, dynamic>) return null;
@@ -278,13 +276,12 @@ class MediaSearchService {
     ).replace(queryParameters: {'language': 'ru-RU'});
     try {
       final response = await _get(
-          uri,
-          headers: {
-            'Authorization': 'Bearer ${accessToken.trim()}',
-            'accept': 'application/json',
-          },
-        )
-          .timeout(const Duration(seconds: 12));
+        uri,
+        headers: {
+          'Authorization': 'Bearer ${accessToken.trim()}',
+          'accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       final data = jsonDecode(response.body);
       if (data is! Map<String, dynamic>) return const [];
@@ -388,13 +385,12 @@ class MediaSearchService {
     ).replace(queryParameters: {'language': 'ru-RU'});
     try {
       final response = await _get(
-          uri,
-          headers: {
-            'Authorization': 'Bearer ${accessToken.trim()}',
-            'accept': 'application/json',
-          },
-        )
-          .timeout(const Duration(seconds: 12));
+        uri,
+        headers: {
+          'Authorization': 'Bearer ${accessToken.trim()}',
+          'accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       return parseSeasonEpisodes(
         jsonDecode(response.body),
