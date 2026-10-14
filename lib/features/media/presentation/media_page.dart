@@ -416,8 +416,8 @@ class _MediaPageState extends State<MediaPage> {
             );
           }
           if (rankedCombined.isEmpty) {
-            final message = _query.trim().isNotEmpty &&
-                    !widget.searchService.isConfigured
+            final message =
+                _query.trim().isNotEmpty && !widget.searchService.isConfigured
                 ? 'ОНЛАЙН-КАТАЛОГ НЕ НАСТРОЕН: отсутствует TMDB_ACCESS_TOKEN. Реальный поиск недоступен.'
                 : 'КАТАЛОГ И ИСТОЧНИКИ ВОСПРОИЗВЕДЕНИЯ ПОКА НЕ ПОДКЛЮЧЕНЫ.';
             return Padding(
