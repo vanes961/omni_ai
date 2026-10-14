@@ -405,7 +405,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(authorization, 'Bearer secure-device-token');
-    expect(find.text('Secure Token Film'), findsOneWidget);
+    expect(find.text('Secure Token Film'), findsNWidgets(2));
     expect(find.textContaining('отсутствует TMDB_ACCESS_TOKEN'), findsNothing);
     expect(tester.takeException(), isNull);
     client.close();
