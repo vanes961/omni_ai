@@ -633,7 +633,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         final newTop = anchorObject
             .localToGlobal(Offset.zero, ancestor: updatedViewport)
             .dy;
-        final corrected = oldOffset + (newTop - anchorTop);
+        final corrected = oldOffset + (newTop - anchorTop!);
         _restoring = true;
         _scroll.jumpTo(
           corrected.clamp(0.0, _scroll.position.maxScrollExtent).toDouble(),
