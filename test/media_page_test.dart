@@ -1341,6 +1341,85 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+
+  testWidgets('filters media search results by genre and rating', (
+    tester,
+  ) async {
+    final service = _FakeMediaSearchService([
+      MediaItem(
+        id: 'comedy',
+        title: 'Comedy Movie',
+        type: 'Фильм',
+        posterUrl: '',
+        rating: 6.5,
+        voiceovers: const [],
+        videoUrl: '',
+        categories: const ['Комедия'],
+      ),
+      MediaItem(
+        id: 'thriller',
+        title: 'Thriller Movie',
+        type: 'Фильм',
+        posterUrl: '',
+        rating: 9.0,
+        voiceovers: const [],
+        videoUrl: '',
+        categories: const ['Триллер'],
+      ),
+    ]);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaPage(
+          preferences: UserPreferences(),
+          searchService: service,
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey('media-search')),
+      'Movie',
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Comedy Movie'), findsOneWidget);
+    expect(find.text('Thriller Movie'), findsOneWidget);
+    expect(find.byKey(const ValueKey('media-genre-Комедия')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('media-genre-Комедия')));
+    await tester.pumpAndSettle();
+    expect(find.text('Comedy Movie'), findsOneWidget);
+    expect(find.text('Thriller Movie'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('media-genre-all')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('media-sort-rating')));
+    await tester.pumpAndSettle();
+    expect(find.text('Сначала высокий рейтинг'), findsOneWidget);
+    expect(find.text('Comedy Movie'), findsOneWidget);
+    expect(find.text('Thriller Movie'), findsOneWidget);
+  });
+
+}
+
+
+class _FakeMediaSearchService extends MediaSearchService {
+  _FakeMediaSearchService(this.items);
+
+  final List<MediaItem> items;
+
+  @override
+  List<MediaItem> search(String query, {String? type}) => const [];
+
+  @override
+  Future<List<MediaItem>> searchOnline(String query, {String? type}) async =>
+      items
+          .where((item) => item.title.toLowerCase().contains(query.toLowerCase()))
+          .where((item) => type == null || item.type == type)
+          .toList();
 }
 
 class _FakePlaybackController implements MediaPlaybackController {
