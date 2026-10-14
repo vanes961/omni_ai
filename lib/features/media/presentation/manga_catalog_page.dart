@@ -319,17 +319,17 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
           if (!mounted || !_scroll.hasClients) return;
           final pageContext = _pageKeys[_pageIndex]?.currentContext;
           final pageObject = pageContext?.findRenderObject();
-          final viewportObject = _viewportKey.currentContext?.findRenderObject();
+          final viewportObject = _viewportKey.currentContext
+              ?.findRenderObject();
           if (pageObject is RenderBox &&
               pageObject.hasSize &&
               viewportObject is RenderBox &&
               viewportObject.hasSize) {
-            final top = pageObject.localToGlobal(
-              Offset.zero,
-              ancestor: viewportObject,
-            ).dy;
-            final corrected = _scroll.offset + top +
-                (_pageOffset * pageObject.size.height);
+            final top = pageObject
+                .localToGlobal(Offset.zero, ancestor: viewportObject)
+                .dy;
+            final corrected =
+                _scroll.offset + top + (_pageOffset * pageObject.size.height);
             _scroll.jumpTo(
               corrected.clamp(0.0, _scroll.position.maxScrollExtent).toDouble(),
             );
@@ -357,10 +357,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     for (final entry in _pageKeys.entries) {
       final pageObject = entry.value.currentContext?.findRenderObject();
       if (pageObject is! RenderBox || !pageObject.hasSize) continue;
-      final top = pageObject.localToGlobal(
-        Offset.zero,
-        ancestor: viewportObject,
-      ).dy;
+      final top = pageObject
+          .localToGlobal(Offset.zero, ancestor: viewportObject)
+          .dy;
       final bottom = top + pageObject.size.height;
       if (bottom > 0 && top < viewportObject.size.height && top < visibleTop) {
         visibleIndex = entry.key;
@@ -378,9 +377,13 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         latestStartPage = entry.value;
       }
     }
-    final nextPageIndex = visibleIndex - (_chapterStartPages[visibleChapter] ?? 0);
-    final nextOffset = ((-visibleTop) / visibleHeight).clamp(0.0, 1.0).toDouble();
-    final pageChanged = visibleChapter != _chapterIndex || nextPageIndex != _pageIndex;
+    final nextPageIndex =
+        visibleIndex - (_chapterStartPages[visibleChapter] ?? 0);
+    final nextOffset = ((-visibleTop) / visibleHeight)
+        .clamp(0.0, 1.0)
+        .toDouble();
+    final pageChanged =
+        visibleChapter != _chapterIndex || nextPageIndex != _pageIndex;
     final offsetChanged = (nextOffset - _pageOffset).abs() >= 0.15;
     _chapterIndex = visibleChapter;
     _pageIndex = nextPageIndex;
@@ -413,7 +416,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         _scheduleProgressSave();
       }
     }
-    if (_scroll.position.maxScrollExtent - _scroll.position.pixels < extent * 2) {
+    if (_scroll.position.maxScrollExtent - _scroll.position.pixels <
+        extent * 2) {
       _loadNextChapter();
     }
   }
@@ -426,7 +430,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   }
 
   MangaReadingProgress? _captureProgress({bool measureVisible = true}) {
-    if (_chapters.isEmpty || _chapterIndex < 0 || _chapterIndex >= _chapters.length) {
+    if (_chapters.isEmpty ||
+        _chapterIndex < 0 ||
+        _chapterIndex >= _chapters.length) {
       return null;
     }
     if (measureVisible) _syncVisiblePage(scheduleSave: false);
@@ -575,29 +581,32 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                                   );
                                 }
                                 return KeyedSubtree(
-                                  key: _pageKeys.putIfAbsent(index, GlobalKey.new),
+                                  key: _pageKeys.putIfAbsent(
+                                    index,
+                                    GlobalKey.new,
+                                  ),
                                   child: CachedNetworkImage(
                                     imageUrl: _pages[index].toString(),
-                                  fit: BoxFit.fitWidth,
-                                  width: double.infinity,
-                                  placeholder: (_, _) => const SizedBox(
-                                    height: 220,
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Color(0xFF74D69A),
+                                    fit: BoxFit.fitWidth,
+                                    width: double.infinity,
+                                    placeholder: (_, _) => const SizedBox(
+                                      height: 220,
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Color(0xFF74D69A),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  errorWidget: (_, _, _) => Container(
-                                    height: 180,
-                                    alignment: Alignment.center,
-                                    color: const Color(0xFF111714),
-                                    child: const Text(
-                                      'Страница не загрузилась',
-                                      style: TextStyle(color: Colors.white70),
+                                    errorWidget: (_, _, _) => Container(
+                                      height: 180,
+                                      alignment: Alignment.center,
+                                      color: const Color(0xFF111714),
+                                      child: const Text(
+                                        'Страница не загрузилась',
+                                        style: TextStyle(color: Colors.white70),
+                                      ),
                                     ),
-                                  ),
                                   ),
                                 );
                               },
