@@ -296,7 +296,7 @@ class _FranchiseSection extends StatefulWidget {
 }
 
 class _FranchiseSectionState extends State<_FranchiseSection> {
-  FranchiseViewingOrder _order = FranchiseViewingOrder.release;
+  FranchiseViewingOrder _order = FranchiseViewingOrder.smart;
 
   bool get _hasVerifiedChronology =>
       widget.items.isNotEmpty &&

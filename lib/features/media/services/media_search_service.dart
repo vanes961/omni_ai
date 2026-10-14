@@ -181,18 +181,23 @@ class MediaSearchService {
           ? collection
           : const <String, dynamic>{};
       final collectionId = collectionMap['id'];
-      final franchiseItems = collectionId is num
-          ? await loadCollectionItems(
-              collectionId.toInt(),
-              currentMovieId: p[1] == 'movie' ? int.tryParse(p[2]) : null,
-            )
+      // Include the currently opened movie while researching chronology so
+      // every position is relative to the full franchise. It is removed from
+      // the related-items carousel only after the complete order is resolved.
+      final franchiseEntries = collectionId is num
+          ? await loadCollectionItems(collectionId.toInt())
           : const <MediaFranchiseEntry>[];
-      final resolvedFranchiseItems = await resolveFranchiseChronology(
+      final resolvedFranchiseEntries = await resolveFranchiseChronology(
         franchiseId: collectionId is num
             ? 'tmdb:collection:${collectionId.toInt()}'
             : 'tmdb:item:${item.id}',
-        entries: franchiseItems,
+        entries: franchiseEntries,
       );
+      final resolvedFranchiseItems = p[1] == 'movie'
+          ? resolvedFranchiseEntries
+                .where((entry) => entry.id != 'tmdb:movie:${p[2]}')
+                .toList(growable: false)
+          : resolvedFranchiseEntries;
       final b = data['backdrop_path'] as String?;
       return MediaDetails(
         overview: data['overview'] as String? ?? item.description,
