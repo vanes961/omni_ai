@@ -5,10 +5,7 @@ import 'package:omni_ai/features/media/services/media_catalog_token_store.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class MediaCatalogSettingsPage extends StatefulWidget {
-  const MediaCatalogSettingsPage({
-    this.tokenStore,
-    super.key,
-  });
+  const MediaCatalogSettingsPage({this.tokenStore, super.key});
 
   final MediaCatalogTokenStore? tokenStore;
 
@@ -46,7 +43,9 @@ class _MediaCatalogSettingsPageState extends State<MediaCatalogSettingsPage> {
       setState(() => _hasToken = token?.isNotEmpty == true);
     } on Object catch (error) {
       if (!mounted) return;
-      setState(() => _status = 'Не удалось прочитать защищённое хранилище: $error');
+      setState(
+        () => _status = 'Не удалось прочитать защищённое хранилище: $error',
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -55,7 +54,9 @@ class _MediaCatalogSettingsPageState extends State<MediaCatalogSettingsPage> {
   Future<void> _saveToken() async {
     final token = _tokenController.text.trim();
     if (token.isEmpty || _saving) {
-      setState(() => _status = 'Вставьте TMDB Read Access Token перед сохранением.');
+      setState(
+        () => _status = 'Вставьте TMDB Read Access Token перед сохранением.',
+      );
       return;
     }
     setState(() {
@@ -68,7 +69,8 @@ class _MediaCatalogSettingsPageState extends State<MediaCatalogSettingsPage> {
       _tokenController.clear();
       setState(() {
         _hasToken = true;
-        _status = 'Токен сохранён в защищённом хранилище устройства. Вернитесь в «Медиа» и выполните поиск.';
+        _status =
+            'Токен сохранён в защищённом хранилище устройства. Вернитесь в «Медиа» и выполните поиск.';
       });
     } on Object catch (error) {
       if (!mounted) return;
@@ -140,7 +142,9 @@ class _MediaCatalogSettingsPageState extends State<MediaCatalogSettingsPage> {
                 tooltip: _obscureToken ? 'Показать токен' : 'Скрыть токен',
                 onPressed: () => setState(() => _obscureToken = !_obscureToken),
                 icon: Icon(
-                  _obscureToken ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  _obscureToken
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
                 ),
               ),
               border: OutlineInputBorder(
@@ -172,7 +176,9 @@ class _MediaCatalogSettingsPageState extends State<MediaCatalogSettingsPage> {
               children: [
                 Icon(
                   _hasToken ? Icons.check_circle_outline : Icons.info_outline,
-                  color: _hasToken ? SystemCorePalette.green : SystemCorePalette.muted,
+                  color: _hasToken
+                      ? SystemCorePalette.green
+                      : SystemCorePalette.muted,
                   size: 18,
                 ),
                 const SizedBox(width: 8),
@@ -197,7 +203,10 @@ class _MediaCatalogSettingsPageState extends State<MediaCatalogSettingsPage> {
             Text(
               _status!,
               key: const ValueKey('tmdb-token-status'),
-              style: const TextStyle(color: SystemCorePalette.green, height: 1.4),
+              style: const TextStyle(
+                color: SystemCorePalette.green,
+                height: 1.4,
+              ),
             ),
           ],
         ],
