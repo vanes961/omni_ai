@@ -62,16 +62,25 @@ class FranchiseChronologyCoordinator {
     }
 
     if (!forceRefresh) {
-      final cached = await cache.read(franchiseId);
-      final cachedResult = _mergeVerifiedCache(entries, cached);
-      if (cachedResult != null) return cachedResult;
+      try {
+        final cached = await cache.read(franchiseId);
+        final cachedResult = _mergeVerifiedCache(entries, cached);
+        if (cachedResult != null) return cachedResult;
+      } on Object {
+        // A cache failure must not prevent the catalog card from opening.
+      }
     }
 
-    final proposals = await research(
-      franchiseId: franchiseId,
-      entries: List<MediaFranchiseEntry>.unmodifiable(entries),
-    );
-    final verified = await _verifyCompleteSet(entries, proposals);
+    late final Map<String, FranchiseChronologyProposal>? verified;
+    try {
+      final proposals = await research(
+        franchiseId: franchiseId,
+        entries: List<MediaFranchiseEntry>.unmodifiable(entries),
+      );
+      verified = await _verifyCompleteSet(entries, proposals);
+    } on Object {
+      return List<MediaFranchiseEntry>.unmodifiable(entries);
+    }
     if (verified == null) {
       return List<MediaFranchiseEntry>.unmodifiable(entries);
     }
@@ -92,10 +101,14 @@ class FranchiseChronologyCoordinator {
         })
         .toList(growable: false);
 
-    await cache.write(
-      franchiseId,
-      List<MediaFranchiseEntry>.unmodifiable(result),
-    );
+    try {
+      await cache.write(
+        franchiseId,
+        List<MediaFranchiseEntry>.unmodifiable(result),
+      );
+    } on Object {
+      // The verified result remains useful even if persistence is unavailable.
+    }
     return List<MediaFranchiseEntry>.unmodifiable(result);
   }
 
