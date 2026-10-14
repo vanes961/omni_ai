@@ -7,14 +7,24 @@ import 'package:omni_ai/core/ai_engine/services/ai_context_manager.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/features/ai_memory/presentation/ai_memory_manager_dialog.dart';
+import 'package:omni_ai/features/news/data/news_interest_repository.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_cache.dart';
+import 'package:omni_ai/features/news/data/shared_preferences_news_interest_repository.dart';
 import 'package:omni_ai/features/news/services/news_chat_context_builder.dart';
+import 'package:omni_ai/features/news/services/news_rss_service.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
 class AIChatPage extends StatefulWidget {
-  const AIChatPage({required this.dependencies, super.key});
+  const AIChatPage({
+    required this.dependencies,
+    this.newsService,
+    this.newsRepository,
+    super.key,
+  });
 
   final AppDependencies dependencies;
+  final NewsRssService? newsService;
+  final NewsInterestRepository? newsRepository;
 
   @override
   State<AIChatPage> createState() => _AIChatPageState();
@@ -25,6 +35,10 @@ class _AIChatPageState extends State<AIChatPage> {
   final ScrollController _scroll = ScrollController();
   final List<_ChatMessage> _messages = <_ChatMessage>[];
   final SharedPreferencesNewsCache _newsCache = SharedPreferencesNewsCache();
+  late final NewsRssService _newsService;
+  late final NewsInterestRepository _newsRepository;
+  late final bool _ownsNewsService;
+  late final bool _ownsNewsRepository;
   final NewsChatContextBuilder _newsContextBuilder =
       const NewsChatContextBuilder();
   AICancellationToken? _activeToken;
@@ -35,6 +49,11 @@ class _AIChatPageState extends State<AIChatPage> {
   @override
   void initState() {
     super.initState();
+    _ownsNewsService = widget.newsService == null;
+    _newsService = widget.newsService ?? NewsRssService();
+    _ownsNewsRepository = widget.newsRepository == null;
+    _newsRepository =
+        widget.newsRepository ?? SharedPreferencesNewsInterestRepository();
     unawaited(_loadMode());
   }
 
@@ -83,16 +102,33 @@ class _AIChatPageState extends State<AIChatPage> {
           .getAll();
       var requestPrompt = prompt;
       if (_newsContextBuilder.isNewsRequest(prompt)) {
+        var cachedArticles = const <dynamic>[];
         try {
-          final cachedArticles = await _newsCache.loadArticles();
-          requestPrompt = _newsContextBuilder.buildPrompt(
-            prompt,
-            cachedArticles,
-          );
-        } on Object catch (_) {
-          // A cache/storage problem must not prevent ordinary chat from working.
-          requestPrompt = _newsContextBuilder.buildPrompt(prompt, const []);
+          cachedArticles = await _newsCache.loadArticles();
+        } on Object {
+          // Fresh RSS retrieval below remains available if local cache fails.
         }
+        var freshArticles = const <dynamic>[];
+        var includesFreshResults = false;
+        try {
+          final profile = await _newsRepository.load();
+          if (profile.topics.any((topic) => topic.trim().isNotEmpty) ||
+              profile.includeCriticalOutsideInterests) {
+            freshArticles = await _newsService.fetchInternational(profile);
+            includesFreshResults = freshArticles.isNotEmpty;
+          }
+        } on Object {
+          // A network/source failure falls back to the cached personalized feed.
+        }
+        final articles = _newsContextBuilder.mergeArticles(
+          fresh: freshArticles.cast(),
+          cached: cachedArticles.cast(),
+        );
+        requestPrompt = _newsContextBuilder.buildPrompt(
+          prompt,
+          articles,
+          includesFreshResults: includesFreshResults,
+        );
       }
       final response = await widget.dependencies.orchestrator.execute(
         AIRequest(
@@ -183,6 +219,8 @@ class _AIChatPageState extends State<AIChatPage> {
   @override
   void dispose() {
     _activeToken?.cancel();
+    if (_ownsNewsService) _newsService.dispose();
+    if (_ownsNewsRepository) unawaited(_newsRepository.dispose());
     _input.dispose();
     _scroll.dispose();
     super.dispose();
