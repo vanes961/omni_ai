@@ -166,6 +166,17 @@ class MediaSearchService {
         }
       }
       final seasons = parseCatalogSeasons(data['seasons']);
+      final collection = data['belongs_to_collection'];
+      final collectionMap = collection is Map<String, dynamic>
+          ? collection
+          : const <String, dynamic>{};
+      final collectionId = collectionMap['id'];
+      final franchiseItems = collectionId is num
+          ? await loadCollectionItems(
+              collectionId.toInt(),
+              currentMovieId: p[1] == 'movie' ? int.tryParse(p[2]) : null,
+            )
+          : const <MediaFranchiseEntry>[];
       final b = data['backdrop_path'] as String?;
       return MediaDetails(
         overview: data['overview'] as String? ?? item.description,
@@ -179,10 +190,80 @@ class MediaSearchService {
         backdropUrl: b == null ? '' : 'https://image.tmdb.org/t/p/w1280$b',
         homepage: data['homepage'] as String? ?? '',
         seasons: seasons,
+        franchiseName: collectionMap['name'] as String? ?? '',
+        franchiseItems: franchiseItems,
       );
     } on Object {
       return null;
     }
+  }
+
+  /// Loads verified movie entries from the TMDB collection attached to a
+  /// movie's details response. Similar/recommended titles are not treated as
+  /// franchise members, and the currently open movie is omitted.
+  Future<List<MediaFranchiseEntry>> loadCollectionItems(
+    int collectionId, {
+    int? currentMovieId,
+  }) async {
+    if (!isConfigured || collectionId <= 0) return const [];
+    final uri = Uri.parse('$_api/collection/$collectionId').replace(
+      queryParameters: {'language': 'ru-RU'},
+    );
+    try {
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer ${accessToken.trim()}',
+              'accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 12));
+      if (response.statusCode != 200) return const [];
+      final data = jsonDecode(response.body);
+      if (data is! Map<String, dynamic>) return const [];
+      return parseCollectionParts(
+        data['parts'],
+        currentMovieId: currentMovieId,
+      );
+    } on Object {
+      return const [];
+    }
+  }
+
+  /// Parses only valid TMDB collection parts; no sequel/prequel relation is
+  /// guessed from title similarity or release date.
+  static List<MediaFranchiseEntry> parseCollectionParts(
+    Object? payload, {
+    int? currentMovieId,
+  }) {
+    if (payload is! List) return const [];
+    final entries = <MediaFranchiseEntry>[];
+    for (final raw in payload) {
+      if (raw is! Map<String, dynamic>) continue;
+      final id = raw['id'];
+      final title = (raw['title'] as String? ?? '').trim();
+      if (id is! num || id <= 0 || title.isEmpty ||
+          id.toInt() == currentMovieId) {
+        continue;
+      }
+      final poster = raw['poster_path'] as String?;
+      entries.add(
+        MediaFranchiseEntry(
+          id: 'tmdb:movie:${id.toInt()}',
+          title: title,
+          overview: raw['overview'] as String? ?? '',
+          releaseDate: raw['release_date'] as String? ?? '',
+          posterUrl: poster == null ? '' : '$_poster$poster',
+        ),
+      );
+    }
+    entries.sort((a, b) {
+      if (a.releaseDate.isEmpty && b.releaseDate.isNotEmpty) return 1;
+      if (b.releaseDate.isEmpty && a.releaseDate.isNotEmpty) return -1;
+      return a.releaseDate.compareTo(b.releaseDate);
+    });
+    return List<MediaFranchiseEntry>.unmodifiable(entries);
   }
 
   /// Loads episode metadata for a TMDB TV season. These entries deliberately
@@ -302,6 +383,22 @@ class MediaCatalogSeason {
   final String overview;
 }
 
+class MediaFranchiseEntry {
+  const MediaFranchiseEntry({
+    required this.id,
+    required this.title,
+    required this.overview,
+    required this.releaseDate,
+    required this.posterUrl,
+  });
+
+  final String id;
+  final String title;
+  final String overview;
+  final String releaseDate;
+  final String posterUrl;
+}
+
 class MediaDetails {
   const MediaDetails({
     required this.overview,
@@ -312,6 +409,8 @@ class MediaDetails {
     required this.backdropUrl,
     required this.homepage,
     this.seasons = const [],
+    this.franchiseName = '',
+    this.franchiseItems = const [],
   });
   final String overview;
   final List<String> genres;
@@ -319,6 +418,8 @@ class MediaDetails {
   final int? runtimeMinutes;
   final String releaseDate, backdropUrl, homepage;
   final List<MediaCatalogSeason> seasons;
+  final String franchiseName;
+  final List<MediaFranchiseEntry> franchiseItems;
 }
 
 /// Descriptive season metadata from a catalog; intentionally not playable.
