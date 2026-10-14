@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 
 import 'package:http/http.dart' as http;
@@ -62,6 +63,7 @@ class LocalModelStorage {
     return File('${directory.path}/models/${model.fileName}');
   }
 
+  /// Fast presence/size check for UI status. Does not read the full model.
   Future<bool> isDownloaded(LocalModelSpec model) async {
     final file = await modelFile(model);
     if (!await file.exists()) return false;
@@ -69,12 +71,23 @@ class LocalModelStorage {
     return length > 0 && length >= model.expectedBytesApprox * 0.95;
   }
 
+  /// Validates the model checksum when one is available. Call during model
+  /// initialization/recovery, not on every UI status refresh.
+  Future<bool> isValid(LocalModelSpec model) async {
+    if (!await isDownloaded(model)) return false;
+    final expectedHash = model.expectedSha256;
+    if (expectedHash == null || expectedHash.isEmpty) return true;
+    final file = await modelFile(model);
+    final digest = await sha256.bind(file.openRead()).first;
+    return digest.toString().toLowerCase() == expectedHash.toLowerCase();
+  }
+
   /// Copies the model packaged inside the APK into app-private storage.
   /// The Android side streams the asset in chunks to avoid loading ~484 MB
   /// into Dart memory at once.
   Future<File> installBundled(LocalModelSpec model) async {
     final destination = await modelFile(model);
-    if (await isDownloaded(model)) return destination;
+    if (await isValid(model)) return destination;
 
     await destination.parent.create(recursive: true);
     await _channel.invokeMethod<void>('copyBundledModel', <String, Object>{
@@ -84,9 +97,9 @@ class LocalModelStorage {
       'expectedSha256': model.expectedSha256 ?? '',
     });
 
-    if (!await isDownloaded(model)) {
+    if (!await isValid(model)) {
       throw const FormatException(
-        'The bundled model failed its size validation. Reinstall the app.',
+        'The bundled model failed integrity validation. Reinstall the app.',
       );
     }
     return destination;
@@ -137,6 +150,15 @@ class LocalModelStorage {
         throw const FormatException(
           'Downloaded model is smaller than expected; please retry.',
         );
+      }
+      final expectedHash = model.expectedSha256;
+      if (expectedHash != null && expectedHash.isNotEmpty) {
+        final digest = await sha256.bind(temporary.openRead()).first;
+        if (digest.toString().toLowerCase() != expectedHash.toLowerCase()) {
+          throw const FormatException(
+            'Downloaded model checksum is invalid; please retry.',
+          );
+        }
       }
 
       // On Android's filesystem, rename within the same directory replaces
