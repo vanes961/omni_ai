@@ -14,8 +14,30 @@ class MediaSearchService {
   const MediaSearchService({
     this.accessToken = _token,
     this.franchiseChronologyResolver,
-  });
+    http.Client? client,
+  }) : _client = client;
+
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
+  final http.Client? _client;
+
+  /// Keeps the same HTTP transport while replacing the credential loaded from
+  /// secure device storage. This makes runtime credentials testable and avoids
+  /// silently losing an injected client when the page loads its token.
+  MediaSearchService withAccessToken(String token) => MediaSearchService(
+    accessToken: token,
+    franchiseChronologyResolver: franchiseChronologyResolver,
+    client: _client,
+  );
+
+  Future<http.Response> _get(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) {
+    final client = _client;
+    return client == null
+        ? http.get(uri, headers: headers)
+        : client.get(uri, headers: headers);
+  }
   static const tmdbAttribution =
       'This product uses the TMDB API but is not endorsed or certified by TMDB.';
   static const _api = 'https://api.themoviedb.org/3';
@@ -65,14 +87,13 @@ class MediaSearchService {
       },
     );
     try {
-      final response = await http
-          .get(
-            uri,
-            headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
-              'accept': 'application/json',
-            },
-          )
+      final response = await _get(
+          uri,
+          headers: {
+            'Authorization': 'Bearer ${accessToken.trim()}',
+            'accept': 'application/json',
+          },
+        )
           .timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       final json = jsonDecode(response.body);
@@ -132,14 +153,13 @@ class MediaSearchService {
       queryParameters: {'language': 'ru-RU', 'append_to_response': 'credits'},
     );
     try {
-      final r = await http
-          .get(
-            uri,
-            headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
-              'accept': 'application/json',
-            },
-          )
+      final r = await _get(
+          uri,
+          headers: {
+            'Authorization': 'Bearer ${accessToken.trim()}',
+            'accept': 'application/json',
+          },
+        )
           .timeout(const Duration(seconds: 12));
       if (r.statusCode != 200) return null;
       final data = jsonDecode(r.body);
@@ -259,14 +279,13 @@ class MediaSearchService {
       '$_api/collection/$collectionId',
     ).replace(queryParameters: {'language': 'ru-RU'});
     try {
-      final response = await http
-          .get(
-            uri,
-            headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
-              'accept': 'application/json',
-            },
-          )
+      final response = await _get(
+          uri,
+          headers: {
+            'Authorization': 'Bearer ${accessToken.trim()}',
+            'accept': 'application/json',
+          },
+        )
           .timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       final data = jsonDecode(response.body);
@@ -370,14 +389,13 @@ class MediaSearchService {
       '$_api/tv/${parts[2]}/season/$seasonNumber',
     ).replace(queryParameters: {'language': 'ru-RU'});
     try {
-      final response = await http
-          .get(
-            uri,
-            headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
-              'accept': 'application/json',
-            },
-          )
+      final response = await _get(
+          uri,
+          headers: {
+            'Authorization': 'Bearer ${accessToken.trim()}',
+            'accept': 'application/json',
+          },
+        )
           .timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       return parseSeasonEpisodes(
