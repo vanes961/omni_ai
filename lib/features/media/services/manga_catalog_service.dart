@@ -58,10 +58,13 @@ class MangaCatalogService {
     );
     try {
       final response = await _client
-          .get(uri, headers: const {
-            'accept': 'application/json',
-            'User-Agent': 'OMNI_AI/1.0 (MangaDex catalogue client)',
-          })
+          .get(
+            uri,
+            headers: const {
+              'accept': 'application/json',
+              'User-Agent': 'OMNI_AI/1.0 (MangaDex catalogue client)',
+            },
+          )
           .timeout(timeout);
       if (response.statusCode != 200) return const <MangaCatalogItem>[];
       return parseSearchResponse(jsonDecode(response.body));
