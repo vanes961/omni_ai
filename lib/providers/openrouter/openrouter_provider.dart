@@ -67,7 +67,7 @@ class OpenRouterProvider implements AIProvider {
             ..headers.addAll({
               'Content-Type': 'application/json',
               'Accept': 'application/json',
-              'Authorization': 'Bearer $apiKey',
+              'Authorization': '***',
               'HTTP-Referer': config.siteUrl,
               'X-Title': config.appName,
             })
@@ -140,7 +140,10 @@ class OpenRouterProvider implements AIProvider {
     } on http.RequestAbortedException {
       if (cancellationToken.isCancelled) {
         throw const AIEngineException(
-          AIError(code: AIErrorCode.cancelled, message: 'OpenRouter request cancelled.'),
+          AIError(
+            code: AIErrorCode.cancelled,
+            message: 'OpenRouter request cancelled.',
+          ),
         );
       }
       throw _providerError('OpenRouter request was aborted.');
@@ -156,8 +159,12 @@ class OpenRouterProvider implements AIProvider {
   String _extractText(Object? content) {
     if (content is String) return content;
     if (content is List) {
-      return content.whereType<Map>().where((part) => part['type'] == 'text')
-          .map((part) => part['text']).whereType<String>().join();
+      return content
+          .whereType<Map>()
+          .where((part) => part['type'] == 'text')
+          .map((part) => part['text'])
+          .whereType<String>()
+          .join();
     }
     return '';
   }
@@ -197,11 +204,13 @@ class OpenRouterProvider implements AIProvider {
       // Keep HTTP status if the body isn't JSON.
     }
     final status = response.statusCode;
-    return AIEngineException(AIError(
-      code: AIErrorCode.provider,
-      message: 'OpenRouter API returned $status: $detail',
-      retryable: status == 429 || status >= 500,
-    ));
+    return AIEngineException(
+      AIError(
+        code: AIErrorCode.provider,
+        message: 'OpenRouter API returned $status: $detail',
+        retryable: status == 429 || status >= 500,
+      ),
+    );
   }
 
   AIEngineException _malformedResponse(String detail) => AIEngineException(
@@ -220,3 +229,4 @@ class OpenRouterProvider implements AIProvider {
     if (_ownsClient) _client.close();
   }
 }
+Formatted 3 files (1 changed) in 0.05 seconds.
