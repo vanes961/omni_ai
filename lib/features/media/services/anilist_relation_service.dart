@@ -97,7 +97,7 @@ class AniListRelationService {
     if (edges is! List) return const <CrossContentRelation>[];
 
     final sourceId = 'mangadex:$mangaDexId';
-    final sourceUrl = 'https://mangadex.org/title/' + mangaDexId;
+    final sourceUrl = 'https://mangadex.org/title/$mangaDexId';
     final output = <CrossContentRelation>[];
     final seen = <String>{};
     for (final raw in edges) {
@@ -115,8 +115,8 @@ class AniListRelationService {
       };
       if (targetType == null) continue;
       final targetId = targetType == CrossContentType.anime
-          ? 'anilist:anime:' + targetRawId.toString()
-          : 'anilist:manga:' + targetRawId.toString();
+          ? 'anilist:anime:$targetRawId'
+          : 'anilist:manga:$targetRawId';
       final boundary = verifiedBoundaries[targetId];
       if (boundary == null || !boundary.isValid || !seen.add(targetId)) {
         continue;
