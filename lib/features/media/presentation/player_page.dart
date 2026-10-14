@@ -878,36 +878,36 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                 ),
               ),
           ],
-            if (_availableQualitiesFor(
-              _hasEpisodes ? episodes[_selectedEpisode] : null,
-            ).isNotEmpty) ...[
-              const SizedBox(height: 14),
-              const _PlayerSectionLabel('КАЧЕСТВО ВИДЕО'),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                key: const ValueKey('quality-selector'),
-                initialValue:
-                    _availableQualitiesFor(
-                      _hasEpisodes ? episodes[_selectedEpisode] : null,
-                    ).contains(_selectedQuality)
-                    ? _selectedQuality
-                    : _availableQualitiesFor(
-                        _hasEpisodes ? episodes[_selectedEpisode] : null,
-                      ).first,
-                isExpanded: true,
-                dropdownColor: SystemCorePalette.panel,
-                decoration: _selectorDecoration(),
-                items: [
-                  for (final quality in _availableQualitiesFor(
+          if (_availableQualitiesFor(
+            _hasEpisodes ? episodes[_selectedEpisode] : null,
+          ).isNotEmpty) ...[
+            const SizedBox(height: 14),
+            const _PlayerSectionLabel('КАЧЕСТВО ВИДЕО'),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              key: const ValueKey('quality-selector'),
+              initialValue:
+                  _availableQualitiesFor(
                     _hasEpisodes ? episodes[_selectedEpisode] : null,
-                  ))
-                    DropdownMenuItem(value: quality, child: Text(quality)),
-                ],
-                onChanged: (quality) {
-                  if (quality != null) unawaited(_selectQuality(quality));
-                },
-              ),
-            ],
+                  ).contains(_selectedQuality)
+                  ? _selectedQuality
+                  : _availableQualitiesFor(
+                      _hasEpisodes ? episodes[_selectedEpisode] : null,
+                    ).first,
+              isExpanded: true,
+              dropdownColor: SystemCorePalette.panel,
+              decoration: _selectorDecoration(),
+              items: [
+                for (final quality in _availableQualitiesFor(
+                  _hasEpisodes ? episodes[_selectedEpisode] : null,
+                ))
+                  DropdownMenuItem(value: quality, child: Text(quality)),
+              ],
+              onChanged: (quality) {
+                if (quality != null) unawaited(_selectQuality(quality));
+              },
+            ),
+          ],
         ],
       ),
     );
