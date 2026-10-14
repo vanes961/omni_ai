@@ -123,6 +123,10 @@ class _AIChatPageState extends State<AIChatPage> {
         _messages[assistantMessageIndex] = _ChatMessage(
           text: _cleanAssistantAnswer(response.text),
           isUser: false,
+          performance: _localPerformanceLabel(
+            response.providerId,
+            response.metadata,
+          ),
         );
       });
     } on Object catch (error) {
@@ -330,15 +334,32 @@ class _AIChatPageState extends State<AIChatPage> {
                                 : Colors.white12,
                           ),
                         ),
-                        child: SelectableText(
-                          message.text,
-                          style: TextStyle(
-                            color: message.isError
-                                ? Colors.orangeAccent
-                                : Colors.white,
-                            height: 1.45,
-                            fontSize: 13,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SelectableText(
+                              message.text,
+                              style: TextStyle(
+                                color: message.isError
+                                    ? Colors.orangeAccent
+                                    : Colors.white,
+                                height: 1.45,
+                                fontSize: 13,
+                              ),
+                            ),
+                            if (message.performance != null) ...[
+                              const SizedBox(height: 10),
+                              Text(
+                                message.performance!,
+                                style: const TextStyle(
+                                  color: SystemCorePalette.green,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     );
@@ -388,11 +409,39 @@ class _ChatMessage {
     required this.text,
     required this.isUser,
     this.isError = false,
+    this.performance,
   });
 
   final String text;
   final bool isUser;
   final bool isError;
+  final String? performance;
+}
+
+String? _localPerformanceLabel(
+  String providerId,
+  Map<String, Object?> metadata,
+) {
+  if (providerId != 'local-llama' && metadata['local'] != true) return null;
+
+  final tokenCount = metadata['generatedTokenCount'];
+  final durationMs = metadata['generationDurationMs'];
+  final tokensPerSecond = metadata['tokensPerSecond'];
+  final firstTokenMs = metadata['timeToFirstTokenMs'];
+  if (tokenCount is! num ||
+      durationMs is! num ||
+      tokensPerSecond is! num) {
+    return 'LOCAL AI  •  скорость не измерена';
+  }
+
+  String decimal(num value) => value.toStringAsFixed(1).replaceAll('.', ',');
+  final details = <String>[
+    'LOCAL AI',
+    '\${decimal(tokensPerSecond)} ток/с',
+    '\${decimal(durationMs / 1000)} с',
+    if (firstTokenMs is num) 'первый токен \${decimal(firstTokenMs / 1000)} с',
+  ];
+  return details.join('  •  ');
 }
 
 String _cleanAssistantAnswer(String text) {
