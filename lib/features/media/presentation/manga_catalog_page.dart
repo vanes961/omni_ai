@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:omni_ai/features/media/data/manga_reading_progress_repository.dart';
 import 'package:omni_ai/features/media/presentation/manga_reader_progress_overlay.dart';
 import 'package:omni_ai/features/media/services/manga_catalog_service.dart';
@@ -153,7 +154,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         final found = all.indexWhere((c) => c.chapter == saved.chapterLabel);
         if (found >= 0) initial = found;
       }
-      setState(() { _chapters = all; _chapterIndex = initial; _loadingChapters = false; _hasMoreChapters = all.length >= 500; });
+      setState(() { _chapters = all; _chapterIndex = initial; _loadingChapters = false; _hasMoreChapters = all.length > 1; });
       await _loadChapterPages(initial, restore: saved);
     } on Object catch (e) {
       if (!mounted) return;
@@ -181,7 +182,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         _chapterStartPages
           ..clear()
           ..[index] = 0;
-        _pageIndex = restore?.page == null ? 0 : (restore!.page! - 1).clamp(0, manifest.imageUrls.length - 1);
+        _pageIndex = restore?.page == null ? 0 : (restore!.page! - 1).clamp(0, manifest.imageUrls.length - 1).toInt();
         _loadingPages = false;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -234,7 +235,8 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
 
   Future<void> _loadNextChapter() async {
     if (_loadingNext || _loadingPages || !_hasMoreChapters) return;
-    final nextIndex = List<int>.generate(_chapters.length, (i) => i).firstWhere((i) => !_loadedChapterIndexes.contains(i), orElse: () => -1);
+    final lastLoaded = _loadedChapterIndexes.isEmpty ? _chapterIndex : _loadedChapterIndexes.reduce((a, b) => a > b ? a : b);
+    final nextIndex = List<int>.generate(_chapters.length, (i) => i).firstWhere((i) => i > lastLoaded && !_loadedChapterIndexes.contains(i), orElse: () => -1);
     if (nextIndex < 0) { _hasMoreChapters = false; return; }
     _loadingNext = true;
     try {
@@ -280,7 +282,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       backgroundColor: const Color(0xFF111714),
       title: Text(widget.manga.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       actions: [
-        IconButton(tooltip: 'Открыть источник MangaDex', onPressed: () {}, icon: const Icon(Icons.menu_book, color: Color(0xFF74D69A))),
+        IconButton(tooltip: 'Открыть источник MangaDex', onPressed: () => launchUrl(Uri.parse(widget.manga.sourceUrl), mode: LaunchMode.externalApplication), icon: const Icon(Icons.open_in_new, color: Color(0xFF74D69A))),
       ],
     ),
     body: _loadingChapters
