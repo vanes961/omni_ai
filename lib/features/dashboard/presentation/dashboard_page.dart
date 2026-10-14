@@ -10,6 +10,7 @@ import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
 import 'package:omni_ai/features/news/presentation/news_center_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/settings/presentation/pages/local_model_settings_page.dart';
+import 'package:omni_ai/features/settings/presentation/pages/media_catalog_settings_page.dart';
 import 'package:omni_ai/features/settings/presentation/pages/network_settings_page.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
@@ -220,6 +221,11 @@ class _DashboardPageState extends State<DashboardPage> {
                 icon: Icon(Icons.memory),
                 label: Text('Локальная AI'),
               ),
+              ButtonSegment(
+                value: 2,
+                icon: Icon(Icons.movie_filter_outlined),
+                label: Text('Каталог'),
+              ),
             ],
             selected: {_selectedSettingsTab},
             onSelectionChanged: (selection) {
@@ -228,15 +234,17 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
         Expanded(
-          child: _selectedSettingsTab == 0
-              ? NetworkSettingsPage(
-                  preferences: widget.preferences,
-                  preferencesStore: _preferencesStore,
-                )
-              : LocalModelSettingsPage(
-                  storage: _localModelStorage,
-                  aiDependencies: _aiDependencies,
-                ),
+          child: switch (_selectedSettingsTab) {
+            0 => NetworkSettingsPage(
+              preferences: widget.preferences,
+              preferencesStore: _preferencesStore,
+            ),
+            1 => LocalModelSettingsPage(
+              storage: _localModelStorage,
+              aiDependencies: _aiDependencies,
+            ),
+            _ => const MediaCatalogSettingsPage(),
+          },
         ),
       ],
     );
