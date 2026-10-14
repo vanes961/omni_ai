@@ -17,7 +17,8 @@ class VerifiedMangaAnimeBoundary {
   final int? safeTargetEpisode;
 
   bool get isValid =>
-      sourceChapter >= 0 && (safeTargetEpisode == null || safeTargetEpisode! >= 1);
+      sourceChapter >= 0 &&
+      (safeTargetEpisode == null || safeTargetEpisode! >= 1);
 }
 
 /// Discovers AniList relation edges for a MangaDex title that advertises an
@@ -131,9 +132,7 @@ class AniListRelationService {
       if (kind == null) continue;
       final targetUrl = node['siteUrl'];
       final uri = targetUrl is String ? Uri.tryParse(targetUrl) : null;
-      if (uri == null ||
-          uri.scheme != 'https' ||
-          uri.host != 'anilist.co') {
+      if (uri == null || uri.scheme != 'https' || uri.host != 'anilist.co') {
         continue;
       }
       output.add(
