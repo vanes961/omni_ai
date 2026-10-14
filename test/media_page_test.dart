@@ -686,7 +686,7 @@ void main() {
     expect(controller.position, const Duration(seconds: 20));
 
     controller.position = duration - const Duration(minutes: 1);
-    await tester.pump(const Duration(seconds: 5));
+    await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('skip-credits-button')), findsOneWidget);
