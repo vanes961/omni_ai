@@ -24,24 +24,23 @@ class NewsChatContextBuilder {
     required List<NewsArticle> fresh,
     required List<NewsArticle> cached,
   }) {
-    final byUrl = <String, NewsArticle>{};
-    final byTitle = <String, NewsArticle>{};
+    final seenUrls = <String>{};
+    final seenTitles = <String>{};
+    final merged = <NewsArticle>[];
     for (final article in [...fresh, ...cached]) {
       final url = article.sourceUrl.trim().toLowerCase();
       final title = article.title
           .trim()
           .toLowerCase()
-          .replaceAll(RegExp(r'[^\\p{L}\\p{N}]+', unicode: true), ' ')
+          .replaceAll(RegExp(r'[^a-z0-9а-яё]+', caseSensitive: false), ' ')
           .trim();
-      if (url.isNotEmpty && byUrl.containsKey(url)) continue;
-      if (title.isNotEmpty && byTitle.containsKey(title)) continue;
-      if (url.isNotEmpty) byUrl[url] = article;
-      if (title.isNotEmpty) byTitle[title] = article;
+      if ((url.isNotEmpty && !seenUrls.add(url)) ||
+          (title.isNotEmpty && !seenTitles.add(title))) {
+        continue;
+      }
+      merged.add(article);
     }
-    final merged = <NewsArticle>{
-      ...byUrl.values,
-      ...byTitle.values,
-    }.toList()..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+    merged.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
     return List<NewsArticle>.unmodifiable(merged);
   }
 
