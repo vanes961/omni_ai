@@ -146,6 +146,9 @@ class LocalLlamaProvider implements AIProvider, AIStreamingProvider {
     );
 
     final output = StringBuffer();
+    final generationStopwatch = Stopwatch()..start();
+    Duration? timeToFirstToken;
+    var generatedTokenCount = 0;
     try {
       await for (final token in _controller.generate(
         prompt: prompt,
@@ -153,9 +156,12 @@ class LocalLlamaProvider implements AIProvider, AIStreamingProvider {
         temperature: temperature,
       )) {
         if (cancellationToken.isCancelled) break;
+        timeToFirstToken ??= generationStopwatch.elapsed;
+        generatedTokenCount++;
         output.write(token);
         onToken(token);
       }
+      generationStopwatch.stop();
       if (cancelled || cancellationToken.isCancelled) {
         throw const AIEngineException(
           AIError(
@@ -181,7 +187,17 @@ class LocalLlamaProvider implements AIProvider, AIStreamingProvider {
         text: text,
         providerId: id,
         generatedAt: DateTime.now(),
-        metadata: {'modelPath': modelFile.path, 'local': true},
+        metadata: {
+          'modelPath': modelFile.path,
+          'local': true,
+          'generatedTokenCount': generatedTokenCount,
+          'generationDurationMs': generationStopwatch.elapsedMilliseconds,
+          'tokensPerSecond': generationStopwatch.elapsedMicroseconds == 0
+              ? 0.0
+              : generatedTokenCount * Duration.microsecondsPerSecond /
+                    generationStopwatch.elapsedMicroseconds,
+          'timeToFirstTokenMs': timeToFirstToken?.inMilliseconds,
+        },
       );
     } on AIEngineException {
       rethrow;
