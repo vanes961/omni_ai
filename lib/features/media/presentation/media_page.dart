@@ -9,6 +9,7 @@ import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
 import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/presentation/media_details_page.dart';
+import 'package:omni_ai/features/media/presentation/manga_catalog_page.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_like_repository.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
@@ -293,7 +294,23 @@ class _MediaPageState extends State<MediaPage> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              key: const ValueKey('open-manga-catalog'),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const MangaCatalogPage()),
+              ),
+              icon: const Icon(Icons.menu_book_rounded, size: 17),
+              label: const Text('МАНГА • РУССКАЯ ЧИТАЛКА'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: SystemCorePalette.green,
+                side: BorderSide(color: SystemCorePalette.green.withValues(alpha: 0.45)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           TextField(
             key: const ValueKey('media-search'),
             controller: _searchController,
