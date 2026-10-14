@@ -652,6 +652,26 @@ void main() {
     },
   );
 
+  test(
+    'does not fetch international editions without selected interests',
+    () async {
+      var requests = 0;
+      final service = NewsRssService(
+        client: MockClient((_) async {
+          requests++;
+          return http.Response('<rss><channel /></rss>', 200);
+        }),
+      );
+      addTearDown(service.dispose);
+
+      expect(
+        await service.fetchInternational(const NewsInterestProfile()),
+        isEmpty,
+      );
+      expect(requests, 0);
+    },
+  );
+
   test('surfaces source errors instead of inventing news', () async {
     final service = NewsRssService(
       client: MockClient((_) async => http.Response('unavailable', 503)),
