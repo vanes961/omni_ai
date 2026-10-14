@@ -362,6 +362,21 @@ class NewsRssService {
     final hasSelectedTopicMatch = items.any((match) {
       final item = match.group(1) ?? '';
       final title = _tag(item, 'title');
+      final link = _tag(item, 'link');
+      final published =
+          _parseDate(_tag(item, 'pubDate')) ??
+          _parseDate(_tag(item, 'dc:date'));
+      final uri = Uri.tryParse(link);
+      // Invalid RSS items must not suppress query-based topic fallback for
+      // otherwise valid results later in the same response.
+      if (title.isEmpty ||
+          link.isEmpty ||
+          published == null ||
+          uri == null ||
+          uri.scheme != 'https' ||
+          uri.host.isEmpty) {
+        return false;
+      }
       final description = _stripMarkup(
         _tag(item, 'description', decodeEntities: false),
       );
