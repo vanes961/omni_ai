@@ -107,6 +107,43 @@ void main() {
   );
 
   test(
+    'ignores invalid RSS items when detecting selected-topic matches',
+    () async {
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          return http.Response(
+            '''<rss><channel>
+            <item>
+              <title>Gaming update with an invalid link</title>
+              <link>not-a-valid-url</link>
+              <description>This item must not disable fallback.</description>
+              <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+            </item>
+            <item>
+              <title>Company announces a new entertainment product</title>
+              <link>https://publisher.example/valid-story</link>
+              <description>The company revealed its next release.</description>
+              <pubDate>Sat, 10 Oct 2026 13:00:00 GMT</pubDate>
+            </item>
+            </channel></rss>''',
+            200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+          );
+        }),
+      );
+      addTearDown(service.dispose);
+
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: ['games']),
+      );
+
+      expect(articles, hasLength(1));
+      expect(articles.single.title, contains('Company announces'));
+      expect(articles.single.topics, ['games']);
+    },
+  );
+
+  test(
     'keeps query-matched stories when headlines omit topic keywords',
     () async {
       final service = NewsRssService(
