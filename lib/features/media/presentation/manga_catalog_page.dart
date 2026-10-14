@@ -208,6 +208,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   String? _error;
   String? _pageError;
   bool _hasMoreChapters = true;
+  int _readerGeneration = 0;
   double _viewportExtent = 1;
   double _pageOffset = 0;
 
@@ -273,6 +274,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     MangaReadingProgress? restore,
   }) async {
     if (index < 0 || index >= _chapters.length || _loadingPages) return;
+    final generation = _readerGeneration;
     setState(() {
       _loadingPages = true;
       _pageError = null;
@@ -280,7 +282,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     });
     try {
       final manifest = await _service.fetchPages(_chapters[index].id);
-      if (!mounted) return;
+      if (!mounted || generation != _readerGeneration) return;
       if (manifest == null || manifest.imageUrls.isEmpty) {
         setState(() {
           _loadingPages = false;
@@ -337,7 +339,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
         });
       });
     } on Object catch (e) {
-      if (!mounted) return;
+      if (!mounted || generation != _readerGeneration) return;
       setState(() {
         _loadingPages = false;
         _pageError = 'Не удалось загрузить страницы: $e';
@@ -467,9 +469,10 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       return;
     }
     _loadingNext = true;
+    final generation = _readerGeneration;
     try {
       final manifest = await _service.fetchPages(_chapters[nextIndex].id);
-      if (!mounted) return;
+      if (!mounted || generation != _readerGeneration) return;
       if (manifest != null && manifest.imageUrls.isNotEmpty) {
         setState(() {
           _chapterStartPages[nextIndex] = _pages.length;
@@ -495,12 +498,17 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
     _saveDebounce?.cancel();
     await _saveProgress();
     if (!mounted) return;
+    // Ignore any in-flight page/prefetch response from the previous selection.
+    // Otherwise a slow request could append the old chapter to the newly picked one.
+    _readerGeneration++;
     _pageKeys.clear();
     setState(() {
       _pages.clear();
       _pageIndex = 0;
       _pageOffset = 0;
       _chapterIndex = index;
+      _loadingPages = false;
+      _loadingNext = false;
       _pageError = null;
     });
     if (_scroll.hasClients) _scroll.jumpTo(0);
