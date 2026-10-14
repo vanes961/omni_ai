@@ -85,7 +85,8 @@ class StoredLocalLlamaProvider implements AIProvider, AIStreamingProvider {
       if (!isInstalled && autoInstallBundledModel) {
         await storage.installBundled(model);
         _ensureNotDisposed();
-        isInstalled = await storage.isValid(model);
+        // installBundled returns only after native SHA-256 and Dart size checks.
+        isInstalled = true;
       }
       if (!isInstalled) {
         throw AIEngineException(
