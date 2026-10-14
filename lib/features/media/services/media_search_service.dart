@@ -59,7 +59,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': '***',
+              'Authorization': 'Bearer ${accessToken.trim()}',
               'accept': 'application/json',
             },
           )
@@ -126,7 +126,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': '***',
+              'Authorization': 'Bearer ${accessToken.trim()}',
               'accept': 'application/json',
             },
           )
@@ -214,7 +214,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': '***',
+              'Authorization': 'Bearer ${accessToken.trim()}',
               'accept': 'application/json',
             },
           )
@@ -319,7 +319,7 @@ class MediaSearchService {
           .get(
             uri,
             headers: {
-              'Authorization': '***',
+              'Authorization': 'Bearer ${accessToken.trim()}',
               'accept': 'application/json',
             },
           )
