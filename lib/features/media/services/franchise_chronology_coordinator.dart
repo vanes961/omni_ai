@@ -87,7 +87,7 @@ class FranchiseChronologyCoordinator {
 
     final result = entries
         .map((entry) {
-          final proposal = verified[entry.id]!;
+          final proposal = verified![entry.id]!;
           return MediaFranchiseEntry(
             id: entry.id,
             title: entry.title,
