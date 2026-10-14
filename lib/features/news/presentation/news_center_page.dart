@@ -246,7 +246,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // cached payload cannot be read, still attempt a fresh feed rather than
       // leaving users with a blank screen until they manually tap Refresh.
       final activeProfile = loadedProfile ?? _profile;
-      final hasFeedInterests = activeProfile != null &&
+      final hasFeedInterests =
+          activeProfile != null &&
           (activeProfile.topics.isNotEmpty ||
               activeProfile.includeCriticalOutsideInterests);
       if (hasFeedInterests && _articles.isEmpty) {
