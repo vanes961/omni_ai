@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:omni_ai/features/favorites/data/favorite_item.dart';
 import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
@@ -384,6 +385,17 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
+Widget _categoryIcon(FavoriteCategory category) => Icon(
+  switch (category) {
+    FavoriteCategory.movie => Icons.movie_outlined,
+    FavoriteCategory.series => Icons.tv_outlined,
+    FavoriteCategory.anime => Icons.auto_awesome_outlined,
+    FavoriteCategory.manga => Icons.menu_book_outlined,
+    FavoriteCategory.trailer => Icons.play_circle_outline,
+  },
+  color: SystemCorePalette.green,
+);
+
 class _FavoriteTile extends StatelessWidget {
   const _FavoriteTile({
     required this.item,
@@ -403,20 +415,22 @@ class _FavoriteTile extends StatelessWidget {
       child: Row(
         children: [
           Container(
+            key: ValueKey('favorite-image-${item.id}'),
             width: 54,
             height: 70,
             color: SystemCorePalette.background,
             alignment: Alignment.center,
-            child: Icon(
-              switch (item.category) {
-                FavoriteCategory.movie => Icons.movie_outlined,
-                FavoriteCategory.series => Icons.tv_outlined,
-                FavoriteCategory.anime => Icons.auto_awesome_outlined,
-                FavoriteCategory.manga => Icons.menu_book_outlined,
-                FavoriteCategory.trailer => Icons.play_circle_outline,
-              },
-              color: SystemCorePalette.green,
-            ),
+            clipBehavior: Clip.antiAlias,
+            child: item.imageUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: item.imageUrl!,
+                    width: 54,
+                    height: 70,
+                    fit: BoxFit.cover,
+                    placeholder: (_, _) => _categoryIcon(item.category),
+                    errorWidget: (_, _, _) => _categoryIcon(item.category),
+                  )
+                : _categoryIcon(item.category),
           ),
           const SizedBox(width: 12),
           Expanded(
