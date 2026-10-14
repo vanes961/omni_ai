@@ -67,7 +67,7 @@ class OpenRouterProvider implements AIProvider {
             ..headers.addAll({
               'Content-Type': 'application/json',
               'Accept': 'application/json',
-              'Authorization': '***',
+              'Authorization': 'Bearer $apiKey',
               'HTTP-Referer': config.siteUrl,
               'X-Title': config.appName,
             })
