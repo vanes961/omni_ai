@@ -91,6 +91,50 @@ void main() {
     expect(uri.queryParameters['index'], '7');
   });
 
+  test('matches season and episode when filenames use unpadded numbers', () async {
+    final resolver = TorrServerPlaybackResolver(
+      client: TorrServerClient(
+        client: MockClient((request) async {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          if (body['action'] == 'add') {
+            return http.Response(
+              jsonEncode({'hash': 'season-match-hash', 'file_stats': []}),
+              200,
+            );
+          }
+          return http.Response(
+            jsonEncode({
+              'hash': 'season-match-hash',
+              'file_stats': [
+                {
+                  'id': 2,
+                  'path': r'Season 1\Show.S1E2.mkv',
+                  'length': 1000,
+                },
+                {
+                  'id': 7,
+                  'path': r'Season 2\Show.S2E2.mkv',
+                  'length': 1000,
+                },
+              ],
+            }),
+            200,
+          );
+        }),
+      ),
+      wait: (_) async {},
+    );
+
+    final uri = await resolver.resolve(
+      endpoint: 'http://media.example:8090',
+      magnetUri: Uri.parse(_magnet),
+      episodeNumber: 2,
+      seasonNumber: 1,
+    );
+
+    expect(uri.queryParameters['index'], '2');
+  });
+
   test('does not choose the first file when multiple videos have no episode', () async {
     final resolver = TorrServerPlaybackResolver(
       client: TorrServerClient(
