@@ -206,6 +206,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   String? _error;
   String? _pageError;
   bool _hasMoreChapters = true;
+  double _viewportExtent = 1;
 
   @override
   void initState() {
@@ -359,12 +360,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
 
   Future<void> _saveProgress() async {
     if (_chapters.isEmpty) return;
+    final extent = _viewportExtent > 0 ? _viewportExtent : 1.0;
     final pageOffset =
-        ((_scroll.hasClients
-                    ? _scroll.offset %
-                          (MediaQuery.sizeOf(context).height * 0.82)
-                    : 0) /
-                (MediaQuery.sizeOf(context).height * 0.82))
+        ((_scroll.hasClients ? _scroll.offset % extent : 0) / extent)
             .clamp(0.0, 1.0)
             .toDouble();
     try {
@@ -419,6 +417,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   Future<void> _pickChapter(MangaReaderChapterOption option) async {
     final index = _chapters.indexWhere((c) => c.id == option.id);
     if (index < 0) return;
+    _saveDebounce?.cancel();
+    await _saveProgress();
+    if (!mounted) return;
     setState(() {
       _pages.clear();
       _pageIndex = 0;
@@ -432,6 +433,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   @override
   void dispose() {
     _saveDebounce?.cancel();
+    unawaited(_saveProgress());
     _scroll.removeListener(_onScroll);
     _scroll.dispose();
     if (widget.chapterService == null) _service.close();
@@ -439,7 +441,9 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    _viewportExtent = MediaQuery.sizeOf(context).height * 0.82;
+    return Scaffold(
     backgroundColor: Colors.black,
     appBar: AppBar(
       backgroundColor: const Color(0xFF111714),
@@ -552,5 +556,6 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
                 ),
             ],
           ),
-  );
+    );
+  }
 }
