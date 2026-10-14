@@ -388,7 +388,6 @@ class _SeasonCatalogSectionState extends State<_SeasonCatalogSection> {
   );
 }
 
-
 Future<void> _chooseAndPlaySource(
   BuildContext context,
   MediaItem item,
@@ -403,7 +402,9 @@ Future<void> _chooseAndPlaySource(
     builder: (dialogContext) => AlertDialog(
       backgroundColor: SystemCorePalette.panel,
       title: Text(
-        episode == null ? 'Источник видео' : 'Источник серии ${episode.episodeNumber}',
+        episode == null
+            ? 'Источник видео'
+            : 'Источник серии ${episode.episodeNumber}',
         style: const TextStyle(color: Colors.white),
       ),
       content: TextField(
@@ -414,7 +415,8 @@ Future<void> _chooseAndPlaySource(
         decoration: const InputDecoration(
           hintText: 'https://… или magnet:?xt=urn:btih:…',
           hintStyle: TextStyle(color: SystemCorePalette.muted),
-          helperText: 'Вставьте ссылку на доступный вам видеоисточник или magnet-ссылку.',
+          helperText:
+              'Вставьте ссылку на доступный вам видеоисточник или magnet-ссылку.',
           helperMaxLines: 3,
         ),
       ),
@@ -424,7 +426,9 @@ Future<void> _chooseAndPlaySource(
           child: const Text('ОТМЕНА'),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(dialogContext).pop(controller.text.trim()),
+          onPressed: () => Navigator.of(dialogContext).pop(
+            controller.text.trim(),
+          ),
           child: const Text('ОТКРЫТЬ'),
         ),
       ],
@@ -436,11 +440,18 @@ Future<void> _chooseAndPlaySource(
   final uri = Uri.tryParse(raw);
   final source = uri == null
       ? null
-      : MediaStreamSource(id: 'user-supplied', label: 'Пользовательский источник', uri: uri);
+      : MediaStreamSource(
+          id: 'user-supplied',
+          label: 'Пользовательский источник',
+          uri: uri,
+        );
   if (source == null || !source.isSupportedInput) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Нужна корректная HTTP(S)-ссылка или magnet-ссылка с BitTorrent hash.'),
+        content: Text(
+          'Нужна корректная HTTP(S)-ссылка или magnet-ссылка '
+          'с BitTorrent hash.',
+        ),
       ),
     );
     return;
