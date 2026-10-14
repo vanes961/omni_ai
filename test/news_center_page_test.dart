@@ -396,6 +396,11 @@ void main() {
 
     expect(requestCount, 3);
     expect(find.text('World leaders meet at summit'), findsNothing);
+    await tester.dragUntilVisible(
+      find.textContaining('Общий поток без персонализации не показывается.'),
+      find.byType(Scrollable).first,
+      const Offset(0, 300),
+    );
     expect(
       find.textContaining('Общий поток без персонализации не показывается.'),
       findsOneWidget,
