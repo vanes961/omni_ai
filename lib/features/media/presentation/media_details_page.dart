@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+Z import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/domain/media_hub_contracts.dart';
@@ -434,8 +434,7 @@ class _MediaSourceDialogState extends State<_MediaSourceDialog> {
         child: const Text('ОТМЕНА'),
       ),
       FilledButton(
-        onPressed: () =>
-            Navigator.of(context).pop(_controller.text.trim()),
+        onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
         child: const Text('ОТКРЫТЬ'),
       ),
     ],
@@ -452,9 +451,7 @@ Future<void> _chooseAndPlaySource(
 }) async {
   final raw = await showDialog<String>(
     context: context,
-    builder: (_) => _MediaSourceDialog(
-      episodeNumber: episode?.episodeNumber,
-    ),
+    builder: (_) => _MediaSourceDialog(episodeNumber: episode?.episodeNumber),
   );
   if (!context.mounted || raw == null || raw.isEmpty) return;
 
@@ -533,3 +530,4 @@ class _Label extends StatelessWidget {
     ),
   );
 }
+2026-10-14T12:23:36.1667078
