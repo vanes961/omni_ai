@@ -231,7 +231,9 @@ class MediaSearchService {
         .where((interest) => interest.isNotEmpty)
         .toSet();
     final genreIds = _genres.entries
-        .where((entry) => normalizedInterests.contains(entry.value.toLowerCase()))
+        .where(
+          (entry) => normalizedInterests.contains(entry.value.toLowerCase()),
+        )
         .map((entry) => entry.key)
         .toList();
     if (genreIds.isEmpty) return const [];
