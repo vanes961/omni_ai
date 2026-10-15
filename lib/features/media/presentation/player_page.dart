@@ -1052,7 +1052,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
               if (_activeMarker(MediaSegmentType.credits, player)
                   case final marker?)
                 Positioned(
-                  bottom: 58,
+                  bottom: 100,
                   right: 8,
                   child: FilledButton.tonalIcon(
                     key: const ValueKey('skip-credits-button'),
