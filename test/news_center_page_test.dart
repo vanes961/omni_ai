@@ -293,6 +293,64 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('refreshes a stale cached feed automatically', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final preferences = SharedPreferencesAsync();
+    await preferences.setString(
+      'omni_ai.news_cache.articles.v1',
+      '[{"id":"cached-anime-1","title":"Saved anime announcement",'
+      '"summary":"A previously loaded article.","sourceName":"Anime News",'
+      '"sourceUrl":"https://publisher.example/cached-anime",'
+      '"publishedAt":"2026-10-12T09:00:00.000Z","topics":["anime"],'
+      '"language":"ru","region":"ru","isCritical":false,'
+      '"isVerified":true,"contentType":"article"}]',
+    );
+    await preferences.setString('omni_ai.news_cache.topics.v1', '["anime"]');
+    await preferences.setString(
+      'omni_ai.news_cache.critical_setting.v1',
+      'false',
+    );
+    await preferences.setString(
+      'omni_ai.news_cache.saved_at.v1',
+      '2026-10-12T09:00:00.000Z',
+    );
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+    var requestCount = 0;
+    final service = NewsRssService(
+      client: MockClient((_) async {
+        requestCount++;
+        return http.Response('''<rss><channel><item>
+          <title>Fresh anime announcement</title>
+          <link>https://publisher.example/fresh-anime</link>
+          <description>Anime news update.</description>
+          <pubDate>Wed, 14 Oct 2026 09:00:00 GMT</pubDate>
+          <source>Anime News</source>
+        </item></channel></rss>''', 200);
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(repository: repository, newsService: service),
+      ),
+    );
+    for (var i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('Saved anime announcement'), findsOneWidget);
+    expect(requestCount, 0);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('invalidates a cached feed when saved interests differ', (
     WidgetTester tester,
   ) async {
