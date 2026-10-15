@@ -58,7 +58,8 @@ class AIEngine {
       // Include setup/model preparation in the same timeout as provider work.
       // Race cancellation against the whole operation so cancellation remains
       // responsive even when setup has not finished yet.
-      final response = await Future.any<AIResponse>([
+      final response =
+          await Future.any<AIResponse>([
         operation,
         _throwWhenCancelled(token),
       ]).timeout(
