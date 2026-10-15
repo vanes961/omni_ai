@@ -626,6 +626,47 @@ void main() {
     );
   });
 
+  testWidgets('diagnostics report zero RSS candidates and elapsed time for empty editions', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response('<rss><channel /></rss>', 200)),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(repository: repository, newsService: service),
+      ),
+    );
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.textContaining('не дали пригодных RSS-статей'), findsOneWidget);
+    for (
+      var i = 0;
+      i < 12 && find.text('Диагностика системы').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await tester.tap(find.text('Диагностика системы'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(find.textContaining('RSS-кандидатов: 0'), findsOneWidget);
+    expect(find.textContaining('Время RSS: нет данных'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('explains why the feed is empty when no interests are selected', (
     WidgetTester tester,
   ) async {
