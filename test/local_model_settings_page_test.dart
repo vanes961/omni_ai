@@ -49,6 +49,6 @@ class _InstalledModelStorage extends LocalModelStorage {
   @override
   Future<File> installBundled(LocalModelSpec model) async {
     installCalls++;
-    return File(Directory.systemTemp.path + '/' + model.fileName);
+    return File('${Directory.systemTemp.path}/${model.fileName}');
   }
 }
