@@ -463,6 +463,35 @@ void main() {
     expect(requestCount, 3);
     expect(find.textContaining('Не удалось загрузить новости:'), findsOneWidget);
     expect(find.text('ЗАГРУЗКА…'), findsNothing);
+
+    for (
+      var i = 0;
+      i < 12 && find.text('Диагностика системы').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await tester.tap(find.text('Диагностика системы'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(
+      find.textContaining('RSS-редакции с ошибкой:'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('ru-RU: ClientException/network'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('en-US: ClientException/network'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('en-GB: ClientException/network'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
