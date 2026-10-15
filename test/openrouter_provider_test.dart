@@ -121,9 +121,11 @@ void main() {
     addTearDown(provider.close);
     await expectLater(
       _engine(provider).execute(_request()),
-      throwsA(isA<AIEngineException>().having(
-        (e) => e.error.message, 'message', contains('нет ключа OpenRouter'),
-      )),
+      throwsA(isA<AIEngineException>()
+        .having((e) => e.error.code, 'code', AIErrorCode.configuration)
+        .having(
+          (e) => e.error.message, 'message', contains('нет ключа OpenRouter'),
+        )),
     );
     expect(sent, isFalse);
   });
@@ -135,8 +137,39 @@ void main() {
     await expectLater(
       _engine(provider).execute(_request()),
       throwsA(isA<AIEngineException>()
+        .having((e) => e.error.code, 'code', AIErrorCode.rateLimited)
         .having((e) => e.error.retryable, 'retryable', isTrue)
         .having((e) => e.error.message, 'message', contains('free quota exceeded'))),
+    );
+  });
+
+  test('classifies authentication and provider outage responses', () async {
+    final unauthorized = _provider(
+      (_) async => http.Response('{"error":{"message":"invalid key"}}', 401),
+    );
+    addTearDown(unauthorized.close);
+    await expectLater(
+      _engine(unauthorized).execute(_request()),
+      throwsA(isA<AIEngineException>().having(
+        (e) => e.error.code,
+        'code',
+        AIErrorCode.unauthorized,
+      )),
+    );
+
+    final unavailable = _provider(
+      (_) async => http.Response('{"error":{"message":"maintenance"}}', 503),
+    );
+    addTearDown(unavailable.close);
+    await expectLater(
+      _engine(unavailable).execute(_request()),
+      throwsA(isA<AIEngineException>()
+        .having(
+          (e) => e.error.code,
+          'code',
+          AIErrorCode.providerUnavailable,
+        )
+        .having((e) => e.error.retryable, 'retryable', isTrue)),
     );
   });
 
