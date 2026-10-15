@@ -477,7 +477,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                           ? DiagnosticStatus.notChecked
                           : (_lastRssCandidateCount == 0 ||
                                     _lastRssRelevantCandidateCount == 0 ||
-                                    _lastRssFailedEditions.isNotEmpty()
+                                    _lastRssFailedEditions.isNotEmpty
                                 ? DiagnosticStatus.warning
                                 : DiagnosticStatus.ok))),
           details: noFeedInterests
