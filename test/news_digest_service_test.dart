@@ -34,9 +34,7 @@ void main() {
     expect(provider.requests, isEmpty);
   });
 
-  test('creates a critical-only digest only when explicitly enabled', () async {
-    final provider = _FakeProvider();
-    final service = NewsDigestService(engine: AIEngine(provider: provider));
+  test('critical-only digest is opt-in and excludes ordinary stories', () async {
     final critical = NewsArticle(
       id: 'critical-1',
       title: 'Critical event headline',
@@ -47,25 +45,33 @@ void main() {
       topics: const ['world'],
       isCritical: true,
     );
+    final ordinary = _article('anime');
 
-    final disabled = await service.createDigest(
+    final discoveryProvider = _FakeProvider();
+    final discoveryService = NewsDigestService(
+      engine: AIEngine(provider: discoveryProvider),
+    );
+    final discovery = await discoveryService.createDigest(
       profile: const NewsInterestProfile(),
-      articles: [critical],
+      articles: [critical, ordinary],
     );
-    expect(disabled, isNull);
-    expect(provider.requests, isEmpty);
+    expect(discovery, 'Персональный дайджест');
+    expect(discoveryProvider.requests, hasLength(1));
+    expect(discoveryProvider.requests.single.prompt, contains('Critical event headline'));
+    expect(discoveryProvider.requests.single.prompt, contains('Anime headline'));
 
-    final enabled = await service.createDigest(
+    final criticalProvider = _FakeProvider();
+    final criticalService = NewsDigestService(
+      engine: AIEngine(provider: criticalProvider),
+    );
+    final result = await criticalService.createDigest(
       profile: const NewsInterestProfile(includeCriticalOutsideInterests: true),
-      articles: [critical, _article('anime')],
+      articles: [critical, ordinary],
     );
-    expect(enabled, 'Персональный дайджест');
-    expect(provider.requests, hasLength(1));
-    expect(
-      provider.requests.single.prompt,
-      contains('Critical event headline'),
-    );
-    expect(provider.requests.single.prompt, isNot(contains('Anime headline')));
+    expect(result, 'Персональный дайджест');
+    expect(criticalProvider.requests, hasLength(1));
+    expect(criticalProvider.requests.single.prompt, contains('Critical event headline'));
+    expect(criticalProvider.requests.single.prompt, isNot(contains('Anime headline')));
   });
 
   test(
