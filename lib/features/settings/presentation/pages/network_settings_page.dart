@@ -564,4 +564,3 @@ String _proxyTypeLabel(ProxyType type) => switch (type) {
   ProxyType.socks5 => 'SOCKS5',
   ProxyType.mtproto => 'MTProto',
 };
-Formatted 5 files (5 changed) in 0.08 seconds.
