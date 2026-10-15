@@ -32,6 +32,9 @@ class NewsScoreBreakdown {
     required this.lessInterestedPenalty,
     required this.trailerBonus,
     required this.categoryBonus,
+    required this.favoriteInterestByTerm,
+    required this.reactionByTopic,
+    required this.lessInterestedTerms,
   });
 
   final double favoriteInterest;
@@ -39,6 +42,9 @@ class NewsScoreBreakdown {
   final double lessInterestedPenalty;
   final double trailerBonus;
   final double categoryBonus;
+  final Map<String, double> favoriteInterestByTerm;
+  final Map<String, double> reactionByTopic;
+  final Set<String> lessInterestedTerms;
 
   double get total =>
       favoriteInterest +
@@ -199,14 +205,33 @@ class FavoriteInterestAnalytics {
     };
     var favoriteInterest = 0.0;
     var lessInterestedPenalty = 0.0;
+    final favoriteInterestByTerm = <String, double>{};
+    final lessInterestedTerms = <String>{};
     for (final term in candidateTerms) {
-      favoriteInterest += profile.interestWeights[term] ?? 0;
-      if (lessInterested.contains(term)) lessInterestedPenalty -= 4.0;
+      final weight = profile.interestWeights[term] ?? 0;
+      if (weight != 0) {
+        favoriteInterestByTerm[term] = weight;
+        favoriteInterest += weight;
+      }
+      if (lessInterested.contains(term)) {
+        lessInterestedPenalty -= 4.0;
+        lessInterestedTerms.add(term);
+      }
     }
 
     var reaction = 0.0;
+    final reactionByTopic = <String, double>{};
     for (final topic in article.topics) {
-      reaction += reactionWeights[topic.trim().toLowerCase()] ?? 0;
+      final normalizedTopic = topic.trim().toLowerCase();
+      final weight = reactionWeights[normalizedTopic] ?? 0;
+      if (weight != 0) {
+        reactionByTopic.update(
+          normalizedTopic,
+          (value) => value + weight,
+          ifAbsent: () => weight,
+        );
+        reaction += weight;
+      }
     }
 
     final trailerBonus =
@@ -236,6 +261,9 @@ class FavoriteInterestAnalytics {
       lessInterestedPenalty: lessInterestedPenalty,
       trailerBonus: trailerBonus,
       categoryBonus: familiarCategory ? 0.35 : 0.0,
+      favoriteInterestByTerm: Map.unmodifiable(favoriteInterestByTerm),
+      reactionByTopic: Map.unmodifiable(reactionByTopic),
+      lessInterestedTerms: Set.unmodifiable(lessInterestedTerms),
     );
   }
 
