@@ -52,10 +52,7 @@ class AIEngine {
                 cancellationToken: token,
                 onToken: onToken,
               )
-            : provider.complete(
-                request,
-                cancellationToken: token,
-              );
+            : provider.complete(request, cancellationToken: token);
       }();
 
       // Include setup/model preparation in the same timeout as provider work.
