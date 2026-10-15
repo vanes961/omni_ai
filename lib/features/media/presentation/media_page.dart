@@ -207,10 +207,12 @@ class _MediaPageState extends State<MediaPage> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      const Text(
-                        'МЕДИАКАТАЛОГ НЕ ПОДКЛЮЧЁН',
+                      Text(
+                        _searchService.isConfigured
+                            ? 'НЕ УДАЛОСЬ ЗАГРУЗИТЬ ТРЕНДЫ'
+                            : 'ПОДКЛЮЧИТЕ КАТАЛОГ TMDB',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                           letterSpacing: 0.6,
@@ -218,10 +220,12 @@ class _MediaPageState extends State<MediaPage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      const Text(
-                        'Демо-контент и фиктивные ссылки отключены. Каталог и источники воспроизведения ещё не подключены — реальные фильмы и серии появятся после интеграции провайдеров.',
+                      Text(
+                        _searchService.isConfigured
+                            ? 'Не удалось получить тренды TMDB. Проверьте интернет и токен в настройках каталога. Источники воспроизведения не подключены, поэтому карточки пока не запускают видео.'
+                            : 'Чтобы показать актуальные фильмы, сериалы и аниме, добавьте TMDB Read Access Token в настройках каталога. Демо-контент и фиктивные ссылки отключены.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: SystemCorePalette.muted,
                           height: 1.5,
                         ),
