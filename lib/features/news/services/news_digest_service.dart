@@ -58,14 +58,17 @@ class NewsDigestService {
         .toList(growable: false);
     if (selected.isEmpty) return null;
 
-    final material = selected.take(20).map((article) {
-      final excerpt = article.summary.trim();
-      return '- ${article.title}\n'
-          'Источник: ${article.sourceName}\n'
-          'Дата: ${article.publishedAt.toIso8601String()}\n'
-          'Описание: ${excerpt.isEmpty ? 'описание не предоставлено' : excerpt}\n'
-          'Ссылка: ${article.sourceUrl}';
-    }).join('\n\n');
+    final material = selected
+        .take(20)
+        .map((article) {
+          final excerpt = article.summary.trim();
+          return '- ${article.title}\n'
+              'Источник: ${article.sourceName}\n'
+              'Дата: ${article.publishedAt.toIso8601String()}\n'
+              'Описание: ${excerpt.isEmpty ? 'описание не предоставлено' : excerpt}\n'
+              'Ссылка: ${article.sourceUrl}';
+        })
+        .join('\n\n');
 
     final response = await engine.execute(
       AIRequest(
