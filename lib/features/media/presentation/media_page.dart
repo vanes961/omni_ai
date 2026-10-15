@@ -91,9 +91,7 @@ class _MediaPageState extends State<MediaPage> {
   Future<void> _loadTrending() async {
     if (!_searchService.isConfigured) return;
     if (mounted) setState(() => _loadingTrending = true);
-    final items = await _searchService.fetchTrendingOnline(
-      type: _selectedType,
-    );
+    final items = await _searchService.fetchTrendingOnline(type: _selectedType);
     if (!mounted) return;
     setState(() {
       _onlineTrending = _rankByFavoriteInterests(items);
