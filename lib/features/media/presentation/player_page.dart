@@ -697,10 +697,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     if (mounted) setState(() => _seekingPosition = null);
   }
 
-  Future<void> _seekBy(
-    MediaPlaybackController player,
-    Duration offset,
-  ) => _seekTo(player, player.position + offset);
+  Future<void> _seekBy(MediaPlaybackController player, Duration offset) =>
+      _seekTo(player, player.position + offset);
 
   Future<void> _togglePlayback(MediaPlaybackController player) async {
     try {
@@ -959,7 +957,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   Widget _buildPlayerSurface() {
     final player = _player;
-    final displayedPosition = _seekingPosition ?? player?.position ?? Duration.zero;
+    final displayedPosition =
+        _seekingPosition ?? player?.position ?? Duration.zero;
     return AspectRatio(
       aspectRatio: player?.aspectRatio ?? 16 / 9,
       child: DecoratedBox(
@@ -1116,15 +1115,15 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                             key: const ValueKey('seek-back-10'),
                             tooltip: 'Назад на 10 секунд',
                             visualDensity: VisualDensity.compact,
-                            onPressed: () => _seekBy(
-                              player,
-                              const Duration(seconds: -10),
-                            ),
+                            onPressed: () =>
+                                _seekBy(player, const Duration(seconds: -10)),
                             icon: const Icon(Icons.replay_10, size: 22),
                             color: Colors.white,
                           ),
                           IconButton(
-                            tooltip: player.isPlaying ? 'Пауза' : 'Воспроизвести',
+                            tooltip: player.isPlaying
+                                ? 'Пауза'
+                                : 'Воспроизвести',
                             onPressed: () => _togglePlayback(player),
                             icon: Icon(
                               player.isPlaying ? Icons.pause : Icons.play_arrow,
@@ -1135,10 +1134,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                             key: const ValueKey('seek-forward-10'),
                             tooltip: 'Вперёд на 10 секунд',
                             visualDensity: VisualDensity.compact,
-                            onPressed: () => _seekBy(
-                              player,
-                              const Duration(seconds: 10),
-                            ),
+                            onPressed: () =>
+                                _seekBy(player, const Duration(seconds: 10)),
                             icon: const Icon(Icons.forward_10, size: 22),
                             color: Colors.white,
                           ),
