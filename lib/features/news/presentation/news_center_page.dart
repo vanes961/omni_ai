@@ -1001,7 +1001,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         cacheWatch.stop();
         _lastCacheWriteDurationMs = cacheWatch.elapsedMilliseconds;
         if (mounted && revisionAtStart == _interestRevision) {
-          setState(() => _newsCacheIsStale = false);
+          setState(() {
+            _newsCacheIsStale = false;
+            _newsCacheLoadError = null;
+          });
         }
         if (revisionAtStart != _interestRevision) {
           // Topic changes clear the cache too, but an in-flight write may finish
