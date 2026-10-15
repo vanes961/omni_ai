@@ -84,6 +84,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   int? _lastDuplicateSuppressedCount;
   int? _lastTranslationBudgetSkippedCount;
   int? _lastTranslationFailureCount;
+  Map<NewsTranslationFailureReason, int> _lastTranslationFailureReasons = const {};
   int? _lastForeignUntranslatedCount;
   int? _lastRankedCandidateCount;
   String? _newsError;
@@ -387,6 +388,27 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     return 'Критических проблем в последнем проходе не обнаружено. Если проблема повторится, скопируй отчёт сразу после неё.';
   }
 
+  String _translationFailureDiagnostic() {
+    if (_lastTranslationFailureReasons.isEmpty) {
+      return 'причина не классифицирована';
+    }
+    const labels = <NewsTranslationFailureReason, String>{
+      NewsTranslationFailureReason.configuration: 'не настроен ключ/аккаунт',
+      NewsTranslationFailureReason.unauthorized: 'ошибка авторизации',
+      NewsTranslationFailureReason.rateLimited: 'лимит или квота',
+      NewsTranslationFailureReason.providerUnavailable: 'сеть/провайдер недоступны',
+      NewsTranslationFailureReason.timeout: 'тайм-аут',
+      NewsTranslationFailureReason.malformedResponse: 'неверный формат ответа',
+      NewsTranslationFailureReason.invalidOutput: 'пустой или некорректный перевод',
+      NewsTranslationFailureReason.cancelled: 'запрос отменён',
+      NewsTranslationFailureReason.provider: 'ошибка провайдера',
+      NewsTranslationFailureReason.unknown: 'неизвестная причина',
+    };
+    return _lastTranslationFailureReasons.entries
+        .map((entry) => '${labels[entry.key]}: ${entry.value}')
+        .join(', ');
+  }
+
   String _aiFailureGuidance(AIEngineException error) {
     final cause = switch (error.error.code) {
       AIErrorCode.cancelled => 'Запрос был отменён; повтори проверку вручную.',
@@ -512,7 +534,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             if ((_lastTranslationBudgetSkippedCount ?? 0) > 0)
               'Причина: превышен лимит переводов на одно обновление.',
             if ((_lastTranslationFailureCount ?? 0) > 0)
-              'Причина: один или несколько AI-запросов перевода завершились ошибкой.',
+              'Причины ошибок перевода: ${_translationFailureDiagnostic()}.',
             'После персонализации: ${_lastRankedCandidateCount ?? 'нет данных'}',
             'На экране: ${_articles.length}',
             'Время RSS: ${_lastRssDurationMs == null ? 'нет данных' : '$_lastRssDurationMs мс'}',
@@ -880,6 +902,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               localizationReport.budgetSkippedCount;
           _lastTranslationFailureCount =
               localizationReport.translationFailureCount;
+          _lastTranslationFailureReasons = localizationReport.failureReasonCounts;
           _lastForeignUntranslatedCount =
               localizationReport.foreignUntranslatedCount;
         });
