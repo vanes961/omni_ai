@@ -47,6 +47,10 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
     // Use cloud when the user asks for news or clearly requests current facts,
     // live updates, or an explicit internet/web search.
     final externalInformationIntent = RegExp(
+      r'(?:покажи|дай|найди|собери|расскажи)\\s+(?:мне\\s+)?'
+      r'(?:свежие\\s+|последние\\s+|актуальные\\s+)?новост\\w*|'
+      r'новости\\s+(?:про|об?|по)\\s+(?:игр\\w*|технолог\\w*|аниме|манг\\w*|'
+      r'наук\\w*|космос\\w*|событи\\w*|мир\\w*)|'
       r'(какие новост\w*|новост\w* (сегодня|мира|за сегодня)|'
       r'дайджест новост\w*|сводка новост\w*|breaking news|latest news|current news|'
       r"today['’]?s news|\bnews\b|"
