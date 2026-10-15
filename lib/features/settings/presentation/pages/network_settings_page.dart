@@ -124,7 +124,7 @@ class _NetworkSettingsPageState extends State<NetworkSettingsPage> {
                 }),
               ),
               if (preferences.proxyEnabled) ...[
-                const Divider(
+                Divider(
                   height: 1,
                   color: SystemCorePalette.border.withValues(alpha: 0.55),
                 ),
