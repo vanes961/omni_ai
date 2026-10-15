@@ -14,11 +14,11 @@ class MediaSearchService {
   const MediaSearchService({
     this.accessToken = _token,
     this.franchiseChronologyResolver,
-    http.Client? client,
-  }) : _client = client;
+    this.client,
+  });
 
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
-  final http.Client? _client;
+  final http.Client? client;
 
   /// Keeps the same HTTP transport while replacing the credential loaded from
   /// secure device storage. This makes runtime credentials testable and avoids
@@ -26,14 +26,14 @@ class MediaSearchService {
   MediaSearchService withAccessToken(String token) => MediaSearchService(
     accessToken: token,
     franchiseChronologyResolver: franchiseChronologyResolver,
-    client: _client,
+    client: client,
   );
 
   Future<http.Response> _get(Uri uri, {required Map<String, String> headers}) {
-    final client = _client;
-    return client == null
+    final transport = client;
+    return transport == null
         ? http.get(uri, headers: headers)
-        : client.get(uri, headers: headers);
+        : transport.get(uri, headers: headers);
   }
 
   static const tmdbAttribution =
