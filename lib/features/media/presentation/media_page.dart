@@ -23,6 +23,7 @@ class MediaPage extends StatefulWidget {
     this.searchService = const MediaSearchService(),
     this.catalogTokenStore,
     this.playerFactory,
+    this.onOpenCatalogSettings,
     super.key,
   });
 
@@ -30,6 +31,7 @@ class MediaPage extends StatefulWidget {
   final MediaSearchService searchService;
   final MediaCatalogTokenStore? catalogTokenStore;
   final MediaPlayerFactory? playerFactory;
+  final VoidCallback? onOpenCatalogSettings;
 
   @override
   State<MediaPage> createState() => _MediaPageState();
@@ -224,6 +226,19 @@ class _MediaPageState extends State<MediaPage> {
                           height: 1.5,
                         ),
                       ),
+                      if (widget.onOpenCatalogSettings != null) ...[
+                        const SizedBox(height: 18),
+                        FilledButton.icon(
+                          key: const ValueKey('open-media-catalog-settings'),
+                          onPressed: widget.onOpenCatalogSettings,
+                          icon: const Icon(Icons.settings_outlined, size: 17),
+                          label: const Text('НАСТРОИТЬ КАТАЛОГ'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: SystemCorePalette.green,
+                            foregroundColor: Colors.black,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 18),
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
