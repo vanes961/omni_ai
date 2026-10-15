@@ -19,6 +19,7 @@ class SharedPreferencesNewsCache {
   static const digestKey = 'omni_ai.news_cache.digest.v1';
   static const topicsKey = 'omni_ai.news_cache.topics.v1';
   static const criticalSettingKey = 'omni_ai.news_cache.critical_setting.v1';
+  static const savedAtKey = 'omni_ai.news_cache.saved_at.v1';
 
   final NewsCacheStringStore _store;
 
@@ -73,6 +74,14 @@ class SharedPreferencesNewsCache {
     }
   }
 
+  Future<DateTime?> loadSavedAt() async {
+    final encoded = await _store.read(savedAtKey);
+    if (encoded == null || encoded.trim().isEmpty) return null;
+    final parsed = DateTime.tryParse(encoded);
+    if (parsed == null) await _store.remove(savedAtKey);
+    return parsed;
+  }
+
   Future<bool?> loadIncludeCriticalOutsideInterests() async {
     final encoded = await _store.read(criticalSettingKey);
     if (encoded == 'true') return true;
@@ -120,6 +129,7 @@ class SharedPreferencesNewsCache {
       includeCriticalOutsideInterests.toString(),
     );
     await _store.write(articlesKey, jsonEncode(encoded));
+    await _store.write(savedAtKey, DateTime.now().toUtc().toIso8601String());
   });
 
   Future<String?> loadDigest() async {
@@ -133,6 +143,7 @@ class SharedPreferencesNewsCache {
     await _store.remove(digestKey);
     await _store.remove(topicsKey);
     await _store.remove(criticalSettingKey);
+    await _store.remove(savedAtKey);
   });
 
   List<String> _normalizeTopics(List<String> topics) => topics
