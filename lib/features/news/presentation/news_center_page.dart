@@ -850,7 +850,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       final noUsableArticles =
           failureStage == 'Получение RSS-кандидатов' &&
           details != null &&
-          details.toLowerCase().contains('no usable articles');
+          (details.toLowerCase().contains('no usable articles') ||
+              details.toLowerCase().contains('no articles were returned'));
       setState(() {
         _lastNewsFailureStage = failureStage;
         _lastNewsFailureType = error.runtimeType.toString();
