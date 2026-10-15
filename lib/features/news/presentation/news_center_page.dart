@@ -443,7 +443,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           details: _newsDiagnosticNextStep(),
         ),
         DiagnosticCheck(
-          name: 'Сетевая доступность RSS',
+          name: 'Результат RSS-запроса',
           status: noFeedInterests
               ? DiagnosticStatus.warning
               : (_newsError != null
