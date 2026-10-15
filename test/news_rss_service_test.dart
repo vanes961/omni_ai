@@ -755,39 +755,66 @@ void main() {
   );
 
   test(
-    'does not request top stories when no interests are selected',
+    'loads top stories when no interests are selected',
     () async {
       var requests = 0;
       final service = NewsRssService(
         client: MockClient((request) async {
           requests++;
-          return http.Response('', 200);
+          expect(request.url.path, '/rss');
+          expect(request.url.queryParameters.containsKey('q'), isFalse);
+          return http.Response(
+            '''<rss><channel><item>
+              <title>Top story without configured interests</title>
+              <link>https://publisher.example/top-story</link>
+              <description>A general current-affairs update.</description>
+              <pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+              <source>World News</source>
+            </item></channel></rss>''',
+            200,
+          );
         }),
       );
       addTearDown(service.dispose);
 
-      expect(await service.fetch(const NewsInterestProfile()), isEmpty);
-      expect(requests, 0);
+      final articles = await service.fetch(const NewsInterestProfile());
+
+      expect(requests, 1);
+      expect(articles, hasLength(1));
+      expect(articles.single.title, 'Top story without configured interests');
     },
   );
 
   test(
-    'does not fetch international editions without selected interests',
+    'loads and deduplicates international top stories without interests',
     () async {
       var requests = 0;
       final service = NewsRssService(
-        client: MockClient((_) async {
+        client: MockClient((request) async {
           requests++;
-          return http.Response('<rss><channel /></rss>', 200);
+          expect(request.url.path, '/rss');
+          expect(request.url.queryParameters.containsKey('q'), isFalse);
+          return http.Response(
+            '''<rss><channel><item>
+              <title>International top story</title>
+              <link>https://publisher.example/international-top-story</link>
+              <description>A general international update.</description>
+              <pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+              <source>World News</source>
+            </item></channel></rss>''',
+            200,
+          );
         }),
       );
       addTearDown(service.dispose);
 
-      expect(
-        await service.fetchInternational(const NewsInterestProfile()),
-        isEmpty,
+      final articles = await service.fetchInternational(
+        const NewsInterestProfile(),
       );
-      expect(requests, 0);
+
+      expect(requests, 3);
+      expect(articles, hasLength(1));
+      expect(articles.single.title, 'International top story');
     },
   );
 
@@ -899,39 +926,31 @@ void main() {
   });
 
   test(
-    'does not load broad top stories without configured interests',
+    'treats blank topic values as an unconfigured discovery feed',
     () async {
-      var requests = 0;
       final service = NewsRssService(
-        client: MockClient((_) async {
-          requests++;
-          return http.Response('<rss><channel /></rss>', 200);
+        client: MockClient((request) async {
+          expect(request.url.path, '/rss');
+          expect(request.url.queryParameters.containsKey('q'), isFalse);
+          return http.Response(
+            '''<rss><channel><item>
+              <title>Discovery story</title>
+              <link>https://publisher.example/discovery</link>
+              <description>A general update.</description>
+              <pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+            </item></channel></rss>''',
+            200,
+          );
         }),
       );
       addTearDown(service.dispose);
 
-      expect(await service.fetch(const NewsInterestProfile()), isEmpty);
-      expect(requests, 0);
-    },
-  );
-
-  test(
-    'does not make a network request when selected topics are blank',
-    () async {
-      var requests = 0;
-      final service = NewsRssService(
-        client: MockClient((_) async {
-          requests++;
-          return http.Response('', 200);
-        }),
+      final articles = await service.fetch(
+        const NewsInterestProfile(topics: [' ', '  ']),
       );
-      addTearDown(service.dispose);
 
-      expect(
-        await service.fetch(const NewsInterestProfile(topics: [' ', '  '])),
-        isEmpty,
-      );
-      expect(requests, 0);
+      expect(articles, hasLength(1));
+      expect(articles.single.title, 'Discovery story');
     },
   );
 
