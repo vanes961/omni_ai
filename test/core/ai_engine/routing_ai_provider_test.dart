@@ -40,27 +40,26 @@ void main() {
       expect(cloud.calls, 0);
     });
 
-    test('routes writing and recommendations to local in automatic mode',
-        () async {
-      final response = await router.complete(
-        AIRequest(
-          id: 'writing-request',
-          prompt: 'Посоветуй фильм с неожиданной концовкой',
-        ),
-        cancellationToken: AICancellationToken(),
-      );
+    test(
+      'routes writing and recommendations to local in automatic mode',
+      () async {
+        final response = await router.complete(
+          AIRequest(
+            id: 'writing-request',
+            prompt: 'Посоветуй фильм с неожиданной концовкой',
+          ),
+          cancellationToken: AICancellationToken(),
+        );
 
-      expect(response.providerId, 'local');
-      expect(local.calls, 1);
-      expect(cloud.calls, 0);
-    });
+        expect(response.providerId, 'local');
+        expect(local.calls, 1);
+        expect(cloud.calls, 0);
+      },
+    );
 
     test('routes explicit current-news requests to cloud', () async {
       final response = await router.complete(
-        AIRequest(
-          id: 'current-news',
-          prompt: 'Какие новости сегодня?',
-        ),
+        AIRequest(id: 'current-news', prompt: 'Какие новости сегодня?'),
         cancellationToken: AICancellationToken(),
       );
 
@@ -113,10 +112,7 @@ void main() {
       cloud.failure = StateError('network unavailable');
 
       final response = await router.complete(
-        AIRequest(
-          id: 'news-offline',
-          prompt: 'Какие новости сегодня?',
-        ),
+        AIRequest(id: 'news-offline', prompt: 'Какие новости сегодня?'),
         cancellationToken: AICancellationToken(),
       );
 
@@ -132,10 +128,7 @@ void main() {
         final tokens = <String>[];
 
         final response = await router.completeStreaming(
-          AIRequest(
-            id: 'stream-offline',
-            prompt: 'Какие новости сегодня?',
-          ),
+          AIRequest(id: 'stream-offline', prompt: 'Какие новости сегодня?'),
           cancellationToken: AICancellationToken(),
           onToken: tokens.add,
         );
@@ -161,10 +154,7 @@ void main() {
 
         await expectLater(
           streamingRouter.completeStreaming(
-            AIRequest(
-              id: 'stream-partial',
-              prompt: 'Какие новости сегодня?',
-            ),
+            AIRequest(id: 'stream-partial', prompt: 'Какие новости сегодня?'),
             cancellationToken: AICancellationToken(),
             onToken: tokens.add,
           ),
