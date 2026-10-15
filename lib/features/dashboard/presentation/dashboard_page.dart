@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:omni_ai/core/diagnostics/diagnostic_report.dart';
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 import 'package:omni_ai/features/media/services/franchise_chronology_coordinator.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
+import 'package:omni_ai/features/media/services/media_catalog_token_store.dart';
 import 'package:omni_ai/features/media/services/openrouter_franchise_chronology_researcher.dart';
 import 'package:omni_ai/features/media/services/shared_preferences_franchise_chronology_cache.dart';
 import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
@@ -103,7 +106,10 @@ class _DashboardPageState extends State<DashboardPage> {
             constraints: const BoxConstraints(maxWidth: 720),
             child: Column(
               children: [
-                _GuardHeader(onProfilePressed: () => _selectTab(4)),
+                _GuardHeader(
+                  onProfilePressed: () => _selectTab(4),
+                  onDiagnosticsPressed: _runAppDiagnostics,
+                ),
                 Expanded(child: _buildTab()),
               ],
             ),
@@ -215,6 +221,183 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Future<void> _runAppDiagnostics() async {
+    final checks = <DiagnosticCheck>[
+      DiagnosticCheck(
+        name: 'Основная панель',
+        status: DiagnosticStatus.ok,
+        details: 'Загружены разделы: Лента, AI, Медиа, Избранное, Настройки',
+      ),
+      DiagnosticCheck(
+        name: 'Профиль приложения',
+        status: widget.preferences.categories.isEmpty
+            ? DiagnosticStatus.warning
+            : DiagnosticStatus.ok,
+        details: 'Сохранённых категорий профиля: '
+            '${widget.preferences.categories.length}; '
+            'личные значения и названия интересов не включены в отчёт',
+      ),
+    ];
+
+    try {
+      await _aiDependencies.restoreExecutionMode();
+      checks.add(
+        DiagnosticCheck(
+          name: 'Маршрутизация AI',
+          status: DiagnosticStatus.ok,
+          details: 'Режим: ${_aiDependencies.executionMode.name}; '
+              'локальный провайдер: ${_aiDependencies.localProvider.id}; '
+              'облачный провайдер: ${_aiDependencies.cloudProvider.id}',
+        ),
+      );
+    } on Object {
+      checks.add(
+        const DiagnosticCheck(
+          name: 'Маршрутизация AI',
+          status: DiagnosticStatus.error,
+          details: 'Не удалось восстановить сохранённый режим AI',
+        ),
+      );
+    }
+
+    try {
+      final hasCloudKey = await _aiDependencies.hasCloudApiKey;
+      checks.add(
+        DiagnosticCheck(
+          name: 'Облачный AI',
+          status: hasCloudKey ? DiagnosticStatus.ok : DiagnosticStatus.warning,
+          details: hasCloudKey
+              ? 'Ключ настроен; секретное значение не читается в отчёт'
+              : 'Ключ OpenRouter не настроен на устройстве',
+        ),
+      );
+    } on Object {
+      checks.add(
+        const DiagnosticCheck(
+          name: 'Облачный AI',
+          status: DiagnosticStatus.error,
+          details: 'Не удалось проверить состояние защищённого хранилища',
+        ),
+      );
+    }
+
+    try {
+      final installed = await _localModelStorage.isDownloaded(
+        LocalModelCatalog.qwen3Small,
+      );
+      checks.add(
+        DiagnosticCheck(
+          name: 'Локальная модель',
+          status: installed ? DiagnosticStatus.ok : DiagnosticStatus.warning,
+          details: installed
+              ? 'Файл модели найден и прошёл проверку размера; checksum отдельно не проверялся'
+              : 'Файл модели отсутствует или меньше ожидаемого размера',
+        ),
+      );
+    } on Object {
+      checks.add(
+        const DiagnosticCheck(
+          name: 'Локальная модель',
+          status: DiagnosticStatus.error,
+          details: 'Не удалось проверить файл локальной модели',
+        ),
+      );
+    }
+
+    try {
+      final token = await SecureMediaCatalogTokenStore().readToken();
+      checks.add(
+        DiagnosticCheck(
+          name: 'Медиакаталог',
+          status: token == null ? DiagnosticStatus.warning : DiagnosticStatus.ok,
+          details: token == null
+              ? 'TMDB-токен не настроен; значение токена не запрашивалось'
+              : 'TMDB-токен найден в защищённом хранилище; доступность каталога отдельно не проверялась',
+        ),
+      );
+    } on Object {
+      checks.add(
+        const DiagnosticCheck(
+          name: 'Медиакаталог',
+          status: DiagnosticStatus.warning,
+          details: 'Не удалось прочитать статус защищённого хранилища TMDB',
+        ),
+      );
+    }
+
+    try {
+      final response = await http
+          .get(
+            Uri.https('news.google.com', '/rss/search', {
+              'q': 'technology',
+              'hl': 'ru',
+              'gl': 'RU',
+              'ceid': 'RU:ru',
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+      checks.add(
+        DiagnosticCheck(
+          name: 'Интернет и RSS endpoint',
+          status: response.statusCode >= 200 && response.statusCode < 300
+              ? DiagnosticStatus.ok
+              : DiagnosticStatus.error,
+          details: response.statusCode >= 200 && response.statusCode < 300
+              ? 'RSS endpoint ответил HTTP ${response.statusCode}; это не гарантирует загрузку и фильтрацию персональной ленты'
+              : 'RSS endpoint ответил HTTP ${response.statusCode}',
+        ),
+      );
+    } on Object catch (error) {
+      checks.add(
+        DiagnosticCheck(
+          name: 'Интернет и RSS endpoint',
+          status: DiagnosticStatus.error,
+          details: 'Пробный запрос не прошёл: ${error.runtimeType}; '
+              'проверьте соединение, DNS, VPN/прокси и повторите тест',
+        ),
+      );
+    }
+
+    final report = DiagnosticReport(createdAt: DateTime.now(), checks: checks);
+    final reportText = report.toPlainText();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: SystemCorePalette.panel,
+        title: const Text('Полная проверка OMNI AI'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              reportText,
+              style: const TextStyle(color: Colors.white70, height: 1.45),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('ЗАКРЫТЬ'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: reportText));
+              if (dialogContext.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Отчёт скопирован')),
+                );
+                Navigator.of(dialogContext).pop();
+              }
+            },
+            icon: const Icon(Icons.copy),
+            label: const Text('КОПИРОВАТЬ ОТЧЁТ'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTab() {
     return switch (_selectedTab) {
       0 => NewsCenterPage(
@@ -287,9 +470,13 @@ class _DashboardPageState extends State<DashboardPage> {
 }
 
 class _GuardHeader extends StatelessWidget {
-  const _GuardHeader({required this.onProfilePressed});
+  const _GuardHeader({
+    required this.onProfilePressed,
+    required this.onDiagnosticsPressed,
+  });
 
   final VoidCallback onProfilePressed;
+  final VoidCallback onDiagnosticsPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -365,6 +552,12 @@ class _GuardHeader extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            IconButton(
+              tooltip: 'Проверить приложение',
+              onPressed: onDiagnosticsPressed,
+              icon: const Icon(Icons.health_and_safety_outlined),
+              color: SystemCorePalette.green,
             ),
             IconButton(
               tooltip: 'Профиль',
