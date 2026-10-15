@@ -42,6 +42,17 @@ void main() {
       );
     });
 
+    test('streams ordinary text while withholding partial control markers', () {
+      expect(Qwen3PromptFormatter.visiblePrefix('Ответ'), 'Ответ');
+      expect(Qwen3PromptFormatter.visiblePrefix('Ответ <thi'), 'Ответ');
+      expect(
+        Qwen3PromptFormatter.visiblePrefix(
+          'Ответ <think>внутренний анализ',
+        ),
+        'Ответ',
+      );
+    });
+
     test('removes complete internal thinking blocks', () {
       expect(
         Qwen3PromptFormatter.sanitize(
