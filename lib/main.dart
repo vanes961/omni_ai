@@ -209,7 +209,7 @@ class _OmniLoadingScreen extends StatelessWidget {
 
   final Animation<double> progress;
 
-  static const _background = Color(0xFF05070B);
+  static const _background = SystemCorePalette.background;
 
   @override
   Widget build(BuildContext context) {
@@ -232,9 +232,9 @@ class _OmniLoadingScreen extends StatelessWidget {
                       center: Alignment(0, -0.15),
                       radius: 1.25,
                       colors: [
-                        Color(0xFF17313A),
-                        Color(0xFF080B12),
-                        Color(0xFF030407),
+                        Color(0xFF29352C),
+                        Color(0xFF1B211C),
+                        Color(0xFF141915),
                       ],
                     ),
                   ),
@@ -304,11 +304,11 @@ class _OmniBrandMark extends StatelessWidget {
         vertical: compact ? 12 : 18,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xB5081017),
-        border: Border.all(color: const Color(0xFF31F5B0)),
+        color: const Color(0xE61D241F),
+        border: Border.all(color: SystemCorePalette.border),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF22F0B0).withValues(alpha: 0.2),
+            color: const Color(0xFF9DB59B).withValues(alpha: 0.08),
             blurRadius: 28,
           ),
         ],
@@ -327,7 +327,7 @@ class _OmniBrandMark extends StatelessWidget {
                 letterSpacing: 8,
                 shadows: [
                   Shadow(
-                    color: const Color(0xFF2DF8B1).withValues(alpha: 0.8),
+                    color: const Color(0xFF9DB59B).withValues(alpha: 0.25),
                     blurRadius: 18,
                   ),
                 ],
@@ -340,7 +340,7 @@ class _OmniBrandMark extends StatelessWidget {
             child: Text(
               'AI  //  INTELLIGENCE HUB',
               style: TextStyle(
-                color: Color(0xFF4BFFD0),
+                color: SystemCorePalette.green,
                 fontSize: 10,
                 letterSpacing: 3,
               ),
@@ -380,7 +380,7 @@ class _OmniLoadingProgress extends StatelessWidget {
               child: Text(
                 'ЗАГРУЗКА...',
                 style: TextStyle(
-                  color: Color(0xFF57FFD0),
+                  color: SystemCorePalette.green,
                   fontSize: 11,
                   letterSpacing: 1.5,
                 ),
@@ -404,7 +404,7 @@ class _OmniLoadingProgress extends StatelessWidget {
             child: Stack(
               children: [
                 const ColoredBox(
-                  color: Color(0xFF18252B),
+                  color: Color(0xFF303A32),
                   child: SizedBox.expand(),
                 ),
                 FractionallySizedBox(
@@ -413,9 +413,9 @@ class _OmniLoadingProgress extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Color(0xFF126D50),
-                          Color(0xFF20FFD0),
-                          Color(0xFF9CFFD5),
+                          Color(0xFF657D67),
+                          Color(0xFF8DAA8D),
+                          Color(0xFFC7D5C0),
                         ],
                       ),
                     ),
@@ -431,7 +431,7 @@ class _OmniLoadingProgress extends StatelessWidget {
           'ПОДГОТОВКА МОДУЛЕЙ  •  ЗАГРУЗКА ПРОФИЛЯ',
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Color(0xFF8797A2),
+            color: SystemCorePalette.muted,
             fontSize: 9,
             letterSpacing: 1,
           ),
@@ -440,7 +440,7 @@ class _OmniLoadingProgress extends StatelessWidget {
         const Text(
           'Версия 1.0.0',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFF53616C), fontSize: 10),
+          style: TextStyle(color: Color(0xFF7D897F), fontSize: 10),
         ),
       ],
     );
