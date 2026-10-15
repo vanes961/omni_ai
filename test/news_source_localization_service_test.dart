@@ -114,12 +114,41 @@ void main() {
         translationTimeout: const Duration(milliseconds: 1),
       );
 
-      final result = await translationService.localizeCandidates([foreign]);
+      final report = await translationService.localizeCandidatesWithReport([foreign]);
 
-      expect(result, hasLength(1));
-      expect(result.single, same(foreign));
+      expect(report.articles, hasLength(1));
+      expect(report.articles.single, same(foreign));
+      expect(report.translationFailureCount, 1);
+      expect(
+        report.failureReasonCounts[NewsTranslationFailureReason.timeout],
+        1,
+      );
     },
   );
+
+  test('reports malformed AI translation output', () async {
+    final foreign = _article(
+      id: 'malformed',
+      language: 'en',
+      title: 'Foreign headline',
+    );
+    final translationService = NewsSourceLocalizationService(
+      aiEngine: AIEngine(
+        provider: _TranslationProvider(responseText: 'not-json'),
+      ),
+    );
+
+    final report = await translationService.localizeCandidatesWithReport([
+      foreign,
+    ]);
+
+    expect(report.articles.single, same(foreign));
+    expect(report.translationFailureCount, 1);
+    expect(
+      report.failureReasonCounts[NewsTranslationFailureReason.malformedResponse],
+      1,
+    );
+  });
 
   test('does not send video or trailer previews to AI localization', () async {
     final provider = _TranslationProvider();
@@ -230,9 +259,13 @@ NewsArticle _article({
 }
 
 class _TranslationProvider implements AIProvider {
-  _TranslationProvider({this.delay = Duration.zero});
+  _TranslationProvider({
+    this.delay = Duration.zero,
+    this.responseText = '{"title":"Консоль","summary":"Описание"}',
+  });
 
   final Duration delay;
+  final String responseText;
   int calls = 0;
 
   @override
@@ -247,7 +280,7 @@ class _TranslationProvider implements AIProvider {
     await Future<void>.delayed(delay);
     return AIResponse(
       requestId: request.id,
-      text: '{"title":"Консоль","summary":"Описание"}',
+      text: responseText,
       providerId: id,
       generatedAt: DateTime.utc(2026, 10, 12),
     );
