@@ -246,10 +246,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           now.difference(cacheSavedAt) >= const Duration(hours: 6) ||
           cacheSavedAt.isAfter(now.add(const Duration(minutes: 5)));
       final selectedTopics = _normalizeTopics(profile.topics);
-      final hasFeedInterests =
-          profile.topics.isNotEmpty || profile.includeCriticalOutsideInterests;
       final cacheMatchesProfile =
-          hasFeedInterests &&
           savedTopics != null &&
           savedCriticalSetting == profile.includeCriticalOutsideInterests &&
           _sameTopics(savedTopics, selectedTopics);
@@ -259,8 +256,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (!mounted) return;
       setState(() {
         _lastNewsRefreshAt = cacheMatchesProfile ? cacheSavedAt : null;
-        _newsCacheIsStale =
-            hasFeedInterests && (!cacheMatchesProfile || cacheIsStale);
+        _newsCacheIsStale = !cacheMatchesProfile || cacheIsStale;
         if (revisionAtStart == _interestRevision && cacheMatchesProfile) {
           _articles = cachedArticles;
           _digest = cached[1] as String?;
@@ -273,7 +269,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (_refreshPendingAfterCacheLoad) {
         _refreshPendingAfterCacheLoad = false;
         unawaited(_refreshNews());
-      } else if (hasFeedInterests && (_articles.isEmpty || cacheIsStale)) {
+      } else if (_articles.isEmpty || cacheIsStale) {
         // Refresh empty or stale personalized cache while preserving any cached
         // cards until fresh results replace them.
         unawaited(_refreshNews());
@@ -287,15 +283,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // Cache restoration is best-effort. If storage is unavailable or the
       // cached payload cannot be read, still attempt a fresh feed rather than
       // leaving users with a blank screen until they manually tap Refresh.
-      final activeProfile = loadedProfile ?? _profile;
-      final hasFeedInterests =
-          activeProfile != null &&
-          (activeProfile.topics.isNotEmpty ||
-              activeProfile.includeCriticalOutsideInterests);
       if (_refreshPendingAfterCacheLoad) {
         _refreshPendingAfterCacheLoad = false;
         unawaited(_refreshNews());
-      } else if (hasFeedInterests && _articles.isEmpty) {
+      } else if (_articles.isEmpty) {
         unawaited(_refreshNews());
       }
     }
@@ -848,37 +839,6 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   Future<void> _refreshNews() async {
     final profile = _profile;
     if (profile == null || _refreshingNews || _loadingNewsCache) return;
-    if (profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) {
-      setState(() {
-        _articles = const [];
-        _digest = null;
-        _digestError = null;
-        _newsError = null;
-        _newsCacheWarning = null;
-        _hasCompletedNewsFetch = false;
-        _showingCachedNews = false;
-        _newsDiagnosticStage = 'Не запускалась: не выбраны интересы';
-        _lastNewsFailureStage = null;
-        _lastNewsFailureType = null;
-        _lastNewsRefreshAt = null;
-        _lastNewsAttemptAt = null;
-        _lastRssCandidateCount = null;
-        _lastRssRelevantCandidateCount = null;
-        _lastLocalizedCandidateCount = null;
-        _lastTranslatedCandidateCount = null;
-        _lastDuplicateSuppressedCount = null;
-        _lastTranslationBudgetSkippedCount = null;
-        _lastTranslationFailureCount = null;
-        _lastForeignUntranslatedCount = null;
-        _lastRankedCandidateCount = null;
-        _lastRssDurationMs = null;
-        _lastLocalizationDurationMs = null;
-        _lastRankingDurationMs = null;
-        _lastCacheWriteDurationMs = null;
-      });
-      await _newsCache.clear();
-      return;
-    }
     final revisionAtStart = _interestRevision;
     var failureStage = 'Получение RSS-кандидатов';
     Stopwatch? rssWatch;
