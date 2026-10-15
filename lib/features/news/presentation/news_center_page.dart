@@ -371,6 +371,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     if ((_lastRankedCandidateCount ?? 0) == 0) {
       return 'Материалы получены, но персонализация не оставила результатов. Проверь выбранные темы и фильтр релевантности.';
     }
+    if ((_lastForeignUntranslatedCount ?? 0) > 0 && widget.aiEngine == null) {
+      return 'Иностранные публикации сохранены, но AI-движок не передан в новостную ленту. Проверь сборку зависимостей приложения и подключение AIEngine; это не RSS-сбой.';
+    }
     if ((_lastTranslationFailureCount ?? 0) > 0) {
       return 'Часть иностранных публикаций не переведена: ИИ вернул ошибку, тайм-аут или некорректный ответ. Оригиналы оставлены в ленте; проверь доступность AI-провайдера и повтори обновление.';
     }
@@ -412,7 +415,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               : (_refreshingNews ||
                         _articles.isEmpty ||
                         _lastRssFailedEditions.isNotEmpty ||
-                        (_lastTranslationFailureCount ?? 0) > 0
+                        ((_lastTranslationFailureCount ?? 0) > 0 ||
+                        (_lastForeignUntranslatedCount ?? 0) > 0)
                     ? DiagnosticStatus.warning
                     : DiagnosticStatus.ok),
           details: [
@@ -431,7 +435,14 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             'Подавлено русских дублей: ${_lastDuplicateSuppressedCount ?? 'нет данных'}',
             'Перевод пропущен из-за лимита: ${_lastTranslationBudgetSkippedCount ?? 'нет данных'}',
             'Ошибки перевода: ${_lastTranslationFailureCount ?? 'нет данных'}',
+            'AI-движок для перевода: ${widget.aiEngine == null ? 'не подключён' : 'передан в ленту'}',
             'Иностранных статей без перевода: ${_lastForeignUntranslatedCount ?? 'нет данных'}',
+            if ((_lastForeignUntranslatedCount ?? 0) > 0 && widget.aiEngine == null)
+              'Причина: AI-движок не подключён; иностранные оригиналы оставлены видимыми без перевода.',
+            if ((_lastTranslationBudgetSkippedCount ?? 0) > 0)
+              'Причина: превышен лимит переводов на одно обновление.',
+            if ((_lastTranslationFailureCount ?? 0) > 0)
+              'Причина: один или несколько AI-запросов перевода завершились ошибкой.'
             'После персонализации: ${_lastRankedCandidateCount ?? 'нет данных'}',
             'На экране: ${_articles.length}',
             'Время RSS: ${_lastRssDurationMs == null ? 'нет данных' : '$_lastRssDurationMs мс'}',
