@@ -113,7 +113,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(playerSources, isEmpty);
-    expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsOneWidget);
+    expect(find.text('НЕ УДАЛОСЬ ЗАПУСТИТЬ ВИДЕО'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -157,7 +157,7 @@ void main() {
       Uri.parse('https://primary.example/video.mp4'),
       Uri.parse('https://mirror.example/video.mp4'),
     ]);
-    expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsNothing);
+    expect(find.text('НЕ УДАЛОСЬ ЗАПУСТИТЬ ВИДЕО'), findsNothing);
     expect(controllers, hasLength(2));
     expect(controllers.first.isDisposed, isTrue);
     expect(controllers.last.isDisposed, isFalse);
@@ -203,7 +203,7 @@ void main() {
       Uri.parse('https://primary.example/video.mp4'),
       Uri.parse('https://mirror.example/video.mp4'),
     ]);
-    expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsNothing);
+    expect(find.text('НЕ УДАЛОСЬ ЗАПУСТИТЬ ВИДЕО'), findsNothing);
     expect(controllers, hasLength(2));
     expect(controllers.first.isDisposed, isTrue);
     expect(controllers.last.isDisposed, isFalse);
@@ -249,8 +249,8 @@ void main() {
     ]);
     expect(controllers, hasLength(2));
     expect(controllers.every((controller) => controller.isDisposed), isTrue);
-    expect(find.text('ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ'), findsOneWidget);
-    expect(find.text('StateError'), findsOneWidget);
+    expect(find.text('НЕ УДАЛОСЬ ЗАПУСТИТЬ ВИДЕО'), findsOneWidget);
+    expect(find.textContaining('Тип ошибки: StateError'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -1103,7 +1103,7 @@ void main() {
     await tester.tap(find.byTooltip('Воспроизвести'));
     await tester.pumpAndSettle();
 
-    expect(find.text('ОШИБКА ВОСПРОИЗВЕДЕНИЯ: StateError'), findsOneWidget);
+    expect(find.textContaining('Тип ошибки: StateError'), findsOneWidget);
     expect(find.byTooltip('Воспроизвести'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
