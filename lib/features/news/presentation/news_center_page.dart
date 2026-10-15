@@ -90,6 +90,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   int? _lastRankedCandidateCount;
   String? _newsError;
   String? _newsCacheWarning;
+  String? _newsCacheLoadError;
   String _newsDiagnosticStage = 'Ещё не запускалась';
   String? _lastNewsFailureStage;
   String? _lastNewsFailureType;
@@ -214,6 +215,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
 
   Future<void> _loadNewsCache() async {
     final revisionAtStart = _interestRevision;
+    _newsCacheLoadError = null;
     NewsInterestProfile? loadedProfile;
     try {
       final profile = await _profileFuture;
@@ -273,9 +275,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         // cards until fresh results replace them.
         unawaited(_refreshNews());
       }
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
-      setState(() => _loadingNewsCache = false);
+      setState(() {
+        _loadingNewsCache = false;
+        _newsCacheLoadError = error.runtimeType.toString();
+      });
       // Cache restoration is best-effort. If storage is unavailable or the
       // cached payload cannot be read, still attempt a fresh feed rather than
       // leaving users with a blank screen until they manually tap Refresh.
@@ -566,11 +571,13 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         ),
         DiagnosticCheck(
           name: 'Локальный кэш',
-          status: _loadingNewsCache
+          status: _loadingNewsCache || _newsCacheLoadError != null
               ? DiagnosticStatus.warning
               : DiagnosticStatus.ok,
           details: _loadingNewsCache
               ? 'Восстановление кэша ещё выполняется'
+              : _newsCacheLoadError != null
+              ? 'Не удалось восстановить локальный кэш (${_newsCacheLoadError!}). Выполнена попытка загрузить свежую ленту; проверь локальное хранилище.'
               : 'Загрузка кэша завершена',
         ),
         DiagnosticCheck(
