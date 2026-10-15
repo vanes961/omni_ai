@@ -305,11 +305,12 @@ class _OmniBrandMark extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: const Color(0xE61D241F),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: SystemCorePalette.border),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF9DB59B).withValues(alpha: 0.08),
-            blurRadius: 28,
+            blurRadius: 18,
           ),
         ],
       ),
@@ -322,9 +323,9 @@ class _OmniBrandMark extends StatelessWidget {
               'OMNI',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: compact ? 38 : 44,
+                fontSize: compact ? 36 : 40,
                 fontWeight: FontWeight.w900,
-                letterSpacing: 8,
+                letterSpacing: 4,
                 shadows: [
                   Shadow(
                     color: const Color(0xFF9DB59B).withValues(alpha: 0.25),
@@ -338,11 +339,11 @@ class _OmniBrandMark extends StatelessWidget {
           const FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
-              'AI  //  INTELLIGENCE HUB',
+              'ВАШ ЛИЧНЫЙ ПОМОЩНИК',
               style: TextStyle(
                 color: SystemCorePalette.green,
                 fontSize: 10,
-                letterSpacing: 3,
+                letterSpacing: 1.5,
               ),
             ),
           ),
@@ -365,7 +366,7 @@ class _OmniLoadingProgress extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
-          'СИСТЕМА ИНИЦИАЛИЗИРУЕТСЯ',
+          'Рады видеть вас в OMNI AI',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Colors.white70,
@@ -378,11 +379,11 @@ class _OmniLoadingProgress extends StatelessWidget {
           children: [
             const Expanded(
               child: Text(
-                'ЗАГРУЗКА...',
+                'Подготовка',
                 style: TextStyle(
                   color: SystemCorePalette.green,
-                  fontSize: 11,
-                  letterSpacing: 1.5,
+                  fontSize: 12,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
@@ -428,12 +429,12 @@ class _OmniLoadingProgress extends StatelessWidget {
         ),
         const SizedBox(height: 13),
         const Text(
-          'ПОДГОТОВКА МОДУЛЕЙ  •  ЗАГРУЗКА ПРОФИЛЯ',
+          'Загружаем профиль и готовим приложение',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: SystemCorePalette.muted,
-            fontSize: 9,
-            letterSpacing: 1,
+            fontSize: 10,
+            letterSpacing: 0.2,
           ),
         ),
         const SizedBox(height: 12),
