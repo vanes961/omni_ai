@@ -731,9 +731,14 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           await _newsCache.clear();
           return;
         }
-      } catch (_) {
+      } catch (error) {
+        cacheWatch.stop();
+        _lastCacheWriteDurationMs = cacheWatch.elapsedMilliseconds;
         if (mounted && revisionAtStart == _interestRevision) {
           setState(() {
+            _lastNewsFailureStage = 'Сохранение кэша';
+            _lastNewsFailureType = error.runtimeType.toString();
+            _newsDiagnosticStage = 'Ошибка сохранения кэша';
             _newsError =
                 'Новости загружены, но не удалось сохранить их для офлайн-доступа.';
           });
