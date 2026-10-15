@@ -185,6 +185,28 @@ void main() {
     );
   });
 
+  test('reactions rank news even when no favorites are saved', () {
+    final profile = analytics.analyze([], now: now);
+    final unrelated = _news('unrelated', topics: ['gardening']);
+    final reactedTo = _news('reacted-to', topics: ['anime']);
+
+    final ranked = analytics.rankNews(
+      [unrelated, reactedTo],
+      profile,
+      reactionWeights: {'anime': 2.5},
+    );
+
+    expect(ranked.map((article) => article.id), ['reacted-to', 'unrelated']);
+    expect(
+      analytics.scoreNews(
+        reactedTo,
+        profile,
+        reactionWeights: {'anime': 2.5},
+      ),
+      2.5,
+    );
+  });
+
   test('empty favorites do not alter result order', () {
     final items = [
       _media('a', 'First', categories: ['Drama']),
