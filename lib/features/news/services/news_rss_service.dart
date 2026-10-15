@@ -150,13 +150,38 @@ class NewsRssService {
     final batches = await Future.wait(
       locales.map((locale) async {
         try {
-          final articles = await fetch(
-            profile.copyWith(
-              languages: <String>[locale[0]],
-              regions: <String>[locale[1]],
-            ),
-            applyRelevanceFilter: false,
+          final localizedProfile = profile.copyWith(
+            languages: <String>[locale[0]],
+            regions: <String>[locale[1]],
           );
+          final hasTopics = localizedProfile.topics.any(
+            (topic) => topic.trim().isNotEmpty,
+          );
+          final articles = <NewsArticle>[];
+          final profilesToFetch =
+              !hasTopics && localizedProfile.includeCriticalOutsideInterests
+              ? <NewsInterestProfile>[
+                  localizedProfile.copyWith(
+                    includeCriticalOutsideInterests: false,
+                  ),
+                  localizedProfile,
+                ]
+              : <NewsInterestProfile>[localizedProfile];
+          Object? firstFailure;
+          for (final editionProfile in profilesToFetch) {
+            try {
+              articles.addAll(
+                await fetch(editionProfile, applyRelevanceFilter: false),
+              );
+            } catch (error) {
+              // Preserve any usable discovery or critical results when the
+              // companion query fails for this edition.
+              firstFailure ??= error;
+            }
+          }
+          if (articles.isEmpty && firstFailure != null) {
+            throw firstFailure;
+          }
           successfulEditions++;
           return articles;
         } catch (error) {
