@@ -29,11 +29,37 @@ void main() {
       expect(cloud.calls, 0);
     });
 
-    test('routes film recommendations to cloud in automatic mode', () async {
+    test('routes ordinary questions to local in automatic mode', () async {
+      final response = await router.complete(
+        AIRequest(id: 'general-question', prompt: 'Почему небо голубое?'),
+        cancellationToken: AICancellationToken(),
+      );
+
+      expect(response.providerId, 'local');
+      expect(local.calls, 1);
+      expect(cloud.calls, 0);
+    });
+
+    test('routes writing and recommendations to local in automatic mode',
+        () async {
       final response = await router.complete(
         AIRequest(
-          id: 'film-request',
+          id: 'writing-request',
           prompt: 'Посоветуй фильм с неожиданной концовкой',
+        ),
+        cancellationToken: AICancellationToken(),
+      );
+
+      expect(response.providerId, 'local');
+      expect(local.calls, 1);
+      expect(cloud.calls, 0);
+    });
+
+    test('routes explicit current-news requests to cloud', () async {
+      final response = await router.complete(
+        AIRequest(
+          id: 'current-news',
+          prompt: 'Какие новости сегодня?',
         ),
         cancellationToken: AICancellationToken(),
       );
@@ -41,6 +67,33 @@ void main() {
       expect(response.providerId, 'cloud');
       expect(local.calls, 0);
       expect(cloud.calls, 1);
+    });
+
+    test('routes explicit internet searches to cloud', () async {
+      final response = await router.complete(
+        AIRequest(
+          id: 'web-search',
+          prompt: 'Проверь в интернете последние данные о запуске миссии',
+        ),
+        cancellationToken: AICancellationToken(),
+      );
+
+      expect(response.providerId, 'cloud');
+      expect(local.calls, 0);
+      expect(cloud.calls, 1);
+    });
+
+    test('uses local when local mode is explicitly selected', () async {
+      router.mode = AIExecutionMode.local;
+
+      final response = await router.complete(
+        AIRequest(id: 'forced-local', prompt: 'Какие новости сегодня?'),
+        cancellationToken: AICancellationToken(),
+      );
+
+      expect(response.providerId, 'local');
+      expect(local.calls, 1);
+      expect(cloud.calls, 0);
     });
 
     test('uses cloud when cloud mode is explicitly selected', () async {
@@ -61,8 +114,8 @@ void main() {
 
       final response = await router.complete(
         AIRequest(
-          id: 'film-offline',
-          prompt: 'Посоветуй фильм с неожиданной концовкой',
+          id: 'news-offline',
+          prompt: 'Какие новости сегодня?',
         ),
         cancellationToken: AICancellationToken(),
       );
@@ -81,7 +134,7 @@ void main() {
         final response = await router.completeStreaming(
           AIRequest(
             id: 'stream-offline',
-            prompt: 'Посоветуй фильм с неожиданной концовкой',
+            prompt: 'Какие новости сегодня?',
           ),
           cancellationToken: AICancellationToken(),
           onToken: tokens.add,
@@ -110,7 +163,7 @@ void main() {
           streamingRouter.completeStreaming(
             AIRequest(
               id: 'stream-partial',
-              prompt: 'Посоветуй фильм с неожиданной концовкой',
+              prompt: 'Какие новости сегодня?',
             ),
             cancellationToken: AICancellationToken(),
             onToken: tokens.add,
