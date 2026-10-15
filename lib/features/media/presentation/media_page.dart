@@ -421,6 +421,7 @@ class _MediaPageState extends State<MediaPage> {
       _selectedType = type;
       _onlineSearch = null;
     });
+    unawaited(_loadTrending());
     if (_query.trim().isEmpty) return;
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 250), () {
