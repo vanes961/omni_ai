@@ -113,13 +113,22 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                       (top + details.delta.dy).clamp(8.0, maxY),
                     );
                   }),
-                  child: Material(
-                    color: SystemCorePalette.panelElevated,
-                    elevation: 8,
-                    shape: const CircleBorder(
-                      side: BorderSide(color: SystemCorePalette.border),
-                    ),
-                    child: InkWell(
+                  child: Tooltip(
+                    message: 'Перетащите помощника или нажмите, чтобы открыть чат',
+                    child: Material(
+                      color: SystemCorePalette.panelElevated,
+                      elevation: 10,
+                      shadowColor: SystemCorePalette.green.withValues(
+                        alpha: 0.24,
+                      ),
+                      shape: CircleBorder(
+                        side: BorderSide(
+                          color: SystemCorePalette.green.withValues(
+                            alpha: 0.42,
+                          ),
+                        ),
+                      ),
+                      child: InkWell(
                       customBorder: const CircleBorder(),
                       onTap: () => setState(() => _open = true),
                       child: SizedBox(
@@ -149,6 +158,7 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                         ),
                       ),
                     ),
+                  ),
                   ),
                 ),
               ),
