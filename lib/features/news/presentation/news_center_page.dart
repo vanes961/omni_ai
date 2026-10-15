@@ -1031,11 +1031,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       return;
     }
     final revisionAtStart = _interestRevision;
-    if ((profile.topics.isEmpty && !profile.includeCriticalOutsideInterests) ||
-        _articles.isEmpty) {
-      setState(
-        () => _digestError = 'Сначала выберите интересы и загрузите новости.',
-      );
+    if (_articles.isEmpty) {
+      setState(() => _digestError = 'Сначала загрузите новости.');
       return;
     }
     setState(() {
