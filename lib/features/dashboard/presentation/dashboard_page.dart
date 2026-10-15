@@ -13,7 +13,6 @@ import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/media/services/media_catalog_token_store.dart';
 import 'package:omni_ai/features/media/services/openrouter_franchise_chronology_researcher.dart';
 import 'package:omni_ai/features/media/services/shared_preferences_franchise_chronology_cache.dart';
-import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
 import 'package:omni_ai/features/ai_chat/presentation/floating_ai_companion.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
@@ -56,7 +55,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _selectedTab = widget.initialTab.clamp(0, 4).toInt();
+    _selectedTab = widget.initialTab.clamp(0, 3).toInt();
     final dependencies = widget.dependencies;
     _ownsDependencies = dependencies == null;
     if (dependencies == null) {
@@ -109,7 +108,7 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Column(
               children: [
                 _GuardHeader(
-                  onProfilePressed: () => _selectTab(4),
+                  onProfilePressed: () => _selectTab(3),
                   onDiagnosticsPressed: _runAppDiagnostics,
                 ),
                 Expanded(
@@ -177,19 +176,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 icon: SizedBox(
                   width: 24,
                   height: 24,
-                  child: Icon(Icons.auto_awesome, size: 20),
-                ),
-                activeIcon: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: Icon(Icons.auto_awesome, size: 20),
-                ),
-                label: 'AI',
-              ),
-              BottomNavigationBarItem(
-                icon: SizedBox(
-                  width: 24,
-                  height: 24,
                   child: Icon(Icons.movie_outlined, size: 20),
                 ),
                 activeIcon: SizedBox(
@@ -237,7 +223,7 @@ class _DashboardPageState extends State<DashboardPage> {
       DiagnosticCheck(
         name: 'Основная панель',
         status: DiagnosticStatus.ok,
-        details: 'Загружены разделы: Лента, AI, Медиа, Избранное, Настройки',
+        details: 'Загружены разделы: Лента, Медиа, Избранное, Настройки; AI доступен через плавающего помощника',
       ),
       DiagnosticCheck(
         name: 'Профиль приложения',
@@ -442,20 +428,19 @@ class _DashboardPageState extends State<DashboardPage> {
         legacyPreferences: widget.preferences,
         preferencesStore: _preferencesStore,
       ),
-      1 => AIChatPage(dependencies: _chatDependencies),
-      2 => MediaPage(
+      1 => MediaPage(
         preferences: widget.preferences,
         searchService: MediaSearchService(
           franchiseChronologyResolver: _franchiseChronologyResolver,
         ),
         onOpenCatalogSettings: () {
           setState(() {
-            _selectedTab = 4;
+            _selectedTab = 3;
             _selectedSettingsTab = 2;
           });
         },
       ),
-      3 => FavoritesPage(),
+      2 => FavoritesPage(),
       _ => _buildSettings(),
     };
   }
