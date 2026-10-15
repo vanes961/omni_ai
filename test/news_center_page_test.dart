@@ -541,6 +541,53 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('diagnostics explain partial RSS outages while keeping available news', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+    final service = _PartiallyFailedNewsRssService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(repository: repository, newsService: service),
+      ),
+    );
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('New anime season announced'), findsOneWidget);
+    for (
+      var i = 0;
+      i < 12 && find.text('Диагностика системы').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await tester.tap(find.text('Диагностика системы'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(
+      find.textContaining('RSS-редакции с ошибкой: en-US (ClientException)'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(
+        'Лента частично работает, но некоторые RSS-редакции недоступны.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('diagnostic report explains RSS HTTP status failures', (
     WidgetTester tester,
   ) async {
@@ -829,6 +876,28 @@ class _MemoryNewsInterestRepository implements NewsInterestRepository {
   Future<void> dispose() async {}
 }
 
+
+class _PartiallyFailedNewsRssService extends NewsRssService {
+  @override
+  Future<List<NewsArticle>> fetchInternational(
+    NewsInterestProfile profile,
+  ) async {
+    lastCandidateCount = 1;
+    lastRelevantCandidateCount = 1;
+    lastFailedEditions = const <String>['en-US (ClientException)'];
+    return <NewsArticle>[
+      NewsArticle(
+        id: 'anime-season',
+        title: 'New anime season announced',
+        summary: 'A new season was announced.',
+        sourceName: 'Anime News',
+        sourceUrl: 'https://example.com/anime-season',
+        publishedAt: DateTime.utc(2026, 10, 15),
+        topics: const <String>['anime'],
+      ),
+    ];
+  }
+}
 
 class _FilteredOutNewsRssService extends NewsRssService {
   @override
