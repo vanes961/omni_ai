@@ -442,7 +442,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             if ((_lastTranslationBudgetSkippedCount ?? 0) > 0)
               'Причина: превышен лимит переводов на одно обновление.',
             if ((_lastTranslationFailureCount ?? 0) > 0)
-              'Причина: один или несколько AI-запросов перевода завершились ошибкой.'
+              'Причина: один или несколько AI-запросов перевода завершились ошибкой.',
             'После персонализации: ${_lastRankedCandidateCount ?? 'нет данных'}',
             'На экране: ${_articles.length}',
             'Время RSS: ${_lastRssDurationMs == null ? 'нет данных' : '$_lastRssDurationMs мс'}',
