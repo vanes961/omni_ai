@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
+import 'package:omni_ai/core/ai_engine/models/ai_error.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
 import 'package:omni_ai/core/diagnostics/diagnostic_report.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -440,6 +441,15 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               : 'Выбрано тем: ${profile.topics.length}',
         ),
         DiagnosticCheck(
+          name: 'Подключение AI-движка',
+          status: widget.aiEngine == null
+              ? DiagnosticStatus.warning
+              : DiagnosticStatus.notChecked,
+          details: widget.aiEngine == null
+              ? 'AIEngine не передан в новостную ленту. Перевод и AI-анализ отчёта не смогут выполняться.'
+              : 'AIEngine передан; провайдер: ${widget.aiEngine!.provider.id}; тайм-аут: ${widget.aiEngine!.timeout.inSeconds} с. Это подтверждает подключение зависимости, но не доступность провайдера или валидность ключа.',
+        ),
+        DiagnosticCheck(
           name: 'Новостная лента',
           status: _newsError != null
               ? DiagnosticStatus.error
@@ -550,9 +560,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           ),
         );
         aiAnalysis = response.text;
-      } catch (_) {
+      } on AIEngineException catch (error) {
         aiAnalysis =
-            'ИИ-анализ недоступен. Сам диагностический отчёт сформирован локально.';
+            'ИИ-анализ недоступен. Код ошибки: ${error.error.code.name}. Сам диагностический отчёт сформирован локально.';
+      } catch (error) {
+        aiAnalysis =
+            'ИИ-анализ недоступен (${error.runtimeType}). Сам диагностический отчёт сформирован локально.';
       }
     }
     if (!mounted) return;
