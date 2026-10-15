@@ -118,12 +118,12 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         decoration: BoxDecoration(
           color: SystemCorePalette.panel,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: SystemCorePalette.green.withValues(alpha: 0.22),
+            color: SystemCorePalette.green.withValues(alpha: 0.28),
           ),
           boxShadow: [
             BoxShadow(
@@ -143,10 +143,17 @@ class _DashboardPageState extends State<DashboardPage> {
             backgroundColor: Colors.transparent,
             selectedItemColor: SystemCorePalette.green,
             unselectedItemColor: SystemCorePalette.muted,
-            selectedIconTheme: const IconThemeData(size: 20),
+            selectedIconTheme: const IconThemeData(size: 22),
             unselectedIconTheme: const IconThemeData(size: 20),
-            selectedFontSize: 10,
+            selectedFontSize: 11,
             unselectedFontSize: 10,
+            selectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.2,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w500,
+            ),
             showSelectedLabels: true,
             showUnselectedLabels: true,
             items: const [
@@ -521,9 +528,9 @@ class _GuardHeader extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [SystemCorePalette.panelElevated, SystemCorePalette.panel],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: SystemCorePalette.green.withValues(alpha: 0.24),
+          color: SystemCorePalette.green.withValues(alpha: 0.30),
         ),
         boxShadow: [
           BoxShadow(
