@@ -237,7 +237,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       final now = DateTime.now();
       // Keep the cached feed visible, but refresh it at least every six hours.
       // Missing timestamps belong to older cache versions and are stale.
-      final cacheIsStale = cacheSavedAt == null ||
+      final cacheIsStale =
+          cacheSavedAt == null ||
           now.difference(cacheSavedAt) >= const Duration(hours: 6) ||
           cacheSavedAt.isAfter(now.add(const Duration(minutes: 5)));
       final selectedTopics = _normalizeTopics(profile.topics);
