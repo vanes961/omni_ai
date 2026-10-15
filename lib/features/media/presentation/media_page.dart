@@ -52,6 +52,8 @@ class _MediaPageState extends State<MediaPage> {
   bool _sortByRating = false;
   Timer? _searchDebounce;
   Future<List<MediaItem>>? _onlineSearch;
+  List<MediaItem> _onlineTrending = const [];
+  bool _loadingTrending = false;
 
   static const _types = ['Фильм', 'Сериал', 'Аниме'];
 
@@ -62,6 +64,7 @@ class _MediaPageState extends State<MediaPage> {
     _catalogTokenStore =
         widget.catalogTokenStore ?? SecureMediaCatalogTokenStore();
     unawaited(_loadCatalogToken());
+    if (_searchService.isConfigured) unawaited(_loadTrending());
     _loadFavoriteInterests();
   }
 
@@ -78,10 +81,24 @@ class _MediaPageState extends State<MediaPage> {
           );
         }
       });
+      unawaited(_loadTrending());
     } on Object {
       // Keep the explicit missing-token message visible if secure storage is
       // unavailable; a storage failure must not crash the media page.
     }
+  }
+
+  Future<void> _loadTrending() async {
+    if (!_searchService.isConfigured) return;
+    if (mounted) setState(() => _loadingTrending = true);
+    final items = await _searchService.fetchTrendingOnline(
+      type: _selectedType,
+    );
+    if (!mounted) return;
+    setState(() {
+      _onlineTrending = _rankByFavoriteInterests(items);
+      _loadingTrending = false;
+    });
   }
 
   Future<void> _loadFavoriteInterests() async {
@@ -133,7 +150,14 @@ class _MediaPageState extends State<MediaPage> {
           ),
           if (isFiltering)
             _buildSearchResults(results)
-          else if (_searchService.trending.isEmpty)
+          else if (_loadingTrending && _onlineTrending.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 24, 20, 24),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            )
+          else if (_onlineTrending.isEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
@@ -229,7 +253,7 @@ class _MediaPageState extends State<MediaPage> {
               ),
             )
           else ...[
-            _buildCarouselSection('ТРЕНДЫ', _searchService.trending),
+            _buildCarouselSection('ТРЕНДЫ', _onlineTrending),
             _buildCarouselSection(
               'РЕКОМЕНДОВАНО ДЛЯ ТЕБЯ',
               _rankByFavoriteInterests(
