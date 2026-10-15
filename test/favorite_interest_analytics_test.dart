@@ -148,6 +148,40 @@ void main() {
     expect(ranked, hasLength(2));
   });
 
+  test('explains each signal contributing to a news score', () {
+    final profile = analytics.analyze([
+      _favorite(
+        'anime-fav',
+        FavoriteCategory.anime,
+        title: 'Something Else',
+        interests: ['anime'],
+        addedAt: now,
+      ),
+    ], now: now);
+    final article = _news('update', topics: ['anime', 'gaming']);
+    final breakdown = analytics.explainNewsScore(
+      article,
+      profile,
+      lessInterested: {'anime'},
+      reactionWeights: {'gaming': 3},
+    );
+
+    expect(breakdown.favoriteInterest, 2);
+    expect(breakdown.reaction, 3);
+    expect(breakdown.lessInterestedPenalty, -4);
+    expect(breakdown.trailerBonus, 0);
+    expect(breakdown.categoryBonus, 0.35);
+    expect(
+      analytics.scoreNews(
+        article,
+        profile,
+        lessInterested: {'anime'},
+        reactionWeights: {'gaming': 3},
+      ),
+      breakdown.total,
+    );
+  });
+
   test('empty favorites do not alter result order', () {
     final items = [
       _media('a', 'First', categories: ['Drama']),
