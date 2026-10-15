@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
@@ -373,6 +374,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       }
     }
     if (!mounted) return;
+    final completeReport =
+        '$reportText${aiAnalysis == null ? '' : '\n\nАНАЛИЗ ИИ\n$aiAnalysis'}';
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -382,7 +385,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           width: double.maxFinite,
           child: SingleChildScrollView(
             child: SelectableText(
-              '$reportText${aiAnalysis == null ? '' : '\n\nАНАЛИЗ ИИ\n$aiAnalysis'}',
+              completeReport,
               style: const TextStyle(color: Colors.white70, height: 1.45),
             ),
           ),
@@ -391,6 +394,19 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('ЗАКРЫТЬ'),
+          ),
+          FilledButton.icon(
+            onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: completeReport));
+              if (mounted && dialogContext.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Диагностический отчёт скопирован')),
+                );
+                Navigator.of(dialogContext).pop();
+              }
+            },
+            icon: const Icon(Icons.copy),
+            label: const Text('КОПИРОВАТЬ ОТЧЁТ'),
           ),
         ],
       ),
