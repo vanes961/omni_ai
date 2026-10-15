@@ -91,6 +91,7 @@ void main() {
     expect(find.textContaining('Этап:'), findsOneWidget);
     expect(find.textContaining('Время RSS:'), findsOneWidget);
     expect(find.textContaining('Время локализации:'), findsOneWidget);
+    expect(find.textContaining('Рекомендуемый следующий шаг:'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
