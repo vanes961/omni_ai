@@ -118,6 +118,7 @@ class FavoriteInterestAnalytics {
     NewsArticle article,
     FavoriteInterestProfile profile, {
     Set<String> lessInterested = const <String>{},
+    Map<String, double> reactionWeights = const <String, double>{},
   }) {
     if (profile.totalFavorites == 0 && lessInterested.isEmpty) return 0;
     final candidateTerms = <String>{
@@ -130,6 +131,9 @@ class FavoriteInterestAnalytics {
     for (final term in candidateTerms) {
       score += profile.interestWeights[term] ?? 0;
       if (lessInterested.contains(term)) score -= 4.0;
+    }
+    for (final topic in article.topics) {
+      score += reactionWeights[topic.trim().toLowerCase()] ?? 0;
     }
     if (article.contentType == NewsContentType.trailer &&
         profile.countFor(FavoriteCategory.trailer) > 0) {
@@ -158,6 +162,7 @@ class FavoriteInterestAnalytics {
     List<NewsArticle> articles,
     FavoriteInterestProfile profile, {
     Set<String> lessInterested = const <String>{},
+    Map<String, double> reactionWeights = const <String, double>{},
   }) {
     final indexed = articles.indexed.toList();
     indexed.sort((a, b) {
@@ -165,8 +170,14 @@ class FavoriteInterestAnalytics {
         b.$2,
         profile,
         lessInterested: lessInterested,
+        reactionWeights: reactionWeights,
       ).compareTo(
-        scoreNews(a.$2, profile, lessInterested: lessInterested),
+        scoreNews(
+          a.$2,
+          profile,
+          lessInterested: lessInterested,
+          reactionWeights: reactionWeights,
+        ),
       );
       return scoreComparison != 0 ? scoreComparison : a.$1.compareTo(b.$1);
     });
