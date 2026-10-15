@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:omni_ai/core/ai_engine/models/ai_error.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
@@ -45,6 +46,7 @@ class NewsSourceLocalizationService {
     var duplicateSuppressedCount = 0;
     var budgetSkippedCount = 0;
     var translationFailureCount = 0;
+    final failureReasonCounts = <NewsTranslationFailureReason, int>{};
     var foreignUntranslatedCount = 0;
 
     for (final article in articles) {
@@ -75,6 +77,8 @@ class NewsSourceLocalizationService {
           translatedCount++;
         } else {
           translationFailureCount++;
+          final reason = translation.failureReason ?? NewsTranslationFailureReason.unknown;
+          failureReasonCounts.update(reason, (count) => count + 1, ifAbsent: () => 1);
           foreignUntranslatedCount++;
         }
       } else {
@@ -94,6 +98,7 @@ class NewsSourceLocalizationService {
       duplicateSuppressedCount: duplicateSuppressedCount,
       budgetSkippedCount: budgetSkippedCount,
       translationFailureCount: translationFailureCount,
+      failureReasonCounts: Map<NewsTranslationFailureReason, int>.unmodifiable(failureReasonCounts),
       foreignUntranslatedCount: foreignUntranslatedCount,
     );
   }
@@ -129,12 +134,12 @@ class NewsSourceLocalizationService {
           );
       final decoded = jsonDecode(response.text);
       if (decoded is! Map<String, dynamic>) {
-        return _TranslationAttempt(article, false);
+        return _TranslationAttempt(article, false, NewsTranslationFailureReason.invalidOutput);
       }
       final title = decoded['title'];
       final summary = decoded['summary'];
       if (title is! String || title.trim().isEmpty || summary is! String) {
-        return _TranslationAttempt(article, false);
+        return _TranslationAttempt(article, false, NewsTranslationFailureReason.invalidOutput);
       }
       return _TranslationAttempt(
         NewsArticle(
@@ -158,12 +163,41 @@ class NewsSourceLocalizationService {
         ),
         true,
       );
+    } on TimeoutException {
+      return _TranslationAttempt(article, false, NewsTranslationFailureReason.timeout);
+    } on AIEngineException catch (error) {
+      return _TranslationAttempt(
+        article,
+        false,
+        switch (error.error.code) {
+          AIErrorCode.configuration => NewsTranslationFailureReason.configuration,
+          AIErrorCode.unauthorized => NewsTranslationFailureReason.unauthorized,
+          AIErrorCode.rateLimited => NewsTranslationFailureReason.rateLimited,
+          AIErrorCode.providerUnavailable => NewsTranslationFailureReason.providerUnavailable,
+          AIErrorCode.timeout => NewsTranslationFailureReason.timeout,
+          AIErrorCode.malformedResponse => NewsTranslationFailureReason.malformedResponse,
+          AIErrorCode.cancelled => NewsTranslationFailureReason.cancelled,
+          _ => NewsTranslationFailureReason.provider,
+        },
+      );
     } catch (_) {
-      // A translation provider can be offline or return malformed output.
-      // Keep the original source card visible rather than failing the feed.
-      return _TranslationAttempt(article, false);
+      // Keep the original source card visible if translation fails.
+      return _TranslationAttempt(article, false, NewsTranslationFailureReason.unknown);
     }
   }
+}
+
+enum NewsTranslationFailureReason {
+  configuration,
+  unauthorized,
+  rateLimited,
+  providerUnavailable,
+  timeout,
+  malformedResponse,
+  invalidOutput,
+  cancelled,
+  provider,
+  unknown,
 }
 
 class NewsLocalizationResult {
@@ -173,6 +207,7 @@ class NewsLocalizationResult {
     required this.duplicateSuppressedCount,
     required this.budgetSkippedCount,
     required this.translationFailureCount,
+    required this.failureReasonCounts,
     required this.foreignUntranslatedCount,
   });
 
@@ -181,12 +216,14 @@ class NewsLocalizationResult {
   final int duplicateSuppressedCount;
   final int budgetSkippedCount;
   final int translationFailureCount;
+  final Map<NewsTranslationFailureReason, int> failureReasonCounts;
   final int foreignUntranslatedCount;
 }
 
 class _TranslationAttempt {
-  const _TranslationAttempt(this.article, this.translated);
+  const _TranslationAttempt(this.article, this.translated, [this.failureReason]);
 
   final NewsArticle article;
   final bool translated;
+  final NewsTranslationFailureReason? failureReason;
 }
