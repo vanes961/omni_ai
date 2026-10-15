@@ -511,7 +511,9 @@ class _AIChatPageState extends State<AIChatPage> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  icon: Icon(_sending ? Icons.stop_rounded : Icons.arrow_upward),
+                  icon: Icon(
+                    _sending ? Icons.stop_rounded : Icons.arrow_upward,
+                  ),
                 ),
               ),
             ],
