@@ -9,8 +9,8 @@ enum AIExecutionMode { automatic, local, cloud }
 
 /// Routes requests through the shared AI engine.
 ///
-/// Automatic mode keeps app-control commands and greetings on-device and sends
-/// recommendation, research, news, and other conversational requests to cloud.
+/// Automatic mode prefers on-device inference for general reasoning and only
+/// selects cloud for requests that explicitly need fresh external information.
 class RoutingAIProvider implements AIProvider, AIStreamingProvider {
   RoutingAIProvider({
     required this.localProvider,
@@ -34,42 +34,34 @@ class RoutingAIProvider implements AIProvider, AIStreamingProvider {
       AIExecutionMode.local => localProvider,
       AIExecutionMode.cloud => cloudProvider,
       AIExecutionMode.automatic =>
-        _isLocalTask(prompt) ? localProvider : cloudProvider,
+        _requiresFreshExternalInformation(prompt)
+            ? cloudProvider
+            : localProvider,
     };
   }
 
-  bool _isLocalTask(String prompt) {
+  bool _requiresFreshExternalInformation(String prompt) {
     final normalized = prompt.trim().toLowerCase();
-    if (normalized.isEmpty) return true;
+    if (normalized.isEmpty) return false;
 
-    final localCommand = RegExp(
-      r'^(привет|здравствуй|здравствуйте|доброе утро|добрый вечер|'
-      r'спасибо|пока|открой (настройки|приложение|чат|новости|медиа)|перейди|закрой|отмени|'
-      r'обнови|останови|запусти|включи|выключи|'
-      r'добавь в избранное|удали из избранного|'
-      r'покажи избранное|покажи настройки|открой настройки|'
-      r'покажи статус|статус приложения|help|hi|hello|thanks)\b',
+    // Use cloud when the user asks for news or clearly requests current facts,
+    // live updates, or an explicit internet/web search.
+    final externalInformationIntent = RegExp(
+      r'(новост\w*|дайджест новост\w*|breaking news|latest news|current news|'
+      r"today['’]?s news|\bnews\b|"
+      r'сегодняшн\w*|сейчас|прямо сейчас|на данный момент|'
+      r'последн\w* (новост\w*|событи\w*|данн\w*|обновлен\w*)|'
+      r'свеж\w* (новост\w*|данн\w*|событи\w*)|'
+      r'актуальн\w* (курс\w*|цен\w*|данн\w*|информаци\w*)|'
+      r'что произошло сегодня|что случилось сегодня|'
+      r'найди в интернет\w*|поищи в интернет\w*|проверь в интернет\w*|'
+      r'поиск в интернет\w*|поищи в сет\w*|найди источник\w*|'
+      r'со ссылками на источник\w*|проведи веб.?поиск|'
+      r'search the web|browse the web|look up online|check online|'
+      r'latest updates|current events|live updates)',
       caseSensitive: false,
     );
-    if (localCommand.hasMatch(normalized)) return true;
-
-    final cloudIntent = RegExp(
-      r'(посоветуй|рекоменд|подбери|похож|сравни|объясни|расскажи|'
-      r'почему|как лучше|что выбрать|фильм|кино|сериал|аниме|манг|'
-      r'новост|дайджест|анализ|проанализ|спланируй|придумай|'
-      r'переведи|найди информацию|что такое|как работает|'
-      r'составь список|плюсы и минусы|news|recommend|movie|film|'
-      r'series|anime|manga|compare|explain|why|summarize|research)',
-      caseSensitive: false,
-    );
-    if (cloudIntent.hasMatch(normalized)) return false;
-
-    final words = normalized
-        .split(RegExp(r'\s+'))
-        .where((word) => word.isNotEmpty);
-    return words.length <= 3 &&
-        !normalized.contains('?') &&
-        !normalized.contains('？');
+    return externalInformationIntent.hasMatch(normalized);
   }
 
   @override
