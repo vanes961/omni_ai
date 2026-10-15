@@ -23,6 +23,31 @@ class FavoriteInterestProfile {
   int countFor(FavoriteCategory category) => categoryCounts[category] ?? 0;
 }
 
+/// Transparent components of a news ranking score. Positive values boost an
+/// article; a negative less-interested value lowers its position.
+class NewsScoreBreakdown {
+  const NewsScoreBreakdown({
+    required this.favoriteInterest,
+    required this.reaction,
+    required this.lessInterestedPenalty,
+    required this.trailerBonus,
+    required this.categoryBonus,
+  });
+
+  final double favoriteInterest;
+  final double reaction;
+  final double lessInterestedPenalty;
+  final double trailerBonus;
+  final double categoryBonus;
+
+  double get total =>
+      favoriteInterest +
+      reaction +
+      lessInterestedPenalty +
+      trailerBonus +
+      categoryBonus;
+}
+
 /// No network or AI calls: favorites influence ranking on-device only.
 class FavoriteInterestAnalytics {
   const FavoriteInterestAnalytics();
@@ -159,37 +184,36 @@ class FavoriteInterestAnalytics {
     ..._tokens(article.title),
   };
 
-  /// Ranks news and trailers using the same local favorites profile.
-  /// It only reorders candidates; it never hides an article or makes network calls.
-  double scoreNews(
+  /// Breaks a news score into the signals that affected its position.
+  NewsScoreBreakdown explainNewsScore(
     NewsArticle article,
     FavoriteInterestProfile profile, {
     Set<String> lessInterested = const <String>{},
     Map<String, double> reactionWeights = const <String, double>{},
   }) {
-    if (profile.totalFavorites == 0 &&
-        lessInterested.isEmpty &&
-        reactionWeights.isEmpty) {
-      return 0;
-    }
     final candidateTerms = <String>{
       ..._normalizeAll(article.topics),
       ..._tokens(article.title),
       ..._tokens(article.summary),
       ..._tokens(article.channelName ?? ''),
     };
-    var score = 0.0;
+    var favoriteInterest = 0.0;
+    var lessInterestedPenalty = 0.0;
     for (final term in candidateTerms) {
-      score += profile.interestWeights[term] ?? 0;
-      if (lessInterested.contains(term)) score -= 4.0;
+      favoriteInterest += profile.interestWeights[term] ?? 0;
+      if (lessInterested.contains(term)) lessInterestedPenalty -= 4.0;
     }
+
+    var reaction = 0.0;
     for (final topic in article.topics) {
-      score += reactionWeights[topic.trim().toLowerCase()] ?? 0;
+      reaction += reactionWeights[topic.trim().toLowerCase()] ?? 0;
     }
-    if (article.contentType == NewsContentType.trailer &&
-        profile.countFor(FavoriteCategory.trailer) > 0) {
-      score += 0.5;
-    }
+
+    final trailerBonus =
+        article.contentType == NewsContentType.trailer &&
+            profile.countFor(FavoriteCategory.trailer) > 0
+        ? 0.5
+        : 0.0;
     final topicCategories = <String, FavoriteCategory>{
       'movie': FavoriteCategory.movie,
       'movies': FavoriteCategory.movie,
@@ -205,8 +229,35 @@ class FavoriteInterestAnalytics {
         .map((topic) => topicCategories[topic.trim().toLowerCase()])
         .whereType<FavoriteCategory>()
         .any((category) => profile.countFor(category) > 0);
-    if (familiarCategory) score += 0.35;
-    return score;
+
+    return NewsScoreBreakdown(
+      favoriteInterest: favoriteInterest,
+      reaction: reaction,
+      lessInterestedPenalty: lessInterestedPenalty,
+      trailerBonus: trailerBonus,
+      categoryBonus: familiarCategory ? 0.35 : 0.0,
+    );
+  }
+
+  /// Ranks news and trailers using the same local favorites profile.
+  /// It only reorders candidates; it never hides an article or makes network calls.
+  double scoreNews(
+    NewsArticle article,
+    FavoriteInterestProfile profile, {
+    Set<String> lessInterested = const <String>{},
+    Map<String, double> reactionWeights = const <String, double>{},
+  }) {
+    if (profile.totalFavorites == 0 &&
+        lessInterested.isEmpty &&
+        reactionWeights.isEmpty) {
+      return 0;
+    }
+    return explainNewsScore(
+      article,
+      profile,
+      lessInterested: lessInterested,
+      reactionWeights: reactionWeights,
+    ).total;
   }
 
   List<NewsArticle> rankNews(
