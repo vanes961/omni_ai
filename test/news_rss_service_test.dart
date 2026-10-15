@@ -928,6 +928,42 @@ void main() {
   );
 
   test(
+    'reports raw RSS candidate count before relevance filtering',
+    () async {
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          final region = request.url.queryParameters['gl'];
+          return http.Response('''<rss><channel>
+            <item>
+              <title>Anime studio announces a new project $region</title>
+              <link>https://publisher.example/anime-$region</link>
+              <description>Anime news from the $region edition.</description>
+              <pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate>
+              <source>Anime News</source>
+            </item>
+            <item>
+              <title>Local council approves a new road $region</title>
+              <link>https://publisher.example/road-$region</link>
+              <description>Local transport and infrastructure update.</description>
+              <pubDate>Sat, 10 Oct 2026 11:00:00 GMT</pubDate>
+              <source>Local News</source>
+            </item>
+          </channel></rss>''', 200);
+        }),
+      );
+      addTearDown(service.dispose);
+
+      final articles = await service.fetchInternational(
+        const NewsInterestProfile(topics: ['anime']),
+      );
+
+      expect(service.lastCandidateCount, 6);
+      expect(articles, hasLength(3));
+      expect(articles.every((article) => article.topics.contains('anime')), isTrue);
+    },
+  );
+
+  test(
     'supports user-defined interests outside built-in topic categories',
     () async {
       final service = NewsRssService(
