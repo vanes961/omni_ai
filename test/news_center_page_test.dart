@@ -84,6 +84,15 @@ void main() {
     expect(find.text('Не удалось загрузить новости.'), findsNothing);
     expect(tester.takeException(), isNull);
 
+    await tester.tap(find.text('Диагностика системы'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.text('Диагностика OMNI AI'), findsOneWidget);
+    expect(find.textContaining('Этап:'), findsOneWidget);
+    expect(find.textContaining('Время RSS:'), findsOneWidget);
+    expect(find.textContaining('Время локализации:'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
