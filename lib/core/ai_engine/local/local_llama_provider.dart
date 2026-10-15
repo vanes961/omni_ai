@@ -158,8 +158,8 @@ class LocalLlamaProvider implements AIProvider, AIStreamingProvider {
         if (cancellationToken.isCancelled) break;
         timeToFirstToken ??= generationStopwatch.elapsed;
         generatedTokenCount++;
+        // Buffer raw output so internal reasoning cannot leak before cleanup.
         output.write(token);
-        onToken(token);
       }
       generationStopwatch.stop();
       if (cancelled || cancellationToken.isCancelled) {
@@ -182,6 +182,8 @@ class LocalLlamaProvider implements AIProvider, AIStreamingProvider {
         );
       }
 
+      // Emit only the cleaned final answer, never hidden reasoning.
+      onToken(text);
       return AIResponse(
         requestId: request.id,
         text: text,
