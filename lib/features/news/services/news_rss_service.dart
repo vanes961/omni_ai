@@ -221,6 +221,7 @@ class NewsRssService {
     final unrestrictedProfile = profile.copyWith(
       topics: profile.topics
           .map(_canonicalTopic)
+          .where((topic) => topic.isNotEmpty)
           .toSet()
           .toList(growable: false),
       languages: const <String>[],
