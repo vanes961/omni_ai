@@ -227,9 +227,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _lessInterested = await _feedbackRepository.loadLessInterested();
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
       _favoriteInterestProfile = favoriteProfile;
-      final cachedArticles = _rankPersonalized(
-        cached[0] as List<NewsArticle>,
-      );
+      final cachedArticles = _rankPersonalized(cached[0] as List<NewsArticle>);
       final selectedTopics = _normalizeTopics(profile.topics);
       final hasFeedInterests =
           profile.topics.isNotEmpty || profile.includeCriticalOutsideInterests;
