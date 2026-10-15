@@ -29,7 +29,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('OMNI AI'), findsOneWidget);
-    expect(find.text('PERSONAL AI SYSTEM'), findsOneWidget);
+    expect(find.text('Ваш личный помощник'), findsOneWidget);
     expect(find.byTooltip('Проверить приложение'), findsOneWidget);
     expect(find.text('Лента'), findsOneWidget);
     expect(find.text('AI'), findsOneWidget);
