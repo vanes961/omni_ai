@@ -61,6 +61,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   Set<String> _lessInterested = <String>{};
   final FavoriteInterestAnalytics _favoriteAnalytics =
       const FavoriteInterestAnalytics();
+  FavoriteInterestProfile? _favoriteInterestProfile;
   NewsSourceLocalizationService get _sourceLocalizationService =>
       NewsSourceLocalizationService(aiEngine: widget.aiEngine);
   late final SharedPreferencesNewsCache _newsCache;
@@ -225,12 +226,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       final favorites = await _favoritesRepository.getAll();
       _lessInterested = await _feedbackRepository.loadLessInterested();
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
-      final cachedArticles = _rankByReaction(
-        _favoriteAnalytics.rankNews(
-          (cached[0] as List<NewsArticle>),
-          favoriteProfile,
-          lessInterested: _lessInterested,
-        ),
+      _favoriteInterestProfile = favoriteProfile;
+      final cachedArticles = _rankPersonalized(
+        cached[0] as List<NewsArticle>,
       );
       final selectedTopics = _normalizeTopics(profile.topics);
       final hasFeedInterests =
@@ -562,26 +560,21 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (!mounted) return;
       setState(() {
         _reactionWeights = weights;
-        _articles = _rankByReaction(_articles);
+        _articles = _rankPersonalized(_articles);
       });
     } catch (_) {
       // Personalization is optional; the feed must still work without storage.
     }
   }
 
-  List<NewsArticle> _rankByReaction(List<NewsArticle> articles) {
-    if (_reactionWeights.isEmpty || articles.length < 2) return articles;
-    final indexed = articles.indexed.toList();
-    double score(NewsArticle article) => article.topics.fold<double>(
-      0,
-      (total, topic) =>
-          total + (_reactionWeights[topic.trim().toLowerCase()] ?? 0),
+  List<NewsArticle> _rankPersonalized(List<NewsArticle> articles) {
+    return _favoriteAnalytics.rankNews(
+      articles,
+      _favoriteInterestProfile ??
+          _favoriteAnalytics.analyze(const <FavoriteItem>[]),
+      lessInterested: _lessInterested,
+      reactionWeights: _reactionWeights,
     );
-    indexed.sort((a, b) {
-      final byScore = score(b.$2).compareTo(score(a.$2));
-      return byScore != 0 ? byScore : a.$1.compareTo(b.$1);
-    });
-    return List<NewsArticle>.unmodifiable(indexed.map((entry) => entry.$2));
   }
 
   Future<void> _reactToArticle(
@@ -598,7 +591,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (!mounted) return;
       setState(() {
         _reactionWeights = weights;
-        _articles = _rankByReaction(_articles);
+        _articles = _rankPersonalized(_articles);
         _status = switch (reaction) {
           NewsReaction.like =>
             'Лайк сохранён: интересы будут учтены в рекомендациях.',
@@ -813,13 +806,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       final favorites = await _favoritesRepository.getAll();
       _lessInterested = await _feedbackRepository.loadLessInterested();
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
-      final rankedArticles = _rankByReaction(
-        _favoriteAnalytics.rankNews(
-          articles,
-          favoriteProfile,
-          lessInterested: _lessInterested,
-        ),
-      );
+      _favoriteInterestProfile = favoriteProfile;
+      final rankedArticles = _rankPersonalized(articles);
       rankingWatch.stop();
       _lastRankingDurationMs = rankingWatch.elapsedMilliseconds;
       if (revisionAtStart != _interestRevision) return;
