@@ -1291,6 +1291,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _hasCompletedNewsFetch = false;
       _digest = null;
       _digestError = null;
+      // The previous cache was invalidated, so diagnostics must not report it
+      // as current while the user is choosing a different feed profile.
+      _newsCacheIsStale =
+          topics.isNotEmpty || profile.includeCriticalOutsideInterests;
     });
     unawaited(_newsCache.clear());
   }
@@ -1959,6 +1963,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     _digest = null;
                     _digestError = null;
                     _newsError = null;
+                    // Toggling critical news invalidates the previous cache.
+                    _newsCacheIsStale =
+                        value || profile.topics.isNotEmpty;
                   });
                   unawaited(_newsCache.clear());
                 },
