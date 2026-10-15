@@ -972,7 +972,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('explains why the feed is empty when no interests are selected', (
+  testWidgets('shows discovery news before interests are configured', (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -983,9 +983,19 @@ void main() {
     );
     var requestCount = 0;
     final service = NewsRssService(
-      client: MockClient((_) async {
+      client: MockClient((request) async {
         requestCount++;
-        return http.Response('<rss><channel /></rss>', 200);
+        expect(request.url.path, '/rss');
+        return http.Response(
+          '''<rss><channel><item>
+            <title>Discovery feed is available</title>
+            <link>https://publisher.example/discovery-feed</link>
+            <description>General current-affairs coverage.</description>
+            <pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+            <source>World News</source>
+          </item></channel></rss>''',
+          200,
+        );
       }),
     );
 
@@ -994,17 +1004,13 @@ void main() {
         home: NewsCenterPage(repository: repository, newsService: service),
       ),
     );
-    for (var i = 0; i < 30; i++) {
+    for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    // No interests means no generic RSS request and no unpersonalized stories.
-    expect(requestCount, 0);
-    expect(find.text('НАСТРОИТЬ ИНТЕРЕСЫ'), findsOneWidget);
-    expect(
-      find.textContaining('Общий поток без персонализации не показывается.'),
-      findsOneWidget,
-    );
+    expect(requestCount, 3);
+    expect(find.text('Discovery feed is available'), findsOneWidget);
+    expect(find.text('НАСТРОИТЬ ИНТЕРЕСЫ'), findsNothing);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
