@@ -55,7 +55,9 @@ class _MediaPageState extends State<MediaPage> {
   Timer? _searchDebounce;
   Future<List<MediaItem>>? _onlineSearch;
   List<MediaItem> _onlineTrending = const [];
+  List<MediaItem> _onlineRecommendations = const [];
   bool _loadingTrending = false;
+  bool _loadingRecommendations = false;
 
   static const _types = ['Фильм', 'Сериал', 'Аниме'];
 
@@ -84,6 +86,7 @@ class _MediaPageState extends State<MediaPage> {
         }
       });
       unawaited(_loadTrending());
+      unawaited(_loadRecommendations());
     } on Object {
       // Keep the explicit missing-token message visible if secure storage is
       // unavailable; a storage failure must not crash the media page.
@@ -111,9 +114,46 @@ class _MediaPageState extends State<MediaPage> {
         _likedItems = liked;
         _likedIds = liked.map((item) => item.id).toSet();
       });
+      unawaited(_loadRecommendations());
     } catch (_) {
       // Search remains usable if local favorite analytics cannot be read.
     }
+  }
+
+  Future<void> _loadRecommendations() async {
+    if (!_searchService.isConfigured) return;
+    final requestedType = _selectedType;
+    final favorites = [..._favoriteItems, ..._likedItems];
+    final interests = favorites
+        .expand((item) => item.interests)
+        .map((interest) => interest.trim())
+        .where((interest) => interest.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (interests.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _onlineRecommendations = const [];
+          _loadingRecommendations = false;
+        });
+      }
+      return;
+    }
+    if (mounted) setState(() => _loadingRecommendations = true);
+    final items = await _searchService.fetchRecommendationsOnline(
+      interests: interests,
+      type: requestedType,
+    );
+    if (!mounted || _selectedType != requestedType) return;
+    final savedIds = favorites.map((item) => item.id).toSet();
+    final ranked = _rankByFavoriteInterests(items)
+        .where((item) => !savedIds.contains(item.id))
+        .take(20)
+        .toList(growable: false);
+    setState(() {
+      _onlineRecommendations = ranked;
+      _loadingRecommendations = false;
+    });
   }
 
   List<MediaItem> _rankByFavoriteInterests(List<MediaItem> items) {
@@ -274,9 +314,7 @@ class _MediaPageState extends State<MediaPage> {
             _buildCarouselSection('ТРЕНДЫ', _onlineTrending),
             _buildCarouselSection(
               'РЕКОМЕНДОВАНО ДЛЯ ТЕБЯ',
-              _rankByFavoriteInterests(
-                _searchService.recommendedFor(widget.preferences),
-              ),
+              _onlineRecommendations,
             ),
           ],
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -440,6 +478,7 @@ class _MediaPageState extends State<MediaPage> {
       _onlineSearch = null;
     });
     unawaited(_loadTrending());
+    unawaited(_loadRecommendations());
     if (_query.trim().isEmpty) return;
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 250), () {
