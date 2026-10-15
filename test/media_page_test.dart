@@ -61,6 +61,45 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('media type filters keep online trending titles visible', (
+    tester,
+  ) async {
+    final service = MediaSearchService(
+      accessToken: 'test-token',
+      client: MockClient((request) async {
+        final isMovieRequest = request.url.path.endsWith('/movie/week');
+        return http.Response(
+          isMovieRequest
+              ? '{"results":[{"id":11,"media_type":"movie","title":"Film Result"}]}'
+              : '{"results":['
+                    '{"id":11,"media_type":"movie","title":"Film Result"},'
+                    '{"id":12,"media_type":"tv","name":"Series Result",'
+                    '"original_language":"en","origin_country":["US"]}'
+                    ']}',
+          200,
+        );
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaPage(
+          preferences: UserPreferences(),
+          searchService: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Series Result'), findsOneWidget);
+    await tester.tap(find.text('Фильм'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Film Result'), findsOneWidget);
+    expect(find.text('Series Result'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('explains when configured TMDB trends cannot be loaded', (
     tester,
   ) async {
