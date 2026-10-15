@@ -375,6 +375,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     if ((_lastRankedCandidateCount ?? 0) == 0) {
       return 'Материалы получены, но персонализация не оставила результатов. Проверь выбранные темы и фильтр релевантности.';
     }
+    if ((_lastTranslationFailureCount ?? 0) > 0) {
+      return 'Часть иностранных публикаций не переведена: ИИ вернул ошибку, тайм-аут или некорректный ответ. Оригиналы оставлены в ленте; проверь доступность AI-провайдера и повтори обновление.';
+    }
+    if (_lastRssFailedEditions.isNotEmpty) {
+      return 'Лента частично работает, но некоторые RSS-редакции недоступны. Проверь сеть/VPN и детали редакций выше; успешные источники продолжают показывать новости.';
+    }
     if (_articles.isEmpty) {
       return 'Кандидаты были обработаны, но на экране ничего нет. Проверь отображение ленты и состояние кэша.';
     }
@@ -407,11 +413,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           name: 'Новостная лента',
           status: _newsError != null
               ? DiagnosticStatus.error
-              : (_refreshingNews
+              : (_refreshingNews ||
+                    _articles.isEmpty ||
+                    _lastRssFailedEditions.isNotEmpty ||
+                    (_lastTranslationFailureCount ?? 0) > 0
                     ? DiagnosticStatus.warning
-                    : (_articles.isEmpty
-                          ? DiagnosticStatus.warning
-                          : DiagnosticStatus.ok)),
+                    : DiagnosticStatus.ok),
           details: [
             if (_newsError != null) 'Ошибка: $_newsError',
             'Этап: $_newsDiagnosticStage',
@@ -469,7 +476,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     : (_lastRssCandidateCount == null
                           ? DiagnosticStatus.notChecked
                           : (_lastRssCandidateCount == 0 ||
-                                    _lastRssRelevantCandidateCount == 0
+                                    _lastRssRelevantCandidateCount == 0 ||
+                                    _lastRssFailedEditions.isNotEmpty()
                                 ? DiagnosticStatus.warning
                                 : DiagnosticStatus.ok))),
           details: noFeedInterests
