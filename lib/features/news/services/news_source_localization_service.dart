@@ -163,6 +163,12 @@ class NewsSourceLocalizationService {
         ),
         true,
       );
+    } on FormatException {
+      return _TranslationAttempt(
+        article,
+        false,
+        NewsTranslationFailureReason.malformedResponse,
+      );
     } on TimeoutException {
       return _TranslationAttempt(article, false, NewsTranslationFailureReason.timeout);
     } on AIEngineException catch (error) {
