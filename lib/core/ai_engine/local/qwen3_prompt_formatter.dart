@@ -85,12 +85,13 @@ class Qwen3PromptFormatter {
       final end = RegExp(
         r'</think>',
         caseSensitive: false,
-      ).firstMatch(text, start.end);
+      ).firstMatch(text.substring(start.end));
       if (end == null) {
         text = text.substring(0, start.start).trim();
         break;
       }
-      text = '${text.substring(0, start.start)}${text.substring(end.end)}';
+      text =
+          '${text.substring(0, start.start)}${text.substring(start.end + end.end)}';
     }
 
     for (final marker in const [
