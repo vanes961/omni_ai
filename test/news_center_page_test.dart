@@ -957,7 +957,9 @@ void main() {
     expect(find.textContaining('RSS-кандидатов до фильтра: 5'), findsOneWidget);
     expect(find.textContaining('После фильтра интересов: 0'), findsOneWidget);
     expect(
-      find.textContaining('RSS вернул 5 уникальных кандидатов, но фильтр интересов не оставил подходящих публикаций.'),
+      find.textContaining(
+        'RSS вернул 5 уникальных кандидатов, но фильтр интересов не оставил подходящих публикаций.',
+      ),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
