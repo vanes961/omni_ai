@@ -49,7 +49,7 @@ class _MyAppState extends State<MyApp> {
           surface: SystemCorePalette.panel,
           error: SystemCorePalette.red,
         ),
-        fontFamily: 'monospace',
+        fontFamily: 'sans-serif',
         useMaterial3: true,
         splashFactory: InkSparkle.splashFactory,
         dividerColor: SystemCorePalette.border,
@@ -71,15 +71,15 @@ class _MyAppState extends State<MyApp> {
           ),
           hintStyle: const TextStyle(color: SystemCorePalette.muted),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: SystemCorePalette.border),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: SystemCorePalette.border),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(
               color: SystemCorePalette.green,
               width: 1.5,
@@ -91,7 +91,7 @@ class _MyAppState extends State<MyApp> {
             backgroundColor: SystemCorePalette.green,
             foregroundColor: SystemCorePalette.background,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
           ),
@@ -413,9 +413,9 @@ class _OmniLoadingProgress extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Color(0xFF7B2CFF),
+                          Color(0xFF126D50),
                           Color(0xFF20FFD0),
-                          Color(0xFFB8FF49),
+                          Color(0xFF9CFFD5),
                         ],
                       ),
                     ),
