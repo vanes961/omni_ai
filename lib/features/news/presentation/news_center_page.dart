@@ -406,7 +406,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         'Провайдер отклонил запрос как некорректный. Проверь параметры запроса.',
       AIErrorCode.provider =>
         'Провайдер вернул ошибку, которую не удалось точнее классифицировать.',
-      AIErrorCode.unknown => 'Причина не классифицирована; проверь журнал провайдера.',
+      AIErrorCode.unknown =>
+        'Причина не классифицирована; проверь журнал провайдера.',
     };
     final retry = error.error.retryable
         ? ' Повтор может помочь.'
