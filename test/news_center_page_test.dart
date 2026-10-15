@@ -567,6 +567,65 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('diagnostics recommend recovery for RSS timeout and malformed XML', (
+    WidgetTester tester,
+  ) async {
+    Future<void> verifyFailure({
+      required http.Client client,
+      required String expectedGuidance,
+    }) async {
+      SharedPreferences.setMockInitialValues({});
+      SharedPreferencesAsyncPlatform.instance =
+          InMemorySharedPreferencesAsync.empty();
+      final repository = _MemoryNewsInterestRepository(
+        const NewsInterestProfile(topics: ['anime']),
+      );
+      final service = NewsRssService(client: client);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: NewsCenterPage(repository: repository, newsService: service),
+        ),
+      );
+      for (var i = 0; i < 25; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      expect(find.textContaining('Не удалось загрузить новости:'), findsOneWidget);
+      for (
+        var i = 0;
+        i < 12 && find.text('Диагностика системы').evaluate().isEmpty;
+        i++
+      ) {
+        await tester.drag(find.byType(ListView), const Offset(0, -400));
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('Диагностика системы'), findsOneWidget);
+      await tester.tap(find.text('Диагностика системы'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+
+      expect(find.text('Диагностика OMNI AI'), findsOneWidget);
+      expect(find.textContaining(expectedGuidance), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+
+    await verifyFailure(
+      client: MockClient((_) async {
+        throw TimeoutException('simulated RSS timeout');
+      }),
+      expectedGuidance: 'RSS-источник не ответил вовремя',
+    );
+    await verifyFailure(
+      client: MockClient((_) async => http.Response(
+        '<html><body>Access denied</body></html>',
+        200,
+      )),
+      expectedGuidance: 'Вместо RSS/XML пришёл ответ другого формата',
+    );
+  });
+
   testWidgets('explains why the feed is empty when no interests are selected', (
     WidgetTester tester,
   ) async {
