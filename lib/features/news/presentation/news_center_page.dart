@@ -456,7 +456,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     ? DiagnosticStatus.error
                     : (_lastRssCandidateCount == null
                           ? DiagnosticStatus.notChecked
-                          : (_lastRssCandidateCount == 0
+                          : (_lastRssCandidateCount == 0 ||
+                                    _lastRssRelevantCandidateCount == 0
                                 ? DiagnosticStatus.warning
                                 : DiagnosticStatus.ok))),
           details: noFeedInterests
@@ -467,7 +468,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               ? 'Нет результата реального RSS-запроса в этой сессии. Нажми «Обновить персональную ленту» и запусти диагностику повторно.'
               : _lastRssCandidateCount == 0
               ? 'RSS-запрос завершился без пригодных кандидатов. Это не подтверждает, что лента исправна: проверь ответ источника и повтори запрос.'
-              : 'Последний RSS-запрос завершился; кандидатов получено: $_lastRssCandidateCount',
+              : _lastRssRelevantCandidateCount == 0
+              ? 'RSS вернул $_lastRssCandidateCount уникальных кандидатов, но фильтр интересов не оставил подходящих публикаций.'
+              : 'RSS-запрос завершился; до фильтра получено: $_lastRssCandidateCount, после фильтра интересов: ${_lastRssRelevantCandidateCount ?? 'нет данных'}',
         ),
       ],
     );
