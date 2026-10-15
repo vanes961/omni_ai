@@ -40,6 +40,9 @@ void main() {
     expect(restored.single.isVerified, isTrue);
     expect(await restoredCache.loadTopics(), ['anime', 'technology']);
     expect(await restoredCache.loadDigest(), 'Персональный дайджест');
+    final savedAt = await restoredCache.loadSavedAt();
+    expect(savedAt, isNotNull);
+    expect(DateTime.now().difference(savedAt!).abs(), lessThan(const Duration(minutes: 1)));
   });
 
   test('clearing a stale digest preserves the current article feed', () async {
@@ -206,6 +209,19 @@ void main() {
     expect(await cache.loadDigest(), isNull);
     expect(await cache.loadTopics(), isNull);
     expect(await cache.loadIncludeCriticalOutsideInterests(), isNull);
+    expect(await cache.loadSavedAt(), isNull);
+  });
+
+  test('removes a malformed cache timestamp', () async {
+    final store = _MemoryStore()
+      ..values[SharedPreferencesNewsCache.savedAtKey] = 'not-a-timestamp';
+    final cache = SharedPreferencesNewsCache(store: store);
+
+    expect(await cache.loadSavedAt(), isNull);
+    expect(
+      store.values.containsKey(SharedPreferencesNewsCache.savedAtKey),
+      isFalse,
+    );
   });
 
   test(
