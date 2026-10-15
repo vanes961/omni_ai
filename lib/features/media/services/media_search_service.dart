@@ -152,9 +152,9 @@ class MediaSearchService {
       'Сериал' || 'Аниме' => 'tv',
       _ => 'all',
     };
-    final uri = Uri.parse('$_api/trending/$mediaType/week').replace(
-      queryParameters: {'language': 'ru-RU'},
-    );
+    final uri = Uri.parse(
+      '$_api/trending/$mediaType/week',
+    ).replace(queryParameters: {'language': 'ru-RU'});
     try {
       final response = await _get(
         uri,
@@ -176,7 +176,8 @@ class MediaSearchService {
         final originalLanguage = raw['original_language'] as String? ?? '';
         final countries = (raw['origin_country'] as List? ?? const [])
             .whereType<String>();
-        final isAnime = kind == 'tv' &&
+        final isAnime =
+            kind == 'tv' &&
             (originalLanguage == 'ja' || countries.contains('JP'));
         if (type == 'Фильм' && kind != 'movie' ||
             type == 'Сериал' && (kind != 'tv' || isAnime) ||
