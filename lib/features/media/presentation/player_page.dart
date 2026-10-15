@@ -666,8 +666,17 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     MediaPlaybackController player,
     Duration position,
   ) async {
+    final duration = player.duration;
+    final boundedPosition = duration > Duration.zero
+        ? Duration(
+            milliseconds: position.inMilliseconds
+                .clamp(0, duration.inMilliseconds),
+          )
+        : Duration(
+            milliseconds: position.inMilliseconds.clamp(0, 0x7fffffff),
+          );
     try {
-      await player.seekTo(position);
+      await player.seekTo(boundedPosition);
       if (mounted && identical(_player, player)) {
         setState(() => _playerError = null);
       }
@@ -677,6 +686,11 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       }
     }
   }
+
+  Future<void> _seekBy(
+    MediaPlaybackController player,
+    Duration offset,
+  ) => _seekTo(player, player.position + offset);
 
   Future<void> _togglePlayback(MediaPlaybackController player) async {
     try {
@@ -1045,16 +1059,91 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
-                  height: 52,
-                  color: Colors.black54,
-                  alignment: Alignment.center,
-                  child: IconButton(
-                    tooltip: player.isPlaying ? 'Пауза' : 'Воспроизвести',
-                    onPressed: () => _togglePlayback(player),
-                    icon: Icon(
-                      player.isPlaying ? Icons.pause : Icons.play_arrow,
-                    ),
-                    color: Colors.white,
+                  color: Colors.black87,
+                  padding: const EdgeInsets.fromLTRB(8, 2, 8, 4),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Slider(
+                        key: const ValueKey('playback-progress-slider'),
+                        min: 0,
+                        max: player.duration.inMilliseconds > 0
+                            ? player.duration.inMilliseconds.toDouble()
+                            : 1,
+                        value: player.position.inMilliseconds
+                            .clamp(
+                              0,
+                              player.duration.inMilliseconds > 0
+                                  ? player.duration.inMilliseconds
+                                  : 1,
+                            )
+                            .toDouble(),
+                        activeColor: SystemCorePalette.green,
+                        inactiveColor: Colors.white24,
+                        onChanged: player.duration > Duration.zero
+                            ? (value) => setState(() {
+                                // Keep the thumb responsive while dragging;
+                                // commit the actual seek when the drag ends.
+                              })
+                            : null,
+                        onChangeEnd: player.duration > Duration.zero
+                            ? (value) => _seekTo(
+                                player,
+                                Duration(milliseconds: value.round()),
+                              )
+                            : null,
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            _formatPosition(player.position),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            key: const ValueKey('seek-back-10'),
+                            tooltip: 'Назад на 10 секунд',
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () => _seekBy(
+                              player,
+                              const Duration(seconds: -10),
+                            ),
+                            icon: const Icon(Icons.replay_10, size: 22),
+                            color: Colors.white,
+                          ),
+                          IconButton(
+                            tooltip: player.isPlaying ? 'Пауза' : 'Воспроизвести',
+                            onPressed: () => _togglePlayback(player),
+                            icon: Icon(
+                              player.isPlaying ? Icons.pause : Icons.play_arrow,
+                            ),
+                            color: Colors.white,
+                          ),
+                          IconButton(
+                            key: const ValueKey('seek-forward-10'),
+                            tooltip: 'Вперёд на 10 секунд',
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () => _seekBy(
+                              player,
+                              const Duration(seconds: 10),
+                            ),
+                            icon: const Icon(Icons.forward_10, size: 22),
+                            color: Colors.white,
+                          ),
+                          const Spacer(),
+                          Text(
+                            _formatPosition(player.duration),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
