@@ -75,6 +75,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _refreshPendingAfterCurrent = false;
   bool _refreshPendingAfterCacheLoad = false;
   int? _lastRssCandidateCount;
+  int? _lastRssRelevantCandidateCount;
   int? _lastLocalizedCandidateCount;
   int? _lastRankedCandidateCount;
   String? _newsError;
@@ -359,6 +360,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     if (_lastRssCandidateCount == 0) {
       return 'Источник не вернул пригодных RSS-статей. Проверь доступность RSS и повтори запрос позже.';
     }
+    if (_lastRssRelevantCandidateCount == 0 &&
+        _lastRssCandidateCount! > 0) {
+      return 'RSS-кандидаты получены, но строгий фильтр интересов не оставил подходящих статей. Проверь совпадение выбранных тем с заголовками и описаниями источников.';
+    }
     if ((_lastLocalizedCandidateCount ?? 0) == 0) {
       return 'RSS вернул материалы, но после локализации не осталось кандидатов. Проверь этап локализации.';
     }
@@ -409,7 +414,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             if (_lastNewsFailureStage != null)
               'Этап сбоя: $_lastNewsFailureStage',
             if (_lastNewsFailureType != null) 'Тип сбоя: $_lastNewsFailureType',
-            'RSS-кандидатов: ${_lastRssCandidateCount ?? 'нет данных'}',
+            'RSS-кандидатов до фильтра: ${_lastRssCandidateCount ?? 'нет данных'}',
+            'После фильтра интересов: ${_lastRssRelevantCandidateCount ?? 'нет данных'}',
             'После локализации: ${_lastLocalizedCandidateCount ?? 'нет данных'}',
             'После персонализации: ${_lastRankedCandidateCount ?? 'нет данных'}',
             'На экране: ${_articles.length}',
@@ -695,6 +701,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _lastNewsFailureType = null;
         _lastNewsRefreshAt = DateTime.now();
         _lastRssCandidateCount = null;
+        _lastRssRelevantCandidateCount = null;
         _lastLocalizedCandidateCount = null;
         _lastRankedCandidateCount = null;
         _lastRssDurationMs = null;
@@ -716,6 +723,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _lastNewsFailureType = null;
       _lastNewsRefreshAt = DateTime.now();
       _lastRssCandidateCount = null;
+      _lastRssRelevantCandidateCount = null;
       _lastLocalizedCandidateCount = null;
       _lastRankedCandidateCount = null;
       _lastRssDurationMs = null;
@@ -732,10 +740,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _lastRssDurationMs = rssWatch.elapsedMilliseconds;
       if (revisionAtStart != _interestRevision) return;
       if (mounted) {
-        setState(
-          () => _lastRssCandidateCount =
-              _newsService.lastCandidateCount ?? fetchedArticles.length,
-        );
+        setState(() {
+          _lastRssCandidateCount =
+              _newsService.lastCandidateCount ?? fetchedArticles.length;
+          _lastRssRelevantCandidateCount =
+              _newsService.lastRelevantCandidateCount ?? fetchedArticles.length;
+        });
       }
       // Prefer an existing Russian edition when a conservative match is found.
       // Foreign articles without a match remain in the feed unchanged.
@@ -842,7 +852,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       setState(() {
         _lastNewsFailureStage = failureStage;
         _lastNewsFailureType = error.runtimeType.toString();
-        if (noUsableArticles) _lastRssCandidateCount = 0;
+        if (noUsableArticles) {
+          _lastRssCandidateCount = 0;
+          _lastRssRelevantCandidateCount = 0;
+        }
         _newsDiagnosticStage = 'Ошибка: $failureStage';
         _newsError = details == null || details.isEmpty
             ? 'Не удалось загрузить новости. Проверьте соединение и попробуйте снова.'
