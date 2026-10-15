@@ -437,7 +437,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             'Ошибки перевода: ${_lastTranslationFailureCount ?? 'нет данных'}',
             'AI-движок для перевода: ${widget.aiEngine == null ? 'не подключён' : 'передан в ленту'}',
             'Иностранных статей без перевода: ${_lastForeignUntranslatedCount ?? 'нет данных'}',
-            if ((_lastForeignUntranslatedCount ?? 0) > 0 && widget.aiEngine == null)
+            if ((_lastForeignUntranslatedCount ?? 0) > 0 &&
+                widget.aiEngine == null)
               'Причина: AI-движок не подключён; иностранные оригиналы оставлены видимыми без перевода.',
             if ((_lastTranslationBudgetSkippedCount ?? 0) > 0)
               'Причина: превышен лимит переводов на одно обновление.',
