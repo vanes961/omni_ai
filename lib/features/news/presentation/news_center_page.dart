@@ -1279,7 +1279,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               Row(
                 children: [
                   const Text(
-                    'OMNI_AI',
+                    'Новости для вас',
                     style: TextStyle(
                       color: Color(0xFFE8F5F5),
                       fontSize: 23,
@@ -1295,12 +1295,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   ),
                   const SizedBox(width: 6),
                   const Text(
-                    'SYSTEM ONLINE',
+                    'Персональная лента',
                     style: TextStyle(
                       color: SystemCorePalette.green,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.8,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.1,
                     ),
                   ),
                 ],
