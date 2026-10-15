@@ -574,7 +574,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         ),
         DiagnosticCheck(
           name: 'Локальный кэш',
-          status: _loadingNewsCache ||
+          status:
+              _loadingNewsCache ||
                   _newsCacheLoadError != null ||
                   _newsCacheIsStale
               ? DiagnosticStatus.warning
