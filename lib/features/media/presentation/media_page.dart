@@ -791,13 +791,13 @@ class _TypeFilter extends StatelessWidget {
         showCheckmark: false,
         selectedColor: SystemCorePalette.green.withValues(alpha: 0.18),
         labelStyle: TextStyle(
-          color: selected ? SystemCorePalette.green : Colors.white70,
+          color: selected ? SystemCorePalette.green : SystemCorePalette.muted,
           fontSize: 11,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.zero,
           side: BorderSide(
-            color: selected ? SystemCorePalette.green : Colors.white24,
+            color: selected ? SystemCorePalette.green : SystemCorePalette.border,
           ),
         ),
       ),
@@ -891,7 +891,7 @@ class _MediaPosterCard extends StatelessWidget {
                   const SizedBox(width: 3),
                   Text(
                     item.rating.toStringAsFixed(1),
-                    style: const TextStyle(color: Colors.white70, fontSize: 10),
+                    style: const TextStyle(color: SystemCorePalette.muted, fontSize: 10),
                   ),
                 ],
               ),
@@ -978,7 +978,7 @@ class _MediaResultTile extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Colors.white70,
+                          color: SystemCorePalette.muted,
                           fontSize: 10,
                         ),
                       ),
