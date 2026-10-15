@@ -102,6 +102,51 @@ void main() {
   });
 
 
+  testWidgets('automatically loads discovery news when no interests are set', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(),
+    );
+    var requestCount = 0;
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        requestCount++;
+        expect(request.url.path, '/rss');
+        expect(request.url.queryParameters.containsKey('q'), isFalse);
+        return http.Response(
+          '<rss><channel><item>'
+          '<title>Top world story without topic keywords</title>'
+          '<link>https://publisher.example/world-top-story</link>'
+          '<description>A current international development.</description>'
+          '<pubDate>Mon, 12 Oct 2026 09:00:00 GMT</pubDate>'
+          '<source>World Desk</source>'
+          '</item></channel></rss>',
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(repository: repository, newsService: service),
+      ),
+    );
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(requestCount, 3);
+    expect(find.text('Top world story without topic keywords'), findsOneWidget);
+    expect(find.text('Не удалось загрузить новости.'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('refreshes interests saved while news cache is loading', (
     WidgetTester tester,
   ) async {
