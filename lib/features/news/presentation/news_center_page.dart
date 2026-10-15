@@ -76,6 +76,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _refreshPendingAfterCacheLoad = false;
   int? _lastRssCandidateCount;
   int? _lastRssRelevantCandidateCount;
+  List<String> _lastRssFailedEditions = const <String>[];
   int? _lastLocalizedCandidateCount;
   int? _lastRankedCandidateCount;
   String? _newsError;
@@ -413,6 +414,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             if (_lastNewsFailureStage != null)
               'Этап сбоя: $_lastNewsFailureStage',
             if (_lastNewsFailureType != null) 'Тип сбоя: $_lastNewsFailureType',
+            if (_lastRssFailedEditions.isNotEmpty)
+              'RSS-редакции с ошибкой: ${_lastRssFailedEditions.join(', ')}',
             'RSS-кандидатов до фильтра: ${_lastRssCandidateCount ?? 'нет данных'}',
             'После фильтра интересов: ${_lastRssRelevantCandidateCount ?? 'нет данных'}',
             'После локализации: ${_lastLocalizedCandidateCount ?? 'нет данных'}',
@@ -726,6 +729,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _lastNewsRefreshAt = DateTime.now();
       _lastRssCandidateCount = null;
       _lastRssRelevantCandidateCount = null;
+      _lastRssFailedEditions = const <String>[];
       _lastLocalizedCandidateCount = null;
       _lastRankedCandidateCount = null;
       _lastRssDurationMs = null;
@@ -747,6 +751,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               _newsService.lastCandidateCount ?? fetchedArticles.length;
           _lastRssRelevantCandidateCount =
               _newsService.lastRelevantCandidateCount ?? fetchedArticles.length;
+          _lastRssFailedEditions = _newsService.lastFailedEditions;
         });
       }
       // Prefer an existing Russian edition when a conservative match is found.
