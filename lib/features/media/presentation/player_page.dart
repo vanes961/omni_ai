@@ -79,6 +79,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   List<MediaSegmentMarker> _remoteSegmentMarkers = const [];
   Set<String> _likedVoiceovers = <String>{};
   String? _selectedQuality;
+  Duration? _seekingPosition;
   final Map<MediaSegmentType, Duration> _pendingSegmentStarts = {};
 
   bool get _tracksEpisodeHistory {
@@ -670,10 +671,11 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     final boundedPosition = duration > Duration.zero
         ? Duration(
             milliseconds: position.inMilliseconds
-                .clamp(0, duration.inMilliseconds),
+                .clamp(0, duration.inMilliseconds)
+                .toInt(),
           )
         : Duration(
-            milliseconds: position.inMilliseconds.clamp(0, 0x7fffffff),
+            milliseconds: position.inMilliseconds.clamp(0, 0x7fffffff).toInt(),
           );
     try {
       await player.seekTo(boundedPosition);
@@ -685,6 +687,14 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         setState(() => _playerError = error);
       }
     }
+  }
+
+  Future<void> _finishSeek(
+    MediaPlaybackController player,
+    double milliseconds,
+  ) async {
+    await _seekTo(player, Duration(milliseconds: milliseconds.round()));
+    if (mounted) setState(() => _seekingPosition = null);
   }
 
   Future<void> _seekBy(
@@ -949,6 +959,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   Widget _buildPlayerSurface() {
     final player = _player;
+    final displayedPosition = _seekingPosition ?? player?.position ?? Duration.zero;
     return AspectRatio(
       aspectRatio: player?.aspectRatio ?? 16 / 9,
       child: DecoratedBox(
@@ -1070,7 +1081,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                         max: player.duration.inMilliseconds > 0
                             ? player.duration.inMilliseconds.toDouble()
                             : 1,
-                        value: player.position.inMilliseconds
+                        value: displayedPosition.inMilliseconds
                             .clamp(
                               0,
                               player.duration.inMilliseconds > 0
@@ -1082,21 +1093,19 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                         inactiveColor: Colors.white24,
                         onChanged: player.duration > Duration.zero
                             ? (value) => setState(() {
-                                // Keep the thumb responsive while dragging;
-                                // commit the actual seek when the drag ends.
+                                _seekingPosition = Duration(
+                                  milliseconds: value.round(),
+                                );
                               })
                             : null,
                         onChangeEnd: player.duration > Duration.zero
-                            ? (value) => _seekTo(
-                                player,
-                                Duration(milliseconds: value.round()),
-                              )
+                            ? (value) => _finishSeek(player, value)
                             : null,
                       ),
                       Row(
                         children: [
                           Text(
-                            _formatPosition(player.position),
+                            _formatPosition(displayedPosition),
                             style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 10,
