@@ -136,8 +136,9 @@ class _MediaPageState extends State<MediaPage> {
     final results = _rankByFavoriteInterests(
       _searchService.search(_query, type: _selectedType),
     );
-    final isFiltering =
-        _query.isNotEmpty || _selectedType != null || _selectedGenre != null;
+    // Selecting a media type is a browse filter, not a text search.
+    // Keep the trending carousel visible and let the service return that type.
+    final isFiltering = _query.isNotEmpty || _selectedGenre != null;
 
     return Material(
       color: Colors.transparent,
