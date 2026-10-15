@@ -209,10 +209,13 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
 
   Future<void> _download() async {
     if (_installing) return;
+    final wasInstalled = _installed;
     setState(() {
       _installing = true;
       _error = null;
-      _status = 'Установка встроенной модели из APK… Интернет не нужен.';
+      _status = wasInstalled
+          ? 'Проверяем целостность модели; при повреждении восстановим её из APK…'
+          : 'Установка встроенной модели из APK… Интернет не нужен.';
     });
     try {
       await widget.storage.installBundled(_model);
@@ -220,7 +223,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
       setState(() {
         _installed = true;
         _status =
-            'Встроенная модель скопирована и проверена. Интернет не нужен.';
+            'Модель проверена. Если файл был повреждён, он восстановлен из APK.';
       });
     } on Object catch (error) {
       if (!mounted) return;
@@ -574,9 +577,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                 width: double.infinity,
                 child: FilledButton.icon(
                   key: const ValueKey('local-model-download-button'),
-                  onPressed: _checking || _installing || _installed
-                      ? null
-                      : _download,
+                  onPressed: _checking || _installing ? null : _download,
                   icon: _installing
                       ? const SizedBox.square(
                           dimension: 16,
@@ -584,7 +585,11 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                         )
                       : const Icon(Icons.download),
                   label: Text(
-                    _installing ? 'УСТАНОВКА…' : 'УСТАНОВИТЬ МОДЕЛЬ ИЗ APK',
+                    _installing
+                        ? 'ПРОВЕРКА / УСТАНОВКА…'
+                        : _installed
+                        ? 'ПРОВЕРИТЬ / ВОССТАНОВИТЬ МОДЕЛЬ'
+                        : 'УСТАНОВИТЬ МОДЕЛЬ ИЗ APK',
                   ),
                 ),
               ),
