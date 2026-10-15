@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -5,6 +6,22 @@ import 'package:http/http.dart' as http;
 import 'package:omni_ai/features/news/models/news_article.dart';
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/services/news_relevance_filter.dart';
+
+/// The failure class identifies the stage that prevented an RSS request from
+/// producing usable data, without retaining response bodies or credentials.
+enum NewsRssFailureKind { timeout, network, httpStatus, emptyResponse, malformedRss }
+
+class NewsRssException extends http.ClientException {
+  NewsRssException({
+    required this.kind,
+    required String message,
+    this.statusCode,
+    Uri? uri,
+  }) : super(message, uri);
+
+  final NewsRssFailureKind kind;
+  final int? statusCode;
+}
 
 /// Reads public Google News RSS search results. No API key is embedded in the
 /// application. RSS excerpts are displayed with source attribution; full
@@ -131,7 +148,9 @@ class NewsRssService {
           // One unavailable edition should not block the remaining sources.
           // Keep only locale and error type so diagnostics remain useful
           // without exposing response bodies or arbitrary network payloads.
-          failedEditions.add('${locale[0]}-${locale[1]}: ${error.runtimeType}');
+          failedEditions.add(
+            '${locale[0]}-${locale[1]}: ${_failureSummary(error)}',
+          );
           return const <NewsArticle>[];
         }
       }),
@@ -247,17 +266,54 @@ class NewsRssService {
           'gl': region,
           'ceid': '$region:$language',
         });
-    final response = await _client
-        .get(uri, headers: const {'User-Agent': 'OMNI-AI-News/1.0'})
-        .timeout(const Duration(seconds: 20));
+    late final http.Response response;
+    try {
+      response = await _client
+          .get(uri, headers: const {'User-Agent': 'OMNI-AI-News/1.0'})
+          .timeout(const Duration(seconds: 20));
+    } on TimeoutException {
+      throw NewsRssException(
+        kind: NewsRssFailureKind.timeout,
+        message: 'News source request timed out after 20 seconds.',
+        uri: uri,
+      );
+    } on SocketException {
+      throw NewsRssException(
+        kind: NewsRssFailureKind.network,
+        message: 'News source network connection failed.',
+        uri: uri,
+      );
+    } on http.ClientException catch (error) {
+      throw NewsRssException(
+        kind: NewsRssFailureKind.network,
+        message: 'News source request failed: ${error.runtimeType}.',
+        uri: uri,
+      );
+    }
     if (response.statusCode != 200) {
-      throw http.ClientException(
-        'News source returned HTTP ${response.statusCode}.',
-        uri,
+      throw NewsRssException(
+        kind: NewsRssFailureKind.httpStatus,
+        statusCode: response.statusCode,
+        message: 'News source returned HTTP ${response.statusCode}.',
+        uri: uri,
       );
     }
 
-    final xml = utf8.decode(response.bodyBytes, allowMalformed: true);
+    final xml = utf8.decode(response.bodyBytes, allowMalformed: true).trim();
+    if (xml.isEmpty) {
+      throw NewsRssException(
+        kind: NewsRssFailureKind.emptyResponse,
+        message: 'News source returned an empty response body.',
+        uri: uri,
+      );
+    }
+    if (!RegExp(r'<(?:rss|feed)\\b', caseSensitive: false).hasMatch(xml)) {
+      throw NewsRssException(
+        kind: NewsRssFailureKind.malformedRss,
+        message: 'News source response is not recognizable RSS or Atom XML.',
+        uri: uri,
+      );
+    }
     final articles = _parseItems(
       xml,
       language,
@@ -543,6 +599,16 @@ class NewsRssService {
         return String.fromCharCode(codePoint);
       },
     );
+  }
+
+  static String _failureSummary(Object error) {
+    if (error is NewsRssException) {
+      final code = error.statusCode == null ? '' : ' HTTP ${error.statusCode}';
+      return 'ClientException/${error.kind.name}$code';
+    }
+    if (error is TimeoutException) return 'TimeoutException/timeout';
+    if (error is SocketException) return 'SocketException/network';
+    return error.runtimeType.toString();
   }
 
   void dispose() => _client.close();
