@@ -25,6 +25,8 @@ void main() {
       _article(1),
     ]);
 
+    expect(prompt, contains('Какие последние новости?\n\n[Контекст персональной новостной ленты'));
+    expect(prompt, isNot(contains(r'\n')));
     expect(prompt, contains('Контекст персональной новостной ленты'));
     expect(prompt, contains('Тестовый источник 1'));
     expect(prompt, contains('https://example.com/news/1'));
