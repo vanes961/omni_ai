@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,7 +19,6 @@ void main() {
     tester,
   ) async {
     final dependencies = AppDependencies();
-    addTearDown(dependencies.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -47,11 +48,11 @@ void main() {
 
     expect(find.text('OMNI AI · помощник'), findsNothing);
     expect(find.text('Текущий экран'), findsOneWidget);
+    await _disposeDependencies(tester, dependencies);
   });
 
   testWidgets('can hide and restore the floating companion', (tester) async {
     final dependencies = AppDependencies();
-    addTearDown(dependencies.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -80,13 +81,13 @@ void main() {
     expect(find.byTooltip('Показать AI-компаньона'), findsNothing);
     expect(find.byIcon(Icons.smart_toy_rounded), findsOneWidget);
     expect(find.text('Текущий экран'), findsOneWidget);
+    await _disposeDependencies(tester, dependencies);
   });
 
   testWidgets('can drag the companion without removing the current screen', (
     tester,
   ) async {
     final dependencies = AppDependencies();
-    addTearDown(dependencies.dispose);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -111,5 +112,22 @@ void main() {
     expect(after.dy, lessThan(before.dy));
     expect(find.text('Текущий экран'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    await _disposeDependencies(tester, dependencies);
   });
+}
+
+Future<void> _disposeDependencies(
+  WidgetTester tester,
+  AppDependencies dependencies,
+) async {
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump();
+  await tester.runAsync(
+    () => dependencies.dispose().timeout(
+      const Duration(seconds: 5),
+      onTimeout: () => throw TimeoutException(
+        'Floating companion dependencies disposal timed out.',
+      ),
+    ),
+  );
 }
