@@ -114,7 +114,8 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                     );
                   }),
                   child: Tooltip(
-                    message: 'Перетащите помощника или нажмите, чтобы открыть чат',
+                    message:
+                        'Перетащите помощника или нажмите, чтобы открыть чат',
                     child: Material(
                       color: SystemCorePalette.panelElevated,
                       elevation: 10,
@@ -129,36 +130,36 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                         ),
                       ),
                       child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () => setState(() => _open = true),
-                      child: SizedBox(
-                        width: 54,
-                        height: 54,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            const Icon(
-                              Icons.smart_toy_rounded,
-                              size: 29,
-                              color: SystemCorePalette.green,
-                            ),
-                            Positioned(
-                              right: 7,
-                              bottom: 7,
-                              child: Container(
-                                width: 7,
-                                height: 7,
-                                decoration: const BoxDecoration(
-                                  color: SystemCorePalette.mint,
-                                  shape: BoxShape.circle,
+                        customBorder: const CircleBorder(),
+                        onTap: () => setState(() => _open = true),
+                        child: SizedBox(
+                          width: 54,
+                          height: 54,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              const Icon(
+                                Icons.smart_toy_rounded,
+                                size: 29,
+                                color: SystemCorePalette.green,
+                              ),
+                              Positioned(
+                                right: 7,
+                                bottom: 7,
+                                child: Container(
+                                  width: 7,
+                                  height: 7,
+                                  decoration: const BoxDecoration(
+                                    color: SystemCorePalette.mint,
+                                    shape: BoxShape.circle,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   ),
                 ),
               ),
