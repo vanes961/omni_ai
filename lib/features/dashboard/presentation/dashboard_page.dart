@@ -223,7 +223,8 @@ class _DashboardPageState extends State<DashboardPage> {
       DiagnosticCheck(
         name: 'Основная панель',
         status: DiagnosticStatus.ok,
-        details: 'Загружены разделы: Лента, Медиа, Избранное, Настройки; AI доступен через плавающего помощника',
+        details:
+            'Загружены разделы: Лента, Медиа, Избранное, Настройки; AI доступен через плавающего помощника',
       ),
       DiagnosticCheck(
         name: 'Профиль приложения',
