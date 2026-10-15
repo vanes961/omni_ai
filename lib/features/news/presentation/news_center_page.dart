@@ -707,6 +707,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     }
     final revisionAtStart = _interestRevision;
     var failureStage = 'Получение RSS-кандидатов';
+    Stopwatch? rssWatch;
     setState(() {
       _refreshingNews = true;
       _newsError = null;
@@ -725,7 +726,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     try {
       // Search Russian and English editions, while keeping Russian as the
       // app's output language. Feed locale is not the article's geography.
-      final rssWatch = Stopwatch()..start();
+      rssWatch = Stopwatch()..start();
       final fetchedArticles = await _newsService.fetchInternational(profile);
       rssWatch.stop();
       _lastRssDurationMs = rssWatch.elapsedMilliseconds;
@@ -826,10 +827,19 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // A failed request for an old topic selection must not surface an error
       // in the newly selected feed.
       if (!mounted || revisionAtStart != _interestRevision) return;
+      if (rssWatch != null) {
+        if (rssWatch.isRunning) rssWatch.stop();
+        _lastRssDurationMs = rssWatch.elapsedMilliseconds;
+      }
       final details = error is http.ClientException ? error.message : null;
+      final noUsableArticles =
+          failureStage == 'Получение RSS-кандидатов' &&
+          details != null &&
+          details.toLowerCase().contains('no usable articles');
       setState(() {
         _lastNewsFailureStage = failureStage;
         _lastNewsFailureType = error.runtimeType.toString();
+        if (noUsableArticles) _lastRssCandidateCount = 0;
         _newsDiagnosticStage = 'Ошибка: $failureStage';
         _newsError = details == null || details.isEmpty
             ? 'Не удалось загрузить новости. Проверьте соединение и попробуйте снова.'
