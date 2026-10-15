@@ -818,6 +818,54 @@ void main() {
     },
   );
 
+  test(
+    'keeps discovery stories when critical news is enabled without topics',
+    () async {
+      var requests = 0;
+      final service = NewsRssService(
+        client: MockClient((request) async {
+          requests++;
+          if (request.url.path == '/rss') {
+            return http.Response('''<rss><channel><item>
+              <title>General discovery headline</title>
+              <link>https://publisher.example/discovery-headline</link>
+              <description>A general current-affairs update.</description>
+              <pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+              <source>World News</source>
+            </item></channel></rss>''', 200);
+          }
+          expect(request.url.path, '/rss/search');
+          expect(request.url.queryParameters['q'], contains('"tsunami warning"'));
+          return http.Response('''<rss><channel><item>
+            <title>Tsunami warning issued for coastal areas</title>
+            <link>https://publisher.example/tsunami-warning</link>
+            <description>Authorities issue a tsunami warning.</description>
+            <pubDate>Wed, 14 Oct 2026 13:00:00 GMT</pubDate>
+            <source>Public Safety News</source>
+          </item></channel></rss>''', 200);
+        }),
+      );
+      addTearDown(service.dispose);
+
+      final articles = await service.fetchInternational(
+        const NewsInterestProfile(includeCriticalOutsideInterests: true),
+      );
+
+      expect(requests, 6);
+      expect(
+        articles.map((article) => article.title),
+        containsAll(<String>[
+          'General discovery headline',
+          'Tsunami warning issued for coastal areas',
+        ]),
+      );
+      expect(
+        articles.singleWhere((article) => article.isCritical).title,
+        'Tsunami warning issued for coastal areas',
+      );
+    },
+  );
+
   test('surfaces source errors instead of inventing news', () async {
     final service = NewsRssService(
       client: MockClient((_) async => http.Response('unavailable', 503)),
