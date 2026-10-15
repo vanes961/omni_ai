@@ -122,14 +122,21 @@ class _AIChatPageState extends State<AIChatPage> {
         }
         // Apply the same cross-language duplicate detection and bounded
         // translation used by the news feed before giving RSS excerpts to chat.
-        // Include cached Russian articles as matching candidates so a fresh
-        // foreign-language duplicate does not outrank an existing translation.
+        // Only cached Russian articles are duplicate-matching candidates:
+        // treating every cached foreign-language story as a Russian equivalent
+        // can suppress a distinct fresh story with a similar title.
+        final cachedRussianArticles = cachedArticles
+            .where((article) => article.language.toLowerCase() == 'ru')
+            .toList(growable: false);
         final localizedCandidates = await NewsSourceLocalizationService(
           aiEngine: widget.dependencies.ai.engine,
-        ).localizeCandidates([...freshArticles, ...cachedArticles]);
+        ).localizeCandidates([...freshArticles, ...cachedRussianArticles]);
+        final cachedNonRussianArticles = cachedArticles
+            .where((article) => article.language.toLowerCase() != 'ru')
+            .toList(growable: false);
         final articles = _newsContextBuilder.mergeArticles(
           fresh: localizedCandidates,
-          cached: const <NewsArticle>[],
+          cached: cachedNonRussianArticles,
         );
         requestPrompt = _newsContextBuilder.buildPrompt(
           prompt,
