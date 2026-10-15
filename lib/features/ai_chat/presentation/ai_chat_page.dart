@@ -12,6 +12,7 @@ import 'package:omni_ai/features/news/data/news_interest_repository.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_cache.dart';
 import 'package:omni_ai/features/news/data/shared_preferences_news_interest_repository.dart';
 import 'package:omni_ai/features/news/services/news_chat_context_builder.dart';
+import 'package:omni_ai/features/news/services/news_source_localization_service.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
@@ -119,9 +120,16 @@ class _AIChatPageState extends State<AIChatPage> {
         } on Object {
           // A network/source failure falls back to the cached personalized feed.
         }
+        // Apply the same cross-language duplicate detection and bounded
+        // translation used by the news feed before giving RSS excerpts to chat.
+        // Include cached Russian articles as matching candidates so a fresh
+        // foreign-language duplicate does not outrank an existing translation.
+        final localizedCandidates = await NewsSourceLocalizationService(
+          aiEngine: widget.dependencies.ai.engine,
+        ).localizeCandidates([...freshArticles, ...cachedArticles]);
         final articles = _newsContextBuilder.mergeArticles(
-          fresh: freshArticles,
-          cached: cachedArticles,
+          fresh: localizedCandidates,
+          cached: const <NewsArticle>[],
         );
         requestPrompt = _newsContextBuilder.buildPrompt(
           prompt,
