@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -269,6 +270,76 @@ void main() {
       );
     },
   );
+
+  test('classifies non-200 RSS responses with their HTTP status', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response('unavailable', 503)),
+    );
+    addTearDown(service.dispose);
+
+    expect(
+      service.fetch(const NewsInterestProfile(topics: ['anime'])),
+      throwsA(
+        isA<NewsRssException>()
+            .having((error) => error.kind, 'kind', NewsRssFailureKind.httpStatus)
+            .having((error) => error.statusCode, 'statusCode', 503),
+      ),
+    );
+  });
+
+  test('classifies an empty RSS response body', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response('', 200)),
+    );
+    addTearDown(service.dispose);
+
+    expect(
+      service.fetch(const NewsInterestProfile(topics: ['anime'])),
+      throwsA(
+        isA<NewsRssException>().having(
+          (error) => error.kind,
+          'kind',
+          NewsRssFailureKind.emptyResponse,
+        ),
+      ),
+    );
+  });
+
+  test('classifies non-RSS responses as malformed feeds', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response('<html>blocked</html>', 200)),
+    );
+    addTearDown(service.dispose);
+
+    expect(
+      service.fetch(const NewsInterestProfile(topics: ['anime'])),
+      throwsA(
+        isA<NewsRssException>().having(
+          (error) => error.kind,
+          'kind',
+          NewsRssFailureKind.malformedRss,
+        ),
+      ),
+    );
+  });
+
+  test('classifies request timeouts separately from network failures', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => throw TimeoutException('test timeout')),
+    );
+    addTearDown(service.dispose);
+
+    expect(
+      service.fetch(const NewsInterestProfile(topics: ['anime'])),
+      throwsA(
+        isA<NewsRssException>().having(
+          (error) => error.kind,
+          'kind',
+          NewsRssFailureKind.timeout,
+        ),
+      ),
+    );
+  });
 
   test('reports an error when all international news editions fail', () async {
     final service = NewsRssService(
