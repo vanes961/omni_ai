@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/core/diagnostics/diagnostic_report.dart';
 import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
@@ -388,7 +389,7 @@ class _DashboardPageState extends State<DashboardPage> {
           FilledButton.icon(
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: reportText));
-              if (dialogContext.mounted) {
+              if (mounted && dialogContext.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Отчёт скопирован')),
                 );
