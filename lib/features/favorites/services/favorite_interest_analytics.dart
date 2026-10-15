@@ -120,7 +120,11 @@ class FavoriteInterestAnalytics {
     Set<String> lessInterested = const <String>{},
     Map<String, double> reactionWeights = const <String, double>{},
   }) {
-    if (profile.totalFavorites == 0 && lessInterested.isEmpty) return 0;
+    if (profile.totalFavorites == 0 &&
+        lessInterested.isEmpty &&
+        reactionWeights.isEmpty) {
+      return 0;
+    }
     final candidateTerms = <String>{
       ..._normalizeAll(article.topics),
       ..._tokens(article.title),
