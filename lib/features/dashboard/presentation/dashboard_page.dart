@@ -123,13 +123,12 @@ class _DashboardPageState extends State<DashboardPage> {
           color: SystemCorePalette.panel,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: SystemCorePalette.green.withValues(alpha: 0.28),
+            color: SystemCorePalette.border,
           ),
           boxShadow: [
             BoxShadow(
-              color: SystemCorePalette.green.withValues(alpha: 0.06),
-              blurRadius: 24,
-              spreadRadius: 1,
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 18,
             ),
           ],
         ),
@@ -530,13 +529,12 @@ class _GuardHeader extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: SystemCorePalette.green.withValues(alpha: 0.30),
+          color: SystemCorePalette.border,
         ),
         boxShadow: [
           BoxShadow(
-            color: SystemCorePalette.green.withValues(alpha: 0.06),
-            blurRadius: 24,
-            spreadRadius: 1,
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 18,
           ),
         ],
       ),
@@ -548,15 +546,15 @@ class _GuardHeader extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: SystemCorePalette.green.withValues(alpha: 0.08),
+                color: SystemCorePalette.green.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: SystemCorePalette.green.withValues(alpha: 0.65),
+                  color: SystemCorePalette.green.withValues(alpha: 0.38),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: SystemCorePalette.green.withValues(alpha: 0.10),
-                    blurRadius: 16,
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 8,
                   ),
                 ],
               ),
@@ -582,7 +580,7 @@ class _GuardHeader extends StatelessWidget {
                   ),
                   SizedBox(height: 3),
                   Text(
-                    'PERSONAL AI SYSTEM',
+                    'Ваш личный помощник',
                     style: TextStyle(
                       color: SystemCorePalette.green,
                       fontSize: 9,
