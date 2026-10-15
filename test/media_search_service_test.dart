@@ -57,6 +57,56 @@ void main() {
     expect(items.last.title, 'Real Series');
   });
 
+  test('fetches recommendations using saved favorite genres', () async {
+    final requestedPaths = <String>[];
+    final service = MediaSearchService(
+      accessToken: 'test-token',
+      client: MockClient((request) async {
+        requestedPaths.add(request.url.path);
+        expect(request.url.queryParameters['with_genres'], '28');
+        if (request.url.path.endsWith('/movie')) {
+          return http.Response(
+            '{"results":[{"id":21,"title":"Action Film",'
+            '"media_type":"movie","genre_ids":[28],"vote_average":8.1}]}',
+            200,
+          );
+        }
+        return http.Response(
+          '{"results":[{"id":22,"name":"Action Series",'
+          '"original_language":"en","origin_country":["US"],'
+          '"genre_ids":[28],"vote_average":7.9}]}',
+          200,
+        );
+      }),
+    );
+
+    final items = await service.fetchRecommendationsOnline(
+      interests: const ['Боевик'],
+    );
+
+    expect(requestedPaths, containsAll(['/3/discover/movie', '/3/discover/tv']));
+    expect(items.map((item) => item.title), containsAll(['Action Film', 'Action Series']));
+  });
+
+  test('does not query TMDB for interests without known genre metadata', () async {
+    var requested = false;
+    final service = MediaSearchService(
+      accessToken: 'test-token',
+      client: MockClient((request) async {
+        requested = true;
+        return http.Response('{"results":[]}', 200);
+      }),
+    );
+
+    expect(
+      await service.fetchRecommendationsOnline(
+        interests: const ['unknown custom interest'],
+      ),
+      isEmpty,
+    );
+    expect(requested, isFalse);
+  });
+
   test('filters online trending to the requested media type', () async {
     final service = MediaSearchService(
       accessToken: 'test-token',
