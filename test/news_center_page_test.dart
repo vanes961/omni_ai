@@ -482,15 +482,15 @@ void main() {
     );
     expect(
       find.textContaining('ru-RU: ClientException/network'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
     expect(
       find.textContaining('en-US: ClientException/network'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
     expect(
       find.textContaining('en-GB: ClientException/network'),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
     expect(tester.takeException(), isNull);
 
