@@ -400,7 +400,7 @@ class _MediaPageState extends State<MediaPage> {
                 _TypeFilter(
                   label: 'Все',
                   selected: _selectedType == null,
-                  onTap: () => setState(() => _selectedType = null),
+                  onTap: () => _selectMediaType(null),
                 ),
                 for (final type in _types)
                   _TypeFilter(
