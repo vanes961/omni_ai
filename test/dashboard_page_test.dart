@@ -32,7 +32,8 @@ void main() {
     expect(find.text('Ваш личный помощник'), findsOneWidget);
     expect(find.byTooltip('Проверить приложение'), findsOneWidget);
     expect(find.text('Лента'), findsOneWidget);
-    expect(find.text('AI'), findsOneWidget);
+    expect(find.text('AI'), findsNothing);
+    expect(find.byIcon(Icons.smart_toy_rounded), findsOneWidget);
     expect(find.text('Медиа'), findsOneWidget);
     expect(find.text('Избранное'), findsOneWidget);
     expect(find.text('Семья & Здоровье'), findsNothing);
