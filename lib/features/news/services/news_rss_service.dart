@@ -44,6 +44,9 @@ class NewsRssService {
   /// Null means an international fetch has not completed its parsing stage.
   int? lastCandidateCount;
 
+  /// Number of candidates remaining after strict topic relevance filtering.
+  int? lastRelevantCandidateCount;
+
   static const _topicKeywords = <String, List<String>>{
     'games': ['game', 'gaming', 'video game', 'игр', 'гейминг'],
     'anime': ['anime', 'аниме'],
@@ -132,9 +135,11 @@ class NewsRssService {
     NewsInterestProfile profile,
   ) async {
     lastCandidateCount = null;
+    lastRelevantCandidateCount = null;
     if (profile.topics.every((topic) => topic.trim().isEmpty) &&
         !profile.includeCriticalOutsideInterests) {
       lastCandidateCount = 0;
+      lastRelevantCandidateCount = 0;
       return const <NewsArticle>[];
     }
     const locales = <List<String>>[
@@ -178,6 +183,7 @@ class NewsRssService {
     // whether the likely cause is a partial outage or empty source responses.
     if (batches.every((batch) => batch.isEmpty)) {
       lastCandidateCount = 0;
+      lastRelevantCandidateCount = 0;
       if (failedEditions.isNotEmpty) {
         throw http.ClientException(
           'No articles were returned and some international news editions '
@@ -223,12 +229,16 @@ class NewsRssService {
     );
     if (unrestrictedProfile.topics.isEmpty &&
         !unrestrictedProfile.includeCriticalOutsideInterests) {
-      return List<NewsArticle>.unmodifiable(
+      final articles = List<NewsArticle>.unmodifiable(
         byTitle.values.toList()
           ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt)),
       );
+      lastRelevantCandidateCount = articles.length;
+      return articles;
     }
-    return _filter.filter(byTitle.values, unrestrictedProfile);
+    final relevant = _filter.filter(byTitle.values, unrestrictedProfile);
+    lastRelevantCandidateCount = relevant.length;
+    return relevant;
   }
 
   Future<List<NewsArticle>> fetch(
