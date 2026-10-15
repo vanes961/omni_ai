@@ -416,7 +416,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                         _articles.isEmpty ||
                         _lastRssFailedEditions.isNotEmpty ||
                         ((_lastTranslationFailureCount ?? 0) > 0 ||
-                        (_lastForeignUntranslatedCount ?? 0) > 0)
+                            (_lastForeignUntranslatedCount ?? 0) > 0)
                     ? DiagnosticStatus.warning
                     : DiagnosticStatus.ok),
           details: [
