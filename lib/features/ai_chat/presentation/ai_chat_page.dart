@@ -389,14 +389,20 @@ class _AIChatPageState extends State<AIChatPage> {
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(18),
                             topRight: const Radius.circular(18),
-                            bottomLeft: Radius.circular(message.isUser ? 18 : 5),
-                            bottomRight: Radius.circular(message.isUser ? 5 : 18),
+                            bottomLeft: Radius.circular(
+                              message.isUser ? 18 : 5,
+                            ),
+                            bottomRight: Radius.circular(
+                              message.isUser ? 5 : 18,
+                            ),
                           ),
                           border: Border.all(
                             color: message.isError
                                 ? Colors.orangeAccent.withValues(alpha: 0.55)
                                 : message.isUser
-                                ? SystemCorePalette.green.withValues(alpha: 0.32)
+                                ? SystemCorePalette.green.withValues(
+                                    alpha: 0.32,
+                                  )
                                 : SystemCorePalette.border.withValues(
                                     alpha: 0.42,
                                   ),
