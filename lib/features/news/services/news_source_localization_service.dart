@@ -77,8 +77,13 @@ class NewsSourceLocalizationService {
           translatedCount++;
         } else {
           translationFailureCount++;
-          final reason = translation.failureReason ?? NewsTranslationFailureReason.unknown;
-          failureReasonCounts.update(reason, (count) => count + 1, ifAbsent: () => 1);
+          final reason =
+              translation.failureReason ?? NewsTranslationFailureReason.unknown;
+          failureReasonCounts.update(
+            reason,
+            (count) => count + 1,
+            ifAbsent: () => 1,
+          );
           foreignUntranslatedCount++;
         }
       } else {
@@ -98,7 +103,9 @@ class NewsSourceLocalizationService {
       duplicateSuppressedCount: duplicateSuppressedCount,
       budgetSkippedCount: budgetSkippedCount,
       translationFailureCount: translationFailureCount,
-      failureReasonCounts: Map<NewsTranslationFailureReason, int>.unmodifiable(failureReasonCounts),
+      failureReasonCounts: Map<NewsTranslationFailureReason, int>.unmodifiable(
+        failureReasonCounts,
+      ),
       foreignUntranslatedCount: foreignUntranslatedCount,
     );
   }
@@ -134,12 +141,20 @@ class NewsSourceLocalizationService {
           );
       final decoded = jsonDecode(response.text);
       if (decoded is! Map<String, dynamic>) {
-        return _TranslationAttempt(article, false, NewsTranslationFailureReason.invalidOutput);
+        return _TranslationAttempt(
+          article,
+          false,
+          NewsTranslationFailureReason.invalidOutput,
+        );
       }
       final title = decoded['title'];
       final summary = decoded['summary'];
       if (title is! String || title.trim().isEmpty || summary is! String) {
-        return _TranslationAttempt(article, false, NewsTranslationFailureReason.invalidOutput);
+        return _TranslationAttempt(
+          article,
+          false,
+          NewsTranslationFailureReason.invalidOutput,
+        );
       }
       return _TranslationAttempt(
         NewsArticle(
@@ -170,25 +185,31 @@ class NewsSourceLocalizationService {
         NewsTranslationFailureReason.malformedResponse,
       );
     } on TimeoutException {
-      return _TranslationAttempt(article, false, NewsTranslationFailureReason.timeout);
-    } on AIEngineException catch (error) {
       return _TranslationAttempt(
         article,
         false,
-        switch (error.error.code) {
-          AIErrorCode.configuration => NewsTranslationFailureReason.configuration,
-          AIErrorCode.unauthorized => NewsTranslationFailureReason.unauthorized,
-          AIErrorCode.rateLimited => NewsTranslationFailureReason.rateLimited,
-          AIErrorCode.providerUnavailable => NewsTranslationFailureReason.providerUnavailable,
-          AIErrorCode.timeout => NewsTranslationFailureReason.timeout,
-          AIErrorCode.malformedResponse => NewsTranslationFailureReason.malformedResponse,
-          AIErrorCode.cancelled => NewsTranslationFailureReason.cancelled,
-          _ => NewsTranslationFailureReason.provider,
-        },
+        NewsTranslationFailureReason.timeout,
       );
+    } on AIEngineException catch (error) {
+      return _TranslationAttempt(article, false, switch (error.error.code) {
+        AIErrorCode.configuration => NewsTranslationFailureReason.configuration,
+        AIErrorCode.unauthorized => NewsTranslationFailureReason.unauthorized,
+        AIErrorCode.rateLimited => NewsTranslationFailureReason.rateLimited,
+        AIErrorCode.providerUnavailable =>
+          NewsTranslationFailureReason.providerUnavailable,
+        AIErrorCode.timeout => NewsTranslationFailureReason.timeout,
+        AIErrorCode.malformedResponse =>
+          NewsTranslationFailureReason.malformedResponse,
+        AIErrorCode.cancelled => NewsTranslationFailureReason.cancelled,
+        _ => NewsTranslationFailureReason.provider,
+      });
     } catch (_) {
       // Keep the original source card visible if translation fails.
-      return _TranslationAttempt(article, false, NewsTranslationFailureReason.unknown);
+      return _TranslationAttempt(
+        article,
+        false,
+        NewsTranslationFailureReason.unknown,
+      );
     }
   }
 }
@@ -227,7 +248,11 @@ class NewsLocalizationResult {
 }
 
 class _TranslationAttempt {
-  const _TranslationAttempt(this.article, this.translated, [this.failureReason]);
+  const _TranslationAttempt(
+    this.article,
+    this.translated, [
+    this.failureReason,
+  ]);
 
   final NewsArticle article;
   final bool translated;
