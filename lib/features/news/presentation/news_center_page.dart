@@ -84,7 +84,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   int? _lastDuplicateSuppressedCount;
   int? _lastTranslationBudgetSkippedCount;
   int? _lastTranslationFailureCount;
-  Map<NewsTranslationFailureReason, int> _lastTranslationFailureReasons = const {};
+  Map<NewsTranslationFailureReason, int> _lastTranslationFailureReasons =
+      const {};
   int? _lastForeignUntranslatedCount;
   int? _lastRankedCandidateCount;
   String? _newsError;
@@ -396,10 +397,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       NewsTranslationFailureReason.configuration: 'не настроен ключ/аккаунт',
       NewsTranslationFailureReason.unauthorized: 'ошибка авторизации',
       NewsTranslationFailureReason.rateLimited: 'лимит или квота',
-      NewsTranslationFailureReason.providerUnavailable: 'сеть/провайдер недоступны',
+      NewsTranslationFailureReason.providerUnavailable:
+          'сеть/провайдер недоступны',
       NewsTranslationFailureReason.timeout: 'тайм-аут',
       NewsTranslationFailureReason.malformedResponse: 'неверный формат ответа',
-      NewsTranslationFailureReason.invalidOutput: 'пустой или некорректный перевод',
+      NewsTranslationFailureReason.invalidOutput:
+          'пустой или некорректный перевод',
       NewsTranslationFailureReason.cancelled: 'запрос отменён',
       NewsTranslationFailureReason.provider: 'ошибка провайдера',
       NewsTranslationFailureReason.unknown: 'неизвестная причина',
@@ -902,7 +905,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               localizationReport.budgetSkippedCount;
           _lastTranslationFailureCount =
               localizationReport.translationFailureCount;
-          _lastTranslationFailureReasons = localizationReport.failureReasonCounts;
+          _lastTranslationFailureReasons =
+              localizationReport.failureReasonCounts;
           _lastForeignUntranslatedCount =
               localizationReport.foreignUntranslatedCount;
         });
