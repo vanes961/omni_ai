@@ -140,12 +140,6 @@ class NewsRssService {
     lastCandidateCount = null;
     lastRelevantCandidateCount = null;
     lastFailedEditions = const <String>[];
-    if (profile.topics.every((topic) => topic.trim().isEmpty) &&
-        !profile.includeCriticalOutsideInterests) {
-      lastCandidateCount = 0;
-      lastRelevantCandidateCount = 0;
-      return const <NewsArticle>[];
-    }
     const locales = <List<String>>[
       ['ru', 'RU'],
       ['en', 'US'],
@@ -250,12 +244,9 @@ class NewsRssService {
     NewsInterestProfile profile, {
     bool applyRelevanceFilter = true,
   }) async {
-    if (profile.topics.every((topic) => topic.trim().isEmpty) &&
-        !profile.includeCriticalOutsideInterests) {
-      return const <NewsArticle>[];
-    }
     final isDiscoveryFeed =
-        profile.topics.isEmpty && !profile.includeCriticalOutsideInterests;
+        profile.topics.every((topic) => topic.trim().isEmpty) &&
+        !profile.includeCriticalOutsideInterests;
     final language = profile.languages
         .map((value) => value.trim().toLowerCase())
         .firstWhere((value) => value.isNotEmpty, orElse: () => 'ru');
