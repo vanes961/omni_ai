@@ -266,6 +266,10 @@ void main() {
       'omni_ai.news_cache.critical_setting.v1',
       'false',
     );
+    await preferences.setString(
+      'omni_ai.news_cache.saved_at.v1',
+      DateTime.now().toUtc().toIso8601String(),
+    );
     final repository = _MemoryNewsInterestRepository(
       const NewsInterestProfile(topics: ['anime']),
     );
