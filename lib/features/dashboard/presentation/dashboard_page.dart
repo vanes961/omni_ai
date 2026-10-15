@@ -364,6 +364,27 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
+    checks.addAll(const [
+      DiagnosticCheck(
+        name: 'Реальный ответ AI',
+        status: DiagnosticStatus.notChecked,
+        details:
+            'Базовая проверка не отправляет запрос модели. Проверьте короткий запрос во вкладке AI или используйте тест облака в настройках.',
+      ),
+      DiagnosticCheck(
+        name: 'Воспроизведение медиа',
+        status: DiagnosticStatus.notChecked,
+        details:
+            'Нужно открыть реальный источник и проверить запуск, перемотку и полноэкранный режим; тестовые ссылки автоматически не запускаются.',
+      ),
+      DiagnosticCheck(
+        name: 'Персональная новостная лента',
+        status: DiagnosticStatus.notChecked,
+        details:
+            'Для счётчиков RSS, локализации, персонализации и отображаемых статей откройте вкладку «Лента» и сформируйте подробный диагностический отчёт.',
+      ),
+    ]);
+
     final report = DiagnosticReport(createdAt: DateTime.now(), checks: checks);
     final reportText = report.toPlainText();
     if (!mounted) return;
