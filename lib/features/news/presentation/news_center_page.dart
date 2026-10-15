@@ -89,6 +89,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   int? _lastForeignUntranslatedCount;
   int? _lastRankedCandidateCount;
   String? _newsError;
+  String? _newsCacheWarning;
   String _newsDiagnosticStage = 'Ещё не запускалась';
   String? _lastNewsFailureStage;
   String? _lastNewsFailureType;
@@ -506,7 +507,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           name: 'Новостная лента',
           status: _newsError != null
               ? DiagnosticStatus.error
-              : (_refreshingNews ||
+              : (_newsCacheWarning != null ||
+                        _refreshingNews ||
                         _articles.isEmpty ||
                         _lastRssFailedEditions.isNotEmpty ||
                         ((_lastTranslationFailureCount ?? 0) > 0 ||
@@ -515,6 +517,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     : DiagnosticStatus.ok),
           details: [
             if (_newsError != null) 'Ошибка: $_newsError',
+            if (_newsCacheWarning != null)
+              'Предупреждение кэша: $_newsCacheWarning',
             'Этап: $_newsDiagnosticStage',
             'Последнее обновление: ${_lastNewsRefreshAt?.toLocal().toIso8601String() ?? 'нет данных'}',
             if (_lastNewsFailureStage != null)
@@ -566,7 +570,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         ),
         DiagnosticCheck(
           name: 'Рекомендуемый следующий шаг',
-          status: _newsError != null || _articles.isEmpty
+          status: _newsError != null ||
+                  _newsCacheWarning != null ||
+                  _articles.isEmpty
               ? DiagnosticStatus.warning
               : DiagnosticStatus.ok,
           details: _newsDiagnosticNextStep(),
@@ -819,6 +825,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _digest = null;
         _digestError = null;
         _newsError = null;
+        _newsCacheWarning = null;
         _hasCompletedNewsFetch = false;
         _showingCachedNews = false;
         _newsDiagnosticStage = 'Не запускалась: не выбраны интересы';
@@ -848,6 +855,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     setState(() {
       _refreshingNews = true;
       _newsError = null;
+      _newsCacheWarning = null;
       _newsDiagnosticStage = failureStage;
       _lastNewsFailureStage = null;
       _lastNewsFailureType = null;
@@ -976,7 +984,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             _lastNewsFailureStage = 'Сохранение кэша';
             _lastNewsFailureType = error.runtimeType.toString();
             _newsDiagnosticStage = 'Ошибка сохранения кэша';
-            _newsError =
+            _newsCacheWarning =
                 'Новости загружены, но не удалось сохранить их для офлайн-доступа.';
           });
         }
@@ -1459,11 +1467,15 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                   _refreshingNews ? 'ЗАГРУЗКА…' : 'ОБНОВИТЬ ПЕРСОНАЛЬНУЮ ЛЕНТУ',
                 ),
               ),
-              if (_newsError != null) ...[
+              if (_newsError != null || _newsCacheWarning != null) ...[
                 const SizedBox(height: 12),
                 Text(
-                  _newsError!,
-                  style: const TextStyle(color: Colors.orangeAccent),
+                  _newsError ?? _newsCacheWarning!,
+                  style: TextStyle(
+                    color: _newsError != null
+                        ? Colors.orangeAccent
+                        : SystemCorePalette.muted,
+                  ),
                 ),
               ],
               if (widget.aiEngine != null) ...[
