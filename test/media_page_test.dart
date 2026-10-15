@@ -50,9 +50,39 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.text('ПОДКЛЮЧИТЕ КАТАЛОГ TMDB'), findsOneWidget);
+    expect(
+      find.textContaining('TMDB Read Access Token'),
+      findsOneWidget,
+    );
     expect(find.byKey(const ValueKey('open-media-catalog-settings')), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('open-media-catalog-settings')));
     expect(openedSettings, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('explains when configured TMDB trends cannot be loaded', (
+    tester,
+  ) async {
+    final service = MediaSearchService(
+      accessToken: 'test-token',
+      client: MockClient(
+        (request) async => http.Response('unavailable', 503),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaPage(
+          preferences: UserPreferences(),
+          searchService: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('НЕ УДАЛОСЬ ЗАГРУЗИТЬ ТРЕНДЫ'), findsOneWidget);
+    expect(find.textContaining('Проверьте интернет и токен'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
