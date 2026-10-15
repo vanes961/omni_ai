@@ -299,19 +299,26 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   }
 
   Future<void> _runDiagnostics() async {
+    final profile = _profile;
+    final noFeedInterests =
+        profile != null &&
+        profile.topics.every((topic) => topic.trim().isEmpty) &&
+        !profile.includeCriticalOutsideInterests;
     final report = DiagnosticReport(
       createdAt: DateTime.now(),
       checks: [
         DiagnosticCheck(
           name: 'Профиль интересов',
-          status: _profile == null
+          status: profile == null
               ? DiagnosticStatus.warning
-              : (_profile!.topics.isEmpty
+              : (noFeedInterests
                     ? DiagnosticStatus.warning
                     : DiagnosticStatus.ok),
-          details: _profile == null
+          details: profile == null
               ? 'Профиль ещё не загружен'
-              : 'Выбрано тем: ${_profile!.topics.length}',
+              : noFeedInterests
+              ? 'Темы не выбраны; персональная лента намеренно не запускает RSS-запрос'
+              : 'Выбрано тем: ${profile.topics.length}',
         ),
         DiagnosticCheck(
           name: 'Новостная лента',
@@ -345,11 +352,22 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           details:
               'Сигналов интереса: ${_reactionWeights.length}; значения хранятся локально',
         ),
-        const DiagnosticCheck(
-          name: 'Сетевая доступность',
-          status: DiagnosticStatus.notChecked,
-          details:
-              'Проверяется только по результату загрузки ленты; отдельный сетевой тест не запускался',
+        DiagnosticCheck(
+          name: 'Сетевая доступность RSS',
+          status: noFeedInterests
+              ? DiagnosticStatus.warning
+              : (_lastRssCandidateCount == null
+                    ? DiagnosticStatus.notChecked
+                    : (_newsError == null
+                          ? DiagnosticStatus.ok
+                          : DiagnosticStatus.error)),
+          details: noFeedInterests
+              ? 'RSS не запрашивался: нет выбранных интересов. Это не подтверждает сетевую ошибку; добавь тему и обнови ленту.'
+              : _lastRssCandidateCount == null
+              ? 'Нет результата реального RSS-запроса в этой сессии. Нажми «Обновить персональную ленту» и запусти диагностику повторно.'
+              : _newsError != null
+              ? 'Последний RSS-запрос завершился с ошибкой: $_newsError'
+              : 'Последний RSS-запрос завершился; кандидатов получено: $_lastRssCandidateCount',
         ),
       ],
     );
