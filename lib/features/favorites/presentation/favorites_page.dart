@@ -373,13 +373,13 @@ class _CategoryChip extends StatelessWidget {
         showCheckmark: false,
         selectedColor: SystemCorePalette.green.withValues(alpha: 0.18),
         labelStyle: TextStyle(
-          color: selected ? SystemCorePalette.green : Colors.white70,
+          color: selected ? SystemCorePalette.green : SystemCorePalette.muted,
           fontSize: 11,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.zero,
           side: BorderSide(
-            color: selected ? SystemCorePalette.green : Colors.white24,
+            color: selected ? SystemCorePalette.green : SystemCorePalette.border,
           ),
         ),
       ),
