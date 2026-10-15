@@ -959,7 +959,10 @@ void main() {
 
       expect(service.lastCandidateCount, 6);
       expect(articles, hasLength(3));
-      expect(articles.every((article) => article.topics.contains('anime')), isTrue);
+      expect(
+        articles.every((article) => article.topics.contains('anime')),
+        isTrue,
+      );
     },
   );
 
