@@ -10,6 +10,7 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 import 'package:omni_ai/features/news/data/shared_preferences_news_cache.dart';
 import 'package:omni_ai/features/news/data/news_interest_repository.dart';
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
+import 'package:omni_ai/features/news/models/news_article.dart';
 import 'package:omni_ai/features/news/presentation/news_center_page.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
@@ -729,6 +730,49 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('diagnostics explain when topic filtering removes all RSS candidates', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+    final service = _FilteredOutNewsRssService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(repository: repository, newsService: service),
+      ),
+    );
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.textContaining('По выбранным темам сейчас не найдено'), findsOneWidget);
+    for (
+      var i = 0;
+      i < 12 && find.text('Диагностика системы').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await tester.tap(find.text('Диагностика системы'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(find.textContaining('RSS-кандидатов до фильтра: 5'), findsOneWidget);
+    expect(find.textContaining('После фильтра интересов: 0'), findsOneWidget);
+    expect(
+      find.textContaining('RSS вернул 5 уникальных кандидатов, но фильтр интересов не оставил подходящих публикаций.'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('explains why the feed is empty when no interests are selected', (
     WidgetTester tester,
   ) async {
@@ -785,6 +829,18 @@ class _MemoryNewsInterestRepository implements NewsInterestRepository {
   Future<void> dispose() async {}
 }
 
+
+class _FilteredOutNewsRssService extends NewsRssService {
+  @override
+  Future<List<NewsArticle>> fetchInternational(
+    NewsInterestProfile profile,
+  ) async {
+    lastCandidateCount = 5;
+    lastRelevantCandidateCount = 0;
+    lastFailedEditions = const <String>[];
+    return const <NewsArticle>[];
+  }
+}
 
 class _MemoryUserPreferencesStore implements UserPreferencesStore {
   UserPreferences? saved;
