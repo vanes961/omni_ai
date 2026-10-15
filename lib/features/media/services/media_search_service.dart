@@ -142,6 +142,77 @@ class MediaSearchService {
     }
   }
 
+  /// Loads real weekly trending titles from TMDB for the media hub.
+  /// Returns an empty list when credentials or the network are unavailable;
+  /// no demo titles are substituted.
+  Future<List<MediaItem>> fetchTrendingOnline({String? type}) async {
+    if (!isConfigured) return const [];
+    final mediaType = switch (type) {
+      'Фильм' => 'movie',
+      'Сериал' || 'Аниме' => 'tv',
+      _ => 'all',
+    };
+    final uri = Uri.parse('$_api/trending/$mediaType/week').replace(
+      queryParameters: {'language': 'ru-RU'},
+    );
+    try {
+      final response = await _get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer ${accessToken.trim()}',
+          'accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 12));
+      if (response.statusCode != 200) return const [];
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic> || decoded['results'] is! List) {
+        return const [];
+      }
+      final items = <MediaItem>[];
+      for (final raw in decoded['results'] as List) {
+        if (raw is! Map<String, dynamic>) continue;
+        final kind = raw['media_type'] as String? ?? mediaType;
+        if (kind != 'movie' && kind != 'tv') continue;
+        final originalLanguage = raw['original_language'] as String? ?? '';
+        final countries = (raw['origin_country'] as List? ?? const [])
+            .whereType<String>();
+        final isAnime = kind == 'tv' &&
+            (originalLanguage == 'ja' || countries.contains('JP'));
+        if (type == 'Фильм' && kind != 'movie' ||
+            type == 'Сериал' && (kind != 'tv' || isAnime) ||
+            type == 'Аниме' && !isAnime) {
+          continue;
+        }
+        final title = (raw[kind == 'tv' ? 'name' : 'title'] as String? ?? '')
+            .trim();
+        final id = raw['id'];
+        if (title.isEmpty || id is! num) continue;
+        final poster = raw['poster_path'] as String?;
+        final genreIds = (raw['genre_ids'] as List? ?? const [])
+            .whereType<num>();
+        items.add(
+          MediaItem(
+            id: 'tmdb:$kind:${id.toInt()}',
+            title: title,
+            type: isAnime ? 'Аниме' : kind == 'tv' ? 'Сериал' : 'Фильм',
+            posterUrl: poster == null ? '' : '$_poster$poster',
+            rating: (raw['vote_average'] as num?)?.toDouble() ?? 0,
+            voiceovers: const [],
+            videoUrl: '',
+            categories: genreIds
+                .map((genre) => _genres[genre.toInt()])
+                .whereType<String>()
+                .toList(),
+            description: raw['overview'] as String? ?? '',
+          ),
+        );
+      }
+      return items;
+    } on Object {
+      return const [];
+    }
+  }
+
   Future<MediaDetails?> loadDetails(MediaItem item) async {
     if (!isConfigured || !item.id.startsWith('tmdb:')) return null;
     final p = item.id.split(':');
