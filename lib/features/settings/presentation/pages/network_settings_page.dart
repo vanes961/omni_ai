@@ -124,7 +124,10 @@ class _NetworkSettingsPageState extends State<NetworkSettingsPage> {
                 }),
               ),
               if (preferences.proxyEnabled) ...[
-                const Divider(height: 1, color: SystemCorePalette.border.withValues(alpha: 0.55)),
+                const Divider(
+                  height: 1,
+                  color: SystemCorePalette.border.withValues(alpha: 0.55),
+                ),
                 Padding(
                   padding: const EdgeInsets.all(14),
                   child: Column(
@@ -431,7 +434,11 @@ class _NetworkSettingsPageState extends State<NetworkSettingsPage> {
     return Material(
       color: SystemCorePalette.panel,
       child: DecoratedBox(
-        decoration: BoxDecoration(border: Border.all(color: SystemCorePalette.border.withValues(alpha: 0.55))),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: SystemCorePalette.border.withValues(alpha: 0.55),
+          ),
+        ),
         child: child,
       ),
     );
@@ -462,7 +469,9 @@ class _NetworkStatus extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: SystemCorePalette.panel,
-        border: Border.all(color: SystemCorePalette.border.withValues(alpha: 0.55)),
+        border: Border.all(
+          color: SystemCorePalette.border.withValues(alpha: 0.55),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -555,3 +564,4 @@ String _proxyTypeLabel(ProxyType type) => switch (type) {
   ProxyType.socks5 => 'SOCKS5',
   ProxyType.mtproto => 'MTProto',
 };
+Formatted 5 files (5 changed) in 0.08 seconds.
