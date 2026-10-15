@@ -8,15 +8,19 @@ import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/services/news_digest_service.dart';
 
 void main() {
-  test('does not call AI when no interests are selected', () async {
+  test('creates a general discovery digest when no interests are selected', () async {
     final provider = _FakeProvider();
     final service = NewsDigestService(engine: AIEngine(provider: provider));
     final result = await service.createDigest(
       profile: const NewsInterestProfile(),
-      articles: [_article('anime')],
+      articles: [_article('anime'), _article('technology')],
     );
-    expect(result, isNull);
-    expect(provider.requests, isEmpty);
+
+    expect(result, 'Персональный дайджест');
+    expect(provider.requests, hasLength(1));
+    expect(provider.requests.single.prompt, contains('общий дайджест'));
+    expect(provider.requests.single.prompt, contains('Anime headline'));
+    expect(provider.requests.single.prompt, contains('Technology headline'));
   });
 
   test('does not summarize articles outside selected topics', () async {
