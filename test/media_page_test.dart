@@ -36,6 +36,26 @@ void main() {
     expect(MediaHeaders.getHeaders('')['Referer'], isNull);
   });
 
+  testWidgets('media empty state opens catalog setup when available', (
+    tester,
+  ) async {
+    var openedSettings = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaPage(
+          preferences: UserPreferences(),
+          onOpenCatalogSettings: () => openedSettings = true,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('open-media-catalog-settings')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('open-media-catalog-settings')));
+    expect(openedSettings, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('network images use a User-Agent and try fallback URLs', (
     tester,
   ) async {
