@@ -386,6 +386,33 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     return 'Критических проблем в последнем проходе не обнаружено. Если проблема повторится, скопируй отчёт сразу после неё.';
   }
 
+  String _newsRankingDiagnostic() {
+    if (_articles.isEmpty) return 'Нет новостей для анализа рейтинга';
+    final profile =
+        _favoriteInterestProfile ?? _favoriteAnalytics.analyze(const <FavoriteItem>[]);
+    return _articles.take(3).map((article) {
+      final score = _favoriteAnalytics.explainNewsScore(
+        article,
+        profile,
+        lessInterested: _lessInterested,
+        reactionWeights: _reactionWeights,
+      );
+      final favoriteTerms = score.favoriteInterestByTerm.entries
+          .map((entry) => '${entry.key}:${entry.value.toStringAsFixed(2)}')
+          .join(', ');
+      final reactionTopics = score.reactionByTopic.entries
+          .map((entry) => '${entry.key}:${entry.value.toStringAsFixed(2)}')
+          .join(', ');
+      final excludedTopics = score.lessInterestedTerms.join(', ');
+      return '"${article.title}" = ${score.total.toStringAsFixed(2)} '
+          '[избранное: ${favoriteTerms.isEmpty ? 'нет' : favoriteTerms}; '
+          'реакции: ${reactionTopics.isEmpty ? 'нет' : reactionTopics}; '
+          'исключённые темы: ${excludedTopics.isEmpty ? 'нет' : excludedTopics}; '
+          'бонус трейлера: ${score.trailerBonus.toStringAsFixed(2)}; '
+          'бонус категории: ${score.categoryBonus.toStringAsFixed(2)}]';
+    }).join(' | ');
+  }
+
   Future<void> _runDiagnostics() async {
     final profile = _profile;
     final noFeedInterests =
@@ -463,10 +490,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               : 'Загрузка кэша завершена',
         ),
         DiagnosticCheck(
-          name: 'Реакции и интересы',
-          status: DiagnosticStatus.ok,
+          name: 'Персонализация и рейтинг',
+          status: _articles.isEmpty
+              ? DiagnosticStatus.notChecked
+              : DiagnosticStatus.ok,
           details:
-              'Сигналов интереса: ${_reactionWeights.length}; значения хранятся локально',
+              'Избранных материалов: ${_favoriteInterestProfile?.totalFavorites ?? 0}; тем с реакциями: ${_reactionWeights.length}; исключённых тем: ${_lessInterested.length}. Разбор первых новостей: ${_newsRankingDiagnostic()}',
         ),
         DiagnosticCheck(
           name: 'Рекомендуемый следующий шаг',
