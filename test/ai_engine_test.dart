@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_error.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
@@ -104,6 +106,36 @@ void main() {
         ),
       );
       expect(token.isCancelled, isTrue);
+    });
+
+    test('times out during setup before calling the provider', () async {
+      final setup = Completer<void>();
+      final provider = _FakeProvider();
+      final token = AICancellationToken();
+      final engine = AIEngine(
+        provider: provider,
+        timeout: const Duration(milliseconds: 20),
+        beforeExecute: () => setup.future,
+      );
+
+      await expectLater(
+        engine.execute(
+          const AIRequest(id: 'request-6', prompt: 'Загрузка модели'),
+          cancellationToken: token,
+        ),
+        throwsA(
+          isA<AIEngineException>().having(
+            (error) => error.error.code,
+            'code',
+            AIErrorCode.timeout,
+          ),
+        ),
+      );
+
+      expect(token.isCancelled, isTrue);
+      setup.complete();
+      await Future<void>.delayed(Duration.zero);
+      expect(provider.callCount, 0);
     });
   });
 }
