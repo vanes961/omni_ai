@@ -178,6 +178,69 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('diagnostics report local cache restoration failures', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response(
+        '<rss><channel><item>'
+        '<title>Anime: Cache read failure regression</title>'
+        '<link>https://publisher.example/cache-read-failure</link>'
+        '<description>A story fetched after cache restoration fails.</description>'
+        '<pubDate>Mon, 12 Oct 2026 09:00:00 GMT</pubDate>'
+        '<source>Anime News</source>'
+        '</item></channel></rss>',
+        200,
+        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+      )),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(
+          repository: repository,
+          newsService: service,
+          newsCache: SharedPreferencesNewsCache(
+            store: _FailingNewsCacheReadStore(),
+          ),
+        ),
+      ),
+    );
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(find.text('Anime: Cache read failure regression'), findsOneWidget);
+    for (
+      var i = 0;
+      i < 12 && find.text('Диагностика системы').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(find.text('Диагностика системы'), findsOneWidget);
+    await tester.tap(find.text('Диагностика системы'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    expect(find.text('Диагностика OMNI AI'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Не удалось восстановить локальный кэш (StateError)',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('keeps fetched articles visible when cache persistence fails', (
     WidgetTester tester,
   ) async {
@@ -1023,6 +1086,24 @@ class _DelayedNewsCacheStore implements NewsCacheStringStore {
   @override
   Future<String?> read(String key) async {
     await releaseReads.future;
+    return null;
+  }
+
+  @override
+  Future<void> write(String key, String value) async {}
+
+  @override
+  Future<void> remove(String key) async {}
+}
+
+class _FailingNewsCacheReadStore implements NewsCacheStringStore {
+  @override
+  Future<String?> read(String key) async {
+    if (key == SharedPreferencesNewsCache.articlesKey) {
+      throw StateError('Simulated local cache read failure.');
+    }
+    if (key == SharedPreferencesNewsCache.topicsKey) return '["anime"]';
+    if (key == SharedPreferencesNewsCache.criticalSettingKey) return 'false';
     return null;
   }
 
