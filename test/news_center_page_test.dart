@@ -62,17 +62,24 @@ void main() {
     expect(find.byType(NewsCenterPage), findsOneWidget);
     expect(find.text('Anime: New season announced'), findsOneWidget);
     expect(find.textContaining('ANIME NEWS'), findsWidgets);
-    await tester.scrollUntilVisible(
-      find.text('Anime: Second story in the feed'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
+    for (
+      var i = 0;
+      i < 12 &&
+          find.text('Anime: Second story in the feed').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
     expect(find.text('Anime: Second story in the feed'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Диагностика системы'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
+    for (
+      var i = 0;
+      i < 12 && find.text('Диагностика системы').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
     expect(find.text('Диагностика системы'), findsOneWidget);
     expect(find.text('Не удалось загрузить новости.'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -123,8 +130,15 @@ void main() {
     }
     expect(requestCount, 0);
 
-    await tester.ensureVisible(find.text('ВАШИ ИНТЕРЕСЫ'));
-    await tester.pump();
+    for (
+      var i = 0;
+      i < 12 && find.text('ВАШИ ИНТЕРЕСЫ').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(find.text('ВАШИ ИНТЕРЕСЫ'), findsOneWidget);
     await tester.enterText(find.byType(TextField).first, 'anime');
     await tester.tap(find.byTooltip('Добавить тему'));
     await tester.pump();
