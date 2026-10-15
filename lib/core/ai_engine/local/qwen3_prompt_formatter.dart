@@ -10,7 +10,8 @@ class Qwen3PromptFormatter {
     return <String>[
       if (system != null && system.isNotEmpty)
         '<|im_start|>system\n$system\n<|im_end|>',
-      '<|im_start|>user\n${prompt.trim()}\n<|im_end|>',
+      // Qwen3 supports /no_think to request a direct user-facing answer.
+      '<|im_start|>user\n${prompt.trim()}\n/no_think\n<|im_end|>',
       '<|im_start|>assistant\n',
     ].join('\n');
   }
@@ -18,6 +19,22 @@ class Qwen3PromptFormatter {
   /// Removes special end markers and any accidental second turn from output.
   static String sanitize(String output) {
     var text = output.trim();
+
+    // Hide Qwen3 reasoning blocks, including an unfinished block at cutoff.
+    while (true) {
+      final start = RegExp(r'<think>', caseSensitive: false).firstMatch(text);
+      if (start == null) break;
+      final end = RegExp(r'</think>', caseSensitive: false).firstMatch(
+        text,
+        start.end,
+      );
+      if (end == null) {
+        text = text.substring(0, start.start).trim();
+        break;
+      }
+      text = '${text.substring(0, start.start)}${text.substring(end.end)}';
+    }
+
     for (final marker in const [
       '<|im_end|>',
       '<|endoftext|>',
