@@ -328,7 +328,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           'Проверь сохранённые реакции, избранное и локальное хранилище; первичная загрузка RSS уже завершилась.',
         'Сохранение кэша' =>
           'Материалы уже загружены; проверь хранилище приложения. Онлайн-лента должна оставаться доступной.',
-        _ => 'Сохрани отчёт целиком: тип сбоя и этап нужны для следующего точечного теста.',
+        _ =>
+          'Сохрани отчёт целиком: тип сбоя и этап нужны для следующего точечного теста.',
       };
     }
     if (_lastRssCandidateCount == null) {
@@ -386,8 +387,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             'Последнее обновление: ${_lastNewsRefreshAt?.toLocal().toIso8601String() ?? 'нет данных'}',
             if (_lastNewsFailureStage != null)
               'Этап сбоя: $_lastNewsFailureStage',
-            if (_lastNewsFailureType != null)
-              'Тип сбоя: $_lastNewsFailureType',
+            if (_lastNewsFailureType != null) 'Тип сбоя: $_lastNewsFailureType',
             'RSS-кандидатов: ${_lastRssCandidateCount ?? 'нет данных'}',
             'После локализации: ${_lastLocalizedCandidateCount ?? 'нет данных'}',
             'После персонализации: ${_lastRankedCandidateCount ?? 'нет данных'}',
