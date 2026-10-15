@@ -264,7 +264,8 @@ class MediaSearchService {
           ).timeout(const Duration(seconds: 12));
           if (response.statusCode != 200) return const <MediaItem>[];
           final decoded = jsonDecode(response.body);
-          if (decoded is! Map<String, dynamic> || decoded['results'] is! List) {
+          if (decoded is! Map<String, dynamic> ||
+              decoded['results'] is! List) {
             return const <MediaItem>[];
           }
           final items = <MediaItem>[];
@@ -286,7 +287,8 @@ class MediaSearchService {
             final id = raw['id'];
             if (title.isEmpty || id is! num) continue;
             final poster = raw['poster_path'] as String?;
-            final ids = (raw['genre_ids'] as List? ?? const []).whereType<num>();
+            final ids = (raw['genre_ids'] as List? ?? const [])
+                .whereType<num>();
             items.add(
               MediaItem(
                 id: 'tmdb:$mediaType:${id.toInt()}',
