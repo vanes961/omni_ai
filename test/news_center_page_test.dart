@@ -219,6 +219,25 @@ void main() {
       ),
       findsOneWidget,
     );
+    for (
+      var i = 0;
+      i < 12 && find.text('Диагностика системы').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    expect(find.text('Диагностика системы'), findsOneWidget);
+    await tester.tap(find.text('Диагностика системы'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(find.textContaining('Предупреждение кэша:'), findsOneWidget);
+    expect(
+      find.textContaining(
+        'Ошибка: Новости загружены, но не удалось сохранить их для офлайн-доступа.',
+      ),
+      findsNothing,
+    );
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
