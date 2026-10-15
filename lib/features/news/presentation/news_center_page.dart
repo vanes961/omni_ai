@@ -217,10 +217,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   Future<void> _loadNewsCache() async {
     final revisionAtStart = _interestRevision;
     _newsCacheLoadError = null;
-    NewsInterestProfile? loadedProfile;
     try {
       final profile = await _profileFuture;
-      loadedProfile = profile;
       if (!mounted) return;
       setState(() => _profile ??= profile);
       final cached = await Future.wait<Object?>([
