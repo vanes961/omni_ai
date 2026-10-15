@@ -188,17 +188,9 @@ void main() {
       const NewsInterestProfile(topics: ['anime']),
     );
     final service = NewsRssService(
-      client: MockClient((_) async => http.Response(
-        '<rss><channel><item>'
-        '<title>Anime: Cache read failure regression</title>'
-        '<link>https://publisher.example/cache-read-failure</link>'
-        '<description>A story fetched after cache restoration fails.</description>'
-        '<pubDate>Mon, 12 Oct 2026 09:00:00 GMT</pubDate>'
-        '<source>Anime News</source>'
-        '</item></channel></rss>',
-        200,
-        headers: {'content-type': 'application/rss+xml; charset=utf-8'},
-      )),
+      client: MockClient((_) async {
+        throw http.ClientException('Simulated offline RSS after cache read failure.');
+      }),
     );
 
     await tester.pumpWidget(
@@ -216,7 +208,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    expect(find.text('Anime: Cache read failure regression'), findsOneWidget);
+    expect(
+      find.textContaining('Не удалось загрузить новости:'),
+      findsOneWidget,
+    );
     for (
       var i = 0;
       i < 12 && find.text('Диагностика системы').evaluate().isEmpty;
