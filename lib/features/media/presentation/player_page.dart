@@ -1077,6 +1077,24 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                   ),
                 ),
               ),
+            if (player != null && player.isInitialized)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: IconButton(
+                  key: const ValueKey('fullscreen-toggle'),
+                  tooltip: _isFullscreen
+                      ? 'Выйти из полноэкранного режима'
+                      : 'Полноэкранный режим',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _toggleFullscreen,
+                  icon: Icon(
+                    _isFullscreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                    size: 22,
+                  ),
+                  color: Colors.white,
+                ),
+              ),
             if (player != null && player.isInitialized) ...[
               if (_activeMarker(MediaSegmentType.intro, player)
                   case final marker?)
@@ -1183,21 +1201,6 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                             onPressed: () =>
                                 _seekBy(player, const Duration(seconds: 10)),
                             icon: const Icon(Icons.forward_10, size: 22),
-                            color: Colors.white,
-                          ),
-                          IconButton(
-                            key: const ValueKey('fullscreen-toggle'),
-                            tooltip: _isFullscreen
-                                ? 'Выйти из полноэкранного режима'
-                                : 'Полноэкранный режим',
-                            visualDensity: VisualDensity.compact,
-                            onPressed: _toggleFullscreen,
-                            icon: Icon(
-                              _isFullscreen
-                                  ? Icons.fullscreen_exit
-                                  : Icons.fullscreen,
-                              size: 22,
-                            ),
                             color: Colors.white,
                           ),
                           const Spacer(),
