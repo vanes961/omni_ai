@@ -437,7 +437,7 @@ void main() {
       MaterialApp(home: MediaPage(preferences: UserPreferences())),
     );
 
-    expect(find.text('МЕДИАКАТАЛОГ НЕ ПОДКЛЮЧЁН'), findsOneWidget);
+    expect(find.text('ПОДКЛЮЧИТЕ КАТАЛОГ TMDB'), findsOneWidget);
     expect(find.text('OMNI AI  //  MEDIA'), findsOneWidget);
     expect(find.text('KAIROS  //  MEDIA DECK'), findsNothing);
     expect(find.text('Cyberpunk: Edgerunners'), findsNothing);
