@@ -2,10 +2,7 @@
 class Qwen3PromptFormatter {
   const Qwen3PromptFormatter._();
 
-  static String format({
-    required String prompt,
-    String? systemInstruction,
-  }) {
+  static String format({required String prompt, String? systemInstruction}) {
     final system = systemInstruction?.trim();
     return <String>[
       if (system != null && system.isNotEmpty)
@@ -23,10 +20,10 @@ class Qwen3PromptFormatter {
     while (true) {
       final start = RegExp(r'<think>', caseSensitive: false).firstMatch(text);
       if (start == null) break;
-      final end = RegExp(r'</think>', caseSensitive: false).firstMatch(
-        text,
-        start.end,
-      );
+      final end = RegExp(
+        r'</think>',
+        caseSensitive: false,
+      ).firstMatch(text, start.end);
       if (end == null) {
         text = text.substring(0, start.start);
         break;
@@ -84,10 +81,10 @@ class Qwen3PromptFormatter {
     while (true) {
       final start = RegExp(r'<think>', caseSensitive: false).firstMatch(text);
       if (start == null) break;
-      final end = RegExp(r'</think>', caseSensitive: false).firstMatch(
-        text,
-        start.end,
-      );
+      final end = RegExp(
+        r'</think>',
+        caseSensitive: false,
+      ).firstMatch(text, start.end);
       if (end == null) {
         text = text.substring(0, start.start).trim();
         break;
