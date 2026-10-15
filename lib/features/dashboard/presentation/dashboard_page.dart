@@ -14,6 +14,7 @@ import 'package:omni_ai/features/media/services/media_catalog_token_store.dart';
 import 'package:omni_ai/features/media/services/openrouter_franchise_chronology_researcher.dart';
 import 'package:omni_ai/features/media/services/shared_preferences_franchise_chronology_cache.dart';
 import 'package:omni_ai/features/ai_chat/presentation/ai_chat_page.dart';
+import 'package:omni_ai/features/ai_chat/presentation/floating_ai_companion.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
 import 'package:omni_ai/features/news/presentation/news_center_page.dart';
@@ -111,7 +112,14 @@ class _DashboardPageState extends State<DashboardPage> {
                   onProfilePressed: () => _selectTab(4),
                   onDiagnosticsPressed: _runAppDiagnostics,
                 ),
-                Expanded(child: _buildTab()),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Positioned.fill(child: _buildTab()),
+                      FloatingAICompanion(dependencies: _chatDependencies),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
