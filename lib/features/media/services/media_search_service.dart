@@ -218,6 +218,108 @@ class MediaSearchService {
     }
   }
 
+  /// Builds a real recommendation pool from genres saved with favorites.
+  /// Empty or unrecognized interests do not trigger generic/demo suggestions.
+  Future<List<MediaItem>> fetchRecommendationsOnline({
+    required List<String> interests,
+    String? type,
+  }) async {
+    if (!isConfigured || interests.isEmpty) return const [];
+
+    final normalizedInterests = interests
+        .map((interest) => interest.trim().toLowerCase())
+        .where((interest) => interest.isNotEmpty)
+        .toSet();
+    final genreIds = _genres.entries
+        .where((entry) => normalizedInterests.contains(entry.value.toLowerCase()))
+        .map((entry) => entry.key)
+        .toList();
+    if (genreIds.isEmpty) return const [];
+
+    final mediaTypes = switch (type) {
+      'Фильм' => const ['movie'],
+      'Сериал' || 'Аниме' => const ['tv'],
+      _ => const ['movie', 'tv'],
+    };
+    final responses = await Future.wait(
+      mediaTypes.map((mediaType) async {
+        final uri = Uri.parse('$_api/discover/$mediaType').replace(
+          queryParameters: {
+            'language': 'ru-RU',
+            'sort_by': 'popularity.desc',
+            'include_adult': 'false',
+            'page': '1',
+            'with_genres': genreIds.join(','),
+          },
+        );
+        try {
+          final response = await _get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer ${accessToken.trim()}',
+              'accept': 'application/json',
+            },
+          ).timeout(const Duration(seconds: 12));
+          if (response.statusCode != 200) return const <MediaItem>[];
+          final decoded = jsonDecode(response.body);
+          if (decoded is! Map<String, dynamic> || decoded['results'] is! List) {
+            return const <MediaItem>[];
+          }
+          final items = <MediaItem>[];
+          for (final raw in decoded['results'] as List) {
+            if (raw is! Map<String, dynamic>) continue;
+            final isTv = mediaType == 'tv';
+            final originalLanguage = raw['original_language'] as String? ?? '';
+            final countries = (raw['origin_country'] as List? ?? const [])
+                .whereType<String>();
+            final isAnime =
+                isTv &&
+                (originalLanguage == 'ja' || countries.contains('JP'));
+            if (type == 'Аниме' && !isAnime ||
+                type == 'Сериал' && isAnime) {
+              continue;
+            }
+            final title =
+                (raw[isTv ? 'name' : 'title'] as String? ?? '').trim();
+            final id = raw['id'];
+            if (title.isEmpty || id is! num) continue;
+            final poster = raw['poster_path'] as String?;
+            final ids = (raw['genre_ids'] as List? ?? const []).whereType<num>();
+            items.add(
+              MediaItem(
+                id: 'tmdb:$mediaType:${id.toInt()}',
+                title: title,
+                type: isAnime
+                    ? 'Аниме'
+                    : isTv
+                    ? 'Сериал'
+                    : 'Фильм',
+                posterUrl: poster == null ? '' : '$_poster$poster',
+                rating: (raw['vote_average'] as num?)?.toDouble() ?? 0,
+                voiceovers: const [],
+                videoUrl: '',
+                categories: ids
+                    .map((genre) => _genres[genre.toInt()])
+                    .whereType<String>()
+                    .toList(),
+                description: raw['overview'] as String? ?? '',
+              ),
+            );
+          }
+          return items;
+        } on Object {
+          return const <MediaItem>[];
+        }
+      }),
+    );
+
+    final unique = <String, MediaItem>{};
+    for (final item in responses.expand((items) => items)) {
+      unique.putIfAbsent(item.id, () => item);
+    }
+    return List<MediaItem>.unmodifiable(unique.values);
+  }
+
   Future<MediaDetails?> loadDetails(MediaItem item) async {
     if (!isConfigured || !item.id.startsWith('tmdb:')) return null;
     final p = item.id.split(':');
