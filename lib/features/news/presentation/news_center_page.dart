@@ -389,28 +389,32 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   String _newsRankingDiagnostic() {
     if (_articles.isEmpty) return 'Нет новостей для анализа рейтинга';
     final profile =
-        _favoriteInterestProfile ?? _favoriteAnalytics.analyze(const <FavoriteItem>[]);
-    return _articles.take(3).map((article) {
-      final score = _favoriteAnalytics.explainNewsScore(
-        article,
-        profile,
-        lessInterested: _lessInterested,
-        reactionWeights: _reactionWeights,
-      );
-      final favoriteTerms = score.favoriteInterestByTerm.entries
-          .map((entry) => '${entry.key}:${entry.value.toStringAsFixed(2)}')
-          .join(', ');
-      final reactionTopics = score.reactionByTopic.entries
-          .map((entry) => '${entry.key}:${entry.value.toStringAsFixed(2)}')
-          .join(', ');
-      final excludedTopics = score.lessInterestedTerms.join(', ');
-      return '"${article.title}" = ${score.total.toStringAsFixed(2)} '
-          '[избранное: ${favoriteTerms.isEmpty ? 'нет' : favoriteTerms}; '
-          'реакции: ${reactionTopics.isEmpty ? 'нет' : reactionTopics}; '
-          'исключённые темы: ${excludedTopics.isEmpty ? 'нет' : excludedTopics}; '
-          'бонус трейлера: ${score.trailerBonus.toStringAsFixed(2)}; '
-          'бонус категории: ${score.categoryBonus.toStringAsFixed(2)}]';
-    }).join(' | ');
+        _favoriteInterestProfile ??
+        _favoriteAnalytics.analyze(const <FavoriteItem>[]);
+    return _articles
+        .take(3)
+        .map((article) {
+          final score = _favoriteAnalytics.explainNewsScore(
+            article,
+            profile,
+            lessInterested: _lessInterested,
+            reactionWeights: _reactionWeights,
+          );
+          final favoriteTerms = score.favoriteInterestByTerm.entries
+              .map((entry) => '${entry.key}:${entry.value.toStringAsFixed(2)}')
+              .join(', ');
+          final reactionTopics = score.reactionByTopic.entries
+              .map((entry) => '${entry.key}:${entry.value.toStringAsFixed(2)}')
+              .join(', ');
+          final excludedTopics = score.lessInterestedTerms.join(', ');
+          return '"${article.title}" = ${score.total.toStringAsFixed(2)} '
+              '[избранное: ${favoriteTerms.isEmpty ? 'нет' : favoriteTerms}; '
+              'реакции: ${reactionTopics.isEmpty ? 'нет' : reactionTopics}; '
+              'исключённые темы: ${excludedTopics.isEmpty ? 'нет' : excludedTopics}; '
+              'бонус трейлера: ${score.trailerBonus.toStringAsFixed(2)}; '
+              'бонус категории: ${score.categoryBonus.toStringAsFixed(2)}]';
+        })
+        .join(' | ');
   }
 
   Future<void> _runDiagnostics() async {
