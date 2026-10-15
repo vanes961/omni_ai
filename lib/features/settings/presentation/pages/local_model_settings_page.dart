@@ -319,7 +319,9 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: SystemCorePalette.panel,
-              border: Border.all(color: SystemCorePalette.border.withValues(alpha: 0.55)),
+              border: Border.all(
+                color: SystemCorePalette.border.withValues(alpha: 0.55),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,7 +494,9 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: SystemCorePalette.panel,
-            border: Border.all(color: SystemCorePalette.border.withValues(alpha: 0.55)),
+            border: Border.all(
+              color: SystemCorePalette.border.withValues(alpha: 0.55),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
