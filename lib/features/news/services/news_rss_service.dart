@@ -40,6 +40,10 @@ class NewsRssService {
   final http.Client _client;
   final NewsRelevanceFilter _filter;
 
+  /// Number of unique, parsed RSS candidates before strict topic filtering.
+  /// Null means an international fetch has not completed its parsing stage.
+  int? lastCandidateCount;
+
   static const _topicKeywords = <String, List<String>>{
     'games': ['game', 'gaming', 'video game', 'игр', 'гейминг'],
     'anime': ['anime', 'аниме'],
@@ -127,8 +131,10 @@ class NewsRssService {
   Future<List<NewsArticle>> fetchInternational(
     NewsInterestProfile profile,
   ) async {
+    lastCandidateCount = null;
     if (profile.topics.every((topic) => topic.trim().isEmpty) &&
         !profile.includeCriticalOutsideInterests) {
+      lastCandidateCount = 0;
       return const <NewsArticle>[];
     }
     const locales = <List<String>>[
@@ -171,6 +177,7 @@ class NewsRssService {
     // items. Never turn an all-empty result into a silent blank feed: report
     // whether the likely cause is a partial outage or empty source responses.
     if (batches.every((batch) => batch.isEmpty)) {
+      lastCandidateCount = 0;
       if (failedEditions.isNotEmpty) {
         throw http.ClientException(
           'No articles were returned and some international news editions '
@@ -205,6 +212,7 @@ class NewsRssService {
       }
     }
 
+    lastCandidateCount = byTitle.length;
     final unrestrictedProfile = profile.copyWith(
       topics: profile.topics
           .map(_canonicalTopic)
