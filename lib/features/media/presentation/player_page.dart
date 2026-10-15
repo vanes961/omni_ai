@@ -772,221 +772,232 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       body: _isFullscreen
           ? Center(child: _buildPlayerSurface())
           : ListView(
-        key: const ValueKey('player-page-scroll'),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-        children: [
-          _buildPlayerSurface(),
-          if (_player?.isInitialized ?? false) _buildSegmentEditor(),
-          const SizedBox(height: 18),
-          Text(
-            widget.item.title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            '${widget.item.type}  ·  ★ ${widget.item.rating.toStringAsFixed(1)}',
-            style: const TextStyle(
-              color: SystemCorePalette.muted,
-              fontSize: 11,
-            ),
-          ),
-          const SizedBox(height: 20),
-          if (episodes.isNotEmpty) ...[
-            Text(
-              'ПРОСМОТРЕНО: ${_watchedEpisodes.length} ИЗ ${episodes.length} СЕРИЙ',
-              key: const ValueKey('watched-episode-count'),
-              style: const TextStyle(
-                color: SystemCorePalette.green,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (episodes.map((episode) => episode.seasonNumber).toSet().length >
-              1) ...[
-            const _PlayerSectionLabel('ВЫБОР СЕЗОНА'),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<int>(
-              key: const ValueKey('season-selector'),
-              initialValue: episodes[_selectedEpisode].seasonNumber,
-              isExpanded: true,
-              dropdownColor: SystemCorePalette.panel,
-              decoration: _selectorDecoration(),
-              items: [
-                for (final season
-                    in (episodes
-                        .map((episode) => episode.seasonNumber)
-                        .toSet()
-                        .toList()
-                      ..sort()))
-                  DropdownMenuItem(
-                    value: season,
-                    child: Text('СЕЗОН ${season.toString().padLeft(2, '0')}'),
-                  ),
-              ],
-              onChanged: (season) {
-                if (season == null) return;
-                final firstEpisode = episodes.indexWhere(
-                  (episode) => episode.seasonNumber == season,
-                );
-                if (firstEpisode >= 0 && firstEpisode != _selectedEpisode) {
-                  _loadEpisode(firstEpisode);
-                }
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (episodes
-                  .where(
-                    (episode) =>
-                        episode.seasonNumber ==
-                        episodes[_selectedEpisode].seasonNumber,
-                  )
-                  .length >
-              1) ...[
-            const _PlayerSectionLabel('ВЫБОР СЕРИИ'),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<int>(
-              key: const ValueKey('episode-selector'),
-              initialValue: _selectedEpisode,
-              isExpanded: true,
-              dropdownColor: SystemCorePalette.panel,
-              decoration: _selectorDecoration(),
-              items: [
-                for (var index = 0; index < episodes.length; index++)
-                  if (episodes[index].seasonNumber ==
-                      episodes[_selectedEpisode].seasonNumber)
-                    DropdownMenuItem(
-                      value: index,
-                      child: Text(
-                        '${_watchedEpisodes.contains(index) ? '✓  ' : ''}${episodes[index].label}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-              ],
-              onChanged: (index) {
-                if (index != null && index != _selectedEpisode) {
-                  _loadEpisode(index);
-                }
-              },
-            ),
-            const SizedBox(height: 18),
-          ],
-          if (widget.item.voiceovers.isNotEmpty) ...[
-            const _PlayerSectionLabel('ОЗВУЧКА'),
-            const SizedBox(height: 8),
-            Builder(
-              builder: (context) {
-                final episode = _hasEpisodes
-                    ? widget.item.episodes[_selectedEpisode]
-                    : null;
-                final availableVoiceovers = _availableVoiceoversFor(episode);
-                if (availableVoiceovers.isEmpty) {
-                  return Text(
-                    widget.item.voiceovers.join(' · '),
-                    style: const TextStyle(
-                      color: SystemCorePalette.muted,
-                      fontSize: 12,
-                    ),
-                  );
-                }
-                return DropdownButtonFormField<String>(
-                  key: const ValueKey('voiceover-selector'),
-                  initialValue: availableVoiceovers.contains(_selectedVoiceover)
-                      ? _selectedVoiceover
-                      : availableVoiceovers.first,
-                  isExpanded: true,
-                  dropdownColor: SystemCorePalette.panel,
-                  decoration: _selectorDecoration(),
-                  items: [
-                    for (final voiceover in availableVoiceovers)
-                      DropdownMenuItem(
-                        value: voiceover,
-                        child: Text(
-                          voiceover,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                  onChanged: (voiceover) {
-                    if (voiceover == null || voiceover == _selectedVoiceover) {
-                      return;
-                    }
-                    setState(() => _selectedVoiceover = voiceover);
-                    unawaited(
-                      _playbackSettingsStore.saveVoiceover(
-                        widget.item.id,
-                        voiceover,
-                      ),
-                    );
-                    _loadEpisode(_selectedEpisode);
-                  },
-                );
-              },
-            ),
-            if (_selectedVoiceover != null &&
-                _availableVoiceoversFor(
-                  _hasEpisodes ? episodes[_selectedEpisode] : null,
-                ).contains(_selectedVoiceover))
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  key: const ValueKey('voiceover-like-button'),
-                  onPressed: () => _toggleVoiceoverLike(_selectedVoiceover!),
-                  icon: Icon(
-                    _likedVoiceovers.contains(_selectedVoiceover)
-                        ? Icons.thumb_up
-                        : Icons.thumb_up_outlined,
-                    size: 18,
-                  ),
-                  label: Text(
-                    _likedVoiceovers.contains(_selectedVoiceover)
-                        ? 'Озвучка нравится'
-                        : 'Нравится эта озвучка',
+              key: const ValueKey('player-page-scroll'),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: [
+                _buildPlayerSurface(),
+                if (_player?.isInitialized ?? false) _buildSegmentEditor(),
+                const SizedBox(height: 18),
+                Text(
+                  widget.item.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-          ],
-          if (_availableQualitiesFor(
-            _hasEpisodes ? episodes[_selectedEpisode] : null,
-          ).isNotEmpty) ...[
-            const SizedBox(height: 14),
-            const _PlayerSectionLabel('КАЧЕСТВО ВИДЕО'),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              key: const ValueKey('quality-selector'),
-              initialValue:
-                  _availableQualitiesFor(
-                    _hasEpisodes ? episodes[_selectedEpisode] : null,
-                  ).contains(_selectedQuality)
-                  ? _selectedQuality
-                  : _availableQualitiesFor(
-                      _hasEpisodes ? episodes[_selectedEpisode] : null,
-                    ).first,
-              isExpanded: true,
-              dropdownColor: SystemCorePalette.panel,
-              decoration: _selectorDecoration(),
-              items: [
-                for (final quality in _availableQualitiesFor(
+                const SizedBox(height: 5),
+                Text(
+                  '${widget.item.type}  ·  ★ ${widget.item.rating.toStringAsFixed(1)}',
+                  style: const TextStyle(
+                    color: SystemCorePalette.muted,
+                    fontSize: 11,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (episodes.isNotEmpty) ...[
+                  Text(
+                    'ПРОСМОТРЕНО: ${_watchedEpisodes.length} ИЗ ${episodes.length} СЕРИЙ',
+                    key: const ValueKey('watched-episode-count'),
+                    style: const TextStyle(
+                      color: SystemCorePalette.green,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (episodes
+                        .map((episode) => episode.seasonNumber)
+                        .toSet()
+                        .length >
+                    1) ...[
+                  const _PlayerSectionLabel('ВЫБОР СЕЗОНА'),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<int>(
+                    key: const ValueKey('season-selector'),
+                    initialValue: episodes[_selectedEpisode].seasonNumber,
+                    isExpanded: true,
+                    dropdownColor: SystemCorePalette.panel,
+                    decoration: _selectorDecoration(),
+                    items: [
+                      for (final season
+                          in (episodes
+                              .map((episode) => episode.seasonNumber)
+                              .toSet()
+                              .toList()
+                            ..sort()))
+                        DropdownMenuItem(
+                          value: season,
+                          child: Text(
+                            'СЕЗОН ${season.toString().padLeft(2, '0')}',
+                          ),
+                        ),
+                    ],
+                    onChanged: (season) {
+                      if (season == null) return;
+                      final firstEpisode = episodes.indexWhere(
+                        (episode) => episode.seasonNumber == season,
+                      );
+                      if (firstEpisode >= 0 &&
+                          firstEpisode != _selectedEpisode) {
+                        _loadEpisode(firstEpisode);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (episodes
+                        .where(
+                          (episode) =>
+                              episode.seasonNumber ==
+                              episodes[_selectedEpisode].seasonNumber,
+                        )
+                        .length >
+                    1) ...[
+                  const _PlayerSectionLabel('ВЫБОР СЕРИИ'),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<int>(
+                    key: const ValueKey('episode-selector'),
+                    initialValue: _selectedEpisode,
+                    isExpanded: true,
+                    dropdownColor: SystemCorePalette.panel,
+                    decoration: _selectorDecoration(),
+                    items: [
+                      for (var index = 0; index < episodes.length; index++)
+                        if (episodes[index].seasonNumber ==
+                            episodes[_selectedEpisode].seasonNumber)
+                          DropdownMenuItem(
+                            value: index,
+                            child: Text(
+                              '${_watchedEpisodes.contains(index) ? '✓  ' : ''}${episodes[index].label}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                    ],
+                    onChanged: (index) {
+                      if (index != null && index != _selectedEpisode) {
+                        _loadEpisode(index);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 18),
+                ],
+                if (widget.item.voiceovers.isNotEmpty) ...[
+                  const _PlayerSectionLabel('ОЗВУЧКА'),
+                  const SizedBox(height: 8),
+                  Builder(
+                    builder: (context) {
+                      final episode = _hasEpisodes
+                          ? widget.item.episodes[_selectedEpisode]
+                          : null;
+                      final availableVoiceovers = _availableVoiceoversFor(
+                        episode,
+                      );
+                      if (availableVoiceovers.isEmpty) {
+                        return Text(
+                          widget.item.voiceovers.join(' · '),
+                          style: const TextStyle(
+                            color: SystemCorePalette.muted,
+                            fontSize: 12,
+                          ),
+                        );
+                      }
+                      return DropdownButtonFormField<String>(
+                        key: const ValueKey('voiceover-selector'),
+                        initialValue:
+                            availableVoiceovers.contains(_selectedVoiceover)
+                            ? _selectedVoiceover
+                            : availableVoiceovers.first,
+                        isExpanded: true,
+                        dropdownColor: SystemCorePalette.panel,
+                        decoration: _selectorDecoration(),
+                        items: [
+                          for (final voiceover in availableVoiceovers)
+                            DropdownMenuItem(
+                              value: voiceover,
+                              child: Text(
+                                voiceover,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        onChanged: (voiceover) {
+                          if (voiceover == null ||
+                              voiceover == _selectedVoiceover) {
+                            return;
+                          }
+                          setState(() => _selectedVoiceover = voiceover);
+                          unawaited(
+                            _playbackSettingsStore.saveVoiceover(
+                              widget.item.id,
+                              voiceover,
+                            ),
+                          );
+                          _loadEpisode(_selectedEpisode);
+                        },
+                      );
+                    },
+                  ),
+                  if (_selectedVoiceover != null &&
+                      _availableVoiceoversFor(
+                        _hasEpisodes ? episodes[_selectedEpisode] : null,
+                      ).contains(_selectedVoiceover))
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        key: const ValueKey('voiceover-like-button'),
+                        onPressed: () =>
+                            _toggleVoiceoverLike(_selectedVoiceover!),
+                        icon: Icon(
+                          _likedVoiceovers.contains(_selectedVoiceover)
+                              ? Icons.thumb_up
+                              : Icons.thumb_up_outlined,
+                          size: 18,
+                        ),
+                        label: Text(
+                          _likedVoiceovers.contains(_selectedVoiceover)
+                              ? 'Озвучка нравится'
+                              : 'Нравится эта озвучка',
+                        ),
+                      ),
+                    ),
+                ],
+                if (_availableQualitiesFor(
                   _hasEpisodes ? episodes[_selectedEpisode] : null,
-                ))
-                  DropdownMenuItem(value: quality, child: Text(quality)),
+                ).isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  const _PlayerSectionLabel('КАЧЕСТВО ВИДЕО'),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    key: const ValueKey('quality-selector'),
+                    initialValue:
+                        _availableQualitiesFor(
+                          _hasEpisodes ? episodes[_selectedEpisode] : null,
+                        ).contains(_selectedQuality)
+                        ? _selectedQuality
+                        : _availableQualitiesFor(
+                            _hasEpisodes ? episodes[_selectedEpisode] : null,
+                          ).first,
+                    isExpanded: true,
+                    dropdownColor: SystemCorePalette.panel,
+                    decoration: _selectorDecoration(),
+                    items: [
+                      for (final quality in _availableQualitiesFor(
+                        _hasEpisodes ? episodes[_selectedEpisode] : null,
+                      ))
+                        DropdownMenuItem(value: quality, child: Text(quality)),
+                    ],
+                    onChanged: (quality) {
+                      if (quality != null) unawaited(_selectQuality(quality));
+                    },
+                  ),
+                ],
               ],
-              onChanged: (quality) {
-                if (quality != null) unawaited(_selectQuality(quality));
-              },
             ),
-          ],
-        ],
-      ),
     );
   }
 
