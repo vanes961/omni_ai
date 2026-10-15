@@ -360,8 +360,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     if (_lastRssCandidateCount == 0) {
       return 'Источник не вернул пригодных RSS-статей. Проверь доступность RSS и повтори запрос позже.';
     }
-    if (_lastRssRelevantCandidateCount == 0 &&
-        _lastRssCandidateCount! > 0) {
+    if (_lastRssRelevantCandidateCount == 0 && _lastRssCandidateCount! > 0) {
       return 'RSS-кандидаты получены, но строгий фильтр интересов не оставил подходящих статей. Проверь совпадение выбранных тем с заголовками и описаниями источников.';
     }
     if ((_lastLocalizedCandidateCount ?? 0) == 0) {
