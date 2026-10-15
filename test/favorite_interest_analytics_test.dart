@@ -171,6 +171,9 @@ void main() {
     expect(breakdown.lessInterestedPenalty, -4);
     expect(breakdown.trailerBonus, 0);
     expect(breakdown.categoryBonus, 0.35);
+    expect(breakdown.favoriteInterestByTerm, {'anime': 2});
+    expect(breakdown.reactionByTopic, {'gaming': 3});
+    expect(breakdown.lessInterestedTerms, {'anime'});
     expect(
       analytics.scoreNews(
         article,
