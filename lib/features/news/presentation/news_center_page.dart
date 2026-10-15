@@ -450,13 +450,17 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     ? DiagnosticStatus.error
                     : (_lastRssCandidateCount == null
                           ? DiagnosticStatus.notChecked
-                          : DiagnosticStatus.ok)),
+                          : (_lastRssCandidateCount == 0
+                                ? DiagnosticStatus.warning
+                                : DiagnosticStatus.ok))),
           details: noFeedInterests
               ? 'RSS не запрашивался: не выбраны интересы. Это не доказывает сетевую ошибку; выбери тему, обнови ленту и повтори диагностику.'
               : _newsError != null
               ? 'Последняя операция завершилась с ошибкой на этапе «$_lastNewsFailureStage» ($_lastNewsFailureType): $_newsError'
               : _lastRssCandidateCount == null
               ? 'Нет результата реального RSS-запроса в этой сессии. Нажми «Обновить персональную ленту» и запусти диагностику повторно.'
+              : _lastRssCandidateCount == 0
+              ? 'RSS-запрос завершился без пригодных кандидатов. Это не подтверждает, что лента исправна: проверь ответ источника и повтори запрос.'
               : 'Последний RSS-запрос завершился; кандидатов получено: $_lastRssCandidateCount',
         ),
       ],
