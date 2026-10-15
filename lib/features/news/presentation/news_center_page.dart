@@ -732,7 +732,10 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _lastRssDurationMs = rssWatch.elapsedMilliseconds;
       if (revisionAtStart != _interestRevision) return;
       if (mounted) {
-        setState(() => _lastRssCandidateCount = fetchedArticles.length);
+        setState(
+          () => _lastRssCandidateCount =
+              _newsService.lastCandidateCount ?? fetchedArticles.length,
+        );
       }
       // Prefer an existing Russian edition when a conservative match is found.
       // Foreign articles without a match remain in the feed unchanged.
