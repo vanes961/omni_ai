@@ -40,7 +40,7 @@ class OpenRouterProvider implements AIProvider {
       if (apiKey == null || apiKey.isEmpty) {
         throw const AIEngineException(
           AIError(
-            code: AIErrorCode.invalidRequest,
+            code: AIErrorCode.configuration,
             message: 'Облачный AI не настроен: нет ключа OpenRouter.',
           ),
         );
@@ -151,7 +151,13 @@ class OpenRouterProvider implements AIProvider {
       }
       throw _providerError('OpenRouter request was aborted.');
     } on http.ClientException catch (error) {
-      throw _providerError('OpenRouter transport failed: ${error.message}');
+      throw AIEngineException(
+        AIError(
+          code: AIErrorCode.providerUnavailable,
+          message: 'OpenRouter transport failed: ${error.message}',
+          retryable: true,
+        ),
+      );
     } on FormatException catch (error) {
       throw _malformedResponse(error.message);
     } on Object catch (error) {
@@ -207,9 +213,16 @@ class OpenRouterProvider implements AIProvider {
       // Keep HTTP status if the body isn't JSON.
     }
     final status = response.statusCode;
+    final code = switch (status) {
+      401 || 403 => AIErrorCode.unauthorized,
+      402 => AIErrorCode.configuration,
+      429 => AIErrorCode.rateLimited,
+      >= 500 => AIErrorCode.providerUnavailable,
+      _ => AIErrorCode.provider,
+    };
     return AIEngineException(
       AIError(
-        code: AIErrorCode.provider,
+        code: code,
         message: 'OpenRouter API returned $status: $detail',
         retryable: status == 429 || status >= 500,
       ),
@@ -218,7 +231,7 @@ class OpenRouterProvider implements AIProvider {
 
   AIEngineException _malformedResponse(String detail) => AIEngineException(
     AIError(
-      code: AIErrorCode.provider,
+      code: AIErrorCode.malformedResponse,
       message: 'OpenRouter returned a malformed response: $detail',
       retryable: true,
     ),
