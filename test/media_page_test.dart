@@ -970,6 +970,15 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('seek-forward-10')));
     await tester.pumpAndSettle();
     expect(controller.position, duration);
+
+    await tester.tap(find.byKey(const ValueKey('fullscreen-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('OMNI // PLAYER'), findsNothing);
+    expect(find.byTooltip('Выйти из полноэкранного режима'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('fullscreen-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('OMNI // PLAYER'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
