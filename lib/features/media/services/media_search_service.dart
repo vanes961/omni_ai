@@ -264,8 +264,7 @@ class MediaSearchService {
           ).timeout(const Duration(seconds: 12));
           if (response.statusCode != 200) return const <MediaItem>[];
           final decoded = jsonDecode(response.body);
-          if (decoded is! Map<String, dynamic> ||
-              decoded['results'] is! List) {
+          if (decoded is! Map<String, dynamic> || decoded['results'] is! List) {
             return const <MediaItem>[];
           }
           final items = <MediaItem>[];
@@ -276,14 +275,12 @@ class MediaSearchService {
             final countries = (raw['origin_country'] as List? ?? const [])
                 .whereType<String>();
             final isAnime =
-                isTv &&
-                (originalLanguage == 'ja' || countries.contains('JP'));
-            if (type == 'Аниме' && !isAnime ||
-                type == 'Сериал' && isAnime) {
+                isTv && (originalLanguage == 'ja' || countries.contains('JP'));
+            if (type == 'Аниме' && !isAnime || type == 'Сериал' && isAnime) {
               continue;
             }
-            final title =
-                (raw[isTv ? 'name' : 'title'] as String? ?? '').trim();
+            final title = (raw[isTv ? 'name' : 'title'] as String? ?? '')
+                .trim();
             final id = raw['id'];
             if (title.isEmpty || id is! num) continue;
             final poster = raw['poster_path'] as String?;
