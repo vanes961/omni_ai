@@ -916,6 +916,63 @@ void main() {
     expect(find.text('Studio A'), findsNothing);
   });
 
+  testWidgets('playback timeline and ten-second seek controls work', (
+    tester,
+  ) async {
+    const duration = Duration(minutes: 90);
+    final controller = _FakePlaybackController(duration: duration)
+      ..position = const Duration(seconds: 20);
+    final item = MediaItem(
+      id: 'timeline-controls-test',
+      title: 'Timeline Controls Test',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8,
+      voiceovers: const [],
+      videoUrl: 'https://example.com/video.mp4',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerPage(
+          item: item,
+          preferences: UserPreferences(),
+          resumePositionStore: _FakeMediaResumePositionStore(),
+          playerFactory: (_) => controller,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('playback-progress-slider')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('seek-back-10')), findsOneWidget);
+    expect(find.byKey(const ValueKey('seek-forward-10')), findsOneWidget);
+    expect(find.text('0:20'), findsOneWidget);
+    expect(find.text('1:30:00'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('seek-back-10')));
+    await tester.pumpAndSettle();
+    expect(controller.position, const Duration(seconds: 10));
+
+    await tester.tap(find.byKey(const ValueKey('seek-forward-10')));
+    await tester.pumpAndSettle();
+    expect(controller.position, const Duration(seconds: 20));
+
+    controller.position = Duration.zero;
+    await tester.tap(find.byKey(const ValueKey('seek-back-10')));
+    await tester.pumpAndSettle();
+    expect(controller.position, Duration.zero);
+
+    controller.position = duration - const Duration(seconds: 5);
+    await tester.tap(find.byKey(const ValueKey('seek-forward-10')));
+    await tester.pumpAndSettle();
+    expect(controller.position, duration);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('skip intro and credits controls seek to expected positions', (
     tester,
   ) async {
