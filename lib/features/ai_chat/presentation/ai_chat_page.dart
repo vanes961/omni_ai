@@ -386,7 +386,9 @@ class _AIChatPageState extends State<AIChatPage> {
                                 ? Colors.orangeAccent.withValues(alpha: 0.6)
                                 : message.isUser
                                 ? SystemCorePalette.green.withValues(alpha: 0.4)
-                                : SystemCorePalette.border.withValues(alpha: 0.45),
+                                : SystemCorePalette.border.withValues(
+                                    alpha: 0.45,
+                                  ),
                           ),
                         ),
                         child: Column(
