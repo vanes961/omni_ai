@@ -306,6 +306,49 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     return 'Нажмите «Обновить», чтобы загрузить свежие материалы по выбранным темам.';
   }
 
+  String _newsDiagnosticNextStep() {
+    final profile = _profile;
+    if (profile == null) {
+      return 'Профиль ещё загружается. Подожди завершения загрузки и повтори диагностику.';
+    }
+    if (profile.topics.every((topic) => topic.trim().isEmpty) &&
+        !profile.includeCriticalOutsideInterests) {
+      return 'Добавь хотя бы один интерес и нажми «Сохранить интересы», затем обнови ленту.';
+    }
+    if (_refreshingNews) {
+      return 'Дождись завершения текущего обновления и снова сформируй отчёт.';
+    }
+    if (_newsError != null) {
+      return switch (_lastNewsFailureStage) {
+        'Получение RSS-кандидатов' =>
+          'Проверь доступ к Google News, DNS/VPN и HTTP-ответ источника; затем повтори обновление.',
+        'Поиск русскоязычных дублей и локализация' =>
+          'Проверь доступность выбранного AI-провайдера и повтори загрузку; RSS-этап уже завершился.',
+        'Персонализация и сортировка' =>
+          'Проверь сохранённые реакции, избранное и локальное хранилище; первичная загрузка RSS уже завершилась.',
+        'Сохранение кэша' =>
+          'Материалы уже загружены; проверь хранилище приложения. Онлайн-лента должна оставаться доступной.',
+        _ => 'Сохрани отчёт целиком: тип сбоя и этап нужны для следующего точечного теста.',
+      };
+    }
+    if (_lastRssCandidateCount == null) {
+      return 'Нажми «Обновить персональную ленту», дождись результата и сформируй отчёт ещё раз.';
+    }
+    if (_lastRssCandidateCount == 0) {
+      return 'Источник не вернул пригодных RSS-статей. Проверь доступность RSS и повтори запрос позже.';
+    }
+    if ((_lastLocalizedCandidateCount ?? 0) == 0) {
+      return 'RSS вернул материалы, но после локализации не осталось кандидатов. Проверь этап локализации.';
+    }
+    if ((_lastRankedCandidateCount ?? 0) == 0) {
+      return 'Материалы получены, но персонализация не оставила результатов. Проверь выбранные темы и фильтр релевантности.';
+    }
+    if (_articles.isEmpty) {
+      return 'Кандидаты были обработаны, но на экране ничего нет. Проверь отображение ленты и состояние кэша.';
+    }
+    return 'Критических проблем в последнем проходе не обнаружено. Если проблема повторится, скопируй отчёт сразу после неё.';
+  }
+
   Future<void> _runDiagnostics() async {
     final profile = _profile;
     final noFeedInterests =
@@ -370,6 +413,13 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           status: DiagnosticStatus.ok,
           details:
               'Сигналов интереса: ${_reactionWeights.length}; значения хранятся локально',
+        ),
+        DiagnosticCheck(
+          name: 'Рекомендуемый следующий шаг',
+          status: _newsError != null || _articles.isEmpty
+              ? DiagnosticStatus.warning
+              : DiagnosticStatus.ok,
+          details: _newsDiagnosticNextStep(),
         ),
         DiagnosticCheck(
           name: 'Сетевая доступность RSS',
