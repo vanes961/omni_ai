@@ -387,6 +387,33 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     return 'Критических проблем в последнем проходе не обнаружено. Если проблема повторится, скопируй отчёт сразу после неё.';
   }
 
+  String _aiFailureGuidance(AIEngineException error) {
+    final cause = switch (error.error.code) {
+      AIErrorCode.cancelled => 'Запрос был отменён; повтори проверку вручную.',
+      AIErrorCode.timeout =>
+        'Провайдер не ответил вовремя. Проверь соединение и повтори позже.',
+      AIErrorCode.configuration =>
+        'Облачный AI не настроен или аккаунт провайдера требует проверки. Проверь настройки ключа и биллинга.',
+      AIErrorCode.unauthorized =>
+        'Провайдер отклонил авторизацию. Проверь ключ и разрешения аккаунта.',
+      AIErrorCode.rateLimited =>
+        'Достигнут лимит запросов или квоты. Проверь лимит и повтори позже.',
+      AIErrorCode.providerUnavailable =>
+        'Провайдер или сеть временно недоступны. Проверь соединение и повтори позже.',
+      AIErrorCode.malformedResponse =>
+        'Провайдер вернул ответ в неожиданном формате.',
+      AIErrorCode.invalidRequest =>
+        'Провайдер отклонил запрос как некорректный. Проверь параметры запроса.',
+      AIErrorCode.provider =>
+        'Провайдер вернул ошибку, которую не удалось точнее классифицировать.',
+      AIErrorCode.unknown => 'Причина не классифицирована; проверь журнал провайдера.',
+    };
+    final retry = error.error.retryable
+        ? ' Повтор может помочь.'
+        : ' Автоматический повтор не рекомендуется без исправления причины.';
+    return '$cause$retry';
+  }
+
   String _newsRankingDiagnostic() {
     if (_articles.isEmpty) return 'Нет новостей для анализа рейтинга';
     final profile =
@@ -562,7 +589,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         aiAnalysis = response.text;
       } on AIEngineException catch (error) {
         aiAnalysis =
-            'ИИ-анализ недоступен. Код ошибки: ${error.error.code.name}. Сам диагностический отчёт сформирован локально.';
+            'ИИ-анализ недоступен. ${_aiFailureGuidance(error)} Код ошибки: ${error.error.code.name}. Сам диагностический отчёт сформирован локально.';
       } catch (error) {
         aiAnalysis =
             'ИИ-анализ недоступен (${error.runtimeType}). Сам диагностический отчёт сформирован локально.';
