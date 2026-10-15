@@ -28,12 +28,24 @@ class NewsSourceLocalizationService {
   Future<List<NewsArticle>> localizeCandidates(
     Iterable<NewsArticle> candidates,
   ) async {
+    final report = await localizeCandidatesWithReport(candidates);
+    return report.articles;
+  }
+
+  Future<NewsLocalizationResult> localizeCandidatesWithReport(
+    Iterable<NewsArticle> candidates,
+  ) async {
     final articles = candidates.toList(growable: false);
     final russianCandidates = articles
         .where((article) => article.language.toLowerCase() == 'ru')
         .toList(growable: false);
     final result = <NewsArticle>[];
     var translationAttempts = 0;
+    var translatedCount = 0;
+    var duplicateSuppressedCount = 0;
+    var budgetSkippedCount = 0;
+    var translationFailureCount = 0;
+    var foreignUntranslatedCount = 0;
 
     for (final article in articles) {
       // Video and trailer cards are metadata previews, not article bodies.
@@ -53,24 +65,44 @@ class NewsSourceLocalizationService {
       } else if (localized.status == TranslationStatus.foundRussianSource) {
         // Keep the Russian candidate already present in the input collection;
         // suppress only the foreign duplicate.
-        continue;
+        duplicateSuppressedCount++;
       } else if (aiEngine != null &&
           translationAttempts < maxAiTranslationsPerBatch) {
         translationAttempts++;
-        result.add(await _translateIfAvailable(article));
+        final translation = await _translateIfAvailable(article);
+        result.add(translation.article);
+        if (translation.translated) {
+          translatedCount++;
+        } else {
+          translationFailureCount++;
+          foreignUntranslatedCount++;
+        }
       } else {
         // Keep the source visible when the per-refresh translation budget is
-        // exhausted; the next refresh can process newer candidates.
+        // exhausted or no AI engine is configured.
         result.add(article);
+        foreignUntranslatedCount++;
+        if (aiEngine != null) {
+          budgetSkippedCount++;
+        }
       }
     }
 
-    return List<NewsArticle>.unmodifiable(result);
+    return NewsLocalizationResult(
+      articles: List<NewsArticle>.unmodifiable(result),
+      translatedCount: translatedCount,
+      duplicateSuppressedCount: duplicateSuppressedCount,
+      budgetSkippedCount: budgetSkippedCount,
+      translationFailureCount: translationFailureCount,
+      foreignUntranslatedCount: foreignUntranslatedCount,
+    );
   }
 
-  Future<NewsArticle> _translateIfAvailable(NewsArticle article) async {
+  Future<_TranslationAttempt> _translateIfAvailable(
+    NewsArticle article,
+  ) async {
     final engine = aiEngine;
-    if (engine == null) return article;
+    if (engine == null) return _TranslationAttempt(article, false);
     final cancellationToken = AICancellationToken();
     try {
       final response = await engine.execute(
@@ -96,36 +128,66 @@ class NewsSourceLocalizationService {
         },
       );
       final decoded = jsonDecode(response.text);
-      if (decoded is! Map<String, dynamic>) return article;
+      if (decoded is! Map<String, dynamic>) {
+        return _TranslationAttempt(article, false);
+      }
       final title = decoded['title'];
       final summary = decoded['summary'];
       if (title is! String || title.trim().isEmpty ||
           summary is! String) {
-        return article;
+        return _TranslationAttempt(article, false);
       }
-      return NewsArticle(
-        id: article.id,
-        title: title.trim(),
-        summary: summary.trim(),
-        sourceName: article.sourceName,
-        sourceUrl: article.sourceUrl,
-        publishedAt: article.publishedAt,
-        topics: article.topics,
-        language: 'ru',
-        region: article.region,
-        isCritical: article.isCritical,
-        isVerified: article.isVerified,
-        contentType: article.contentType,
-        videoUrl: article.videoUrl,
-        thumbnailUrl: article.thumbnailUrl,
-        channelName: article.channelName,
-        releaseDate: article.releaseDate,
-        releaseDateSourceUrl: article.releaseDateSourceUrl,
+      return _TranslationAttempt(
+        NewsArticle(
+          id: article.id,
+          title: title.trim(),
+          summary: summary.trim(),
+          sourceName: article.sourceName,
+          sourceUrl: article.sourceUrl,
+          publishedAt: article.publishedAt,
+          topics: article.topics,
+          language: 'ru',
+          region: article.region,
+          isCritical: article.isCritical,
+          isVerified: article.isVerified,
+          contentType: article.contentType,
+          videoUrl: article.videoUrl,
+          thumbnailUrl: article.thumbnailUrl,
+          channelName: article.channelName,
+          releaseDate: article.releaseDate,
+          releaseDateSourceUrl: article.releaseDateSourceUrl,
+        ),
+        true,
       );
     } catch (_) {
       // A translation provider can be offline or return malformed output.
       // Keep the original source card visible rather than failing the feed.
-      return article;
+      return _TranslationAttempt(article, false);
     }
   }
+}
+
+class NewsLocalizationResult {
+  const NewsLocalizationResult({
+    required this.articles,
+    required this.translatedCount,
+    required this.duplicateSuppressedCount,
+    required this.budgetSkippedCount,
+    required this.translationFailureCount,
+    required this.foreignUntranslatedCount,
+  });
+
+  final List<NewsArticle> articles;
+  final int translatedCount;
+  final int duplicateSuppressedCount;
+  final int budgetSkippedCount;
+  final int translationFailureCount;
+  final int foreignUntranslatedCount;
+}
+
+class _TranslationAttempt {
+  const _TranslationAttempt(this.article, this.translated);
+
+  final NewsArticle article;
+  final bool translated;
 }
