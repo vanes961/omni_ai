@@ -557,7 +557,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 350));
 
     expect(find.text('Диагностика OMNI AI'), findsOneWidget);
-    expect(find.textContaining('HTTP 503'), findsOneWidget);
+    expect(find.textContaining('HTTP 503'), findsNWidgets(2));
     expect(
       find.textContaining('RSS-источник вернул HTTP-ошибку'),
       findsOneWidget,
