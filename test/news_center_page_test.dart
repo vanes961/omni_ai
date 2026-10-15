@@ -348,8 +348,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    expect(find.text('Saved anime announcement'), findsOneWidget);
-    expect(requestCount, 0);
+    expect(find.text('Fresh anime announcement'), findsOneWidget);
+    expect(find.text('Saved anime announcement'), findsNothing);
+    expect(requestCount, greaterThan(0));
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
