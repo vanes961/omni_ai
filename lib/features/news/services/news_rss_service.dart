@@ -47,6 +47,9 @@ class NewsRssService {
   /// Number of candidates remaining after strict topic relevance filtering.
   int? lastRelevantCandidateCount;
 
+  /// Failed international editions from the most recent fetch.
+  List<String> lastFailedEditions = const <String>[];
+
   static const _topicKeywords = <String, List<String>>{
     'games': ['game', 'gaming', 'video game', 'игр', 'гейминг'],
     'anime': ['anime', 'аниме'],
@@ -136,6 +139,7 @@ class NewsRssService {
   ) async {
     lastCandidateCount = null;
     lastRelevantCandidateCount = null;
+    lastFailedEditions = const <String>[];
     if (profile.topics.every((topic) => topic.trim().isEmpty) &&
         !profile.includeCriticalOutsideInterests) {
       lastCandidateCount = 0;
@@ -168,6 +172,7 @@ class NewsRssService {
           failedEditions.add(
             '${locale[0]}-${locale[1]}: ${_failureSummary(error)}',
           );
+          lastFailedEditions = List<String>.unmodifiable(failedEditions);
           return const <NewsArticle>[];
         }
       }),
