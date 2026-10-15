@@ -29,7 +29,7 @@ class NewsRssException extends http.ClientException {
   final int? statusCode;
 }
 
-/// Reads public Google News RSS search results. No API key is embedded in the
+/// Reads public Google News RSS feeds and search results. No API key is embedded in the
 /// application. RSS excerpts are displayed with source attribution; full
 /// publisher articles remain at their original source.
 class NewsRssService {
