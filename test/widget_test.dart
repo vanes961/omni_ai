@@ -55,7 +55,7 @@ void main() {
 
     expect(find.byType(DashboardPage), findsOneWidget);
     expect(find.text('01 // СФЕРЫ ИНТЕРЕСОВ'), findsNothing);
-    expect(find.text('PERSONAL AI SYSTEM'), findsOneWidget);
+    expect(find.text('Ваш личный помощник'), findsOneWidget);
     expect(find.text('AI-GUARD ACTIVE'), findsNothing);
     expect(
       tester
@@ -80,14 +80,14 @@ void main() {
       await tester.pumpWidget(MyApp(preferencesStore: store));
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('СИСТЕМА ИНИЦИАЛИЗИРУЕТСЯ'), findsOneWidget);
+      expect(find.text('Подготовка'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       tester.view.physicalSize = const Size(800, 400);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('СИСТЕМА ИНИЦИАЛИЗИРУЕТСЯ'), findsOneWidget);
+      expect(find.text('Подготовка'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       store.complete(null);
