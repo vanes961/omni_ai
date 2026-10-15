@@ -78,7 +78,6 @@ void main() {
     expect(find.byTooltip('Показать AI-компаньона'), findsNothing);
     expect(find.byIcon(Icons.smart_toy_rounded), findsOneWidget);
     expect(find.text('Текущий экран'), findsOneWidget);
-    await _disposeDependencies(tester, dependencies);
   });
 
   testWidgets('can drag the companion without removing the current screen', (
@@ -109,7 +108,6 @@ void main() {
     expect(after.dy, lessThan(before.dy));
     expect(find.text('Текущий экран'), findsOneWidget);
     expect(tester.takeException(), isNull);
-    await _disposeDependencies(tester, dependencies);
   });
 }
 
