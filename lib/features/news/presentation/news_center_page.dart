@@ -313,23 +313,20 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   String _emptyFeedMessage(NewsInterestProfile profile) {
     final hasNoTopics = profile.topics.isEmpty;
     final criticalNewsDisabled = !profile.includeCriticalOutsideInterests;
-    if (hasNoTopics && criticalNewsDisabled) {
-      return 'Выберите интересы ниже, чтобы наполнить ленту подходящими новостями. Общий поток без персонализации не показывается.';
-    }
     if (_hasCompletedNewsFetch) {
-      return 'По выбранным темам сейчас не найдено подходящих публикаций. Попробуйте добавить более широкую тему или обновить ленту позже.';
+      return hasNoTopics && criticalNewsDisabled
+          ? 'Общий поток новостей пока не вернул пригодных публикаций. Попробуйте обновить ленту позже.'
+          : 'По выбранным темам сейчас не найдено подходящих публикаций. Попробуйте добавить более широкую тему или обновить ленту позже.';
     }
-    return 'Нажмите «Обновить», чтобы загрузить свежие материалы по выбранным темам.';
+    return hasNoTopics && criticalNewsDisabled
+        ? 'Нажмите «Обновить», чтобы загрузить свежие новости. Интересы можно настроить позже.'
+        : 'Нажмите «Обновить», чтобы загрузить свежие материалы по выбранным темам.';
   }
 
   String _newsDiagnosticNextStep() {
     final profile = _profile;
     if (profile == null) {
       return 'Профиль ещё загружается. Подожди завершения загрузки и повтори диагностику.';
-    }
-    if (profile.topics.every((topic) => topic.trim().isEmpty) &&
-        !profile.includeCriticalOutsideInterests) {
-      return 'Добавь хотя бы один интерес и нажми «Сохранить интересы», затем обнови ленту.';
     }
     if (_refreshingNews) {
       return 'Дождись завершения текущего обновления и снова сформируй отчёт.';
@@ -483,10 +480,6 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
 
   Future<void> _runDiagnostics() async {
     final profile = _profile;
-    final noFeedInterests =
-        profile != null &&
-        profile.topics.every((topic) => topic.trim().isEmpty) &&
-        !profile.includeCriticalOutsideInterests;
     final report = DiagnosticReport(
       createdAt: DateTime.now(),
       checks: [
@@ -494,13 +487,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           name: 'Профиль интересов',
           status: profile == null
               ? DiagnosticStatus.warning
-              : (noFeedInterests
-                    ? DiagnosticStatus.warning
-                    : DiagnosticStatus.ok),
+              : DiagnosticStatus.ok,
           details: profile == null
               ? 'Профиль ещё не загружен'
-              : noFeedInterests
-              ? 'Темы не выбраны; персональная лента намеренно не запускает RSS-запрос'
+              : profile.topics.every((topic) => topic.trim().isEmpty) &&
+                    !profile.includeCriticalOutsideInterests
+              ? 'Интересы пока не настроены; отображается общий поток новостей'
               : 'Выбрано тем: ${profile.topics.length}',
         ),
         DiagnosticCheck(
@@ -574,7 +566,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               : _newsCacheLoadError != null
               ? 'Не удалось восстановить локальный кэш (${_newsCacheLoadError!}). Выполнена попытка загрузить свежую ленту; проверь локальное хранилище.'
               : _newsCacheIsStale
-              ? 'Локальный кэш отсутствует, не соответствует текущим интересам или старше 6 часов. При доступных интересах выполняется обновление; после успешной записи кэш будет отмечен актуальным.'
+              ? 'Локальный кэш отсутствует, не соответствует текущему профилю или старше 6 часов. Выполняется обновление; после успешной записи кэш будет отмечен актуальным.'
               : 'Загрузка кэша завершена; отметка времени соответствует актуальному кэшу',
         ),
         DiagnosticCheck(
