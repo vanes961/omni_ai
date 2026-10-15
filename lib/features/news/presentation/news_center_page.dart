@@ -589,25 +589,21 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         ),
         DiagnosticCheck(
           name: 'Результат RSS-запроса',
-          status: noFeedInterests
-              ? DiagnosticStatus.warning
-              : (_newsError != null
-                    ? DiagnosticStatus.error
-                    : (_lastRssCandidateCount == null
-                          ? DiagnosticStatus.notChecked
-                          : (_lastRssCandidateCount == 0 ||
-                                    _lastRssRelevantCandidateCount == 0 ||
-                                    _lastRssFailedEditions.isNotEmpty
-                                ? DiagnosticStatus.warning
-                                : DiagnosticStatus.ok))),
-          details: noFeedInterests
-              ? 'RSS не запрашивался: не выбраны интересы. Это не доказывает сетевую ошибку; выбери тему, обнови ленту и повтори диагностику.'
-              : _newsError != null
+          status: _newsError != null
+              ? DiagnosticStatus.error
+              : (_lastRssCandidateCount == null
+                    ? DiagnosticStatus.notChecked
+                    : (_lastRssCandidateCount == 0 ||
+                              _lastRssRelevantCandidateCount == 0 ||
+                              _lastRssFailedEditions.isNotEmpty
+                          ? DiagnosticStatus.warning
+                          : DiagnosticStatus.ok)),
+          details: _newsError != null
               ? 'Последняя операция завершилась с ошибкой на этапе «$_lastNewsFailureStage» ($_lastNewsFailureType): $_newsError'
               : _lastRssCandidateCount == null
               ? 'Нет результата реального RSS-запроса в этой сессии. Нажми «Обновить персональную ленту» и запусти диагностику повторно.'
               : _lastRssCandidateCount == 0
-              ? 'RSS-запрос завершился без пригодных кандидатов. Это не подтверждает, что лента исправна: проверь ответ источника и повтори запрос.'
+              ? 'RSS-запрос завершился без пригодных кандидатов. Проверь ответ источника и повтори запрос.'
               : _lastRssRelevantCandidateCount == 0
               ? 'RSS вернул $_lastRssCandidateCount уникальных кандидатов, но фильтр интересов не оставил подходящих публикаций.'
               : 'RSS-запрос завершился; до фильтра получено: $_lastRssCandidateCount, после фильтра интересов: ${_lastRssRelevantCandidateCount ?? 'нет данных'}',
