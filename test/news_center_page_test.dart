@@ -12,6 +12,7 @@ import 'package:omni_ai/features/news/data/news_interest_repository.dart';
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/presentation/news_center_page.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
+import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 void main() {
   testWidgets('renders real RSS candidates on first visit with saved interests', (
@@ -687,6 +688,47 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('migrates supported legacy categories into news interests', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+    final repository = _MemoryNewsInterestRepository(
+      const NewsInterestProfile(),
+    );
+    final legacy = UserPreferences()
+      ..categories = ['Anime', 'Манга', 'life', 'Telegram'];
+    final preferencesStore = _MemoryUserPreferencesStore();
+    final service = NewsRssService(
+      client: MockClient(
+        (_) async => http.Response('<rss><channel /></rss>', 200),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NewsCenterPage(
+          repository: repository,
+          newsService: service,
+          legacyPreferences: legacy,
+          preferencesStore: preferencesStore,
+        ),
+      ),
+    );
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(repository.profile.topics, ['anime', 'manga']);
+    expect(legacy.newsInterestsMigrated, isTrue);
+    expect(preferencesStore.saved, same(legacy));
+    expect(legacy.categories, ['Anime', 'Манга', 'life', 'Telegram']);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('explains why the feed is empty when no interests are selected', (
     WidgetTester tester,
   ) async {
@@ -743,6 +785,18 @@ class _MemoryNewsInterestRepository implements NewsInterestRepository {
   Future<void> dispose() async {}
 }
 
+
+class _MemoryUserPreferencesStore implements UserPreferencesStore {
+  UserPreferences? saved;
+
+  @override
+  Future<UserPreferences?> load() async => saved;
+
+  @override
+  Future<void> save(UserPreferences preferences) async {
+    saved = preferences;
+  }
+}
 
 class _DelayedNewsCacheStore implements NewsCacheStringStore {
   final Completer<void> releaseReads = Completer<void>();
