@@ -69,6 +69,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   MediaPlaybackController? _player;
   Object? _playerError;
   bool _isLoading = true;
+  bool _isFullscreen = false;
   int _selectedEpisode = 0;
   int _playerGeneration = 0;
   Timer? _progressTimer;
@@ -181,6 +182,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     _playerGeneration++;
+    if (_isFullscreen) unawaited(_restoreSystemUi());
     WidgetsBinding.instance.removeObserver(this);
     _progressTimer?.cancel();
     _positionTimer?.cancel();
@@ -700,6 +702,35 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   Future<void> _seekBy(MediaPlaybackController player, Duration offset) =>
       _seekTo(player, player.position + offset);
 
+  Future<void> _toggleFullscreen() async {
+    final enable = !_isFullscreen;
+    try {
+      await SystemChrome.setEnabledSystemUIMode(
+        enable ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+      );
+      await SystemChrome.setPreferredOrientations(
+        enable
+            ? const [
+                DeviceOrientation.landscapeLeft,
+                DeviceOrientation.landscapeRight,
+              ]
+            : const [],
+      );
+      if (mounted) setState(() => _isFullscreen = enable);
+    } on Object catch (error) {
+      if (mounted) setState(() => _playerError = error);
+    }
+  }
+
+  Future<void> _restoreSystemUi() async {
+    try {
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      await SystemChrome.setPreferredOrientations(const []);
+    } on Object {
+      // Restoring platform UI must not block widget disposal.
+    }
+  }
+
   Future<void> _togglePlayback(MediaPlaybackController player) async {
     try {
       if (player.isPlaying) {
@@ -732,11 +763,15 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
     return Scaffold(
       backgroundColor: SystemCorePalette.background,
-      appBar: AppBar(
-        title: const Text('OMNI // PLAYER'),
-        backgroundColor: SystemCorePalette.background,
-      ),
-      body: ListView(
+      appBar: _isFullscreen
+          ? null
+          : AppBar(
+              title: const Text('OMNI // PLAYER'),
+              backgroundColor: SystemCorePalette.background,
+            ),
+      body: _isFullscreen
+          ? Center(child: _buildPlayerSurface())
+          : ListView(
         key: const ValueKey('player-page-scroll'),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
@@ -1137,6 +1172,21 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                             onPressed: () =>
                                 _seekBy(player, const Duration(seconds: 10)),
                             icon: const Icon(Icons.forward_10, size: 22),
+                            color: Colors.white,
+                          ),
+                          IconButton(
+                            key: const ValueKey('fullscreen-toggle'),
+                            tooltip: _isFullscreen
+                                ? 'Выйти из полноэкранного режима'
+                                : 'Полноэкранный режим',
+                            visualDensity: VisualDensity.compact,
+                            onPressed: _toggleFullscreen,
+                            icon: Icon(
+                              _isFullscreen
+                                  ? Icons.fullscreen_exit
+                                  : Icons.fullscreen,
+                              size: 22,
+                            ),
                             color: Colors.white,
                           ),
                           const Spacer(),
