@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,7 +46,6 @@ void main() {
 
     expect(find.text('OMNI AI · помощник'), findsNothing);
     expect(find.text('Текущий экран'), findsOneWidget);
-    await _disposeDependencies(tester, dependencies);
   });
 
   testWidgets('can hide and restore the floating companion', (tester) async {
@@ -116,18 +113,3 @@ void main() {
   });
 }
 
-Future<void> _disposeDependencies(
-  WidgetTester tester,
-  AppDependencies dependencies,
-) async {
-  await tester.pumpWidget(const SizedBox.shrink());
-  await tester.pump();
-  await tester.runAsync(
-    () => dependencies.dispose().timeout(
-      const Duration(seconds: 5),
-      onTimeout: () => throw TimeoutException(
-        'Floating companion dependencies disposal timed out.',
-      ),
-    ),
-  );
-}
