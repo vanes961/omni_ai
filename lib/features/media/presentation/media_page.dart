@@ -895,16 +895,18 @@ class _MediaPosterCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 3),
-              Text(
-                item.voiceovers.join(' · '),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: SystemCorePalette.muted,
-                  fontSize: 8,
+              if (item.voiceovers.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                Text(
+                  item.voiceovers.join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: SystemCorePalette.muted,
+                    fontSize: 8,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
