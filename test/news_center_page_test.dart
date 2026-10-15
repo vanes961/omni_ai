@@ -620,7 +620,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('stops loading a generic feed after all interests are removed', (
+  testWidgets('loads a generic feed after all interests are removed', (
     WidgetTester tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -678,17 +678,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    expect(requestCount, 3);
-    expect(find.text('World leaders meet at summit'), findsNothing);
-    await tester.dragUntilVisible(
-      find.textContaining('Общий поток без персонализации не показывается.'),
-      find.byType(Scrollable).first,
-      const Offset(0, 300),
-    );
-    expect(
-      find.textContaining('Общий поток без персонализации не показывается.'),
-      findsOneWidget,
-    );
+    expect(requestCount, 6);
+    expect(find.text('World leaders meet at summit'), findsOneWidget);
+    expect(find.text('НАСТРОИТЬ ИНТЕРЕСЫ'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
