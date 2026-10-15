@@ -758,12 +758,15 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // digest generated from the previous feed after a successful refresh.
       // Cache writes are best-effort: report a storage warning, but keep the
       // freshly fetched articles visible if persistence fails.
+      final cacheWatch = Stopwatch();
       try {
         failureStage = 'Сохранение кэша';
         if (mounted) setState(() => _newsDiagnosticStage = failureStage);
-        final cacheWatch = Stopwatch()..start();
+        cacheWatch.start();
         await _newsCache.saveDigest(null);
         if (revisionAtStart != _interestRevision) {
+          cacheWatch.stop();
+          _lastCacheWriteDurationMs = cacheWatch.elapsedMilliseconds;
           await _newsCache.clear();
           return;
         }
@@ -782,7 +785,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           return;
         }
       } catch (error) {
-        cacheWatch.stop();
+        if (cacheWatch.isRunning) cacheWatch.stop();
         _lastCacheWriteDurationMs = cacheWatch.elapsedMilliseconds;
         if (mounted && revisionAtStart == _interestRevision) {
           setState(() {
