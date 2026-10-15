@@ -106,22 +106,23 @@ class NewsSourceLocalizationService {
       final response = await engine
           .execute(
             AIRequest(
-          id: 'news-translation-${DateTime.now().microsecondsSinceEpoch}',
-          systemInstruction:
-              'Translate news text into natural Russian. Preserve names, '
-              'numbers, factual meaning, and uncertainty. Do not add facts. '
-              'Return only a valid JSON object with string fields "title" '
-              'and "summary". Translate only the supplied text.',
-          prompt: jsonEncode({
-            'title': article.title,
-            'summary': article.summary,
-          }),
-          metadata: const {'feature': 'news_translation'},
-        ),
-        cancellationToken: cancellationToken,
-      ).timeout(
-        translationTimeout,
-        onTimeout: () {
+              id: 'news-translation-${DateTime.now().microsecondsSinceEpoch}',
+              systemInstruction:
+                  'Translate news text into natural Russian. Preserve names, '
+                  'numbers, factual meaning, and uncertainty. Do not add facts. '
+                  'Return only a valid JSON object with string fields "title" '
+                  'and "summary". Translate only the supplied text.',
+              prompt: jsonEncode({
+                'title': article.title,
+                'summary': article.summary,
+              }),
+              metadata: const {'feature': 'news_translation'},
+            ),
+            cancellationToken: cancellationToken,
+          )
+          .timeout(
+            translationTimeout,
+            onTimeout: () {
               cancellationToken.cancel();
               throw TimeoutException('News translation timed out.');
             },
