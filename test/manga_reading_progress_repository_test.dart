@@ -68,6 +68,29 @@ void main() {
       );
     });
 
+    test('uses chapter label, not zero-based catalogue index, for boundaries', () {
+      final progress = MangaReadingProgress(
+        mangaId: 'mangadex:source',
+        chapterIndex: 3,
+        chapterLabel: '12.5',
+        updatedAt: DateTime.utc(2026, 10, 14),
+      ).toCrossContentProgress();
+
+      // Fractional chapter labels conservatively round up for spoiler safety.
+      expect(progress.chapter, 13);
+    });
+
+    test('does not infer a chapter boundary from index without numeric label', () {
+      final progress = MangaReadingProgress(
+        mangaId: 'mangadex:source',
+        chapterIndex: 20,
+        chapterLabel: 'Extra',
+        updatedAt: DateTime.utc(2026, 10, 14),
+      ).toCrossContentProgress();
+
+      expect(progress.chapter, isNull);
+    });
+
     test('adapts saved manga progress to spoiler-aware recommendations', () async {
       final saved = _progress('mangadex:source', 8, 1);
       final progress = saved.toCrossContentProgress();
@@ -208,6 +231,7 @@ MangaReadingProgress _progress(String id, int chapter, int minute) =>
     MangaReadingProgress(
       mangaId: id,
       chapterIndex: chapter,
+      chapterLabel: '$chapter',
       updatedAt: DateTime.utc(2026, 10, 14, 12, minute),
     );
 
