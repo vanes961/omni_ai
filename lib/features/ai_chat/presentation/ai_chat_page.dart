@@ -256,7 +256,7 @@ class _AIChatPageState extends State<AIChatPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'KAIROS // NEURAL LINK',
+                'OMNI AI  /  PERSONAL INTELLIGENCE',
                 style: TextStyle(
                   color: SystemCorePalette.muted,
                   fontSize: 10,
@@ -269,7 +269,7 @@ class _AIChatPageState extends State<AIChatPage> {
                 children: [
                   const Expanded(
                     child: Text(
-                      'AI-КУРАТОР',
+                      'ЛИЧНЫЙ ПОМОЩНИК',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 19,
@@ -374,20 +374,31 @@ class _AIChatPageState extends State<AIChatPage> {
                           : Alignment.centerLeft,
                       child: Container(
                         constraints: const BoxConstraints(maxWidth: 560),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(13),
+                        margin: EdgeInsets.only(
+                          bottom: 14,
+                          left: message.isUser ? 36 : 0,
+                          right: message.isUser ? 0 : 36,
+                        ),
+                        padding: const EdgeInsets.fromLTRB(15, 12, 15, 12),
                         decoration: BoxDecoration(
-                          color: message.isUser
-                              ? SystemCorePalette.green.withValues(alpha: 0.10)
+                          color: message.isError
+                              ? Colors.orangeAccent.withValues(alpha: 0.08)
+                              : message.isUser
+                              ? SystemCorePalette.green.withValues(alpha: 0.12)
                               : SystemCorePalette.panelElevated,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(18),
+                            topRight: const Radius.circular(18),
+                            bottomLeft: Radius.circular(message.isUser ? 18 : 5),
+                            bottomRight: Radius.circular(message.isUser ? 5 : 18),
+                          ),
                           border: Border.all(
                             color: message.isError
-                                ? Colors.orangeAccent.withValues(alpha: 0.6)
+                                ? Colors.orangeAccent.withValues(alpha: 0.55)
                                 : message.isUser
-                                ? SystemCorePalette.green.withValues(alpha: 0.4)
+                                ? SystemCorePalette.green.withValues(alpha: 0.32)
                                 : SystemCorePalette.border.withValues(
-                                    alpha: 0.45,
+                                    alpha: 0.42,
                                   ),
                           ),
                         ),
@@ -425,9 +436,18 @@ class _AIChatPageState extends State<AIChatPage> {
         ),
         Container(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: SystemCorePalette.panel,
-            border: Border(top: BorderSide(color: SystemCorePalette.border)),
+            border: const Border(
+              top: BorderSide(color: SystemCorePalette.border),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 16,
+                offset: const Offset(0, -4),
+              ),
+            ],
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -440,18 +460,53 @@ class _AIChatPageState extends State<AIChatPage> {
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => unawaited(_send()),
                   style: const TextStyle(color: Colors.white, fontSize: 13),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Напишите сообщение...',
+                    hintStyle: const TextStyle(
+                      color: SystemCorePalette.muted,
+                      fontSize: 13,
+                    ),
                     isDense: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+                    filled: true,
+                    fillColor: SystemCorePalette.background,
+                    contentPadding: const EdgeInsets.fromLTRB(16, 13, 16, 13),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(
+                        color: SystemCorePalette.border,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(
+                        color: SystemCorePalette.border,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(
+                        color: SystemCorePalette.green,
+                      ),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              IconButton.filled(
-                tooltip: _sending ? 'Отменить запрос' : 'Отправить',
-                onPressed: _sending ? _cancel : _send,
-                icon: Icon(_sending ? Icons.stop : Icons.send),
+              SizedBox(
+                width: 46,
+                height: 46,
+                child: IconButton.filled(
+                  tooltip: _sending ? 'Отменить запрос' : 'Отправить',
+                  onPressed: _sending ? _cancel : _send,
+                  style: IconButton.styleFrom(
+                    backgroundColor: SystemCorePalette.green,
+                    foregroundColor: SystemCorePalette.background,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  icon: Icon(_sending ? Icons.stop_rounded : Icons.arrow_upward),
+                ),
               ),
             ],
           ),
