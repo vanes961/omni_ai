@@ -74,18 +74,19 @@ void main() {
     test(
       'keeps writing a news item local when no current facts are requested',
       () async {
-      final response = await router.complete(
-        AIRequest(
-          id: 'write-news-item',
-          prompt: 'Помоги написать новость о школьном мероприятии',
-        ),
-        cancellationToken: AICancellationToken(),
-      );
+        final response = await router.complete(
+          AIRequest(
+            id: 'write-news-item',
+            prompt: 'Помоги написать новость о школьном мероприятии',
+          ),
+          cancellationToken: AICancellationToken(),
+        );
 
-      expect(response.providerId, 'local');
-      expect(local.calls, 1);
-      expect(cloud.calls, 0);
-    });
+        expect(response.providerId, 'local');
+        expect(local.calls, 1);
+        expect(cloud.calls, 0);
+      },
+    );
 
     test('routes explicit current-news requests to cloud', () async {
       final response = await router.complete(
