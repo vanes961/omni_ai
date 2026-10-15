@@ -69,6 +69,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   final NewsFeedbackRepository _newsFeedback = NewsFeedbackRepository();
   Map<String, double> _reactionWeights = const <String, double>{};
   bool _loadingNewsCache = true;
+  bool _newsCacheIsStale = false;
   int _interestRevision = 0;
   List<NewsArticle> _articles = const [];
   bool _showingCachedNews = false;
@@ -258,6 +259,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (!mounted) return;
       setState(() {
         _lastNewsRefreshAt = cacheMatchesProfile ? cacheSavedAt : null;
+        _newsCacheIsStale =
+            hasFeedInterests && (!cacheMatchesProfile || cacheIsStale);
         if (revisionAtStart == _interestRevision && cacheMatchesProfile) {
           _articles = cachedArticles;
           _digest = cached[1] as String?;
@@ -571,14 +574,18 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         ),
         DiagnosticCheck(
           name: 'Локальный кэш',
-          status: _loadingNewsCache || _newsCacheLoadError != null
+          status: _loadingNewsCache ||
+                  _newsCacheLoadError != null ||
+                  _newsCacheIsStale
               ? DiagnosticStatus.warning
               : DiagnosticStatus.ok,
           details: _loadingNewsCache
               ? 'Восстановление кэша ещё выполняется'
               : _newsCacheLoadError != null
               ? 'Не удалось восстановить локальный кэш (${_newsCacheLoadError!}). Выполнена попытка загрузить свежую ленту; проверь локальное хранилище.'
-              : 'Загрузка кэша завершена',
+              : _newsCacheIsStale
+              ? 'Локальный кэш отсутствует, не соответствует текущим интересам или старше 6 часов. При доступных интересах выполняется обновление; после успешной записи кэш будет отмечен актуальным.'
+              : 'Загрузка кэша завершена; отметка времени соответствует актуальному кэшу',
         ),
         DiagnosticCheck(
           name: 'Персонализация и рейтинг',
@@ -993,6 +1000,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         );
         cacheWatch.stop();
         _lastCacheWriteDurationMs = cacheWatch.elapsedMilliseconds;
+        if (mounted && revisionAtStart == _interestRevision) {
+          setState(() => _newsCacheIsStale = false);
+        }
         if (revisionAtStart != _interestRevision) {
           // Topic changes clear the cache too, but an in-flight write may finish
           // afterward. Clear again so stale results cannot survive that race.
