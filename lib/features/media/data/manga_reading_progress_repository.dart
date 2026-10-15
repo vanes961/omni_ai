@@ -38,11 +38,23 @@ class MangaReadingProgress {
 
   final DateTime updatedAt;
 
+  /// Parses a conservative chapter boundary from the provider's chapter label.
+  ///
+  /// [chapterIndex] is a zero-based position in the currently loaded catalogue,
+  /// not the manga's chapter number, so it must never unlock spoiler boundaries.
+  int? get spoilerSafeChapterPosition {
+    final value = double.tryParse(chapterLabel.trim());
+    if (value == null || !value.isFinite || value < 1) return null;
+
+    // Fractional chapters only unlock after the next whole-number boundary.
+    return value.ceil();
+  }
+
   /// Adapts persisted manga progress to the shared spoiler-aware engine.
   CrossContentProgress toCrossContentProgress() => CrossContentProgress(
     contentId: mangaId,
     type: CrossContentType.manga,
-    chapter: chapterIndex,
+    chapter: spoilerSafeChapterPosition,
   );
 
   Map<String, Object?> toJson() => {
