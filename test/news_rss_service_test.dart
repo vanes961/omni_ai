@@ -951,6 +951,7 @@ void main() {
 
       expect(articles, hasLength(1));
       expect(articles.single.title, 'Discovery story');
+      expect(articles.single.topics, isEmpty);
     },
   );
 
