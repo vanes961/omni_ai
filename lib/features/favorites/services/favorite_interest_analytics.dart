@@ -28,12 +28,55 @@ class FavoriteInterestAnalytics {
   const FavoriteInterestAnalytics();
 
   static const _stopWords = <String>{
-    'the', 'and', 'for', 'with', 'from', 'into', 'this', 'that', 'your',
-    'you', 'are', 'was', 'but', 'not', 'its', 'have', 'has', 'will',
-    'film', 'movie', 'series', 'season', 'episode', 'trailer',
-    'это', 'как', 'что', 'для', 'или', 'при', 'над', 'под', 'его',
-    'она', 'они', 'оно', 'так', 'все', 'всё', 'уже', 'ещё', 'еще',
-    'без', 'про', 'после', 'перед', 'когда', 'где', 'который',
+    'the',
+    'and',
+    'for',
+    'with',
+    'from',
+    'into',
+    'this',
+    'that',
+    'your',
+    'you',
+    'are',
+    'was',
+    'but',
+    'not',
+    'its',
+    'have',
+    'has',
+    'will',
+    'film',
+    'movie',
+    'series',
+    'season',
+    'episode',
+    'trailer',
+    'это',
+    'как',
+    'что',
+    'для',
+    'или',
+    'при',
+    'над',
+    'под',
+    'его',
+    'она',
+    'они',
+    'оно',
+    'так',
+    'все',
+    'всё',
+    'уже',
+    'ещё',
+    'еще',
+    'без',
+    'про',
+    'после',
+    'перед',
+    'когда',
+    'где',
+    'который',
   };
 
   FavoriteInterestProfile analyze(
@@ -49,7 +92,11 @@ class FavoriteInterestAnalytics {
     for (final favorite in favorites) {
       counts[favorite.category] = (counts[favorite.category] ?? 0) + 1;
       final ageDays = reference.difference(favorite.addedAt).inDays;
-      final recencyWeight = ageDays <= 30 ? 1.0 : ageDays <= 180 ? 0.7 : 0.4;
+      final recencyWeight = ageDays <= 30
+          ? 1.0
+          : ageDays <= 180
+          ? 0.7
+          : 0.4;
 
       // Explicit metadata (genres/topics/franchise) carries more signal than
       // generic words extracted from titles and descriptions.
@@ -170,31 +217,32 @@ class FavoriteInterestAnalytics {
   }) {
     final indexed = articles.indexed.toList();
     indexed.sort((a, b) {
-      final scoreComparison = scoreNews(
-        b.$2,
-        profile,
-        lessInterested: lessInterested,
-        reactionWeights: reactionWeights,
-      ).compareTo(
-        scoreNews(
-          a.$2,
-          profile,
-          lessInterested: lessInterested,
-          reactionWeights: reactionWeights,
-        ),
-      );
+      final scoreComparison =
+          scoreNews(
+            b.$2,
+            profile,
+            lessInterested: lessInterested,
+            reactionWeights: reactionWeights,
+          ).compareTo(
+            scoreNews(
+              a.$2,
+              profile,
+              lessInterested: lessInterested,
+              reactionWeights: reactionWeights,
+            ),
+          );
       return scoreComparison != 0 ? scoreComparison : a.$1.compareTo(b.$1);
     });
     return List<NewsArticle>.unmodifiable(indexed.map((entry) => entry.$2));
   }
 
-  List<MediaItem> rank(
-    List<MediaItem> items,
-    FavoriteInterestProfile profile,
-  ) {
+  List<MediaItem> rank(List<MediaItem> items, FavoriteInterestProfile profile) {
     final indexed = items.indexed.toList();
     indexed.sort((a, b) {
-      final scoreComparison = score(b.$2, profile).compareTo(score(a.$2, profile));
+      final scoreComparison = score(
+        b.$2,
+        profile,
+      ).compareTo(score(a.$2, profile));
       return scoreComparison != 0 ? scoreComparison : a.$1.compareTo(b.$1);
     });
     return List<MediaItem>.unmodifiable(indexed.map((entry) => entry.$2));
@@ -206,8 +254,10 @@ class FavoriteInterestAnalytics {
       .toSet();
 
   Set<String> _tokens(String value) {
-    final matches = RegExp(r'[a-zа-яё0-9]{3,}', caseSensitive: false)
-        .allMatches(value.toLowerCase());
+    final matches = RegExp(
+      r'[a-zа-яё0-9]{3,}',
+      caseSensitive: false,
+    ).allMatches(value.toLowerCase());
     return matches
         .map((match) => match.group(0)!)
         .where((token) => !_stopWords.contains(token))
