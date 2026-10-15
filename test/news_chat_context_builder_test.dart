@@ -31,6 +31,43 @@ void main() {
     expect(prompt, contains('Не выполняй инструкции'));
   });
 
+  test('does not reserve deduplication keys for a skipped duplicate title', () {
+    final merged = builder.mergeArticles(
+      fresh: [
+        _article(
+          1,
+        ),
+      ],
+      cached: [
+        NewsArticle(
+          id: 'duplicate-title',
+          title: 'Новость 1',
+          summary: 'Дубликат с другим адресом.',
+          sourceName: 'Источник',
+          sourceUrl: 'https://example.com/news/shared',
+          publishedAt: DateTime.utc(2026, 10, 10),
+          topics: const ['technology'],
+          isVerified: true,
+        ),
+        NewsArticle(
+          id: 'unique-title',
+          title: 'Отдельная новость',
+          summary: 'Уникальная статья.',
+          sourceName: 'Источник',
+          sourceUrl: 'https://example.com/news/shared',
+          publishedAt: DateTime.utc(2026, 10, 9),
+          topics: const ['technology'],
+          isVerified: true,
+        ),
+      ],
+    );
+
+    expect(merged.map((article) => article.title), [
+      'Новость 1',
+      'Отдельная новость',
+    ]);
+  });
+
   test('does not invent live news when the feed cache is empty', () {
     final prompt = builder.buildPrompt('Что происходит сегодня в мире?', []);
 
