@@ -758,6 +758,32 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     }
   }
 
+  String _playerErrorDescription(Object? error) {
+    if (error == null) {
+      return 'Источник не удалось открыть. Повтори запуск и проверь диагностику.';
+    }
+    final message = error.toString().toLowerCase();
+    if (message.contains('укажите адрес torrserver')) {
+      return 'Не указан адрес TorrServer. Добавь его в сетевых настройках для magnet-источников.';
+    }
+    if (message.contains('выбор видеофайла отменён')) {
+      return 'Выбор видеофайла отменён. Выбери файл и повтори запуск.';
+    }
+    if (message.contains('timeout') || message.contains('timed out')) {
+      return 'Источник не ответил вовремя. Проверь соединение и доступность источника.';
+    }
+    if (error is PlatformException) {
+      return 'Медиаплеер платформы не смог открыть поток. Возможна неподдерживаемая кодировка или ошибка источника.';
+    }
+    if (message.contains('http 401') || message.contains('http 403')) {
+      return 'Источник отклонил запрос. Проверь доступность и права на поток.';
+    }
+    if (message.contains('format') || message.contains('codec')) {
+      return 'Формат или кодек потока может не поддерживаться текущим плеером.';
+    }
+    return 'Не удалось открыть источник. Тип ошибки: ${error.runtimeType}. Проверь источник и повтори запуск.';
+  }
+
   @override
   Widget build(BuildContext context) {
     final episodes = widget.item.episodes;
@@ -1036,7 +1062,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'ВИДЕО НЕДОСТУПНО НА ЭТОЙ ПЛАТФОРМЕ',
+                        'НЕ УДАЛОСЬ ЗАПУСТИТЬ ВИДЕО',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.white70,
@@ -1046,7 +1072,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                       if (_playerError != null) ...[
                         const SizedBox(height: 5),
                         Text(
-                          _playerError.runtimeType.toString(),
+                          _playerErrorDescription(_playerError),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: SystemCorePalette.muted,
@@ -1071,7 +1097,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                   child: Padding(
                     padding: const EdgeInsets.all(8),
                     child: Text(
-                      'ОШИБКА ВОСПРОИЗВЕДЕНИЯ: ${_playerError.runtimeType}',
+                      _playerErrorDescription(_playerError),
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.white, fontSize: 10),
                     ),
