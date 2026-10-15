@@ -319,6 +319,27 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       return 'Дождись завершения текущего обновления и снова сформируй отчёт.';
     }
     if (_newsError != null) {
+      final error = _newsError!.toLowerCase();
+      if (error.contains('timeout')) {
+        return 'RSS-источник не ответил вовремя. Проверь соединение/VPN и повтори запрос; в отчёте указан этап и редакция, где истёк тайм-аут.';
+      }
+      if (error.contains('httpstatus') ||
+          RegExp(r'http\\s+\\d{3}').hasMatch(error)) {
+        return 'RSS-источник вернул HTTP-ошибку. Проверь доступность Google News, блокировку запросов и сетевые настройки; код ответа указан в отчёте.';
+      }
+      if (error.contains('emptyresponse')) {
+        return 'Сервер ответил без содержимого. Проверь доступ к Google News и повтори запрос; это отличается от пустой ленты с корректным RSS.';
+      }
+      if (error.contains('malformedrss')) {
+        return 'Вместо RSS/XML пришёл ответ другого формата (например, страница блокировки). Проверь VPN, DNS и сетевые фильтры.';
+      }
+      if (error.contains('clientexception/network') ||
+          error.contains('socketexception/network')) {
+        return 'Не удалось установить сетевое соединение с RSS-источником. Проверь интернет, DNS/VPN и повтори обновление.';
+      }
+      if (error.contains('returned no usable articles')) {
+        return 'Источники ответили, но не дали пригодных RSS-статей. Повтори запрос позже; если проблема сохраняется, проверь формат ответа и доступность редакций.';
+      }
       return switch (_lastNewsFailureStage) {
         'Получение RSS-кандидатов' =>
           'Проверь доступ к Google News, DNS/VPN и HTTP-ответ источника; затем повтори обновление.',
