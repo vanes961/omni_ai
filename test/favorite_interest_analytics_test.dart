@@ -125,6 +125,29 @@ void main() {
     expect(ranked, hasLength(2));
   });
 
+  test('combines favorite and reaction signals in one ranking pass', () {
+    final profile = analytics.analyze([
+      _favorite(
+        'anime-fav',
+        FavoriteCategory.anime,
+        title: 'Cyberpunk Edgerunners',
+        interests: ['anime', 'cyberpunk'],
+        addedAt: now,
+      ),
+    ], now: now);
+    final matching = _news('matching', topics: ['anime']);
+    final unrelated = _news('unrelated', topics: ['gardening']);
+
+    final ranked = analytics.rankNews(
+      [unrelated, matching],
+      profile,
+      reactionWeights: {'gardening': 10},
+    );
+
+    expect(ranked.map((article) => article.id), ['unrelated', 'matching']);
+    expect(ranked, hasLength(2));
+  });
+
   test('empty favorites do not alter result order', () {
     final items = [
       _media('a', 'First', categories: ['Drama']),
