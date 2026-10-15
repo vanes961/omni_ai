@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/core/diagnostics/diagnostic_report.dart';
@@ -233,7 +231,8 @@ class _DashboardPageState extends State<DashboardPage> {
         status: widget.preferences.categories.isEmpty
             ? DiagnosticStatus.warning
             : DiagnosticStatus.ok,
-        details: 'Сохранённых категорий профиля: '
+        details:
+            'Сохранённых категорий профиля: '
             '${widget.preferences.categories.length}; '
             'личные значения и названия интересов не включены в отчёт',
       ),
@@ -245,7 +244,8 @@ class _DashboardPageState extends State<DashboardPage> {
         DiagnosticCheck(
           name: 'Маршрутизация AI',
           status: DiagnosticStatus.ok,
-          details: 'Режим: ${_aiDependencies.executionMode.name}; '
+          details:
+              'Режим: ${_aiDependencies.executionMode.name}; '
               'локальный провайдер: ${_aiDependencies.localProvider.id}; '
               'облачный провайдер: ${_aiDependencies.cloudProvider.id}',
         ),
@@ -309,7 +309,9 @@ class _DashboardPageState extends State<DashboardPage> {
       checks.add(
         DiagnosticCheck(
           name: 'Медиакаталог',
-          status: token == null ? DiagnosticStatus.warning : DiagnosticStatus.ok,
+          status: token == null
+              ? DiagnosticStatus.warning
+              : DiagnosticStatus.ok,
           details: token == null
               ? 'TMDB-токен не настроен; значение токена не запрашивалось'
               : 'TMDB-токен найден в защищённом хранилище; доступность каталога отдельно не проверялась',
@@ -352,7 +354,8 @@ class _DashboardPageState extends State<DashboardPage> {
         DiagnosticCheck(
           name: 'Интернет и RSS endpoint',
           status: DiagnosticStatus.error,
-          details: 'Пробный запрос не прошёл: ${error.runtimeType}; '
+          details:
+              'Пробный запрос не прошёл: ${error.runtimeType}; '
               'проверьте соединение, DNS, VPN/прокси и повторите тест',
         ),
       );
@@ -571,3 +574,6 @@ class _GuardHeader extends StatelessWidget {
     );
   }
 }
+import 'dart:async';
+
+import 'package:flutter/material.dart';
