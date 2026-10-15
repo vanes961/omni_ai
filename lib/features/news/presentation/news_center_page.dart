@@ -78,6 +78,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   int? _lastRssRelevantCandidateCount;
   List<String> _lastRssFailedEditions = const <String>[];
   int? _lastLocalizedCandidateCount;
+  int? _lastTranslatedCandidateCount;
+  int? _lastDuplicateSuppressedCount;
+  int? _lastTranslationBudgetSkippedCount;
+  int? _lastTranslationFailureCount;
+  int? _lastForeignUntranslatedCount;
   int? _lastRankedCandidateCount;
   String? _newsError;
   String _newsDiagnosticStage = 'Ещё не запускалась';
@@ -419,6 +424,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             'RSS-кандидатов до фильтра: ${_lastRssCandidateCount ?? 'нет данных'}',
             'После фильтра интересов: ${_lastRssRelevantCandidateCount ?? 'нет данных'}',
             'После локализации: ${_lastLocalizedCandidateCount ?? 'нет данных'}',
+            'Переведено ИИ: ${_lastTranslatedCandidateCount ?? 'нет данных'}',
+            'Подавлено русских дублей: ${_lastDuplicateSuppressedCount ?? 'нет данных'}',
+            'Перевод пропущен из-за лимита: ${_lastTranslationBudgetSkippedCount ?? 'нет данных'}',
+            'Ошибки перевода: ${_lastTranslationFailureCount ?? 'нет данных'}',
+            'Иностранных статей без перевода: ${_lastForeignUntranslatedCount ?? 'нет данных'}',
             'После персонализации: ${_lastRankedCandidateCount ?? 'нет данных'}',
             'На экране: ${_articles.length}',
             'Время RSS: ${_lastRssDurationMs == null ? 'нет данных' : '$_lastRssDurationMs мс'}',
@@ -708,6 +718,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _lastRssCandidateCount = null;
         _lastRssRelevantCandidateCount = null;
         _lastLocalizedCandidateCount = null;
+        _lastTranslatedCandidateCount = null;
+        _lastDuplicateSuppressedCount = null;
+        _lastTranslationBudgetSkippedCount = null;
+        _lastTranslationFailureCount = null;
+        _lastForeignUntranslatedCount = null;
         _lastRankedCandidateCount = null;
         _lastRssDurationMs = null;
         _lastLocalizationDurationMs = null;
@@ -731,6 +746,11 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _lastRssRelevantCandidateCount = null;
       _lastRssFailedEditions = const <String>[];
       _lastLocalizedCandidateCount = null;
+      _lastTranslatedCandidateCount = null;
+      _lastDuplicateSuppressedCount = null;
+      _lastTranslationBudgetSkippedCount = null;
+      _lastTranslationFailureCount = null;
+      _lastForeignUntranslatedCount = null;
       _lastRankedCandidateCount = null;
       _lastRssDurationMs = null;
       _lastLocalizationDurationMs = null;
@@ -759,14 +779,25 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       failureStage = 'Поиск русскоязычных дублей и локализация';
       if (mounted) setState(() => _newsDiagnosticStage = failureStage);
       final localizationWatch = Stopwatch()..start();
-      final articles = await _sourceLocalizationService.localizeCandidates(
-        fetchedArticles,
-      );
+      final localizationReport = await _sourceLocalizationService
+          .localizeCandidatesWithReport(fetchedArticles);
+      final articles = localizationReport.articles;
       localizationWatch.stop();
       _lastLocalizationDurationMs = localizationWatch.elapsedMilliseconds;
       if (revisionAtStart != _interestRevision) return;
       if (mounted) {
-        setState(() => _lastLocalizedCandidateCount = articles.length);
+        setState(() {
+          _lastLocalizedCandidateCount = articles.length;
+          _lastTranslatedCandidateCount = localizationReport.translatedCount;
+          _lastDuplicateSuppressedCount =
+              localizationReport.duplicateSuppressedCount;
+          _lastTranslationBudgetSkippedCount =
+              localizationReport.budgetSkippedCount;
+          _lastTranslationFailureCount =
+              localizationReport.translationFailureCount;
+          _lastForeignUntranslatedCount =
+              localizationReport.foreignUntranslatedCount;
+        });
       }
       failureStage = 'Персонализация и сортировка';
       if (mounted) setState(() => _newsDiagnosticStage = failureStage);
