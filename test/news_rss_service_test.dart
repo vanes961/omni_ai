@@ -462,6 +462,31 @@ void main() {
     },
   );
 
+  test('records a failed edition when other international editions succeed', () async {
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        if (request.url.queryParameters['gl'] == 'US') {
+          throw http.ClientException('offline');
+        }
+        return http.Response(
+          '<rss><channel><item><title>Anime update</title><link>https://publisher.example/anime</link><description>Anime news</description><pubDate>Sat, 10 Oct 2026 12:00:00 GMT</pubDate></item></channel></rss>',
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetchInternational(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+
+    expect(articles, isNotEmpty);
+    expect(service.lastFailedEditions, hasLength(1));
+    expect(service.lastFailedEditions.single, contains('en-US'));
+    expect(service.lastFailedEditions.single, contains('ClientException'));
+  });
+
   test(
     'fetches international editions and filters topics without locale lock',
     () async {
