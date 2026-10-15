@@ -438,6 +438,12 @@ class _DashboardPageState extends State<DashboardPage> {
         searchService: MediaSearchService(
           franchiseChronologyResolver: _franchiseChronologyResolver,
         ),
+        onOpenCatalogSettings: () {
+          setState(() {
+            _selectedTab = 4;
+            _selectedSettingsTab = 2;
+          });
+        },
       ),
       3 => FavoritesPage(),
       _ => _buildSettings(),
