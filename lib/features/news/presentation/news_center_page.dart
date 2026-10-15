@@ -375,17 +375,17 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           name: 'Сетевая доступность RSS',
           status: noFeedInterests
               ? DiagnosticStatus.warning
-              : (_lastRssCandidateCount == null
-                    ? DiagnosticStatus.notChecked
-                    : (_newsError == null
-                          ? DiagnosticStatus.ok
-                          : DiagnosticStatus.error)),
+              : (_newsError != null
+                    ? DiagnosticStatus.error
+                    : (_lastRssCandidateCount == null
+                          ? DiagnosticStatus.notChecked
+                          : DiagnosticStatus.ok)),
           details: noFeedInterests
-              ? 'RSS не запрашивался: нет выбранных интересов. Это не подтверждает сетевую ошибку; добавь тему и обнови ленту.'
+              ? 'RSS не запрашивался: не выбраны интересы. Это не доказывает сетевую ошибку; выбери тему, обнови ленту и повтори диагностику.'
+              : _newsError != null
+              ? 'Последняя операция завершилась с ошибкой на этапе «$_lastNewsFailureStage» ($_lastNewsFailureType): $_newsError'
               : _lastRssCandidateCount == null
               ? 'Нет результата реального RSS-запроса в этой сессии. Нажми «Обновить персональную ленту» и запусти диагностику повторно.'
-              : _newsError != null
-              ? 'Последний RSS-запрос завершился с ошибкой: $_newsError'
               : 'Последний RSS-запрос завершился; кандидатов получено: $_lastRssCandidateCount',
         ),
       ],
