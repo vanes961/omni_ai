@@ -1010,7 +1010,7 @@ void main() {
 
     expect(requestCount, 3);
     expect(find.text('Discovery feed is available'), findsOneWidget);
-    expect(find.text('НАСТРОИТЬ ИНТЕРЕСЫ'), findsNothing);
+    expect(find.text('НАСТРОИТЬ ИНТЕРЕСЫ'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
