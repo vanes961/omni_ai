@@ -88,7 +88,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -159,7 +159,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -195,7 +195,11 @@ class MediaSearchService {
           MediaItem(
             id: 'tmdb:$kind:${id.toInt()}',
             title: title,
-            type: isAnime ? 'Аниме' : kind == 'tv' ? 'Сериал' : 'Фильм',
+            type: isAnime
+                ? 'Аниме'
+                : kind == 'tv'
+                ? 'Сериал'
+                : 'Фильм',
             posterUrl: poster == null ? '' : '$_poster$poster',
             rating: (raw['vote_average'] as num?)?.toDouble() ?? 0,
             voiceovers: const [],
@@ -225,7 +229,7 @@ class MediaSearchService {
       final r = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -350,7 +354,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -459,7 +463,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
