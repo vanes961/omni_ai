@@ -74,6 +74,44 @@ void main() {
     expect(submittedPrompt, contains('https://publisher.example/live-anime'));
   });
 
+  testWidgets('fetches discovery RSS articles without saved interests', (
+    WidgetTester tester,
+  ) async {
+    var requestCount = 0;
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        requestCount++;
+        expect(request.url.host, 'news.google.com');
+        return http.Response(
+          '<rss><channel><item>'
+          '<title>Global discovery headline</title>'
+          '<link>https://publisher.example/global-discovery</link>'
+          '<description>A general world news update.</description>'
+          '<pubDate>Wed, 14 Oct 2026 10:00:00 GMT</pubDate>'
+          '<source>World News</source>'
+          '</item></channel></rss>',
+          200,
+          headers: {'content-type': 'application/rss+xml; charset=utf-8'},
+        );
+      }),
+    );
+    addTearDown(service.dispose);
+
+    final submittedPrompt = await _sendPrompt(
+      tester,
+      'Какие последние новости в мире?',
+      newsService: service,
+    );
+
+    expect(requestCount, 3);
+    expect(submittedPrompt, contains('Global discovery headline'));
+    expect(submittedPrompt, contains('свежие RSS-кандидаты'));
+    expect(
+      submittedPrompt,
+      contains('https://publisher.example/global-discovery'),
+    );
+  });
+
   testWidgets('does not add cached news to unrelated chat questions', (
     WidgetTester tester,
   ) async {
