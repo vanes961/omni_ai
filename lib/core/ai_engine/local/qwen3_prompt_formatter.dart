@@ -16,6 +16,99 @@ class Qwen3PromptFormatter {
     ].join('\n');
   }
 
+  /// Returns a safe prefix for streaming without exposing internal
+  /// reasoning or partial control markers.
+  static String visiblePrefix(String output) {
+    var text = output;
+    while (true) {
+      final start = RegExp(r'<think>', caseSensitive: false).firstMatch(text);
+      if (start == null) break;
+      final end = RegExp(r'</think>', caseSensitive: false).firstMatch(
+        text,
+        start.end,
+      );
+      if (end == null) {
+        text = text.substring(0, start.start);
+        break;
+      }
+      text = '${text.substring(0, start.start)}${text.substring(end.end)}';
+    }
+
+    for (final marker in const [
+      '<|im_end|>',
+      '<|endoftext|>',
+      '<|im_start|>user',
+      '<|im_start|>assistant',
+      '\nUser:',
+      '\nAssistant:',
+    ]) {
+      final index = text.indexOf(marker);
+      if (index >= 0) text = text.substring(0, index);
+    }
+
+    const partialMarkers = [
+      '<think>',
+      '</think>',
+      '<|im_end|>',
+      '<|endoftext|>',
+      '<|im_start|>user',
+      '<|im_start|>assistant',
+      '\nUser:',
+      '\nAssistant:',
+    ];
+    for (final marker in partialMarkers) {
+      for (var length = 1; length < marker.length; length++) {
+        if (text.endsWith(marker.substring(0, length))) {
+          text = text.substring(0, text.length - length);
+        }
+      }
+    }
+
+    final trimmed = text.trim();
+    if (RegExp(r'^(?:Assistant|User)\s*:\s*
+  static String sanitize(String output) {
+    var text = output.trim();
+
+    // Hide Qwen3 reasoning blocks, including an unfinished block at cutoff.
+    while (true) {
+      final start = RegExp(r'<think>', caseSensitive: false).firstMatch(text);
+      if (start == null) break;
+      final end = RegExp(r'</think>', caseSensitive: false).firstMatch(
+        text,
+        start.end,
+      );
+      if (end == null) {
+        text = text.substring(0, start.start).trim();
+        break;
+      }
+      text = '${text.substring(0, start.start)}${text.substring(end.end)}';
+    }
+
+    for (final marker in const [
+      '<|im_end|>',
+      '<|endoftext|>',
+      '<|im_start|>user',
+      '<|im_start|>assistant',
+      '\nUser:',
+      '\nAssistant:',
+    ]) {
+      final index = text.indexOf(marker);
+      if (index >= 0) text = text.substring(0, index).trim();
+    }
+    text = text.replaceFirst(
+      RegExp(r'^(?:Assistant|User)\s*:\s*', caseSensitive: false),
+      '',
+    );
+    return text.trim();
+  }
+}
+, caseSensitive: false)
+        .hasMatch(trimmed)) {
+      return '';
+    }
+    return trimmed;
+  }
+
   /// Removes special end markers and any accidental second turn from output.
   static String sanitize(String output) {
     var text = output.trim();
