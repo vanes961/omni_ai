@@ -1007,6 +1007,12 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       setState(() {
         _lastNewsFailureStage = failureStage;
         _lastNewsFailureType = error.runtimeType.toString();
+        if (failureStage == 'Получение RSS-кандидатов') {
+          // The service retains per-edition failures even when every edition
+          // fails. Copy them here too so the diagnostic report doesn't lose
+          // the useful breakdown on the exception path.
+          _lastRssFailedEditions = _newsService.lastFailedEditions;
+        }
         if (noUsableArticles) {
           _lastRssCandidateCount = 0;
           _lastRssRelevantCandidateCount = 0;
