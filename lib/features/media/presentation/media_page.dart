@@ -57,7 +57,6 @@ class _MediaPageState extends State<MediaPage> {
   List<MediaItem> _onlineTrending = const [];
   List<MediaItem> _onlineRecommendations = const [];
   bool _loadingTrending = false;
-  bool _loadingRecommendations = false;
 
   static const _types = ['Фильм', 'Сериал', 'Аниме'];
 
@@ -134,12 +133,10 @@ class _MediaPageState extends State<MediaPage> {
       if (mounted) {
         setState(() {
           _onlineRecommendations = const [];
-          _loadingRecommendations = false;
         });
       }
       return;
     }
-    if (mounted) setState(() => _loadingRecommendations = true);
     final items = await _searchService.fetchRecommendationsOnline(
       interests: interests,
       type: requestedType,
@@ -152,7 +149,6 @@ class _MediaPageState extends State<MediaPage> {
         .toList(growable: false);
     setState(() {
       _onlineRecommendations = ranked;
-      _loadingRecommendations = false;
     });
   }
 
