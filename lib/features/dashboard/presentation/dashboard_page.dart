@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/core/diagnostics/diagnostic_report.dart';
@@ -574,6 +576,3 @@ class _GuardHeader extends StatelessWidget {
     );
   }
 }
-import 'dart:async';
-
-import 'package:flutter/material.dart';
