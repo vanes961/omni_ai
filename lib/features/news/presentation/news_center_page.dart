@@ -1757,7 +1757,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     ),
                     subtitle: Text(
                       profile.topics.isEmpty
-                          ? 'Выберите темы, чтобы включить ленту'
+                          ? 'Общая лента работает без тем; интересы уточнят подборку'
                           : 'Выбрано тем: ${profile.topics.length}',
                       style: const TextStyle(
                         color: SystemCorePalette.muted,
