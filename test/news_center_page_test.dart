@@ -91,6 +91,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 350));
     expect(find.text('Диагностика OMNI AI'), findsOneWidget);
     expect(find.textContaining('Этап:'), findsOneWidget);
+    expect(find.textContaining('Последнее успешное обновление:'), findsOneWidget);
+    expect(find.textContaining('Последняя попытка обновления:'), findsOneWidget);
     expect(find.textContaining('Время RSS:'), findsOneWidget);
     expect(find.textContaining('Время локализации:'), findsOneWidget);
     expect(find.textContaining('Рекомендуемый следующий шаг:'), findsOneWidget);
