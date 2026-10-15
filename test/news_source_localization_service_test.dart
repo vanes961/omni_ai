@@ -151,6 +151,49 @@ void main() {
     expect(result[1].videoUrl, 'https://youtube.com/watch?v=trailer');
   });
 
+  test('reports translation outcomes and budget skips', () async {
+    final duplicate = _article(
+      id: 'duplicate',
+      language: 'en',
+      title: 'Nintendo Switch 2 release date revealed',
+    );
+    final russian = _article(
+      id: 'russian',
+      language: 'ru',
+      title: 'Раскрыта дата выхода Nintendo Switch 2',
+    );
+    final translated = _article(
+      id: 'translated',
+      language: 'en',
+      title: 'A new console is announced',
+    );
+    final skipped = _article(
+      id: 'skipped',
+      language: 'en',
+      title: 'A new game is announced',
+    );
+    final serviceWithLimit = NewsSourceLocalizationService(
+      aiEngine: AIEngine(provider: _TranslationProvider()),
+      maxAiTranslationsPerBatch: 1,
+    );
+
+    final report = await serviceWithLimit.localizeCandidatesWithReport([
+      duplicate,
+      russian,
+      translated,
+      skipped,
+    ]);
+
+    expect(report.articles, hasLength(3));
+    expect(report.articles, contains(russian));
+    expect(report.articles, contains(skipped));
+    expect(report.duplicateSuppressedCount, 1);
+    expect(report.translatedCount, 1);
+    expect(report.budgetSkippedCount, 1);
+    expect(report.translationFailureCount, 0);
+    expect(report.foreignUntranslatedCount, 1);
+  });
+
   test('keeps Russian articles', () async {
     final russian = _article(
       id: 'russian',
