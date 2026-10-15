@@ -661,7 +661,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
 
-    expect(find.textContaining('RSS-кандидатов: 0'), findsOneWidget);
+    expect(find.textContaining('RSS-кандидатов до фильтра: 0'), findsOneWidget);
+    expect(find.textContaining('После фильтра интересов: 0'), findsOneWidget);
     expect(find.textContaining('Время RSS: нет данных'), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
