@@ -323,6 +323,29 @@ void main() {
     );
   });
 
+  test('classifies Atom XML as unsupported by the RSS-only parser', () async {
+    final service = NewsRssService(
+      client: MockClient(
+        (_) async => http.Response(
+          '<feed><entry><title>Anime news</title></entry></feed>',
+          200,
+        ),
+      ),
+    );
+    addTearDown(service.dispose);
+
+    expect(
+      service.fetch(const NewsInterestProfile(topics: ['anime'])),
+      throwsA(
+        isA<NewsRssException>().having(
+          (error) => error.kind,
+          'kind',
+          NewsRssFailureKind.malformedRss,
+        ),
+      ),
+    );
+  });
+
   test('classifies request timeouts separately from network failures', () async {
     final service = NewsRssService(
       client: MockClient((_) async => throw TimeoutException('test timeout')),
