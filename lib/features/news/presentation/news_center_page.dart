@@ -224,6 +224,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _newsCache.loadDigest(),
         _newsCache.loadTopics(),
         _newsCache.loadIncludeCriticalOutsideInterests(),
+        _newsCache.loadSavedAt(),
       ]);
       final savedTopics = cached[2] as List<String>?;
       final savedCriticalSetting = cached[3] as bool?;
@@ -232,6 +233,13 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
       _favoriteInterestProfile = favoriteProfile;
       final cachedArticles = _rankPersonalized(cached[0] as List<NewsArticle>);
+      final cacheSavedAt = cached[4] as DateTime?;
+      final now = DateTime.now();
+      // Keep the cached feed visible, but refresh it at least every six hours.
+      // Missing timestamps belong to older cache versions and are stale.
+      final cacheIsStale = cacheSavedAt == null ||
+          now.difference(cacheSavedAt) >= const Duration(hours: 6) ||
+          cacheSavedAt.isAfter(now.add(const Duration(minutes: 5)));
       final selectedTopics = _normalizeTopics(profile.topics);
       final hasFeedInterests =
           profile.topics.isNotEmpty || profile.includeCriticalOutsideInterests;
@@ -245,6 +253,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       }
       if (!mounted) return;
       setState(() {
+        _lastNewsRefreshAt = cacheSavedAt;
         if (revisionAtStart == _interestRevision && cacheMatchesProfile) {
           _articles = cachedArticles;
           _digest = cached[1] as String?;
@@ -257,8 +266,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (_refreshPendingAfterCacheLoad) {
         _refreshPendingAfterCacheLoad = false;
         unawaited(_refreshNews());
-      } else if (hasFeedInterests && _articles.isEmpty) {
-        // Do not fetch a generic feed when no interests are selected.
+      } else if (hasFeedInterests && (_articles.isEmpty || cacheIsStale)) {
+        // Refresh empty or stale personalized cache while preserving any cached
+        // cards until fresh results replace them.
         unawaited(_refreshNews());
       }
     } catch (_) {
