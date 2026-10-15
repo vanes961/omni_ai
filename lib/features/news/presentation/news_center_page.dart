@@ -1831,7 +1831,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Лента показывает новости только по выбранным интересам. Добавьте темы ниже, чтобы начать.',
+                'Общая лента доступна сразу. Добавьте темы ниже, чтобы точнее настроить подборку.',
                 style: TextStyle(color: Colors.white70, height: 1.4),
               ),
               Row(
