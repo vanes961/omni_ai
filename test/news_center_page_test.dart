@@ -648,7 +648,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    expect(find.textContaining('не дали пригодных RSS-статей'), findsOneWidget);
+    expect(find.textContaining('returned no usable articles'), findsOneWidget);
     for (
       var i = 0;
       i < 12 && find.text('Диагностика системы').evaluate().isEmpty;
