@@ -99,6 +99,28 @@ void main() {
       expect(cloud.calls, 1);
     });
 
+    test('routes short news commands to cloud', () async {
+      final response = await router.complete(
+        AIRequest(id: 'show-news', prompt: 'Покажи новости'),
+        cancellationToken: AICancellationToken(),
+      );
+
+      expect(response.providerId, 'cloud');
+      expect(local.calls, 0);
+      expect(cloud.calls, 1);
+    });
+
+    test('routes topic-specific news requests to cloud', () async {
+      final response = await router.complete(
+        AIRequest(id: 'game-news', prompt: 'Дай новости про игры'),
+        cancellationToken: AICancellationToken(),
+      );
+
+      expect(response.providerId, 'cloud');
+      expect(local.calls, 0);
+      expect(cloud.calls, 1);
+    });
+
     test('routes explicit internet searches to cloud', () async {
       final response = await router.complete(
         AIRequest(
