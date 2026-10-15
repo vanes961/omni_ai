@@ -307,7 +307,7 @@ class NewsRssService {
         uri: uri,
       );
     }
-    if (!RegExp(r'<(?:rss|feed)\\b', caseSensitive: false).hasMatch(xml)) {
+    if (!RegExp(r'<(?:rss|feed)\b', caseSensitive: false).hasMatch(xml)) {
       throw NewsRssException(
         kind: NewsRssFailureKind.malformedRss,
         message: 'News source response is not recognizable RSS or Atom XML.',
