@@ -130,9 +130,7 @@ class _DashboardPageState extends State<DashboardPage> {
         decoration: BoxDecoration(
           color: SystemCorePalette.panel,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: SystemCorePalette.border,
-          ),
+          border: Border.all(color: SystemCorePalette.border),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.10),
@@ -158,9 +156,7 @@ class _DashboardPageState extends State<DashboardPage> {
               fontWeight: FontWeight.w800,
               letterSpacing: 0.2,
             ),
-            unselectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.w500,
-            ),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
             showSelectedLabels: true,
             showUnselectedLabels: true,
             items: const [
@@ -536,9 +532,7 @@ class _GuardHeader extends StatelessWidget {
           colors: [SystemCorePalette.panelElevated, SystemCorePalette.panel],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: SystemCorePalette.border,
-        ),
+        border: Border.all(color: SystemCorePalette.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.10),
