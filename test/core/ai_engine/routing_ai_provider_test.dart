@@ -71,8 +71,9 @@ void main() {
       expect(cloud.calls, 0);
     });
 
-    test('keeps writing a news item local when no current facts are requested',
-        () async {
+    test(
+      'keeps writing a news item local when no current facts are requested',
+      () async {
       final response = await router.complete(
         AIRequest(
           id: 'write-news-item',
