@@ -1910,8 +1910,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     _digestError = null;
                     _newsError = null;
                     // Toggling critical news invalidates the previous cache.
-                    _newsCacheIsStale =
-                        value || profile.topics.isNotEmpty;
+                    _newsCacheIsStale = value || profile.topics.isNotEmpty;
                   });
                   unawaited(_newsCache.clear());
                 },
