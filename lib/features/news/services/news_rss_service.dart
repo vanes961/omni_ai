@@ -252,8 +252,7 @@ class NewsRssService {
       languages: const <String>[],
       regions: const <String>[],
     );
-    if (unrestrictedProfile.topics.isEmpty &&
-        !unrestrictedProfile.includeCriticalOutsideInterests) {
+    if (unrestrictedProfile.topics.isEmpty) {
       final articles = List<NewsArticle>.unmodifiable(
         byTitle.values.toList()
           ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt)),
