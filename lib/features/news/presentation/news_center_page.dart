@@ -237,7 +237,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       final cachedArticles = _rankPersonalized(cached[0] as List<NewsArticle>);
       final cacheSavedAt = cached[4] as DateTime?;
       final now = DateTime.now();
-      // Keep the cached feed visible, but refresh it at least every six hours.
+      // Keep cached personalized and discovery feeds visible, refreshing at least every six hours.
       // Missing timestamps belong to older cache versions and are stale.
       final cacheIsStale =
           cacheSavedAt == null ||
