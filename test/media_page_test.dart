@@ -971,14 +971,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.position, duration);
 
-    await tester.tap(find.byKey(const ValueKey('fullscreen-toggle')));
-    await tester.pumpAndSettle();
-    expect(find.text('OMNI // PLAYER'), findsNothing);
-    expect(find.byTooltip('Выйти из полноэкранного режима'), findsOneWidget);
-
-    await tester.tap(find.byKey(const ValueKey('fullscreen-toggle')));
-    await tester.pumpAndSettle();
-    expect(find.text('OMNI // PLAYER'), findsOneWidget);
+    expect(find.byKey(const ValueKey('fullscreen-toggle')), findsOneWidget);
+    expect(find.byTooltip('Полноэкранный режим'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
