@@ -60,21 +60,21 @@ class AIEngine {
       // responsive even when setup has not finished yet.
       final response =
           await Future.any<AIResponse>([
-        operation,
-        _throwWhenCancelled(token),
-      ]).timeout(
-        timeout,
-        onTimeout: () {
-          token.cancel();
-          throw const AIEngineException(
-            AIError(
-              code: AIErrorCode.timeout,
-              message: 'AI provider request timed out.',
-              retryable: true,
-            ),
+            operation,
+            _throwWhenCancelled(token),
+          ]).timeout(
+            timeout,
+            onTimeout: () {
+              token.cancel();
+              throw const AIEngineException(
+                AIError(
+                  code: AIErrorCode.timeout,
+                  message: 'AI provider request timed out.',
+                  retryable: true,
+                ),
+              );
+            },
           );
-        },
-      );
 
       if (token.isCancelled) {
         throw const AIEngineException(
