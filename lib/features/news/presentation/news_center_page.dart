@@ -324,7 +324,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         return 'RSS-источник не ответил вовремя. Проверь соединение/VPN и повтори запрос; в отчёте указан этап и редакция, где истёк тайм-аут.';
       }
       if (error.contains('httpstatus') ||
-          RegExp(r'http\\s+\\d{3}').hasMatch(error)) {
+          RegExp(r'http\s+\d{3}').hasMatch(error)) {
         return 'RSS-источник вернул HTTP-ошибку. Проверь доступность Google News, блокировку запросов и сетевые настройки; код ответа указан в отчёте.';
       }
       if (error.contains('emptyresponse')) {
