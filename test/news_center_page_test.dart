@@ -679,6 +679,11 @@ void main() {
     }
 
     expect(requestCount, 6);
+    await tester.dragUntilVisible(
+      find.text('World leaders meet at summit'),
+      find.byType(Scrollable).first,
+      const Offset(0, 300),
+    );
     expect(find.text('World leaders meet at summit'), findsOneWidget);
     expect(find.text('НАСТРОИТЬ ИНТЕРЕСЫ'), findsOneWidget);
     expect(tester.takeException(), isNull);
