@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/domain/media_hub_contracts.dart';
@@ -21,6 +23,66 @@ void main() {
       ..favoriteTitles = ['Атака Титанов'];
 
     expect(service.recommendedFor(preferences), isEmpty);
+  });
+
+  test('loads real trending titles from the TMDB response', () async {
+    final service = MediaSearchService(
+      accessToken: 'test-token',
+      client: MockClient((request) async {
+        expect(request.url.path, '/3/trending/all/week');
+        expect(request.url.queryParameters['language'], 'ru-RU');
+        expect(request.headers['Authorization'], 'Bearer test-token');
+        return http.Response(
+          '{"results":['
+          '{"id":11,"media_type":"movie","title":"Real Film",'
+          '"overview":"Summary","poster_path":"/film.jpg",'
+          '"vote_average":8.2,"genre_ids":[28]},'
+          '{"id":12,"media_type":"tv","name":"Real Series",'
+          '"original_language":"en","origin_country":["US"],'
+          '"vote_average":7.5,"genre_ids":[18]}'
+          ']}',
+          200,
+        );
+      }),
+    );
+
+    final items = await service.fetchTrendingOnline();
+
+    expect(items, hasLength(2));
+    expect(items.first.id, 'tmdb:movie:11');
+    expect(items.first.title, 'Real Film');
+    expect(items.first.posterUrl, 'https://image.tmdb.org/t/p/w500/film.jpg');
+    expect(items.first.categories, contains('Боевик'));
+    expect(items.last.type, 'Сериал');
+    expect(items.last.title, 'Real Series');
+  });
+
+  test('filters online trending to the requested media type', () async {
+    final service = MediaSearchService(
+      accessToken: 'test-token',
+      client: MockClient((request) async => http.Response(
+        '{"results":['
+        '{"id":11,"media_type":"movie","title":"Film"},'
+        '{"id":12,"media_type":"tv","name":"Series",'
+        '"original_language":"en","origin_country":["US"]}'
+        ']}',
+        200,
+      )),
+    );
+
+    final items = await service.fetchTrendingOnline(type: 'Фильм');
+
+    expect(items, hasLength(1));
+    expect(items.single.title, 'Film');
+  });
+
+  test('returns no trending data when the TMDB request fails', () async {
+    final service = MediaSearchService(
+      accessToken: 'test-token',
+      client: MockClient((request) async => http.Response('unavailable', 503)),
+    );
+
+    expect(await service.fetchTrendingOnline(), isEmpty);
   });
 
   test('parses TMDB season summaries in season-number order', () {
