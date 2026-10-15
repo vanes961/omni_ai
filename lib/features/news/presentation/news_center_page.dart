@@ -94,6 +94,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   String? _lastNewsFailureStage;
   String? _lastNewsFailureType;
   DateTime? _lastNewsRefreshAt;
+  DateTime? _lastNewsAttemptAt;
   int? _lastRssDurationMs;
   int? _lastLocalizationDurationMs;
   int? _lastRankingDurationMs;
@@ -254,7 +255,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       }
       if (!mounted) return;
       setState(() {
-        _lastNewsRefreshAt = cacheSavedAt;
+        _lastNewsRefreshAt = cacheMatchesProfile ? cacheSavedAt : null;
         if (revisionAtStart == _interestRevision && cacheMatchesProfile) {
           _articles = cachedArticles;
           _digest = cached[1] as String?;
@@ -531,7 +532,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
             if (_newsCacheWarning != null)
               'Предупреждение кэша: $_newsCacheWarning',
             'Этап: $_newsDiagnosticStage',
-            'Последнее обновление: ${_lastNewsRefreshAt?.toLocal().toIso8601String() ?? 'нет данных'}',
+            'Последнее успешное обновление: ${_lastNewsRefreshAt?.toLocal().toIso8601String() ?? 'нет данных'}',
+            'Последняя попытка обновления: ${_lastNewsAttemptAt?.toLocal().toIso8601String() ?? 'нет данных'}',
             if (_lastNewsFailureStage != null)
               'Этап сбоя: $_lastNewsFailureStage',
             if (_lastNewsFailureType != null) 'Тип сбоя: $_lastNewsFailureType',
@@ -843,7 +845,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _newsDiagnosticStage = 'Не запускалась: не выбраны интересы';
         _lastNewsFailureStage = null;
         _lastNewsFailureType = null;
-        _lastNewsRefreshAt = DateTime.now();
+        _lastNewsRefreshAt = null;
+        _lastNewsAttemptAt = null;
         _lastRssCandidateCount = null;
         _lastRssRelevantCandidateCount = null;
         _lastLocalizedCandidateCount = null;
@@ -871,7 +874,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       _newsDiagnosticStage = failureStage;
       _lastNewsFailureStage = null;
       _lastNewsFailureType = null;
-      _lastNewsRefreshAt = DateTime.now();
+      _lastNewsAttemptAt = DateTime.now();
       _lastRssCandidateCount = null;
       _lastRssRelevantCandidateCount = null;
       _lastRssFailedEditions = const <String>[];
@@ -956,6 +959,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _digest = null;
         _digestError = null;
         _newsError = null;
+        _lastNewsRefreshAt = DateTime.now();
       });
 
       // A digest describes a specific set of articles. Never keep showing a
