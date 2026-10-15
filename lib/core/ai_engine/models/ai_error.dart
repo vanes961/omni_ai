@@ -1,4 +1,15 @@
-enum AIErrorCode { cancelled, timeout, provider, invalidRequest, unknown }
+enum AIErrorCode {
+  cancelled,
+  timeout,
+  provider,
+  invalidRequest,
+  configuration,
+  unauthorized,
+  rateLimited,
+  providerUnavailable,
+  malformedResponse,
+  unknown,
+}
 
 class AIError {
   const AIError({
