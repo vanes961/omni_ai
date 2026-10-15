@@ -98,15 +98,14 @@ class NewsSourceLocalizationService {
     );
   }
 
-  Future<_TranslationAttempt> _translateIfAvailable(
-    NewsArticle article,
-  ) async {
+  Future<_TranslationAttempt> _translateIfAvailable(NewsArticle article) async {
     final engine = aiEngine;
     if (engine == null) return _TranslationAttempt(article, false);
     final cancellationToken = AICancellationToken();
     try {
-      final response = await engine.execute(
-        AIRequest(
+      final response = await engine
+          .execute(
+            AIRequest(
           id: 'news-translation-${DateTime.now().microsecondsSinceEpoch}',
           systemInstruction:
               'Translate news text into natural Russian. Preserve names, '
@@ -123,18 +122,17 @@ class NewsSourceLocalizationService {
       ).timeout(
         translationTimeout,
         onTimeout: () {
-          cancellationToken.cancel();
-          throw TimeoutException('News translation timed out.');
-        },
-      );
+              cancellationToken.cancel();
+              throw TimeoutException('News translation timed out.');
+            },
+          );
       final decoded = jsonDecode(response.text);
       if (decoded is! Map<String, dynamic>) {
         return _TranslationAttempt(article, false);
       }
       final title = decoded['title'];
       final summary = decoded['summary'];
-      if (title is! String || title.trim().isEmpty ||
-          summary is! String) {
+      if (title is! String || title.trim().isEmpty || summary is! String) {
         return _TranslationAttempt(article, false);
       }
       return _TranslationAttempt(
