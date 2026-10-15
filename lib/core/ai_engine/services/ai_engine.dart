@@ -35,19 +35,34 @@ class AIEngine {
     }
 
     try {
-      await beforeExecute?.call();
-      final providerFuture = onToken != null && provider is AIStreamingProvider
-          ? (provider as AIStreamingProvider).completeStreaming(
-              request,
-              cancellationToken: token,
-              onToken: onToken,
-            )
-          : provider.complete(
-              request,
-              cancellationToken: token,
-            );
+      final operation = () async {
+        await beforeExecute?.call();
+        if (token.isCancelled) {
+          throw const AIEngineException(
+            AIError(
+              code: AIErrorCode.cancelled,
+              message: 'AI request cancelled.',
+            ),
+          );
+        }
+
+        return onToken != null && provider is AIStreamingProvider
+            ? (provider as AIStreamingProvider).completeStreaming(
+                request,
+                cancellationToken: token,
+                onToken: onToken,
+              )
+            : provider.complete(
+                request,
+                cancellationToken: token,
+              );
+      }();
+
+      // Include setup/model preparation in the same timeout as provider work.
+      // Race cancellation against the whole operation so cancellation remains
+      // responsive even when setup has not finished yet.
       final response = await Future.any<AIResponse>([
-        providerFuture,
+        operation,
         _throwWhenCancelled(token),
       ]).timeout(
         timeout,
