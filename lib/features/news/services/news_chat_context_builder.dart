@@ -34,10 +34,12 @@ class NewsChatContextBuilder {
           .toLowerCase()
           .replaceAll(RegExp(r'[^a-z0-9а-яё]+', caseSensitive: false), ' ')
           .trim();
-      if ((url.isNotEmpty && !seenUrls.add(url)) ||
-          (title.isNotEmpty && !seenTitles.add(title))) {
+      if ((url.isNotEmpty && seenUrls.contains(url)) ||
+          (title.isNotEmpty && seenTitles.contains(title))) {
         continue;
       }
+      if (url.isNotEmpty) seenUrls.add(url);
+      if (title.isNotEmpty) seenTitles.add(title);
       merged.add(article);
     }
     merged.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
