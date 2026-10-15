@@ -958,6 +958,7 @@ void main() {
       );
 
       expect(service.lastCandidateCount, 6);
+      expect(service.lastRelevantCandidateCount, 3);
       expect(articles, hasLength(3));
       expect(
         articles.every((article) => article.topics.contains('anime')),
