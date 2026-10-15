@@ -78,6 +78,14 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   int? _lastLocalizedCandidateCount;
   int? _lastRankedCandidateCount;
   String? _newsError;
+  String _newsDiagnosticStage = 'Ещё не запускалась';
+  String? _lastNewsFailureStage;
+  String? _lastNewsFailureType;
+  DateTime? _lastNewsRefreshAt;
+  int? _lastRssDurationMs;
+  int? _lastLocalizationDurationMs;
+  int? _lastRankingDurationMs;
+  int? _lastCacheWriteDurationMs;
   bool _generatingDigest = false;
   String? _digest;
   String? _digestError;
@@ -329,13 +337,24 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                     : (_articles.isEmpty
                           ? DiagnosticStatus.warning
                           : DiagnosticStatus.ok)),
-          details:
-              _newsError ??
-              'RSS-кандидатов: ${_lastRssCandidateCount ?? 'нет данных'}; '
-                  'после локализации: ${_lastLocalizedCandidateCount ?? 'нет данных'}; '
-                  'после персонализации: ${_lastRankedCandidateCount ?? 'нет данных'}; '
-                  'на экране: ${_articles.length}'
-                  '${_refreshingNews ? '; загрузка ещё выполняется' : ''}',
+          details: [
+            if (_newsError != null) 'Ошибка: $_newsError',
+            'Этап: $_newsDiagnosticStage',
+            'Последнее обновление: ${_lastNewsRefreshAt?.toLocal().toIso8601String() ?? 'нет данных'}',
+            if (_lastNewsFailureStage != null)
+              'Этап сбоя: $_lastNewsFailureStage',
+            if (_lastNewsFailureType != null)
+              'Тип сбоя: $_lastNewsFailureType',
+            'RSS-кандидатов: ${_lastRssCandidateCount ?? 'нет данных'}',
+            'После локализации: ${_lastLocalizedCandidateCount ?? 'нет данных'}',
+            'После персонализации: ${_lastRankedCandidateCount ?? 'нет данных'}',
+            'На экране: ${_articles.length}',
+            'Время RSS: ${_lastRssDurationMs == null ? 'нет данных' : '$_lastRssDurationMs мс'}',
+            'Время локализации: ${_lastLocalizationDurationMs == null ? 'нет данных' : '$_lastLocalizationDurationMs мс'}',
+            'Время персонализации: ${_lastRankingDurationMs == null ? 'нет данных' : '$_lastRankingDurationMs мс'}',
+            'Время записи кэша: ${_lastCacheWriteDurationMs == null ? 'нет данных' : '$_lastCacheWriteDurationMs мс'}',
+            if (_refreshingNews) 'Загрузка ещё выполняется',
+          ].join('; '),
         ),
         DiagnosticCheck(
           name: 'Локальный кэш',
@@ -596,32 +615,66 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
         _newsError = null;
         _hasCompletedNewsFetch = false;
         _showingCachedNews = false;
+        _newsDiagnosticStage = 'Не запускалась: не выбраны интересы';
+        _lastNewsFailureStage = null;
+        _lastNewsFailureType = null;
+        _lastNewsRefreshAt = DateTime.now();
+        _lastRssCandidateCount = null;
+        _lastLocalizedCandidateCount = null;
+        _lastRankedCandidateCount = null;
+        _lastRssDurationMs = null;
+        _lastLocalizationDurationMs = null;
+        _lastRankingDurationMs = null;
+        _lastCacheWriteDurationMs = null;
       });
       await _newsCache.clear();
       return;
     }
     final revisionAtStart = _interestRevision;
+    var failureStage = 'Получение RSS-кандидатов';
     setState(() {
       _refreshingNews = true;
       _newsError = null;
+      _newsDiagnosticStage = failureStage;
+      _lastNewsFailureStage = null;
+      _lastNewsFailureType = null;
+      _lastNewsRefreshAt = DateTime.now();
+      _lastRssCandidateCount = null;
+      _lastLocalizedCandidateCount = null;
+      _lastRankedCandidateCount = null;
+      _lastRssDurationMs = null;
+      _lastLocalizationDurationMs = null;
+      _lastRankingDurationMs = null;
+      _lastCacheWriteDurationMs = null;
     });
     try {
       // Search Russian and English editions, while keeping Russian as the
       // app's output language. Feed locale is not the article's geography.
+      final rssWatch = Stopwatch()..start();
       final fetchedArticles = await _newsService.fetchInternational(profile);
+      rssWatch.stop();
+      _lastRssDurationMs = rssWatch.elapsedMilliseconds;
       if (revisionAtStart != _interestRevision) return;
       if (mounted) {
         setState(() => _lastRssCandidateCount = fetchedArticles.length);
       }
       // Prefer an existing Russian edition when a conservative match is found.
       // Foreign articles without a match remain in the feed unchanged.
+      failureStage = 'Поиск русскоязычных дублей и локализация';
+      if (mounted) setState(() => _newsDiagnosticStage = failureStage);
+      final localizationWatch = Stopwatch()..start();
       final articles = await _sourceLocalizationService.localizeCandidates(
         fetchedArticles,
       );
+      localizationWatch.stop();
+      _lastLocalizationDurationMs = localizationWatch.elapsedMilliseconds;
       if (revisionAtStart != _interestRevision) return;
       if (mounted) {
         setState(() => _lastLocalizedCandidateCount = articles.length);
       }
+      failureStage = 'Персонализация и сортировка';
+      if (mounted) setState(() => _newsDiagnosticStage = failureStage);
+      final rankingWatch = Stopwatch()..start();
       final favorites = await _favoritesRepository.getAll();
       _lessInterested = await _feedbackRepository.loadLessInterested();
       final favoriteProfile = _favoriteAnalytics.analyze(favorites);
@@ -632,6 +685,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           lessInterested: _lessInterested,
         ),
       );
+      rankingWatch.stop();
+      _lastRankingDurationMs = rankingWatch.elapsedMilliseconds;
       if (revisionAtStart != _interestRevision) return;
       if (mounted) {
         setState(() => _lastRankedCandidateCount = rankedArticles.length);
@@ -654,6 +709,9 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       // Cache writes are best-effort: report a storage warning, but keep the
       // freshly fetched articles visible if persistence fails.
       try {
+        failureStage = 'Сохранение кэша';
+        if (mounted) setState(() => _newsDiagnosticStage = failureStage);
+        final cacheWatch = Stopwatch()..start();
         await _newsCache.saveDigest(null);
         if (revisionAtStart != _interestRevision) {
           await _newsCache.clear();
@@ -665,6 +723,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           includeCriticalOutsideInterests:
               profile.includeCriticalOutsideInterests,
         );
+        cacheWatch.stop();
+        _lastCacheWriteDurationMs = cacheWatch.elapsedMilliseconds;
         if (revisionAtStart != _interestRevision) {
           // Topic changes clear the cache too, but an in-flight write may finish
           // afterward. Clear again so stale results cannot survive that race.
@@ -685,13 +745,21 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
       if (!mounted || revisionAtStart != _interestRevision) return;
       final details = error is http.ClientException ? error.message : null;
       setState(() {
+        _lastNewsFailureStage = failureStage;
+        _lastNewsFailureType = error.runtimeType.toString();
+        _newsDiagnosticStage = 'Ошибка: $failureStage';
         _newsError = details == null || details.isEmpty
             ? 'Не удалось загрузить новости. Проверьте соединение и попробуйте снова.'
             : 'Не удалось загрузить новости: $details';
       });
     } finally {
       if (mounted) {
-        setState(() => _refreshingNews = false);
+        setState(() {
+          _refreshingNews = false;
+          if (_lastNewsFailureStage == null) {
+            _newsDiagnosticStage = 'Завершена';
+          }
+        });
         if (_refreshPendingAfterCurrent) {
           _refreshPendingAfterCurrent = false;
           unawaited(_refreshNews());
