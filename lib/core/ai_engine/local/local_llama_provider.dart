@@ -149,6 +149,7 @@ class LocalLlamaProvider implements AIProvider, AIStreamingProvider {
     final generationStopwatch = Stopwatch()..start();
     Duration? timeToFirstToken;
     var generatedTokenCount = 0;
+    var emittedVisibleText = '';
     try {
       await for (final token in _controller.generate(
         prompt: prompt,
@@ -158,8 +159,15 @@ class LocalLlamaProvider implements AIProvider, AIStreamingProvider {
         if (cancellationToken.isCancelled) break;
         timeToFirstToken ??= generationStopwatch.elapsed;
         generatedTokenCount++;
-        // Buffer raw output so internal reasoning cannot leak before cleanup.
         output.write(token);
+        final visibleText = Qwen3PromptFormatter.visiblePrefix(
+          output.toString(),
+        );
+        if (visibleText.startsWith(emittedVisibleText) &&
+            visibleText.length > emittedVisibleText.length) {
+          onToken(visibleText.substring(emittedVisibleText.length));
+          emittedVisibleText = visibleText;
+        }
       }
       generationStopwatch.stop();
       if (cancelled || cancellationToken.isCancelled) {
@@ -182,8 +190,11 @@ class LocalLlamaProvider implements AIProvider, AIStreamingProvider {
         );
       }
 
-      // Emit only the cleaned final answer, never hidden reasoning.
-      onToken(text);
+      // Flush any final characters withheld while checking partial markers.
+      if (text.startsWith(emittedVisibleText) &&
+          text.length > emittedVisibleText.length) {
+        onToken(text.substring(emittedVisibleText.length));
+      }
       return AIResponse(
         requestId: request.id,
         text: text,
