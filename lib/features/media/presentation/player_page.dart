@@ -704,6 +704,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   Future<void> _toggleFullscreen() async {
     final enable = !_isFullscreen;
+    if (mounted) setState(() => _isFullscreen = enable);
     try {
       await SystemChrome.setEnabledSystemUIMode(
         enable ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
@@ -716,9 +717,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
               ]
             : const [],
       );
-      if (mounted) setState(() => _isFullscreen = enable);
-    } on Object catch (error) {
-      if (mounted) setState(() => _playerError = error);
+    } on Object {
+      // Keep the in-app fullscreen layout usable if a platform rejects the
+      // orientation or system-UI request (for example, in widget tests).
     }
   }
 
