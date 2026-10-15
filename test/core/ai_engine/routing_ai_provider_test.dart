@@ -57,6 +57,35 @@ void main() {
       },
     );
 
+    test('keeps conversational uses of current-time words local', () async {
+      final response = await router.complete(
+        AIRequest(
+          id: 'scene-question',
+          prompt: 'Объясни, что сейчас происходит в этой сцене',
+        ),
+        cancellationToken: AICancellationToken(),
+      );
+
+      expect(response.providerId, 'local');
+      expect(local.calls, 1);
+      expect(cloud.calls, 0);
+    });
+
+    test('keeps writing a news item local when no current facts are requested',
+        () async {
+      final response = await router.complete(
+        AIRequest(
+          id: 'write-news-item',
+          prompt: 'Помоги написать новость о школьном мероприятии',
+        ),
+        cancellationToken: AICancellationToken(),
+      );
+
+      expect(response.providerId, 'local');
+      expect(local.calls, 1);
+      expect(cloud.calls, 0);
+    });
+
     test('routes explicit current-news requests to cloud', () async {
       final response = await router.complete(
         AIRequest(id: 'current-news', prompt: 'Какие новости сегодня?'),
