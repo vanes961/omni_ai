@@ -113,11 +113,9 @@ class _AIChatPageState extends State<AIChatPage> {
         var includesFreshResults = false;
         try {
           final profile = await _newsRepository.load();
-          if (profile.topics.any((topic) => topic.trim().isNotEmpty) ||
-              profile.includeCriticalOutsideInterests) {
-            freshArticles = await _newsService.fetchInternational(profile);
-            includesFreshResults = freshArticles.isNotEmpty;
-          }
+          // An empty interest profile still has a general discovery feed.
+          freshArticles = await _newsService.fetchInternational(profile);
+          includesFreshResults = freshArticles.isNotEmpty;
         } on Object {
           // A network/source failure falls back to the cached personalized feed.
         }
