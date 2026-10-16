@@ -19,21 +19,6 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
 
   @override
   Widget build(BuildContext context) {
-    if (_hidden) {
-      return Positioned(
-        right: 8,
-        bottom: 12,
-        child: IconButton(
-          tooltip: 'Показать AI-компаньона',
-          onPressed: () => setState(() => _hidden = false),
-          style: IconButton.styleFrom(
-            backgroundColor: SystemCorePalette.panelElevated,
-            foregroundColor: SystemCorePalette.green,
-          ),
-          icon: const Icon(Icons.smart_toy_outlined),
-        ),
-      );
-    }
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxX = (constraints.maxWidth - 62).clamp(8.0, double.infinity);
@@ -122,7 +107,7 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                 ),
               ),
             ),
-            if (!_open)
+            if (!_open && !_hidden)
               Positioned(
                 left: left,
                 top: top,
@@ -181,6 +166,20 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                       ),
                     ),
                   ),
+                ),
+              ),
+            if (_hidden)
+              Positioned(
+                right: 8,
+                bottom: 12,
+                child: IconButton(
+                  tooltip: 'Показать AI-компаньона',
+                  onPressed: () => setState(() => _hidden = false),
+                  style: IconButton.styleFrom(
+                    backgroundColor: SystemCorePalette.panelElevated,
+                    foregroundColor: SystemCorePalette.green,
+                  ),
+                  icon: const Icon(Icons.smart_toy_outlined),
                 ),
               ),
           ],
