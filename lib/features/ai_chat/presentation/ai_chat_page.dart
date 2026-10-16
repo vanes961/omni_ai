@@ -6,6 +6,7 @@ import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_context_manager.dart';
 import 'package:omni_ai/core/ai_engine/providers/routing_ai_provider.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
+import 'package:omni_ai/features/ai_memory/models/ai_memory.dart';
 import 'package:omni_ai/features/ai_memory/presentation/ai_memory_manager_dialog.dart';
 import 'package:omni_ai/features/news/models/news_article.dart';
 import 'package:omni_ai/features/news/data/news_interest_repository.dart';
@@ -103,8 +104,15 @@ class _AIChatPageState extends State<AIChatPage> {
     try {
       await widget.dependencies.ai.restoreExecutionMode();
       _ensureRequestActive(token);
-      final savedMemories = await widget.dependencies.aiMemoryRepository
-          .getAll();
+      final List<AIMemory> savedMemories;
+      try {
+        savedMemories = await widget.dependencies.aiMemoryRepository.getAll();
+      } on Object {
+        // A memory-store failure should not prevent an otherwise valid chat
+        // request. Cancellation is still checked before continuing without it.
+        _ensureRequestActive(token);
+        savedMemories = const <AIMemory>[];
+      }
       _ensureRequestActive(token);
       var requestPrompt = prompt;
       if (_newsContextBuilder.isNewsRequest(prompt)) {
