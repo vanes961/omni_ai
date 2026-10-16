@@ -85,6 +85,40 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('keeps the composer visible when the keyboard reduces height', (
+    tester,
+  ) async {
+    final dependencies = AppDependencies();
+    await tester.binding.setSurfaceSize(const Size(390, 760));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    addTearDown(tester.view.resetViewInsets);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              const Center(child: Text('Текущий экран')),
+              FloatingAICompanion(dependencies: dependencies),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+
+    final composer = find.byType(TextField);
+    final sendButton = find.byTooltip('Отправить');
+    expect(composer, findsOneWidget);
+    expect(sendButton, findsOneWidget);
+    expect(tester.getRect(composer).bottom, lessThanOrEqualTo(460));
+    expect(tester.getRect(sendButton).bottom, lessThanOrEqualTo(460));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('uses the compact header in the floating chat', (tester) async {
     final dependencies = AppDependencies();
 
