@@ -144,7 +144,7 @@ void main() {
     final warning = find.byWidgetPredicate(
       (widget) =>
           widget is Tooltip &&
-          widget.message.contains('Не удалось загрузить режим'),
+          (widget.message?.contains('Не удалось загрузить режим') ?? false),
     );
     expect(warning, findsOneWidget);
     expect(tester.takeException(), isNull);
