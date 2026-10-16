@@ -282,5 +282,40 @@ void main() {
     expect(find.text('Текущий экран'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-}
 
+  testWidgets('preserves the chat draft when the companion is hidden', (
+    tester,
+  ) async {
+    final dependencies = AppDependencies();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              const Center(child: Text('Текущий экран')),
+              FloatingAICompanion(dependencies: dependencies),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), 'Черновик перед скрытием');
+
+    await tester.tap(find.byTooltip('Скрыть помощника'));
+    await tester.pump();
+    expect(find.byTooltip('Показать AI-компаньона'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Показать AI-компаньона'));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+
+    expect(find.text('Черновик перед скрытием'), findsOneWidget);
+    expect(find.text('Текущий экран'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}
