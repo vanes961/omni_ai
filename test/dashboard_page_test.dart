@@ -108,6 +108,22 @@ void main() {
 
     expect(find.text('Черновик при навигации'), findsOneWidget);
     expect(find.text('OMNI AI · помощник'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Скрыть помощника'));
+    await tester.pump();
+    expect(find.byTooltip('Показать AI-компаньона'), findsOneWidget);
+
+    await tester.tap(find.text('Настройки'));
+    await tester.pump();
+    expect(find.byType(NetworkSettingsPage), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Показать AI-компаньона'));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+
+    expect(find.text('Черновик при навигации'), findsOneWidget);
+    expect(find.text('OMNI AI · помощник'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
