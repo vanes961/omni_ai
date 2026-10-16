@@ -5,6 +5,7 @@ import 'package:omni_ai/core/ai_engine/models/ai_error.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_response.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
+import 'package:omni_ai/core/ai_engine/providers/ai_streaming_provider.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 import 'package:omni_ai/features/run_history/data/in_memory_run_history_repository.dart';
 import 'package:omni_ai/features/system_core/models/system_core_process_state.dart';
@@ -92,6 +93,39 @@ void main() {
     final record = (await harness.repository.getAll()).single;
     expect(record.status, SystemCoreProcessStatus.cancelled);
     expect(record.finishedAt, isNotNull);
+  });
+
+  test('does not forward late stream chunks after caller cancellation', () async {
+    final provider = _LateStreamingProvider();
+    final harness = _OrchestratorHarness(provider: provider);
+    addTearDown(harness.dispose);
+    final cancellationToken = AICancellationToken();
+    final received = <String>[];
+
+    final execution = harness.orchestrator.execute(
+      _request('stream-cancelled'),
+      cancellationToken: cancellationToken,
+      onToken: received.add,
+    );
+    await provider.started.future;
+    cancellationToken.cancel();
+
+    await expectLater(
+      execution,
+      throwsA(
+        isA<AIEngineException>().having(
+          (error) => error.error.code,
+          'code',
+          AIErrorCode.cancelled,
+        ),
+      ),
+    );
+    provider.releaseLateChunk.complete();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(received, ['first']);
+    final record = (await harness.repository.getAll()).single;
+    expect(record.status, SystemCoreProcessStatus.cancelled);
   });
 
   test('records engine timeout as a distinct terminal state', () async {
@@ -194,6 +228,38 @@ class _FakeProvider implements AIProvider {
       text: 'generated response',
       providerId: id,
       generatedAt: DateTime.utc(2026, 10, 8),
+    );
+  }
+}
+
+class _LateStreamingProvider implements AIProvider, AIStreamingProvider {
+  final started = Completer<void>();
+  final releaseLateChunk = Completer<void>();
+
+  @override
+  String get id => 'fake-streaming';
+
+  @override
+  Future<AIResponse> complete(
+    AIRequest request, {
+    required AICancellationToken cancellationToken,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<AIResponse> completeStreaming(
+    AIRequest request, {
+    required AICancellationToken cancellationToken,
+    required void Function(String token) onToken,
+  }) async {
+    onToken('first');
+    started.complete();
+    await releaseLateChunk.future;
+    onToken('late');
+    return AIResponse(
+      requestId: request.id,
+      text: 'firstlate',
+      providerId: id,
+      generatedAt: DateTime.utc(2026, 10, 16),
     );
   }
 }
