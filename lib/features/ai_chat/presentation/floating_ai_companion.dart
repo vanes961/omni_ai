@@ -45,8 +45,10 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
         final top = pos.dy.clamp(8.0, maxY);
         return Stack(
           children: [
-            if (_open)
-              Positioned.fill(
+            Positioned.fill(
+              child: Visibility(
+                visible: _open,
+                maintainState: true,
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
                     12,
@@ -118,8 +120,8 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                     ),
                   ),
                 ),
-              )
-            else
+              ),
+            if (!_open)
               Positioned(
                 left: left,
                 top: top,
