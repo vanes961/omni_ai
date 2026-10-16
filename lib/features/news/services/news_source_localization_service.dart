@@ -27,15 +27,20 @@ class NewsSourceLocalizationService {
   final SmartTranslationService _translationService;
 
   Future<List<NewsArticle>> localizeCandidates(
-    Iterable<NewsArticle> candidates,
-  ) async {
-    final report = await localizeCandidatesWithReport(candidates);
+    Iterable<NewsArticle> candidates, {
+    AICancellationToken? cancellationToken,
+  }) async {
+    final report = await localizeCandidatesWithReport(
+      candidates,
+      cancellationToken: cancellationToken,
+    );
     return report.articles;
   }
 
   Future<NewsLocalizationResult> localizeCandidatesWithReport(
-    Iterable<NewsArticle> candidates,
-  ) async {
+    Iterable<NewsArticle> candidates, {
+    AICancellationToken? cancellationToken,
+  }) async {
     final articles = candidates.toList(growable: false);
     final russianCandidates = articles
         .where((article) => article.language.toLowerCase() == 'ru')
@@ -50,6 +55,7 @@ class NewsSourceLocalizationService {
     var foreignUntranslatedCount = 0;
 
     for (final article in articles) {
+      _ensureActive(cancellationToken);
       // Video and trailer cards are metadata previews, not article bodies.
       // Keep their original title, description and outbound link without
       // duplicate matching or an AI translation request.
@@ -71,7 +77,11 @@ class NewsSourceLocalizationService {
       } else if (aiEngine != null &&
           translationAttempts < maxAiTranslationsPerBatch) {
         translationAttempts++;
-        final translation = await _translateIfAvailable(article);
+        final translation = await _translateIfAvailable(
+          article,
+          cancellationToken: cancellationToken,
+        );
+        _ensureActive(cancellationToken);
         result.add(translation.article);
         if (translation.translated) {
           translatedCount++;
@@ -110,10 +120,13 @@ class NewsSourceLocalizationService {
     );
   }
 
-  Future<_TranslationAttempt> _translateIfAvailable(NewsArticle article) async {
+  Future<_TranslationAttempt> _translateIfAvailable(
+    NewsArticle article, {
+    AICancellationToken? cancellationToken,
+  }) async {
     final engine = aiEngine;
     if (engine == null) return _TranslationAttempt(article, false);
-    final cancellationToken = AICancellationToken();
+    final engineCancellationToken = cancellationToken ?? AICancellationToken();
     try {
       final response = await engine
           .execute(
@@ -130,12 +143,12 @@ class NewsSourceLocalizationService {
               }),
               metadata: const {'feature': 'news_translation'},
             ),
-            cancellationToken: cancellationToken,
+            cancellationToken: engineCancellationToken,
           )
           .timeout(
             translationTimeout,
             onTimeout: () {
-              cancellationToken.cancel();
+              engineCancellationToken.cancel();
               throw TimeoutException('News translation timed out.');
             },
           );
@@ -210,6 +223,12 @@ class NewsSourceLocalizationService {
         false,
         NewsTranslationFailureReason.unknown,
       );
+    }
+  }
+
+  void _ensureActive(AICancellationToken? token) {
+    if (token?.isCancelled == true) {
+      throw StateError('News localization cancelled.');
     }
   }
 }
