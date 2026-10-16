@@ -42,6 +42,14 @@ void main() {
     expect(find.text('Life Free Hub'), findsNothing);
     expect(find.text('Legacy demo title'), findsNothing);
 
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+    expect(find.text('OMNI AI · помощник'), findsOneWidget);
+    expect(find.text('ЛИЧНЫЙ ПОМОЩНИК'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.byTooltip('Свернуть'));
+    await tester.pump();
+
     await tester.tap(find.text('Медиа'));
     await tester.pump();
     expect(find.byType(MediaPage), findsOneWidget);
