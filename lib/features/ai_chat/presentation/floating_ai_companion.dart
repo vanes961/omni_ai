@@ -109,6 +109,7 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                             Expanded(
                               child: AIChatPage(
                                 dependencies: widget.dependencies,
+                                compactHeader: true,
                               ),
                             ),
                           ],
