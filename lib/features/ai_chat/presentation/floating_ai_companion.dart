@@ -17,6 +17,19 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
   bool _hidden = false;
   bool _open = false;
 
+  void _collapseChat() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _open = false);
+  }
+
+  void _hideCompanion() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _open = false;
+      _hidden = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -78,16 +91,12 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                                   ),
                                   IconButton(
                                     tooltip: 'Свернуть',
-                                    onPressed: () =>
-                                        setState(() => _open = false),
+                                    onPressed: _collapseChat,
                                     icon: const Icon(Icons.remove),
                                   ),
                                   IconButton(
                                     tooltip: 'Скрыть помощника',
-                                    onPressed: () => setState(() {
-                                      _open = false;
-                                      _hidden = true;
-                                    }),
+                                    onPressed: _hideCompanion,
                                     icon: const Icon(Icons.close),
                                   ),
                                 ],
