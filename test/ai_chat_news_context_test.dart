@@ -112,6 +112,18 @@ void main() {
     );
   });
 
+  testWidgets('continues chat when saved memory storage fails', (
+    WidgetTester tester,
+  ) async {
+    final submittedPrompt = await _sendPrompt(
+      tester,
+      'Привет, помощник.',
+      failMemoryLoad: true,
+    );
+
+    expect(submittedPrompt, 'Привет, помощник.');
+  });
+
   testWidgets('does not add cached news to unrelated chat questions', (
     WidgetTester tester,
   ) async {
@@ -134,6 +146,7 @@ Future<String> _sendPrompt(
   String prompt, {
   NewsRssService? newsService,
   bool saveAnimeInterest = false,
+  bool failMemoryLoad = false,
 }) async {
   _checkpoint('[news-context-test] helper entered');
   SharedPreferences.setMockInitialValues({});
@@ -172,7 +185,7 @@ Future<String> _sendPrompt(
     runHistoryRepository: InMemoryRunHistoryRepository(),
     aiExecutionModeStore: _TestExecutionModeStore(),
     localAIProvider: _TestLocalAIProvider(),
-    aiMemoryRepository: _TestMemoryRepository(),
+    aiMemoryRepository: _TestMemoryRepository(throwOnRead: failMemoryLoad),
     httpClient: MockClient((request) async {
       final payload = jsonDecode(request.body) as Map<String, dynamic>;
       final messages = payload['messages'] as List<dynamic>;
@@ -285,8 +298,15 @@ class _TestExecutionModeStore implements AIExecutionModeStore {
 }
 
 class _TestMemoryRepository implements AIMemoryRepository {
+  const _TestMemoryRepository({this.throwOnRead = false});
+
+  final bool throwOnRead;
+
   @override
-  Future<List<AIMemory>> getAll() async => const [];
+  Future<List<AIMemory>> getAll() async {
+    if (throwOnRead) throw StateError('Test memory store unavailable.');
+    return const [];
+  }
 
   @override
   Future<void> save(AIMemory memory) async {}
