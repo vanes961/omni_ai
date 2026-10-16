@@ -170,9 +170,11 @@ class _AIChatPageState extends State<AIChatPage> {
             .map((memory) => memory.content)
             .toList(growable: false),
         onToken: (chunk) {
+          // A provider may emit a late chunk after cancellation. Do not let it
+          // overwrite the cancellation/error state shown by the chat.
+          if (!mounted || token.isCancelled) return;
           streamedOutput.write(chunk);
           final visibleText = _cleanAssistantAnswer(streamedOutput.toString());
-          if (!mounted) return;
           setState(() {
             _messages[assistantMessageIndex] = _ChatMessage(
               text: visibleText,
