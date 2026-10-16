@@ -91,17 +91,20 @@ void main() {
     final dependencies = AppDependencies();
     await tester.binding.setSurfaceSize(const Size(390, 760));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
-    addTearDown(tester.view.resetViewInsets);
-
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: Stack(
-            children: [
-              const Center(child: Text('Текущий экран')),
-              FloatingAICompanion(dependencies: dependencies),
-            ],
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(390, 760),
+            viewInsets: EdgeInsets.only(bottom: 300),
+          ),
+          child: Scaffold(
+            body: Stack(
+              children: [
+                const Center(child: Text('Текущий экран')),
+                FloatingAICompanion(dependencies: dependencies),
+              ],
+            ),
           ),
         ),
       ),
