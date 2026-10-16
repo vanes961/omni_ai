@@ -46,59 +46,75 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
         return Stack(
           children: [
             if (_open)
-              Positioned(
-                left: 8,
-                right: 8,
-                top: 8,
-                bottom: 8,
-                child: Material(
-                  color: SystemCorePalette.panel,
-                  elevation: 14,
-                  clipBehavior: Clip.antiAlias,
-                  borderRadius: BorderRadius.circular(22),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
-                        decoration: const BoxDecoration(
-                          color: SystemCorePalette.panelElevated,
-                          border: Border(
-                            bottom: BorderSide(color: SystemCorePalette.border),
-                          ),
-                        ),
-                        child: Row(
+              Positioned.fill(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    12,
+                    12,
+                    12,
+                    constraints.maxHeight > 620 ? 76 : 12,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 560),
+                      child: Material(
+                        color: SystemCorePalette.panel,
+                        elevation: 14,
+                        clipBehavior: Clip.antiAlias,
+                        borderRadius: BorderRadius.circular(22),
+                        child: Column(
                           children: [
-                            const Icon(
-                              Icons.smart_toy_rounded,
-                              color: SystemCorePalette.green,
-                            ),
-                            const SizedBox(width: 10),
-                            const Expanded(
-                              child: Text(
-                                'OMNI AI · помощник',
-                                style: TextStyle(fontWeight: FontWeight.w600),
+                            Container(
+                              padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
+                              decoration: const BoxDecoration(
+                                color: SystemCorePalette.panelElevated,
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: SystemCorePalette.border,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.smart_toy_rounded,
+                                    color: SystemCorePalette.green,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Expanded(
+                                    child: Text(
+                                      'OMNI AI · помощник',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Свернуть',
+                                    onPressed: () =>
+                                        setState(() => _open = false),
+                                    icon: const Icon(Icons.remove),
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Скрыть помощника',
+                                    onPressed: () => setState(() {
+                                      _open = false;
+                                      _hidden = true;
+                                    }),
+                                    icon: const Icon(Icons.close),
+                                  ),
+                                ],
                               ),
                             ),
-                            IconButton(
-                              tooltip: 'Свернуть',
-                              onPressed: () => setState(() => _open = false),
-                              icon: const Icon(Icons.remove),
-                            ),
-                            IconButton(
-                              tooltip: 'Скрыть помощника',
-                              onPressed: () => setState(() {
-                                _open = false;
-                                _hidden = true;
-                              }),
-                              icon: const Icon(Icons.close),
+                            Expanded(
+                              child: AIChatPage(
+                                dependencies: widget.dependencies,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Expanded(
-                        child: AIChatPage(dependencies: widget.dependencies),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               )
