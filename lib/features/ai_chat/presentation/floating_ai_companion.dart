@@ -48,12 +48,7 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                 visible: _open,
                 maintainState: true,
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    12,
-                    12,
-                    12,
-                    constraints.maxHeight > 620 ? 76 : 12,
-                  ),
+                  padding: const EdgeInsets.all(12),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 560),
