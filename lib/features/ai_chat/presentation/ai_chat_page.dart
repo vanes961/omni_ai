@@ -21,12 +21,14 @@ class AIChatPage extends StatefulWidget {
     required this.dependencies,
     this.newsService,
     this.newsRepository,
+    this.compactHeader = false,
     super.key,
   });
 
   final AppDependencies dependencies;
   final NewsRssService? newsService;
   final NewsInterestRepository? newsRepository;
+  final bool compactHeader;
 
   @override
   State<AIChatPage> createState() => _AIChatPageState();
@@ -245,7 +247,56 @@ class _AIChatPageState extends State<AIChatPage> {
     final mode = widget.dependencies.ai.executionMode;
     return Column(
       children: [
-        Container(
+        if (widget.compactHeader)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: const BoxDecoration(
+              color: SystemCorePalette.panel,
+              border: Border(
+                bottom: BorderSide(color: SystemCorePalette.border),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  mode == AIExecutionMode.local
+                      ? Icons.phone_android
+                      : mode == AIExecutionMode.cloud
+                      ? Icons.cloud_outlined
+                      : Icons.alt_route,
+                  size: 16,
+                  color: SystemCorePalette.green,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _modeLoading
+                        ? 'ЗАГРУЗКА РЕЖИМА...'
+                        : mode == AIExecutionMode.local
+                        ? 'LOCAL AI · НА УСТРОЙСТВЕ'
+                        : mode == AIExecutionMode.cloud
+                        ? 'CLOUD AI · ОБЛАЧНЫЕ ЗАПРОСЫ'
+                        : 'AUTO AI · АДАПТИВНЫЙ РЕЖИМ',
+                    style: const TextStyle(
+                      color: SystemCorePalette.green,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Долговременная память',
+                  onPressed: _openMemoryManager,
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.bookmarks_outlined, size: 20),
+                ),
+              ],
+            ),
+          ),
+        if (!widget.compactHeader)
+          Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
           decoration: const BoxDecoration(
