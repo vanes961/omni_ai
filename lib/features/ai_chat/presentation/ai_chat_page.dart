@@ -301,7 +301,9 @@ class _AIChatPageState extends State<AIChatPage> {
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
             decoration: const BoxDecoration(
               color: SystemCorePalette.panel,
-              border: Border(bottom: BorderSide(color: SystemCorePalette.border)),
+              border: Border(
+                bottom: BorderSide(color: SystemCorePalette.border),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
