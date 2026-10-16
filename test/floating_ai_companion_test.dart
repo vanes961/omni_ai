@@ -340,12 +340,15 @@ void main() {
     await tester.pump();
     await tester.tap(find.byType(TextField));
     await tester.pump();
-    expect(tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus, isTrue);
+    final focusNode = tester
+        .widget<EditableText>(find.byType(EditableText))
+        .focusNode;
+    expect(focusNode.hasFocus, isTrue);
 
     await tester.tap(find.byTooltip('Свернуть'));
     await tester.pump();
 
-    expect(tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus, isFalse);
+    expect(focusNode.hasFocus, isFalse);
     expect(find.text('Текущий экран'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
