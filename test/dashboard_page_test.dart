@@ -89,6 +89,18 @@ void main() {
 
     await tester.tap(find.text('Избранное'));
     await tester.pump();
+    expect(find.byType(FavoritesPage), findsOneWidget);
+
+    await tester.tap(find.text('Настройки'));
+    await tester.pump();
+    expect(find.byType(NetworkSettingsPage), findsOneWidget);
+
+    await tester.tap(find.text('Лента'));
+    await tester.pump();
+    expect(find.byType(NewsCenterPage), findsOneWidget);
+
+    await tester.tap(find.text('Избранное'));
+    await tester.pump();
 
     await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
     await tester.pump();
