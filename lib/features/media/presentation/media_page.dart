@@ -666,7 +666,7 @@ class _MediaPageState extends State<MediaPage> {
                   final item = items[index];
                   return _MediaPosterCard(
                     item: item,
-                    onTap: () => _openPlayer(item),
+                    onTap: () => _openDetails(item),
                     onFavorite: () => _saveFavorite(item),
                     isLiked: _likedIds.contains(item.id),
                     onLike: () => _toggleLike(item),
