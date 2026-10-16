@@ -389,4 +389,42 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+
+  testWidgets('keeps the companion inside the screen after resizing', (
+    tester,
+  ) async {
+    final dependencies = AppDependencies();
+    await tester.binding.setSurfaceSize(const Size(420, 820));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              const Center(child: Text('Текущий экран')),
+              FloatingAICompanion(dependencies: dependencies),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final robot = find.byIcon(Icons.smart_toy_rounded).first;
+    await tester.drag(robot, const Offset(-260, -420));
+    await tester.pump();
+
+    await tester.binding.setSurfaceSize(const Size(320, 600));
+    await tester.pump();
+
+    final resizedRobot = tester.getRect(
+      find.byIcon(Icons.smart_toy_rounded).first,
+    );
+    expect(resizedRobot.left, greaterThanOrEqualTo(0));
+    expect(resizedRobot.top, greaterThanOrEqualTo(0));
+    expect(resizedRobot.right, lessThanOrEqualTo(320));
+    expect(resizedRobot.bottom, lessThanOrEqualTo(600));
+    expect(find.text('Текущий экран'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
