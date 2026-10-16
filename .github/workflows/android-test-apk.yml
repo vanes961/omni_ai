@@ -45,7 +45,19 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      - name: Build debug APK
+      - name: Download bundled Qwen model
+        run: |
+          mkdir -p android/app/src/main/assets/models
+          curl --location --fail --retry 3 --retry-delay 2 \
+            'https://huggingface.co/SandLogicTechnologies/Qwen3-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf' \
+            --output android/app/src/main/assets/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf
+
+      - name: Verify bundled Qwen model
+        run: |
+          echo '9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14  android/app/src/main/assets/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf' | sha256sum --check
+          test "$(stat -c%s android/app/src/main/assets/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf)" -ge 459800000
+
+      - name: Build debug APK with bundled model
         run: flutter build apk --debug
 
       - name: Publish APK artifact
