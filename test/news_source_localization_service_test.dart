@@ -241,6 +241,29 @@ void main() {
     expect(provider.calls, 0);
   });
 
+  test('does not start another translation after cancellation in flight', () async {
+    final token = AICancellationToken();
+    final provider = _TranslationProvider(
+      onComplete: (_) => token.cancel(),
+    );
+    final translationService = NewsSourceLocalizationService(
+      aiEngine: AIEngine(provider: provider),
+    );
+
+    await expectLater(
+      translationService.localizeCandidates(
+        [
+          _article(id: 'first', language: 'en', title: 'First headline'),
+          _article(id: 'second', language: 'en', title: 'Second headline'),
+        ],
+        cancellationToken: token,
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(provider.calls, 1);
+  });
+
   test('keeps Russian articles', () async {
     final russian = _article(
       id: 'russian',
@@ -280,10 +303,12 @@ class _TranslationProvider implements AIProvider {
   _TranslationProvider({
     this.delay = Duration.zero,
     this.responseText = '{"title":"Консоль","summary":"Описание"}',
+    this.onComplete,
   });
 
   final Duration delay;
   final String responseText;
+  final void Function(AICancellationToken cancellationToken)? onComplete;
   int calls = 0;
 
   @override
@@ -296,6 +321,7 @@ class _TranslationProvider implements AIProvider {
   }) async {
     calls++;
     await Future<void>.delayed(delay);
+    onComplete?.call(cancellationToken);
     return AIResponse(
       requestId: request.id,
       text: responseText,
