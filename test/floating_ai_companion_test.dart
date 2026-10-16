@@ -318,4 +318,36 @@ void main() {
     expect(find.text('Текущий экран'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('dismisses the keyboard when the chat is collapsed', (
+    tester,
+  ) async {
+    final dependencies = AppDependencies();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              const Center(child: Text('Текущий экран')),
+              FloatingAICompanion(dependencies: dependencies),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+    await tester.tap(find.byType(TextField));
+    await tester.pump();
+    expect(tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus, isTrue);
+
+    await tester.tap(find.byTooltip('Свернуть'));
+    await tester.pump();
+
+    expect(tester.widget<EditableText>(find.byType(EditableText)).focusNode.hasFocus, isFalse);
+    expect(find.text('Текущий экран'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
