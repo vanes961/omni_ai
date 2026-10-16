@@ -48,6 +48,42 @@ void main() {
     expect(find.text('Текущий экран'), findsOneWidget);
   });
 
+  testWidgets('keeps the open chat window floating and width-constrained', (
+    tester,
+  ) async {
+    final dependencies = AppDependencies();
+    await tester.binding.setSurfaceSize(const Size(900, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              const Center(child: Text('Текущий экран')),
+              FloatingAICompanion(dependencies: dependencies),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+
+    final panel = find.byWidgetPredicate(
+      (widget) =>
+          widget is Material &&
+          widget.borderRadius == BorderRadius.circular(22),
+    );
+    expect(panel, findsOneWidget);
+    final panelRect = tester.getRect(panel);
+    expect(panelRect.width, lessThanOrEqualTo(560));
+    expect(panelRect.height, lessThan(900));
+    expect(panelRect.bottom, lessThan(900));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('can hide and restore the floating companion', (tester) async {
     final dependencies = AppDependencies();
 
