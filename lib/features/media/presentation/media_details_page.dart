@@ -232,7 +232,68 @@ class MediaDetailsPage extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 20),
-            if (item.videoUrl.isNotEmpty)
+            if (item.videoUrl.trim().isEmpty &&
+                !item.videoSources.any(
+                  (source) => source.url.trim().isNotEmpty,
+                ))
+              Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: SystemCorePalette.panel,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: SystemCorePalette.border),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: SystemCorePalette.green.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.link_off_rounded,
+                        color: SystemCorePalette.green,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ВИДЕОИСТОЧНИК НЕ ПОДКЛЮЧЁН',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.35,
+                            ),
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'TMDB предоставляет карточку, постер и описание, но не сам фильм. '
+                            'Добавь доступный тебе HTTP(S)-поток или magnet-ссылку. '
+                            'Для magnet нужен настроенный TorrServer.',
+                            style: TextStyle(
+                              color: SystemCorePalette.muted,
+                              fontSize: 12,
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (item.videoUrl.trim().isNotEmpty ||
+                item.videoSources.any(
+                  (source) => source.url.trim().isNotEmpty,
+                ))
               FilledButton.icon(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
