@@ -121,6 +121,7 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                   ),
                 ),
               ),
+            ),
             if (!_open)
               Positioned(
                 left: left,
