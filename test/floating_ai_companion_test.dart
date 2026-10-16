@@ -84,6 +84,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('uses the compact header in the floating chat', (tester) async {
+    final dependencies = AppDependencies();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              const Center(child: Text('Текущий экран')),
+              FloatingAICompanion(dependencies: dependencies),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+
+    expect(find.text('OMNI AI · помощник'), findsOneWidget);
+    expect(find.text('ЛИЧНЫЙ ПОМОЩНИК'), findsNothing);
+    expect(find.byTooltip('Долговременная память'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('can hide and restore the floating companion', (tester) async {
     final dependencies = AppDependencies();
 
