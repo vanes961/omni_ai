@@ -137,7 +137,10 @@ class _AIChatPageState extends State<AIChatPage> {
             .toList(growable: false);
         final localizedCandidates = await NewsSourceLocalizationService(
           aiEngine: widget.dependencies.ai.engine,
-        ).localizeCandidates([...freshArticles, ...cachedRussianArticles]);
+        ).localizeCandidates(
+          [...freshArticles, ...cachedRussianArticles],
+          cancellationToken: token,
+        );
         _ensureRequestActive(token);
         final cachedNonRussianArticles = cachedArticles
             .where((article) => article.language.toLowerCase() != 'ru')
