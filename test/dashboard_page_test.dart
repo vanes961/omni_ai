@@ -64,4 +64,38 @@ void main() {
     await tester.pump();
     expect(find.byType(NewsCenterPage), findsOneWidget);
   });
+
+  testWidgets('keeps floating chat draft when navigating between tabs', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.empty();
+
+    await tester.pumpWidget(
+      MaterialApp(home: DashboardPage(preferences: UserPreferences())),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), 'Черновик при навигации');
+    await tester.tap(find.byTooltip('Свернуть'));
+    await tester.pump();
+
+    await tester.tap(find.text('Медиа'));
+    await tester.pump();
+    expect(find.byType(MediaPage), findsOneWidget);
+
+    await tester.tap(find.text('Избранное'));
+    await tester.pump();
+
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+
+    expect(find.text('Черновик при навигации'), findsOneWidget);
+    expect(find.text('OMNI AI · помощник'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
