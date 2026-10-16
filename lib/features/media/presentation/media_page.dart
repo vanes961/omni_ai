@@ -755,18 +755,6 @@ class _MediaPageState extends State<MediaPage> {
     );
   }
 
-  void _openPlayer(MediaItem item) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (context) => PlayerPage(
-          item: item,
-          preferences: widget.preferences,
-          searchService: _searchService,
-          playerFactory: widget.playerFactory,
-        ),
-      ),
-    );
-  }
 }
 
 class _TypeFilter extends StatelessWidget {
