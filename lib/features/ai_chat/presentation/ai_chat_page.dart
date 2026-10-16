@@ -297,81 +297,81 @@ class _AIChatPageState extends State<AIChatPage> {
           ),
         if (!widget.compactHeader)
           Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
-          decoration: const BoxDecoration(
-            color: SystemCorePalette.panel,
-            border: Border(bottom: BorderSide(color: SystemCorePalette.border)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'OMNI AI  /  PERSONAL INTELLIGENCE',
-                style: TextStyle(
-                  color: SystemCorePalette.muted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+            decoration: const BoxDecoration(
+              color: SystemCorePalette.panel,
+              border: Border(bottom: BorderSide(color: SystemCorePalette.border)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'OMNI AI  /  PERSONAL INTELLIGENCE',
+                  style: TextStyle(
+                    color: SystemCorePalette.muted,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'ЛИЧНЫЙ ПОМОЩНИК',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'ЛИЧНЫЙ ПОМОЩНИК',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Долговременная память',
-                    onPressed: _openMemoryManager,
-                    icon: const Icon(Icons.bookmarks_outlined),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    mode == AIExecutionMode.local
-                        ? Icons.phone_android
-                        : mode == AIExecutionMode.cloud
-                        ? Icons.cloud_outlined
-                        : Icons.alt_route,
-                    size: 15,
-                    color: SystemCorePalette.green,
-                  ),
-                  const SizedBox(width: 7),
-                  Text(
-                    _modeLoading
-                        ? 'ЗАГРУЗКА РЕЖИМА...'
-                        : mode == AIExecutionMode.local
-                        ? 'LOCAL AI — ТОЛЬКО НА УСТРОЙСТВЕ'
-                        : mode == AIExecutionMode.cloud
-                        ? 'CLOUD AI — ОБЛАЧНЫЕ ЗАПРОСЫ'
-                        : 'AUTO AI — ВЫБОР МОДЕЛИ ПО ЗАДАЧЕ',
-                    style: const TextStyle(
-                      color: SystemCorePalette.green,
-                      fontSize: 10,
+                    IconButton(
+                      tooltip: 'Долговременная память',
+                      onPressed: _openMemoryManager,
+                      icon: const Icon(Icons.bookmarks_outlined),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      mode == AIExecutionMode.local
+                          ? Icons.phone_android
+                          : mode == AIExecutionMode.cloud
+                          ? Icons.cloud_outlined
+                          : Icons.alt_route,
+                      size: 15,
+                      color: SystemCorePalette.green,
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      _modeLoading
+                          ? 'ЗАГРУЗКА РЕЖИМА...'
+                          : mode == AIExecutionMode.local
+                          ? 'LOCAL AI — ТОЛЬКО НА УСТРОЙСТВЕ'
+                          : mode == AIExecutionMode.cloud
+                          ? 'CLOUD AI — ОБЛАЧНЫЕ ЗАПРОСЫ'
+                          : 'AUTO AI — ВЫБОР МОДЕЛИ ПО ЗАДАЧЕ',
+                      style: const TextStyle(
+                        color: SystemCorePalette.green,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_modeError != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Не удалось загрузить режим: $_modeError',
+                    style: const TextStyle(color: Colors.orangeAccent),
                   ),
                 ],
-              ),
-              if (_modeError != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Не удалось загрузить режим: $_modeError',
-                  style: const TextStyle(color: Colors.orangeAccent),
-                ),
               ],
-            ],
-          ),
+            ),
         ),
         Expanded(
           child: _messages.isEmpty
