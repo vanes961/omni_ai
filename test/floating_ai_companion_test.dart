@@ -353,4 +353,40 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('dismisses the keyboard when the companion is hidden', (
+    tester,
+  ) async {
+    final dependencies = AppDependencies();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              const Center(child: Text('Текущий экран')),
+              FloatingAICompanion(dependencies: dependencies),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+    await tester.tap(find.byType(TextField));
+    await tester.pump();
+    final focusNode = tester
+        .widget<EditableText>(find.byType(EditableText))
+        .focusNode;
+    expect(focusNode.hasFocus, isTrue);
+
+    await tester.tap(find.byTooltip('Скрыть помощника'));
+    await tester.pump();
+
+    expect(focusNode.hasFocus, isFalse);
+    expect(find.byTooltip('Показать AI-компаньона'), findsOneWidget);
+    expect(find.text('Текущий экран'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
