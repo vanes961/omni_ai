@@ -223,6 +223,24 @@ void main() {
     expect(report.foreignUntranslatedCount, 1);
   });
 
+  test('stops localization before provider execution when cancelled', () async {
+    final provider = _TranslationProvider();
+    final cancellationToken = AICancellationToken()..cancel();
+    final translationService = NewsSourceLocalizationService(
+      aiEngine: AIEngine(provider: provider),
+    );
+
+    await expectLater(
+      translationService.localizeCandidates(
+        [_article(id: 'cancelled', language: 'en', title: 'Foreign headline')],
+        cancellationToken: cancellationToken,
+      ),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(provider.calls, 0);
+  });
+
   test('keeps Russian articles', () async {
     final russian = _article(
       id: 'russian',
