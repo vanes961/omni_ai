@@ -49,6 +49,40 @@ void main() {
     expect(find.text('Текущий экран'), findsOneWidget);
   });
 
+  testWidgets('preserves the chat draft when the window is collapsed', (
+    tester,
+  ) async {
+    final dependencies = AppDependencies();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              const Center(child: Text('Текущий экран')),
+              FloatingAICompanion(dependencies: dependencies),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), 'Черновик сообщения');
+
+    await tester.tap(find.byTooltip('Свернуть'));
+    await tester.pump();
+    expect(find.text('OMNI AI · помощник'), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pump();
+
+    expect(find.text('Черновик сообщения'), findsOneWidget);
+    expect(find.text('Текущий экран'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('keeps the open chat window floating and width-constrained', (
     tester,
   ) async {
