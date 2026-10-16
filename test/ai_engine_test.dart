@@ -5,6 +5,7 @@ import 'package:omni_ai/core/ai_engine/models/ai_error.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_request.dart';
 import 'package:omni_ai/core/ai_engine/models/ai_response.dart';
 import 'package:omni_ai/core/ai_engine/providers/ai_provider.dart';
+import 'package:omni_ai/core/ai_engine/providers/ai_streaming_provider.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 
 void main() {
@@ -80,6 +81,36 @@ void main() {
           ),
         ),
       );
+    });
+
+    test('does not forward streamed chunks after cancellation', () async {
+      final provider = _FakeStreamingProvider();
+      final engine = AIEngine(provider: provider);
+      final token = AICancellationToken();
+      final received = <String>[];
+
+      final future = engine.execute(
+        const AIRequest(id: 'request-stream-cancel', prompt: 'Стрим'),
+        cancellationToken: token,
+        onToken: received.add,
+      );
+      await provider.started.future;
+      token.cancel();
+
+      await expectLater(
+        future,
+        throwsA(
+          isA<AIEngineException>().having(
+            (error) => error.error.code,
+            'code',
+            AIErrorCode.cancelled,
+          ),
+        ),
+      );
+      provider.releaseLateChunk.complete();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(received, ['first']);
     });
 
     test('times out and requests provider cancellation', () async {
@@ -173,6 +204,38 @@ class _FakeProvider implements AIProvider {
       text: responseText,
       providerId: id,
       generatedAt: DateTime.utc(2026, 1, 1),
+    );
+  }
+}
+
+class _FakeStreamingProvider implements AIProvider, AIStreamingProvider {
+  final started = Completer<void>();
+  final releaseLateChunk = Completer<void>();
+
+  @override
+  String get id => 'fake-streaming';
+
+  @override
+  Future<AIResponse> complete(
+    AIRequest request, {
+    required AICancellationToken cancellationToken,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<AIResponse> completeStreaming(
+    AIRequest request, {
+    required AICancellationToken cancellationToken,
+    required void Function(String token) onToken,
+  }) async {
+    onToken('first');
+    if (!started.isCompleted) started.complete();
+    await releaseLateChunk.future;
+    onToken('late');
+    return AIResponse(
+      requestId: request.id,
+      text: 'firstlate',
+      providerId: id,
+      generatedAt: DateTime.utc(2026, 10, 16),
     );
   }
 }
