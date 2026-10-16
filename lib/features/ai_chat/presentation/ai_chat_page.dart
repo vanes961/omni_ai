@@ -293,16 +293,13 @@ class _AIChatPageState extends State<AIChatPage> {
                   icon: const Icon(Icons.bookmarks_outlined, size: 20),
                 ),
                 if (_modeError != null)
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    size: 18,
-                    color: Colors.orangeAccent,
-                    semanticLabel: 'Не удалось загрузить режим AI',
-                  ),
-                if (_modeError != null)
                   Tooltip(
                     message: 'Не удалось загрузить режим: $_modeError',
-                    child: const SizedBox.shrink(),
+                    child: const Icon(
+                      Icons.warning_amber_rounded,
+                      size: 18,
+                      color: Colors.orangeAccent,
+                    ),
                   ),
               ],
             ),
