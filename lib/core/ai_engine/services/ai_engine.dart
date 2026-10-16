@@ -50,7 +50,11 @@ class AIEngine {
             ? (provider as AIStreamingProvider).completeStreaming(
                 request,
                 cancellationToken: token,
-                onToken: onToken,
+                onToken: (chunk) {
+                  // Enforce cancellation at the engine boundary so every
+                  // consumer is protected from providers that emit late chunks.
+                  if (!token.isCancelled) onToken(chunk);
+                },
               )
             : provider.complete(request, cancellationToken: token);
       }();
