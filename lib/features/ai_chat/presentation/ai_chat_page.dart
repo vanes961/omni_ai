@@ -102,13 +102,16 @@ class _AIChatPageState extends State<AIChatPage> {
 
     try {
       await widget.dependencies.ai.restoreExecutionMode();
+      _ensureRequestActive(token);
       final savedMemories = await widget.dependencies.aiMemoryRepository
           .getAll();
+      _ensureRequestActive(token);
       var requestPrompt = prompt;
       if (_newsContextBuilder.isNewsRequest(prompt)) {
         var cachedArticles = const <NewsArticle>[];
         try {
           cachedArticles = await _newsCache.loadArticles();
+          _ensureRequestActive(token);
         } on Object {
           // Fresh RSS retrieval below remains available if local cache fails.
         }
@@ -116,8 +119,10 @@ class _AIChatPageState extends State<AIChatPage> {
         var includesFreshResults = false;
         try {
           final profile = await _newsRepository.load();
+          _ensureRequestActive(token);
           // An empty interest profile still has a general discovery feed.
           freshArticles = await _newsService.fetchInternational(profile);
+          _ensureRequestActive(token);
           includesFreshResults = freshArticles.isNotEmpty;
         } on Object {
           // A network/source failure falls back to the cached personalized feed.
@@ -133,6 +138,7 @@ class _AIChatPageState extends State<AIChatPage> {
         final localizedCandidates = await NewsSourceLocalizationService(
           aiEngine: widget.dependencies.ai.engine,
         ).localizeCandidates([...freshArticles, ...cachedRussianArticles]);
+        _ensureRequestActive(token);
         final cachedNonRussianArticles = cachedArticles
             .where((article) => article.language.toLowerCase() != 'ru')
             .toList(growable: false);
@@ -146,6 +152,7 @@ class _AIChatPageState extends State<AIChatPage> {
           includesFreshResults: includesFreshResults,
         );
       }
+      _ensureRequestActive(token);
       final response = await widget.dependencies.orchestrator.execute(
         AIRequest(
           id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -217,6 +224,12 @@ class _AIChatPageState extends State<AIChatPage> {
 
   void _cancel() {
     _activeToken?.cancel();
+  }
+
+  void _ensureRequestActive(AICancellationToken token) {
+    if (token.isCancelled) {
+      throw StateError('AI request cancelled before provider execution.');
+    }
   }
 
   void _scrollToBottom() {
