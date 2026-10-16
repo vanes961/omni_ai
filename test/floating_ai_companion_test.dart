@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
+import 'package:omni_ai/core/ai_engine/providers/ai_execution_mode_store.dart';
 import 'package:omni_ai/features/ai_chat/presentation/floating_ai_companion.dart';
 
 void main() {
@@ -112,6 +113,40 @@ void main() {
     expect(find.text('Что запомнить?'), findsOneWidget);
     await tester.tap(find.text('Закрыть'));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('shows mode restore errors in the compact header', (
+    tester,
+  ) async {
+    final dependencies = AppDependencies(
+      aiExecutionModeStore: SharedPreferencesAIExecutionModeStore(
+        read: (_) async => throw StateError('test failure'),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              const Center(child: Text('Текущий экран')),
+              FloatingAICompanion(dependencies: dependencies),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.smart_toy_rounded).first);
+    await tester.pumpAndSettle();
+
+    final warning = find.byWidgetPredicate(
+      (widget) =>
+          widget is Tooltip &&
+          widget.message.contains('Не удалось загрузить режим'),
+    );
+    expect(warning, findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
