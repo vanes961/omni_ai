@@ -372,7 +372,7 @@ class _AIChatPageState extends State<AIChatPage> {
                 ],
               ],
             ),
-        ),
+          ),
         Expanded(
           child: _messages.isEmpty
               ? const Center(
