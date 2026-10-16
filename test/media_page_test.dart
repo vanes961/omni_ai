@@ -100,6 +100,42 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('trending catalog title opens details when no video source exists', (
+    tester,
+  ) async {
+    final service = MediaSearchService(
+      accessToken: 'test-token',
+      client: MockClient((request) async {
+        if (request.url.path.endsWith('/trending/all/week')) {
+          return http.Response(
+            '{"results":[{"id":44,"media_type":"movie","title":"Source-less Movie",'
+            '"poster_path":null,"vote_average":8.0,"genre_ids":[],"overview":"Catalog metadata only"}]}',
+            200,
+          );
+        }
+        return http.Response('not found', 404);
+      }),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaPage(
+          preferences: UserPreferences(),
+          searchService: service,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Source-less Movie'), findsOneWidget);
+    await tester.tap(find.text('Source-less Movie'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('О ФИЛЬМЕ'), findsOneWidget);
+    expect(find.text('ВИДЕОИСТОЧНИК НЕ ПОДКЛЮЧЁН'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('explains when configured TMDB trends cannot be loaded', (
     tester,
   ) async {
