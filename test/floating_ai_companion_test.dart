@@ -106,6 +106,12 @@ void main() {
     expect(find.text('OMNI AI · помощник'), findsOneWidget);
     expect(find.text('ЛИЧНЫЙ ПОМОЩНИК'), findsNothing);
     expect(find.byTooltip('Долговременная память'), findsOneWidget);
+    await tester.tap(find.byTooltip('Долговременная память'));
+    await tester.pumpAndSettle();
+    expect(find.text('Долговременная память'), findsOneWidget);
+    expect(find.text('Что запомнить?'), findsOneWidget);
+    await tester.tap(find.text('Закрыть'));
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
 
