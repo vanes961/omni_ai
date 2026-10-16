@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 import 'package:omni_ai/features/dashboard/presentation/dashboard_page.dart';
+import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/news/presentation/news_center_page.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
