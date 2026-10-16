@@ -36,6 +36,7 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
     }
     return LayoutBuilder(
       builder: (context, constraints) {
+        final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
         final maxX = (constraints.maxWidth - 62).clamp(8.0, double.infinity);
         final maxY = (constraints.maxHeight - 70).clamp(8.0, double.infinity);
         final pos =
@@ -52,7 +53,11 @@ class _FloatingAICompanionState extends State<FloatingAICompanion> {
                     12,
                     12,
                     12,
-                    constraints.maxHeight > 620 ? 76 : 12,
+                    keyboardInset > 0
+                        ? keyboardInset + 12
+                        : constraints.maxHeight > 620
+                        ? 76
+                        : 12,
                   ),
                   child: Center(
                     child: ConstrainedBox(
