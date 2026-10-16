@@ -104,7 +104,7 @@ class _AIChatPageState extends State<AIChatPage> {
     try {
       await widget.dependencies.ai.restoreExecutionMode();
       _ensureRequestActive(token);
-      final List<AIMemory> savedMemories;
+      List<AIMemory> savedMemories;
       try {
         savedMemories = await widget.dependencies.aiMemoryRepository.getAll();
       } on Object {
