@@ -209,26 +209,24 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
 
   Future<void> _download() async {
     if (_installing) return;
-    final wasInstalled = _installed;
     setState(() {
       _installing = true;
       _error = null;
-      _status = wasInstalled
-          ? 'Проверяем целостность модели; при повреждении восстановим её из APK…'
-          : 'Установка встроенной модели из APK… Интернет не нужен.';
+      _status = _installed
+          ? 'Проверяем целостность установленной модели…'
+          : 'Скачиваем модель. Нужны стабильный интернет и около 500 МБ свободного места.';
     });
     try {
-      await widget.storage.installBundled(_model);
+      await widget.storage.download(_model);
       if (!mounted) return;
       setState(() {
         _installed = true;
-        _status =
-            'Модель проверена. Если файл был повреждён, он восстановлен из APK.';
+        _status = 'Модель скачана и проверена по размеру и SHA-256.';
       });
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = 'Не удалось установить встроенную модель: $error';
+        _error = 'Не удалось скачать или проверить модель: $error';
         _status = null;
       });
     } finally {
@@ -244,7 +242,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
         title: const Text('Удалить локальную модель?'),
         content: const Text(
           'Файл модели будет удалён из хранилища приложения. '
-          'Его можно будет восстановить из встроенного файла APK без интернета.',
+          'Для повторной установки потребуется скачать около 500 МБ.',
         ),
         actions: [
           TextButton(
@@ -308,9 +306,8 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
         ),
         const SizedBox(height: 8),
         const Text(
-          'Модель включена в APK и копируется в закрытую папку приложения при '
-          'установке. После этого её можно запускать без интернета; '
-          'само наличие файла ещё не гарантирует подключение генерации к чату.',
+          'Модель скачивается отдельно один раз и хранится в закрытой папке приложения. '
+          'Обычные обновления приложения её не содержат и не удаляют.',
           style: TextStyle(color: SystemCorePalette.muted, fontSize: 12),
         ),
         if (widget.aiDependencies != null) ...[
@@ -526,7 +523,7 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
               ),
               const SizedBox(height: 4),
               const Text(
-                'Формат GGUF · Q4_K_M · модель встроена в APK · интернет не нужен',
+                'Формат GGUF · Q4_K_M · отдельная загрузка · после установки работает офлайн',
                 style: TextStyle(color: SystemCorePalette.muted, fontSize: 11),
               ),
               const SizedBox(height: 16),
@@ -590,10 +587,10 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
                       : const Icon(Icons.download),
                   label: Text(
                     _installing
-                        ? 'ПРОВЕРКА / УСТАНОВКА…'
+                        ? 'ЗАГРУЗКА / ПРОВЕРКА…'
                         : _installed
-                        ? 'ПРОВЕРИТЬ / ВОССТАНОВИТЬ МОДЕЛЬ'
-                        : 'УСТАНОВИТЬ МОДЕЛЬ ИЗ APK',
+                        ? 'ПОВТОРНО ПРОВЕРИТЬ МОДЕЛЬ'
+                        : 'СКАЧАТЬ ЛОКАЛЬНУЮ МОДЕЛЬ',
                   ),
                 ),
               ),
@@ -622,8 +619,8 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
         ),
         const SizedBox(height: 18),
         const Text(
-          'Модель в APK проверяется по ожидаемому размеру и SHA-256 '
-          'при копировании. Сетевой загрузки модели не требуется.',
+          'Загружаемый файл проверяется по ожидаемому размеру и SHA-256. '
+          'После первой загрузки интернет для локального ИИ не требуется.',
           style: TextStyle(color: SystemCorePalette.muted, fontSize: 11),
         ),
       ],
