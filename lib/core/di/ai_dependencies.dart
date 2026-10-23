@@ -23,7 +23,9 @@ class AIDependencies {
   }) {
     final ownsLocalModelStorage = localModelStorage == null;
     final storage = localModelStorage ?? LocalModelStorage();
-    final local = localProvider ?? StoredLocalLlamaProvider(storage: storage);
+    final local =
+        localProvider ??
+        StoredLocalLlamaProvider(storage: storage, autoInstallBundledModel: true);
     final cloud = OpenRouterProvider(
       apiKeySource: apiKeySource ?? const UnconfiguredOpenRouterApiKeySource(),
       config: config,
