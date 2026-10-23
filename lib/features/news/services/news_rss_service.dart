@@ -165,6 +165,30 @@ class NewsRssService {
       'name': 'Банк России: события',
       'url': 'https://www.cbr.ru/rss/eventrss',
     },
+    {
+      'name': 'Газета.Ru',
+      'url': 'https://www.gazeta.ru/export/rss/first.xml',
+    },
+    {
+      'name': 'Известия',
+      'url': 'https://iz.ru/xml/rss/all.xml',
+    },
+    {
+      'name': 'РИА Новости',
+      'url': 'https://ria.ru/export/rss2/index.xml',
+    },
+    {
+      'name': 'Москва 24',
+      'url': 'https://www.m24.ru/rss.xml',
+    },
+    {
+      'name': 'Минфин России',
+      'url': 'https://minfin.gov.ru/ru/press-center/rss/',
+    },
+    {
+      'name': 'Росстат',
+      'url': 'https://rosstat.gov.ru/rss',
+    },
   ];
 
   Future<List<NewsArticle>> _fetchRussianRssSources() async {
