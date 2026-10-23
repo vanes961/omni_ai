@@ -132,6 +132,67 @@ class NewsRssService {
     'gadgets': 'gadgets consumer electronics',
   };
 
+  /// Public Russian-language RSS sources. The app shows only the feed's
+  /// title/excerpt with source attribution and opens the publisher for the
+  /// full article; commercial redistribution still requires checking each
+  /// publisher's terms or obtaining permission where required.
+  static const _russianRssSources = <Map<String, String>>[
+    {
+      'name': 'Лента.ру',
+      'url': 'https://lenta.ru/rss',
+    },
+    {
+      'name': 'Вести',
+      'url': 'https://www.vesti.ru/vesti.rss',
+    },
+    {
+      'name': 'Московский комсомолец',
+      'url': 'https://www.mk.ru/rss/index.xml',
+    },
+    {
+      'name': 'Российская газета',
+      'url': 'https://rg.ru/xml/index.xml',
+    },
+    {
+      'name': 'Хабр',
+      'url': 'https://habr.com/ru/rss/all/all/?fl=ru',
+    },
+    {
+      'name': 'Банк России: новости',
+      'url': 'https://www.cbr.ru/rss/RssNews',
+    },
+    {
+      'name': 'Банк России: события',
+      'url': 'https://www.cbr.ru/rss/eventrss',
+    },
+  ];
+
+  Future<List<NewsArticle>> _fetchRussianRssSources() async {
+    final batches = await Future.wait(
+      _russianRssSources.map((source) async {
+        final uri = Uri.parse(source['url']!);
+        try {
+          final response = await _client
+              .get(uri, headers: const {'User-Agent': 'OMNI-AI-News/1.0'})
+              .timeout(const Duration(seconds: 12));
+          if (response.statusCode != 200) return const <NewsArticle>[];
+          final xml = utf8
+              .decode(response.bodyBytes, allowMalformed: true)
+              .trim();
+          if (xml.isEmpty ||
+              !RegExp(r'<rss\\b', caseSensitive: false).hasMatch(xml)) {
+            return const <NewsArticle>[];
+          }
+          return _parseItems(xml, 'ru', 'ru');
+        } on Object {
+          // A single unavailable publisher must not blank the whole feed.
+          return const <NewsArticle>[];
+        }
+      }),
+    );
+    return batches.expand((batch) => batch).toList(growable: false);
+  }
+
   /// Collects candidates from Russian and English Google News editions.
   /// Edition locale describes the feed, not the article's actual geography.
   Future<List<NewsArticle>> fetchInternational(
@@ -196,16 +257,19 @@ class NewsRssService {
         }
       }),
     );
+    final russianArticles = await _fetchRussianRssSources();
+    if (russianArticles.isNotEmpty) successfulEditions++;
+    final allBatches = <List<NewsArticle>>[...batches, russianArticles];
     if (successfulEditions == 0) {
       throw http.ClientException(
-        'All international news editions are unavailable '
+        'All Russian and international news sources are unavailable '
         '(${failedEditions.join(', ')}).',
       );
     }
     // A nominally successful HTTP response can still contain no usable RSS
     // items. Never turn an all-empty result into a silent blank feed: report
     // whether the likely cause is a partial outage or empty source responses.
-    if (batches.every((batch) => batch.isEmpty)) {
+    if (allBatches.every((batch) => batch.isEmpty)) {
       lastCandidateCount = 0;
       lastRelevantCandidateCount = 0;
       if (failedEditions.isNotEmpty) {
@@ -220,7 +284,7 @@ class NewsRssService {
     }
 
     final byUrl = <String, NewsArticle>{};
-    for (final article in batches.expand((batch) => batch)) {
+    for (final article in allBatches.expand((batch) => batch)) {
       // Apply the same tracking-parameter normalization across editions as
       // within a single feed, while retaining the original user-facing URL.
       final url = _canonicalUrl(article.sourceUrl);
