@@ -13,7 +13,7 @@ on:
         description: "Build and publish a debug APK with the bundled Qwen model"
         required: true
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
