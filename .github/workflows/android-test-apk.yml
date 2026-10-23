@@ -28,6 +28,25 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Cache stable Android debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: omni-ai-stable-debug-keystore-v1
+
+      - name: Ensure stable Android debug signing key exists
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -v \
+              -keystore "$HOME/.android/debug.keystore" \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -45,19 +64,7 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      - name: Download bundled Qwen model
-        run: |
-          mkdir -p android/app/src/main/assets/models
-          curl --location --fail --retry 3 --retry-delay 2 \
-            'https://huggingface.co/SandLogicTechnologies/Qwen3-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf' \
-            --output android/app/src/main/assets/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf
-
-      - name: Verify bundled Qwen model
-        run: |
-          echo '9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14  android/app/src/main/assets/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf' | sha256sum --check
-          test "$(stat -c%s android/app/src/main/assets/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf)" -ge 459800000
-
-      - name: Build debug APK with bundled model
+      - name: Build small debug APK without bundled model
         run: flutter build apk --debug
 
       - name: Publish APK artifact
