@@ -113,6 +113,42 @@ class MediaDetailsPage extends StatelessWidget {
               style: const TextStyle(color: Colors.white70, height: 1.5),
             ),
             const SizedBox(height: 20),
+            const _Label('РОССИЙСКИЕ ВИДЕОИСТОЧНИКИ'),
+            const SizedBox(height: 6),
+            const Text(
+              'Бесплатный просмотр зависит от наличия фильма, региона и правил самого сервиса. OMNI AI не обходит ограничения доступа.',
+              style: TextStyle(color: Colors.white54, fontSize: 12, height: 1.4),
+            ),
+            const SizedBox(height: 6),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.play_circle_outline, color: SystemCorePalette.green),
+              title: const Text('Найти на RUTUBE', style: TextStyle(color: Colors.white)),
+              subtitle: const Text('Бесплатные видео и часть фильмов', style: TextStyle(color: Colors.white54)),
+              trailing: const Icon(Icons.open_in_new, color: SystemCorePalette.muted, size: 18),
+              onTap: () => _openProvider(
+                Uri.https('rutube.ru', '/search/', {'query': item.title}),
+              ),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.video_library_outlined, color: SystemCorePalette.green),
+              title: const Text('Найти в VK Видео', style: TextStyle(color: Colors.white)),
+              subtitle: const Text('Ролики, трейлеры и доступные публикации', style: TextStyle(color: Colors.white54)),
+              trailing: const Icon(Icons.open_in_new, color: SystemCorePalette.muted, size: 18),
+              onTap: () => _openProvider(
+                Uri.https('vk.com', '/video', {'q': item.title}),
+              ),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.local_movies_outlined, color: SystemCorePalette.green),
+              title: const Text('Каталог PREMIER', style: TextStyle(color: Colors.white)),
+              subtitle: const Text('Есть отдельный раздел бесплатного контента', style: TextStyle(color: Colors.white54)),
+              trailing: const Icon(Icons.open_in_new, color: SystemCorePalette.muted, size: 18),
+              onTap: () => _openProvider(Uri.https('premier.one', '/')),
+            ),
+            const SizedBox(height: 20),
             const _Label('ЖАНРЫ'),
             const SizedBox(height: 8),
             Wrap(
@@ -847,6 +883,10 @@ Future<void> _chooseAndPlaySource(
       ),
     ),
   );
+}
+
+Future<void> _openProvider(Uri uri) async {
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
 class _Label extends StatelessWidget {
