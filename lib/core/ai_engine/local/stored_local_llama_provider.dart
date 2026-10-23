@@ -8,15 +8,15 @@ import '../providers/ai_streaming_provider.dart';
 import 'local_llama_provider.dart';
 import 'local_model_storage.dart';
 
-/// Lazily initializes the bundled GGUF model for local requests.
+/// Lazily initializes the already-installed GGUF model for local requests.
 ///
-/// This provider never downloads a model or forwards prompts remotely. If the
-/// model is missing from app storage, it copies the packaged APK asset first.
+/// The model is kept in app-private storage across app updates. A normal
+/// application update must never require the model to be bundled in its APK.
 class StoredLocalLlamaProvider implements AIProvider, AIStreamingProvider {
   StoredLocalLlamaProvider({
     required this.storage,
     this.model = LocalModelCatalog.qwen3Small,
-    this.autoInstallBundledModel = true,
+    this.autoInstallBundledModel = false,
     LocalLlamaProvider Function(File modelFile)? providerFactory,
   }) : _providerFactory =
            providerFactory ?? ((file) => LocalLlamaProvider(modelFile: file));
@@ -85,7 +85,6 @@ class StoredLocalLlamaProvider implements AIProvider, AIStreamingProvider {
       if (!isInstalled && autoInstallBundledModel) {
         await storage.installBundled(model);
         _ensureNotDisposed();
-        // installBundled returns only after native SHA-256 and Dart size checks.
         isInstalled = true;
       }
       if (!isInstalled) {
@@ -93,7 +92,7 @@ class StoredLocalLlamaProvider implements AIProvider, AIStreamingProvider {
           AIError(
             code: AIErrorCode.invalidRequest,
             message:
-                'Local model is not installed. Install the bundled model from Local AI settings.',
+                'Локальная модель не установлена. Откройте настройки локального ИИ и скачайте модель.',
           ),
         );
       }
