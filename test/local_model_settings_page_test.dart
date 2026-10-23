@@ -18,7 +18,7 @@ void main() {
 
       expect(find.text('Файл модели найден'), findsOneWidget);
       expect(
-        find.text('ПРОВЕРИТЬ / ВОССТАНОВИТЬ МОДЕЛЬ'),
+        find.text('ПОВТОРНО ПРОВЕРИТЬ МОДЕЛЬ'),
         findsOneWidget,
       );
 
@@ -47,11 +47,13 @@ class _InstalledModelStorage extends LocalModelStorage {
   Future<bool> isDownloaded(LocalModelSpec model) async => true;
 
   @override
-  @override
   Future<bool> isValid(LocalModelSpec model) async => true;
 
   @override
-  Future<File> download(LocalModelSpec model, {void Function(int, int?)? onProgress}) async {
+  Future<File> download(
+    LocalModelSpec model, {
+    void Function(int receivedBytes, int? totalBytes)? onProgress,
+  }) async {
     downloadCalls++;
     return File('${Directory.systemTemp.path}/${model.fileName}');
   }
