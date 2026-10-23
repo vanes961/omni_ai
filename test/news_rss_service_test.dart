@@ -516,7 +516,7 @@ void main() {
       var requests = 0;
       final service = NewsRssService(
         client: MockClient((request) async {
-          requests++;
+          if (request.url.host == 'news.google.com') requests++;
           final language = request.url.queryParameters['hl'];
           final region = request.url.queryParameters['gl'];
           expect(<String>{
