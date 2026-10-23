@@ -219,7 +219,9 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
     try {
       if (_installed && await widget.storage.isValid(_model)) {
         if (!mounted) return;
-        setState(() => _status = 'Модель уже установлена и прошла проверку SHA-256.');
+        setState(
+          () => _status = 'Модель уже установлена и прошла проверку SHA-256.',
+        );
         return;
       }
       await widget.storage.download(_model);
