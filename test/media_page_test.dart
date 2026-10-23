@@ -132,6 +132,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('О ФИЛЬМЕ'), findsOneWidget);
+    for (
+      var i = 0;
+      i < 12 &&
+          find.text('ВИДЕОИСТОЧНИК НЕ ПОДКЛЮЧЁН').evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+      await tester.pumpAndSettle();
+    }
     expect(find.text('ВИДЕОИСТОЧНИК НЕ ПОДКЛЮЧЁН'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -1542,7 +1551,16 @@ void main() {
         ),
       ),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
+    for (
+      var i = 0;
+      i < 12 &&
+          find.byKey(const ValueKey('choose-media-source')).evaluate().isEmpty;
+      i++
+    ) {
+      await tester.drag(find.byType(ListView).last, const Offset(0, -500));
+      await tester.pumpAndSettle();
+    }
     await tester.tap(find.byKey(const ValueKey('choose-media-source')));
     await tester.pumpAndSettle();
     await tester.enterText(
