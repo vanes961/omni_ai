@@ -217,6 +217,11 @@ class _LocalModelSettingsPageState extends State<LocalModelSettingsPage> {
           : 'Скачиваем модель. Нужны стабильный интернет и около 500 МБ свободного места.';
     });
     try {
+      if (_installed && await widget.storage.isValid(_model)) {
+        if (!mounted) return;
+        setState(() => _status = 'Модель уже установлена и прошла проверку SHA-256.');
+        return;
+      }
       await widget.storage.download(_model);
       if (!mounted) return;
       setState(() {
