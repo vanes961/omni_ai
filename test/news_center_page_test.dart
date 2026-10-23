@@ -628,7 +628,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
-    expect(requestCount, 3);
+    // Three Google News editions fail first, then the Russian RSS fallback
+    // checks each configured publisher before reporting a complete outage.
+    expect(requestCount, 16);
     expect(find.textContaining('Не удалось загрузить новости:'), findsOneWidget);
     expect(find.text('ЗАГРУЗКА…'), findsNothing);
 
