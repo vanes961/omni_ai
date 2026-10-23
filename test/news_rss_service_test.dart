@@ -8,6 +8,38 @@ import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
 
 void main() {
+  test('falls back to Russian RSS sources when Google News is unavailable', () async {
+    final service = NewsRssService(
+      client: MockClient((request) async {
+        if (request.url.host == 'news.google.com') {
+          throw http.ClientException('Google News unavailable');
+        }
+        if (request.url.host == 'habr.com') {
+          return http.Response(
+            '''<rss><channel><item>
+              <title>Новая технология для разработчиков</title>
+              <link>https://habr.com/ru/articles/123456/</link>
+              <description>Материал о технологиях и разработке.</description>
+              <pubDate>Fri, 23 Oct 2026 08:00:00 GMT</pubDate>
+            </item></channel></rss>''',
+            200,
+          );
+        }
+        return http.Response('unavailable', 503);
+      }),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetchInternational(
+      const NewsInterestProfile(topics: ['technology']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.title, 'Новая технология для разработчиков');
+    expect(articles.single.sourceName, 'Хабр');
+    expect(articles.single.language, 'ru');
+  });
+
   test(
     'deduplicates tracking URL variants and keeps the newest story',
     () async {
