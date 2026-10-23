@@ -27,8 +27,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(storage.installCalls, 1);
-      expect(find.textContaining('Модель проверена.'), findsOneWidget);
+      expect(storage.downloadCalls, 0);
+      expect(find.textContaining('Модель уже установлена'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(const SizedBox.shrink());
@@ -41,14 +41,18 @@ class _InstalledModelStorage extends LocalModelStorage {
   _InstalledModelStorage()
     : super(supportDirectoryProvider: () async => Directory.systemTemp);
 
-  int installCalls = 0;
+  int downloadCalls = 0;
 
   @override
   Future<bool> isDownloaded(LocalModelSpec model) async => true;
 
   @override
-  Future<File> installBundled(LocalModelSpec model) async {
-    installCalls++;
+  @override
+  Future<bool> isValid(LocalModelSpec model) async => true;
+
+  @override
+  Future<File> download(LocalModelSpec model, {void Function(int, int?)? onProgress}) async {
+    downloadCalls++;
     return File('${Directory.systemTemp.path}/${model.fileName}');
   }
 }
