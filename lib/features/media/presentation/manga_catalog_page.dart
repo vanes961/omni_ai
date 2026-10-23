@@ -159,7 +159,11 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
             children: [
               const Text(
                 'Если MangaDex недоступен или нет русской главы, проверьте другие русскоязычные источники:',
-                style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.4),
+                style: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
               ),
               Wrap(
                 spacing: 8,
@@ -183,8 +187,14 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
                 ],
               ),
               const Text(
-                'MangaLib может ограничивать часть функций подпиской; SelfManga публикует авторскую мангу. Доступность и права на отдельные произведения зависят от источника.',
-                style: TextStyle(color: Colors.white38, fontSize: 10, height: 1.35),
+                'MangaLib может ограничивать часть функций подпиской; SelfManga '
+                'публикует авторскую мангу. Доступность и права на отдельные '
+                'произведения зависят от источника.',
+                style: TextStyle(
+                  color: Colors.white38,
+                  fontSize: 10,
+                  height: 1.35,
+                ),
               ),
             ],
           ),
