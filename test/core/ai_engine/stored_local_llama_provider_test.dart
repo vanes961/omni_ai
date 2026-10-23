@@ -42,7 +42,7 @@ void main() {
         isA<AIEngineException>().having(
           (error) => error.error.message,
           'message',
-          contains('Local model is not installed'),
+          contains('Локальная модель не установлена'),
         ),
       ),
     );
