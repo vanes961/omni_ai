@@ -28,24 +28,21 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Cache stable Android debug signing key
+      - name: Restore stable Android debug signing key
+        id: signing_key_cache
         uses: actions/cache@v4
         with:
           path: ~/.android/debug.keystore
           key: omni-ai-stable-debug-keystore-v1
 
-      - name: Ensure stable Android debug signing key exists
+      - name: Require the established signing key
+        if: steps.signing_key_cache.outputs.cache-hit != 'true'
         run: |
-          mkdir -p "$HOME/.android"
-          if [ ! -f "$HOME/.android/debug.keystore" ]; then
-            keytool -genkeypair -v \
-              -keystore "$HOME/.android/debug.keystore" \
-              -storepass android \
-              -alias androiddebugkey \
-              -keypass android \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=Android Debug,O=Android,C=US"
-          fi
+          echo "::error::The established Android debug signing key was not restored. Refusing to generate a different key that could break app upgrades."
+          exit 1
+
+      - name: Verify restored signing key exists
+        run: test -f "$HOME/.android/debug.keystore"
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
