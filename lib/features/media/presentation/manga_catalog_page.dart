@@ -152,6 +152,43 @@ class _MangaCatalogPageState extends State<MangaCatalogPage> {
             ),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Если MangaDex недоступен или нет русской главы, проверьте другие русскоязычные источники:',
+                style: TextStyle(color: Colors.white60, fontSize: 12, height: 1.4),
+              ),
+              Wrap(
+                spacing: 8,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => launchUrl(
+                      Uri.https('mangalib.app', '/'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    icon: const Icon(Icons.menu_book, size: 16),
+                    label: const Text('MangaLib'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => launchUrl(
+                      Uri.https('1.selfmanga.live', '/'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    icon: const Icon(Icons.auto_stories, size: 16),
+                    label: const Text('SelfManga'),
+                  ),
+                ],
+              ),
+              const Text(
+                'MangaLib может ограничивать часть функций подпиской; SelfManga публикует авторскую мангу. Доступность и права на отдельные произведения зависят от источника.',
+                style: TextStyle(color: Colors.white38, fontSize: 10, height: 1.35),
+              ),
+            ],
+          ),
+        ),
         if (_loading) const LinearProgressIndicator(color: Color(0xFF74D69A)),
         if (_error != null)
           Padding(
