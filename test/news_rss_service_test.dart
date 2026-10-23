@@ -23,6 +23,7 @@ void main() {
               <pubDate>Fri, 23 Oct 2026 08:00:00 GMT</pubDate>
             </item></channel></rss>''',
             200,
+            headers: {'content-type': 'application/rss+xml; charset=utf-8'},
           );
         }
         return http.Response('unavailable', 503);
