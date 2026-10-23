@@ -180,10 +180,15 @@ class NewsRssService {
               .decode(response.bodyBytes, allowMalformed: true)
               .trim();
           if (xml.isEmpty ||
-              !RegExp(r'<rss\\b', caseSensitive: false).hasMatch(xml)) {
+              !RegExp(r'<rss\b', caseSensitive: false).hasMatch(xml)) {
             return const <NewsArticle>[];
           }
-          return _parseItems(xml, 'ru', 'ru');
+          return _parseItems(
+            xml,
+            'ru',
+            'ru',
+            defaultSourceName: source['name']!,
+          );
         } on Object {
           // A single unavailable publisher must not blank the whole feed.
           return const <NewsArticle>[];
@@ -524,6 +529,7 @@ class NewsRssService {
     String language,
     String? profileRegion, {
     List<String> selectedTopics = const <String>[],
+    String? defaultSourceName,
   }) {
     final items = RegExp(
       r'<item(?:\s[^>]*)?>([\s\S]*?)</item>',
@@ -579,7 +585,7 @@ class NewsRssService {
       if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) continue;
       final sourceName = _tag(item, 'source').isNotEmpty
           ? _tag(item, 'source')
-          : uri.host;
+          : (defaultSourceName ?? uri.host);
       final text = _stripMarkup(description);
       final normalized = ' ${title.toLowerCase()} ${text.toLowerCase()} ';
       final detectedTopics = _topicKeywords.entries
