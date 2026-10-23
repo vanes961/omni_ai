@@ -6,10 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
-/// Metadata for the bundled on-device model.
+/// Metadata for the optional on-device model download.
 ///
-/// The model is bundled into the Android APK by CI and copied into app-private
-/// storage on first use. Inference is handled separately.
+/// The model is downloaded once and kept in app-private storage across app updates.
 class LocalModelCatalog {
   const LocalModelCatalog._();
 
@@ -43,8 +42,8 @@ class LocalModelSpec {
   final String? expectedSha256;
 }
 
-/// Stores GGUF files in app-private storage. The production model is copied
-/// from the APK; the download method remains available for development tools.
+/// Stores GGUF files in app-private storage. Normal APK updates never contain
+/// the model; the validated download method installs it once per device.
 class LocalModelStorage {
   LocalModelStorage({
     http.Client? client,
