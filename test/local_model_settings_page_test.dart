@@ -17,10 +17,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Файл модели найден'), findsOneWidget);
-      expect(
-        find.text('ПОВТОРНО ПРОВЕРИТЬ МОДЕЛЬ'),
-        findsOneWidget,
-      );
+      expect(find.text('ПОВТОРНО ПРОВЕРИТЬ МОДЕЛЬ'), findsOneWidget);
 
       await tester.tap(
         find.byKey(const ValueKey('local-model-download-button')),
