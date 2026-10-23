@@ -286,14 +286,19 @@ class NewsRssService {
         }
       }),
     );
-    final russianArticles = await _fetchRussianRssSources();
-    if (russianArticles.isNotEmpty) successfulEditions++;
-    final allBatches = <List<NewsArticle>>[...batches, russianArticles];
+    // Russian publisher feeds are a fallback, not an additional batch on
+    // every refresh. This keeps normal refreshes fast and avoids treating
+    // unrelated publisher outages as failures of the three Google editions.
+    var allBatches = <List<NewsArticle>>[...batches];
     if (successfulEditions == 0) {
-      throw http.ClientException(
-        'All Russian and international news sources are unavailable '
-        '(${failedEditions.join(', ')}).',
-      );
+      final russianArticles = await _fetchRussianRssSources();
+      if (russianArticles.isEmpty) {
+        throw http.ClientException(
+          'All Russian and international news sources are unavailable '
+          '(${failedEditions.join(', ')}).',
+        );
+      }
+      allBatches = <List<NewsArticle>>[...batches, russianArticles];
     }
     // A nominally successful HTTP response can still contain no usable RSS
     // items. Never turn an all-empty result into a silent blank feed: report
