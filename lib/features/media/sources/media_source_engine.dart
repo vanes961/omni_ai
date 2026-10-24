@@ -224,7 +224,6 @@ class MediaSourceEngine {
   }
 }
 
-
 class _CachedSearch {
   const _CachedSearch(this.items, this.savedAt);
 
