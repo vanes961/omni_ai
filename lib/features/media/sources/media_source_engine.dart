@@ -118,7 +118,9 @@ class MediaSourceEngine {
             : a.title.toLowerCase().compareTo(b.title.toLowerCase());
       });
     final immutableItems = List<MediaItem>.unmodifiable(items);
-    if (maxCacheEntries > 0 && cacheTtl > Duration.zero) {
+    if (results.any((result) => result.succeeded) &&
+        maxCacheEntries > 0 &&
+        cacheTtl > Duration.zero) {
       if (_cache.length >= maxCacheEntries) {
         _cache.remove(_cache.keys.first);
       }
