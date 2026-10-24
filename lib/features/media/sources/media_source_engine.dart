@@ -62,7 +62,7 @@ class MediaSourceEngine {
     final unique = <String, MediaItem>{};
     for (final item in results.expand((result) => result.items)) {
       if (!_matchesKind(item, kind)) continue;
-      final key = _identityKey(item);
+      final key = _identityKey(item, kind);
       if (key.isEmpty) continue;
 
       final current = unique[key];
@@ -74,9 +74,9 @@ class MediaSourceEngine {
     final items = unique.values.toList()
       ..sort((a, b) {
         final rating = b.rating.compareTo(a.rating);
-        return rating != 0 ? rating : a.title.toLowerCase().compareTo(
-          b.title.toLowerCase(),
-        );
+        return rating != 0
+            ? rating
+            : a.title.toLowerCase().compareTo(b.title.toLowerCase());
       });
     return List<MediaItem>.unmodifiable(items);
   }
@@ -116,23 +116,23 @@ class MediaSourceEngine {
     final type = item.type.trim().toLowerCase();
     return switch (kind) {
       MediaSourceKind.movie => type == 'фильм' || type == 'movie',
-      MediaSourceKind.series => type == 'сериал' || type == 'series' || type == 'tv',
+      MediaSourceKind.series =>
+        type == 'сериал' || type == 'series' || type == 'tv',
       MediaSourceKind.anime => type == 'аниме' || type == 'anime',
-      // Manga will need its own normalized model before this category is
-      // enabled; don't misclassify a movie/series as manga.
       MediaSourceKind.manga => type == 'манга' || type == 'manga',
     };
   }
 
-  String _identityKey(MediaItem item) {
+  String _identityKey(MediaItem item, MediaSourceKind kind) {
     final title = item.title
         .toLowerCase()
-        .replaceAll(RegExp(r'[^\p{L}\p{N}]', unicode: true), ' ')
+        .replaceAll(RegExp(r'[^a-z0-9а-яё]', caseSensitive: false), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
     if (title.isEmpty) return '';
-    final type = item.type.trim().toLowerCase();
-    return '$type|$title';
+    // The requested category is canonical, so «movie» and «Фильм» entries
+    // from different sources can still be deduplicated.
+    return '${kind.name}|$title';
   }
 
   int _qualityScore(MediaItem item) {
@@ -140,8 +140,7 @@ class MediaSourceEngine {
     if (item.posterUrl.trim().isNotEmpty) score += 4;
     if (item.description.trim().isNotEmpty) score += 2;
     if (item.categories.isNotEmpty) score += 1;
-    if (item.rating > 0) score += 1;
-    if (item.rating >= 0 && item.rating <= 10) score += 1;
+    if (item.rating > 0 && item.rating <= 10) score += 1;
     return score;
   }
 }
