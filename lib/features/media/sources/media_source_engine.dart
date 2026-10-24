@@ -24,8 +24,23 @@ class MediaSourceResult {
 /// access controls. Add a source through [MediaSource] after verifying its
 /// API/feed and usage terms. Playback resolution remains a separate concern.
 class MediaSourceEngine {
-  MediaSourceEngine(Iterable<MediaSource> sources)
-    : registry = SourceRegistry(sources);
+  MediaSourceEngine(
+    Iterable<MediaSource> sources, {
+    this.sourceTimeout = const Duration(seconds: 12),
+    this.cacheTtl = const Duration(minutes: 5),
+    this.maxCacheEntries = 100,
+  }) : registry = SourceRegistry(sources);
+
+  /// Upper bound for one source request, even if an adapter forgets a timeout.
+  final Duration sourceTimeout;
+
+  /// Short-lived in-memory cache; persistent device storage can be added later.
+  final Duration cacheTtl;
+
+  /// Bounds memory usage on low-end phones.
+  final int maxCacheEntries;
+
+  final Map<String, _CachedSearch> _cache = {};
 
   /// Exposes safe per-source health state for diagnostics and UI.
   final SourceRegistry registry;
@@ -42,13 +57,23 @@ class MediaSourceEngine {
     final normalizedQuery = query.trim();
     if (normalizedQuery.isEmpty) return const <MediaItem>[];
 
+    final cacheKey = '${kind.name}|${normalizedQuery.toLowerCase()}';
+    final now = DateTime.now();
+    final cached = _cache[cacheKey];
+    if (cached != null && now.difference(cached.savedAt) < cacheTtl) {
+      return cached.items;
+    }
+    if (cached != null) _cache.remove(cacheKey);
+
     final matchingSources = registry.candidatesFor(kind);
 
     final results = await Future.wait(
       matchingSources.map((source) async {
         final stopwatch = Stopwatch()..start();
         try {
-          final items = await source.search(normalizedQuery, kind: kind);
+          final items = await source
+              .search(normalizedQuery, kind: kind)
+              .timeout(sourceTimeout);
           stopwatch.stop();
           registry.recordSuccess(
             source.id,
@@ -92,7 +117,14 @@ class MediaSourceEngine {
             ? rating
             : a.title.toLowerCase().compareTo(b.title.toLowerCase());
       });
-    return List<MediaItem>.unmodifiable(items);
+    final immutableItems = List<MediaItem>.unmodifiable(items);
+    if (maxCacheEntries > 0 && cacheTtl > Duration.zero) {
+      if (_cache.length >= maxCacheEntries) {
+        _cache.remove(_cache.keys.first);
+      }
+      _cache[cacheKey] = _CachedSearch(immutableItems, DateTime.now());
+    }
+    return immutableItems;
   }
 
   /// Returns per-source health/results for diagnostics without exposing
@@ -111,7 +143,9 @@ class MediaSourceEngine {
         matchingSources.map((source) async {
           final stopwatch = Stopwatch()..start();
           try {
-            final items = await source.search(normalizedQuery, kind: kind);
+            final items = await source
+                .search(normalizedQuery, kind: kind)
+                .timeout(sourceTimeout);
             stopwatch.stop();
             registry.recordSuccess(
               source.id,
@@ -186,4 +220,12 @@ class MediaSourceEngine {
     if (item.rating > 0 && item.rating <= 10) score += 1;
     return score;
   }
+}
+
+
+class _CachedSearch {
+  const _CachedSearch(this.items, this.savedAt);
+
+  final List<MediaItem> items;
+  final DateTime savedAt;
 }
