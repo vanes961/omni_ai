@@ -698,7 +698,7 @@ class NewsRssService {
     if (normalized.length <= maxLength) return normalized;
     final boundary = normalized.lastIndexOf(' ', maxLength);
     final end = boundary >= 400 ? boundary : maxLength;
-    return '\${normalized.substring(0, end).trimRight()}…';
+    return '${normalized.substring(0, end).trimRight()}…';
   }
 
   String _decodeEntities(String value) {
