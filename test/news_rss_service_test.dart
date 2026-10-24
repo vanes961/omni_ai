@@ -8,6 +8,33 @@ import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
 
 void main() {
+  test('cleans encoded HTML and limits oversized RSS summaries', () async {
+    final service = NewsRssService(
+      client: MockClient((_) async => http.Response(
+        '''<rss><channel><item>
+          <title>Anime news update</title>
+          <link>https://publisher.example/anime</link>
+          <description>&lt;p&gt;A clean paragraph with &lt;a href="https://tracking.example/story"&gt;the story&lt;/a&gt;.&lt;/p&gt;&lt;script&gt;tracking junk&lt;/script&gt; \${'long story ' * 90}</description>
+          <pubDate>Fri, 23 Oct 2026 08:00:00 GMT</pubDate>
+          <source>Anime News</source>
+        </item></channel></rss>''',
+        200,
+      )),
+    );
+    addTearDown(service.dispose);
+
+    final articles = await service.fetch(
+      const NewsInterestProfile(topics: ['anime']),
+    );
+
+    expect(articles, hasLength(1));
+    expect(articles.single.summary, startsWith('A clean paragraph with the story.'));
+    expect(articles.single.summary, isNot(contains('tracking.example')));
+    expect(articles.single.summary, isNot(contains('tracking junk')));
+    expect(articles.single.summary.length, lessThanOrEqualTo(561));
+    expect(articles.single.summary, endsWith('…'));
+  });
+
   test('falls back to Russian RSS sources when Google News is unavailable', () async {
     final service = NewsRssService(
       client: MockClient((request) async {
