@@ -691,10 +691,7 @@ class NewsRssService {
     decoded = _decodeEntities(decoded);
     return decoded
         .replaceAll(RegExp(r'\s+'), ' ')
-        .replaceAllMapped(
-          RegExp(r'\s+([.,!?;:])'),
-          (match) => match.group(1)!,
-        )
+        .replaceAllMapped(RegExp(r'\s+([.,!?;:])'), (match) => match.group(1)!)
         .trim();
   }
 
