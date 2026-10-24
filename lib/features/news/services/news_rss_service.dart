@@ -684,11 +684,11 @@ class NewsRssService {
         .replaceAll(RegExp(r'<[^>]*>'), ' ')
         .replaceAll(RegExp(r'https?://[^\s<>()]+', caseSensitive: false), ' ');
     decoded = _decodeEntities(decoded);
+    // Do not strip tags a second time after entity decoding: an encoded
+    // literal such as &#x3C;updates&#x3E; is text, not HTML markup.
     return decoded
-        .replaceAll(RegExp(r'<[^>]*>'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
-        .replaceAll('<', '')
-        .replaceAll('>', '')
+        .replaceAll(RegExp(r'\s+([.,!?;:])'), r'$1')
         .trim();
   }
 
