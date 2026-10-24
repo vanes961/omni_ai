@@ -611,7 +611,7 @@ class NewsRssService {
         NewsArticle(
           id: uri.toString(),
           title: title,
-          summary: text,
+          summary: _summaryExcerpt(text),
           sourceName: sourceName,
           sourceUrl: uri.toString(),
           publishedAt: published.toUtc(),
@@ -669,12 +669,36 @@ class NewsRssService {
   }
 
   String _stripMarkup(String value) {
-    final decoded = _decodeEntities(
-      value.replaceAll(RegExp(r'<[^>]*>'), ' ').replaceAll(RegExp(r'\s+'), ' '),
-    );
-    // Encoded angle brackets are text, not markup. Remove the brackets while
-    // retaining their contents so excerpts remain readable and predictable.
-    return decoded.replaceAll('<', '').replaceAll('>', '').trim();
+    // RSS descriptions often contain HTML inside CDATA or entity-escaped HTML.
+    // Decode first, remove non-content blocks and markup, then normalize text.
+    var decoded = _decodeEntities(value);
+    decoded = decoded
+        .replaceAll(
+          RegExp(r'<script\b[^>]*>[\s\S]*?</script>', caseSensitive: false),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(r'<style\b[^>]*>[\s\S]*?</style>', caseSensitive: false),
+          ' ',
+        )
+        .replaceAll(RegExp(r'<[^>]*>'), ' ')
+        .replaceAll(RegExp(r'https?://[^\s<>()]+', caseSensitive: false), ' ');
+    decoded = _decodeEntities(decoded);
+    return decoded
+        .replaceAll(RegExp(r'<[^>]*>'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll('<', '')
+        .replaceAll('>', '')
+        .trim();
+  }
+
+  String _summaryExcerpt(String value) {
+    const maxLength = 560;
+    final normalized = value.trim();
+    if (normalized.length <= maxLength) return normalized;
+    final boundary = normalized.lastIndexOf(' ', maxLength);
+    final end = boundary >= 400 ? boundary : maxLength;
+    return '\${normalized.substring(0, end).trimRight()}…';
   }
 
   String _decodeEntities(String value) {
