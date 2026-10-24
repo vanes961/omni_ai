@@ -14,7 +14,7 @@ void main() {
         '''<rss><channel><item>
           <title>Anime news update</title>
           <link>https://publisher.example/anime</link>
-          <description>&lt;p&gt;A clean paragraph with &lt;a href="https://tracking.example/story"&gt;the story&lt;/a&gt;.&lt;/p&gt;&lt;script&gt;tracking junk&lt;/script&gt; \${'long story ' * 90}</description>
+          <description>&lt;p&gt;A clean paragraph with &lt;a href="https://tracking.example/story"&gt;the story&lt;/a&gt;.&lt;/p&gt;&lt;script&gt;tracking junk&lt;/script&gt; ${'long story ' * 90}</description>
           <pubDate>Fri, 23 Oct 2026 08:00:00 GMT</pubDate>
           <source>Anime News</source>
         </item></channel></rss>''',
