@@ -1,5 +1,6 @@
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/sources/media_source.dart';
+import 'package:omni_ai/features/media/sources/source_registry.dart';
 
 /// Result of one source request. Errors are isolated so one broken provider
 /// cannot make the entire media search fail.
@@ -24,9 +25,12 @@ class MediaSourceResult {
 /// API/feed and usage terms. Playback resolution remains a separate concern.
 class MediaSourceEngine {
   MediaSourceEngine(Iterable<MediaSource> sources)
-    : _sources = List<MediaSource>.unmodifiable(sources);
+    : registry = SourceRegistry(sources);
 
-  final List<MediaSource> _sources;
+  /// Exposes safe per-source health state for diagnostics and UI.
+  final SourceRegistry registry;
+
+  List<MediaSource> get _sources => registry.sources;
 
   List<String> get sourceIds =>
       List<String>.unmodifiable(_sources.map((source) => source.id));
@@ -38,18 +42,28 @@ class MediaSourceEngine {
     final normalizedQuery = query.trim();
     if (normalizedQuery.isEmpty) return const <MediaItem>[];
 
-    final matchingSources = _sources
-        .where((source) => source.supportedKinds.contains(kind))
-        .toList(growable: false);
+    final matchingSources = registry.candidatesFor(kind);
 
     final results = await Future.wait(
       matchingSources.map((source) async {
+        final stopwatch = Stopwatch()..start();
         try {
-          return MediaSourceResult(
-            sourceId: source.id,
-            items: await source.search(normalizedQuery, kind: kind),
+          final items = await source.search(normalizedQuery, kind: kind);
+          stopwatch.stop();
+          registry.recordSuccess(
+            source.id,
+            checkedAt: DateTime.now(),
+            latency: stopwatch.elapsed,
           );
+          return MediaSourceResult(sourceId: source.id, items: items);
         } on Object catch (error) {
+          stopwatch.stop();
+          registry.recordFailure(
+            source.id,
+            checkedAt: DateTime.now(),
+            latency: stopwatch.elapsed,
+            errorCategory: _errorCategory(error),
+          );
           return MediaSourceResult(
             sourceId: source.id,
             items: const <MediaItem>[],
@@ -90,17 +104,29 @@ class MediaSourceEngine {
     final normalizedQuery = query.trim();
     if (normalizedQuery.isEmpty) return const <MediaSourceResult>[];
 
-    final matchingSources = _sources
-        .where((source) => source.supportedKinds.contains(kind))
-        .toList(growable: false);
+    final matchingSources = registry.candidatesFor(kind);
 
     return List<MediaSourceResult>.unmodifiable(
       await Future.wait(
         matchingSources.map((source) async {
+          final stopwatch = Stopwatch()..start();
           try {
             final items = await source.search(normalizedQuery, kind: kind);
+            stopwatch.stop();
+            registry.recordSuccess(
+              source.id,
+              checkedAt: DateTime.now(),
+              latency: stopwatch.elapsed,
+            );
             return MediaSourceResult(sourceId: source.id, items: items);
           } on Object catch (error) {
+            stopwatch.stop();
+            registry.recordFailure(
+              source.id,
+              checkedAt: DateTime.now(),
+              latency: stopwatch.elapsed,
+              errorCategory: _errorCategory(error),
+            );
             return MediaSourceResult(
               sourceId: source.id,
               items: const <MediaItem>[],
@@ -133,6 +159,23 @@ class MediaSourceEngine {
     // The requested category is canonical, so «movie» and «Фильм» entries
     // from different sources can still be deduplicated.
     return '${kind.name}|$title';
+  }
+
+  String _errorCategory(Object error) {
+    final message = error.toString().toLowerCase();
+    if (message.contains('timeout')) return 'timeout';
+    if (message.contains('socket') ||
+        message.contains('network') ||
+        message.contains('connection')) {
+      return 'network';
+    }
+    if (message.contains('http')) return 'http';
+    if (message.contains('format') ||
+        message.contains('json') ||
+        message.contains('parse')) {
+      return 'parse';
+    }
+    return 'unknown';
   }
 
   int _qualityScore(MediaItem item) {
