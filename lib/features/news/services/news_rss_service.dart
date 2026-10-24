@@ -669,10 +669,9 @@ class NewsRssService {
   }
 
   String _stripMarkup(String value) {
-    // RSS descriptions often contain HTML inside CDATA or entity-escaped HTML.
-    // Decode first, remove non-content blocks and markup, then normalize text.
-    var decoded = _decodeEntities(value);
-    decoded = decoded
+    // Remove known HTML elements before decoding escaped text. Unknown
+    // angle-bracket text such as &amp;#x3C;updates&amp;#x3E; is kept as text.
+    var decoded = value
         .replaceAll(
           RegExp(r'<script\b[^>]*>[\s\S]*?</script>', caseSensitive: false),
           ' ',
@@ -683,19 +682,17 @@ class NewsRssService {
         )
         .replaceAll(
           RegExp(
-            r'<\/?(?:a|p|br|div|span|b|strong|em|i|ul|ol|li|img|script|style|h[1-6]|blockquote|table|tr|td|th|hr)\\b[^>]*>',
+            r'</?(?:a|p|br|div|span|b|strong|em|i|ul|ol|li|img|script|style|h[1-6]|blockquote|table|tr|td|th|hr)\b[^>]*>',
             caseSensitive: false,
           ),
           ' ',
         )
-        .replaceAll(RegExp(r'https?://[^\\s<>()]+', caseSensitive: false), ' ');
+        .replaceAll(RegExp(r'https?://[^\s<>()]+', caseSensitive: false), ' ');
     decoded = _decodeEntities(decoded);
-    // Decode escaped text after removing recognized HTML elements. Unknown
-    // angle-bracket text such as <updates> is not assumed to be markup.
     return decoded
-        .replaceAll(RegExp(r'\\s+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
         .replaceAllMapped(
-          RegExp(r'\\s+([.,!?;:])'),
+          RegExp(r'\s+([.,!?;:])'),
           (match) => match.group(1)!,
         )
         .trim();
