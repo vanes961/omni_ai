@@ -15,8 +15,7 @@ class AniLibriaCatalogSource implements MediaSource {
     this.client,
     Uri? baseUri,
     this.timeout = const Duration(seconds: 10),
-  }) : baseUri = baseUri ??
-           Uri.https('api.anilibria.tv', '/v3/title/search');
+  }) : baseUri = baseUri ?? Uri.https('api.anilibria.tv', '/v3/title/search');
 
   final http.Client? client;
   final Uri baseUri;
@@ -30,8 +29,9 @@ class AniLibriaCatalogSource implements MediaSource {
 
   Future<http.Response> _get(Uri uri) {
     final transport = client;
-    return (transport == null ? http.get(uri) : transport.get(uri))
-        .timeout(timeout);
+    return (transport == null ? http.get(uri) : transport.get(uri)).timeout(
+      timeout,
+    );
   }
 
   @override
@@ -44,10 +44,7 @@ class AniLibriaCatalogSource implements MediaSource {
     }
 
     final uri = baseUri.replace(
-      queryParameters: {
-        ...baseUri.queryParameters,
-        'search': query.trim(),
-      },
+      queryParameters: {...baseUri.queryParameters, 'search': query.trim()},
     );
     final response = await _get(uri);
     if (response.statusCode != 200) {
@@ -158,7 +155,10 @@ class AniLibriaCatalogSource implements MediaSource {
   }
 
   String _plainText(String value) => value
-      .replaceAll(RegExp(r'<(script|style)\b[^>]*>[\s\S]*?</\1>', caseSensitive: false), ' ')
+      .replaceAll(
+        RegExp(r'<(script|style)\b[^>]*>[\s\S]*?</\1>', caseSensitive: false),
+        ' ',
+      )
       .replaceAll(RegExp(r'<[^>]*>'), ' ')
       .replaceAll('&nbsp;', ' ')
       .replaceAll('&amp;', '&')
