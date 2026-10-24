@@ -681,14 +681,23 @@ class NewsRssService {
           RegExp(r'<style\b[^>]*>[\s\S]*?</style>', caseSensitive: false),
           ' ',
         )
-        .replaceAll(RegExp(r'<[^>]*>'), ' ')
-        .replaceAll(RegExp(r'https?://[^\s<>()]+', caseSensitive: false), ' ');
+        .replaceAll(
+          RegExp(
+            r'<\/?(?:a|p|br|div|span|b|strong|em|i|ul|ol|li|img|script|style|h[1-6]|blockquote|table|tr|td|th|hr)\\b[^>]*>',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(RegExp(r'https?://[^\\s<>()]+', caseSensitive: false), ' ');
     decoded = _decodeEntities(decoded);
-    // Do not strip tags a second time after entity decoding: an encoded
-    // literal such as &#x3C;updates&#x3E; is text, not HTML markup.
+    // Decode escaped text after removing recognized HTML elements. Unknown
+    // angle-bracket text such as <updates> is not assumed to be markup.
     return decoded
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .replaceAll(RegExp(r'\s+([.,!?;:])'), r'$1')
+        .replaceAll(RegExp(r'\\s+'), ' ')
+        .replaceAllMapped(
+          RegExp(r'\\s+([.,!?;:])'),
+          (match) => match.group(1)!,
+        )
         .trim();
   }
 
