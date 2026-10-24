@@ -61,6 +61,18 @@ void main() {
       expect(results.map((item) => item.title), ['Дюна']);
     });
 
+    test('reuses recent successful results from the bounded cache', () async {
+      final source = _FakeSource('catalog', [_item(title: 'Дюна')]);
+      final engine = MediaSourceEngine([source]);
+
+      final first = await engine.search('дюна', kind: MediaSourceKind.movie);
+      final second = await engine.search('дюна', kind: MediaSourceKind.movie);
+
+      expect(first, hasLength(1));
+      expect(second, hasLength(1));
+      expect(source.calls, 1);
+    });
+
     test('records source health without exposing raw errors', () async {
       final engine = MediaSourceEngine([
         _FakeSource('offline', const [], fail: true),
