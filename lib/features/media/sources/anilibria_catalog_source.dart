@@ -51,7 +51,7 @@ class AniLibriaCatalogSource implements MediaSource {
       throw HttpException('AniLibria returned HTTP ${response.statusCode}');
     }
 
-    final decoded = jsonDecode(response.body);
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     final entries = _extractEntries(decoded);
     final results = <MediaItem>[];
     for (final raw in entries) {
