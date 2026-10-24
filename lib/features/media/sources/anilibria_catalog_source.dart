@@ -12,16 +12,13 @@ import 'package:omni_ai/features/media/sources/media_source.dart';
 /// provides for use by its player.
 class AniLibriaCatalogSource implements MediaSource {
   AniLibriaCatalogSource({
-    http.Client? client,
-    this.baseUri = const Uri(
-      scheme: 'https',
-      host: 'api.anilibria.tv',
-      path: '/v3/title/search',
-    ),
+    this.client,
+    Uri? baseUri,
     this.timeout = const Duration(seconds: 10),
-  }) : _client = client;
+  }) : baseUri = baseUri ??
+           Uri.https('api.anilibria.tv', '/v3/title/search');
 
-  final http.Client? _client;
+  final http.Client? client;
   final Uri baseUri;
   final Duration timeout;
 
@@ -32,8 +29,9 @@ class AniLibriaCatalogSource implements MediaSource {
   Set<MediaSourceKind> get supportedKinds => const {MediaSourceKind.anime};
 
   Future<http.Response> _get(Uri uri) {
-    final client = _client;
-    return (client == null ? http.get(uri) : client.get(uri)).timeout(timeout);
+    final transport = client;
+    return (transport == null ? http.get(uri) : transport.get(uri))
+        .timeout(timeout);
   }
 
   @override
