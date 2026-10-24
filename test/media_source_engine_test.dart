@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/sources/media_source.dart';
 import 'package:omni_ai/features/media/sources/media_source_engine.dart';
+import 'package:omni_ai/features/media/sources/source_registry.dart';
 
 void main() {
   group('MediaSourceEngine', () {
@@ -58,6 +59,19 @@ void main() {
       );
 
       expect(results.map((item) => item.title), ['Дюна']);
+    });
+
+    test('records source health without exposing raw errors', () async {
+      final engine = MediaSourceEngine([
+        _FakeSource('offline', const [], fail: true),
+      ]);
+
+      await engine.search('query', kind: MediaSourceKind.movie);
+
+      final health = engine.registry.healthFor('offline')!;
+      expect(health.availability, SourceAvailability.degraded);
+      expect(health.consecutiveFailures, 1);
+      expect(health.lastErrorCategory, 'unknown');
     });
 
     test('blank queries do not call sources', () async {
