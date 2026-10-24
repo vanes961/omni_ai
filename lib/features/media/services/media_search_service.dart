@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/media/sources/anilibria_catalog_source.dart';
+import 'package:omni_ai/features/media/sources/media_source.dart';
+import 'package:omni_ai/features/media/sources/media_source_engine.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 typedef FranchiseChronologyResolver =
@@ -15,10 +18,17 @@ class MediaSearchService {
     this.accessToken = _token,
     this.franchiseChronologyResolver,
     this.client,
+    this.sourceEngine,
   });
+
+  static final MediaSourceEngine _defaultSourceEngine = MediaSourceEngine([
+    AniLibriaCatalogSource(),
+  ]);
 
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
   final http.Client? client;
+  final MediaSourceEngine? sourceEngine;
+  MediaSourceEngine get _mediaSources => sourceEngine ?? _defaultSourceEngine;
 
   /// Keeps the same HTTP transport while replacing the credential loaded from
   /// secure device storage. This makes runtime credentials testable and avoids
@@ -27,6 +37,7 @@ class MediaSearchService {
     accessToken: token,
     franchiseChronologyResolver: franchiseChronologyResolver,
     client: client,
+    sourceEngine: sourceEngine,
   );
 
   Future<http.Response> _get(Uri uri, {required Map<String, String> headers}) {
@@ -70,7 +81,16 @@ class MediaSearchService {
   List<MediaItem> search(String query, {String? type}) => const [];
   List<MediaItem> recommendedFor(UserPreferences preferences) => const [];
   Future<List<MediaItem>> searchOnline(String query, {String? type}) async {
-    if (query.trim().isEmpty || !isConfigured) return const [];
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) return const [];
+
+    // AniLibria is an independent anime catalog, so anime search remains
+    // useful when the optional TMDB token is missing or temporarily offline.
+    if (type == 'Аниме' && !isConfigured) {
+      return _searchAnimeCatalog(normalizedQuery);
+    }
+    if (!isConfigured) return const [];
+
     final endpoint = switch (type) {
       'Фильм' => 'movie',
       'Сериал' || 'Аниме' => 'tv',
@@ -78,7 +98,7 @@ class MediaSearchService {
     };
     final uri = Uri.parse('$_api/search/$endpoint').replace(
       queryParameters: {
-        'query': query.trim(),
+        'query': normalizedQuery,
         'language': 'ru-RU',
         'include_adult': 'false',
         'page': '1',
@@ -92,10 +112,16 @@ class MediaSearchService {
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
-      if (response.statusCode != 200) return const [];
+      if (response.statusCode != 200) {
+        return type == 'Аниме'
+            ? _searchAnimeCatalog(normalizedQuery)
+            : const [];
+      }
       final json = jsonDecode(response.body);
       if (json is! Map<String, dynamic> || json['results'] is! List) {
-        return const [];
+        return type == 'Аниме'
+            ? _searchAnimeCatalog(normalizedQuery)
+            : const [];
       }
       final items = <MediaItem>[];
       for (final raw in json['results'] as List) {
@@ -136,11 +162,19 @@ class MediaSearchService {
           ),
         );
       }
+      if (type == 'Аниме' && items.isEmpty) {
+        return _searchAnimeCatalog(normalizedQuery);
+      }
       return items;
     } on Object {
-      return const [];
+      return type == 'Аниме'
+          ? _searchAnimeCatalog(normalizedQuery)
+          : const [];
     }
   }
+
+  Future<List<MediaItem>> _searchAnimeCatalog(String query) =>
+      _mediaSources.search(query, kind: MediaSourceKind.anime);
 
   /// Loads real weekly trending titles from TMDB for the media hub.
   /// Returns an empty list when credentials or the network are unavailable;
