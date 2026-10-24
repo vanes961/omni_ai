@@ -1029,7 +1029,7 @@ void main() {
 
     expect(articles, hasLength(1));
     expect(articles.single.title, 'Anime & manga 🎮 news');
-    expect(articles.single.summary, 'Anime — manga & updates');
+    expect(articles.single.summary, 'Anime — manga & <updates>');
     expect(articles.single.sourceName, 'publisher.example');
   });
 
