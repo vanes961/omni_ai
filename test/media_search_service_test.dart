@@ -3,10 +3,41 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/media/sources/media_source.dart';
+import 'package:omni_ai/features/media/sources/media_source_engine.dart';
 import 'package:omni_ai/features/media/domain/media_hub_contracts.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 void main() {
+  test('searches AniLibria for anime when TMDB is not configured', () async {
+    final source = _FakeAnimeSource();
+    final service = MediaSearchService(
+      sourceEngine: MediaSourceEngine([source]),
+    );
+
+    final items = await service.searchOnline('наруто', type: 'Аниме');
+
+    expect(source.lastQuery, 'наруто');
+    expect(items.map((item) => item.title), ['Наруто']);
+  });
+
+  test('falls back to AniLibria when TMDB has no anime results', () async {
+    final source = _FakeAnimeSource();
+    final service = MediaSearchService(
+      accessToken: 'test-token',
+      sourceEngine: MediaSourceEngine([source]),
+      client: MockClient((request) async {
+        expect(request.url.path, '/3/search/tv');
+        return http.Response('{"results":[]}', 200);
+      }),
+    );
+
+    final items = await service.searchOnline('наруто', type: 'Аниме');
+
+    expect(items.single.id, 'anilibria:42');
+    expect(source.lastQuery, 'наруто');
+  });
+
   const service = MediaSearchService();
 
   test('does not expose fabricated demo titles in the local catalog', () {
@@ -462,4 +493,33 @@ void main() {
       expect(credentials.isSupportedInput, isFalse);
     });
   });
+}
+
+class _FakeAnimeSource implements MediaSource {
+  String? lastQuery;
+
+  @override
+  String get id => 'fake-anime';
+
+  @override
+  Set<MediaSourceKind> get supportedKinds => const {MediaSourceKind.anime};
+
+  @override
+  Future<List<MediaItem>> search(
+    String query, {
+    required MediaSourceKind kind,
+  }) async {
+    lastQuery = query;
+    return [
+      MediaItem(
+        id: 'anilibria:42',
+        title: 'Наруто',
+        type: 'Аниме',
+        posterUrl: '',
+        rating: 8,
+        voiceovers: const [],
+        videoUrl: '',
+      ),
+    ];
+  }
 }
