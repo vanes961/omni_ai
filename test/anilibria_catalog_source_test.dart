@@ -12,8 +12,8 @@ void main() {
     final source = AniLibriaCatalogSource(
       client: MockClient((request) async {
         requestedUri = request.url;
-        return http.Response(
-          jsonEncode({
+        return http.Response.bytes(
+          utf8.encode(jsonEncode({
             'list': [
               {
                 'id': 123,
@@ -29,7 +29,7 @@ void main() {
               {'id': 124, 'names': {'ru': '   '}},
               'invalid',
             ],
-          }),
+          })),
           200,
         );
       }),
