@@ -669,9 +669,9 @@ class NewsRssService {
   }
 
   String _stripMarkup(String value) {
-    // Remove known HTML elements before decoding escaped text. Unknown
-    // angle-bracket text such as &amp;#x3C;updates&amp;#x3E; is kept as text.
-    var decoded = value
+    // Decode entities, then remove only recognized HTML tags. Unknown
+    // angle-bracket text such as <updates> is kept as ordinary text.
+    var decoded = _decodeEntities(value)
         .replaceAll(
           RegExp(r'<script\b[^>]*>[\s\S]*?</script>', caseSensitive: false),
           ' ',
