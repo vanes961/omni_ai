@@ -133,10 +133,11 @@ class _MediaPageState extends State<MediaPage> {
   }
 
   Future<void> _loadTrending() async {
-    if (!_searchService.isSearchConfigured) return;
+    final service = _searchService;
+    if (!service.isSearchConfigured) return;
     if (mounted) setState(() => _loadingTrending = true);
-    final items = await _searchService.fetchTrendingOnline(type: _selectedType);
-    if (!mounted) return;
+    final items = await service.fetchTrendingOnline(type: _selectedType);
+    if (!mounted || !identical(service, _searchService)) return;
     setState(() {
       _onlineTrending = _rankByFavoriteInterests(items);
       _loadingTrending = false;
@@ -177,11 +178,16 @@ class _MediaPageState extends State<MediaPage> {
       }
       return;
     }
-    final items = await _searchService.fetchRecommendationsOnline(
+    final service = _searchService;
+    final items = await service.fetchRecommendationsOnline(
       interests: interests,
       type: requestedType,
     );
-    if (!mounted || _selectedType != requestedType) return;
+    if (!mounted ||
+        !identical(service, _searchService) ||
+        _selectedType != requestedType) {
+      return;
+    }
     final savedIds = favorites.map((item) => item.id).toSet();
     final ranked = _rankByFavoriteInterests(items)
         .where((item) => !savedIds.contains(item.id))
