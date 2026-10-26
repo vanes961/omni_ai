@@ -178,10 +178,10 @@ class KinopoiskCatalogSource implements MediaSource {
           ),
         )
         .join('&');
-    final uri = Uri.https(
-      'api.poiskkino.dev',
-      '/v1.5/movie',
-    ).replace(query: query);
+    // Parse the already percent-encoded query as a complete URI. Passing it
+    // to Uri.replace(query:) can encode percent signs again, corrupting UTF-8
+    // genre values and making the API return no matches.
+    final uri = Uri.parse('https://api.poiskkino.dev/v1.5/movie?$query');
     final response = await _get(uri);
     if (response.statusCode != 200) {
       throw CatalogHttpException(
@@ -313,6 +313,7 @@ class KinopoiskCatalogSource implements MediaSource {
   String _title(Map<String, dynamic> raw) {
     final direct =
         (raw['name'] as String? ??
+                raw['title'] as String? ??
                 raw['alternativeName'] as String? ??
                 raw['alternative_name'] as String? ??
                 '')
