@@ -13,24 +13,22 @@ void main() {
       client: MockClient((request) async {
         requestedUri = request.url;
         return http.Response.bytes(
-          utf8.encode(jsonEncode({
-            [
-              {
-                'id': 123,
-                'name': {'main': 'Пример аниме', 'english': 'Example Anime'},
-                'poster': {'preview': 'https://img.example/poster.jpg'},
-                'genres': [
-                  {'name': 'Приключения'},
-                  {'name': 'Фантастика'},
-                ],
-                'description': '<p>Описание <b>аниме</b></p>',
-                'year': 2025,
-                'rating': {'average': 8.2},
-              },
-              {'id': 124, 'name': {'main': '   '}},
-              'invalid',
-            ],
-          })),
+          utf8.encode(jsonEncode([
+            {
+              'id': 123,
+              'name': {'main': 'Пример аниме', 'english': 'Example Anime'},
+              'poster': {'preview': 'https://img.example/poster.jpg'},
+              'genres': [
+                {'name': 'Приключения'},
+                {'name': 'Фантастика'},
+              ],
+              'description': '<p>Описание <b>аниме</b></p>',
+              'year': 2025,
+              'rating': {'average': 8.2},
+            },
+            {'id': 124, 'name': {'main': '   '}},
+            'invalid',
+          ])),
           200,
         );
       }),
