@@ -1,13 +1,9 @@
+import 'package:omni_ai/features/media/data/video_source_engine.dart';
 import 'package:omni_ai/features/media/data/video_source_provider.dart';
 
 /// Describes what a discovered site can provide. Catalog metadata alone is
 /// never treated as a playable stream.
-enum DiscoveredSourceCapability {
-  metadata,
-  episodeIndex,
-  trailer,
-  playback,
-}
+enum DiscoveredSourceCapability { metadata, episodeIndex, trailer, playback }
 
 /// Current health of a discovered source.
 enum DiscoveredSourceStatus { unverified, available, unavailable, rejected }
@@ -46,18 +42,17 @@ class DiscoveredSourceCandidate {
     DiscoveredSourceStatus? status,
     DateTime? checkedAt,
     String? note,
-  }) =>
-      DiscoveredSourceCandidate(
-        id: id,
-        name: name,
-        baseUri: baseUri,
-        mediaKinds: mediaKinds,
-        capabilities: capabilities,
-        discoveredBy: discoveredBy,
-        status: status ?? this.status,
-        checkedAt: checkedAt ?? this.checkedAt,
-        note: note ?? this.note,
-      );
+  }) => DiscoveredSourceCandidate(
+    id: id,
+    name: name,
+    baseUri: baseUri,
+    mediaKinds: mediaKinds,
+    capabilities: capabilities,
+    discoveredBy: discoveredBy,
+    status: status ?? this.status,
+    checkedAt: checkedAt ?? this.checkedAt,
+    note: note ?? this.note,
+  );
 }
 
 /// Plug-in boundary for search engines, public registries, or curated
@@ -78,20 +73,29 @@ abstract interface class DiscoveredSourceProbe {
   );
 }
 
-/// Coordinates discovery adapters and maintains the latest candidate list.
+typedef DiscoveredProviderFactory =
+    VideoSourceProvider? Function(DiscoveredSourceCandidate candidate);
+
+/// Coordinates discovery, validation, registration, and runtime status.
 ///
-/// This registry is intentionally in-memory in the first iteration. Durable
-/// storage and scheduled background refresh should be added after a concrete
-/// discovery adapter and its data policy are selected.
+/// Catalog-only candidates are recorded here but are never registered with the
+/// playback engine. A playback provider is registered only after a successful
+/// probe and an explicit provider factory has produced a matching adapter.
 class SourceDiscoveryService {
   SourceDiscoveryService({
     required Iterable<SourceDiscoveryAdapter> adapters,
     required DiscoveredSourceProbe probe,
+    VideoSourceEngine? videoSourceEngine,
+    DiscoveredProviderFactory? providerFactory,
   }) : _adapters = List<SourceDiscoveryAdapter>.unmodifiable(adapters),
-       _probe = probe;
+       _probe = probe,
+       _videoSourceEngine = videoSourceEngine,
+       _providerFactory = providerFactory;
 
   final List<SourceDiscoveryAdapter> _adapters;
   final DiscoveredSourceProbe _probe;
+  final VideoSourceEngine? _videoSourceEngine;
+  final DiscoveredProviderFactory? _providerFactory;
   final Map<String, DiscoveredSourceCandidate> _candidates = {};
 
   List<DiscoveredSourceCandidate> get candidates =>
@@ -110,7 +114,9 @@ class SourceDiscoveryService {
     for (final adapter in _adapters) {
       Iterable<DiscoveredSourceCandidate> discovered;
       try {
-        discovered = await adapter.discover(mediaKinds: mediaKinds);
+        discovered = await adapter.discover(mediaKinds: mediaKinds).timeout(
+          const Duration(seconds: 15),
+        );
       } on Object {
         // A failed discovery backend must not block other backends.
         continue;
@@ -130,8 +136,14 @@ class SourceDiscoveryService {
         }
 
         try {
-          final checked = await _probe.check(candidate);
-          _candidates[candidate.id] = checked;
+          final checked = await _probe.check(candidate).timeout(
+            const Duration(seconds: 12),
+          );
+          final normalized = checked.copyWith(
+            checkedAt: checked.checkedAt ?? DateTime.now(),
+          );
+          _candidates[candidate.id] = normalized;
+          _registerPlaybackProvider(normalized);
         } on Object {
           _candidates[candidate.id] = candidate.copyWith(
             status: DiscoveredSourceStatus.unavailable,
@@ -144,6 +156,24 @@ class SourceDiscoveryService {
     return candidates;
   }
 
+  void _registerPlaybackProvider(DiscoveredSourceCandidate candidate) {
+    if (candidate.status != DiscoveredSourceStatus.available ||
+        !candidate.capabilities.contains(DiscoveredSourceCapability.playback)) {
+      return;
+    }
+    final engine = _videoSourceEngine;
+    final factory = _providerFactory;
+    if (engine == null || factory == null) return;
+
+    try {
+      final provider = factory(candidate);
+      if (provider == null || provider.id != candidate.id) return;
+      engine.registerProvider(provider);
+    } on Object {
+      // A provider factory failure must not invalidate catalog discovery.
+    }
+  }
+
   /// Allows a caller to disable a source without deleting discovery history.
   void reject(String candidateId, {String? reason}) {
     final candidate = _candidates[candidateId];
@@ -153,7 +183,10 @@ class SourceDiscoveryService {
       checkedAt: DateTime.now(),
       note: reason ?? 'Источник отключён.',
     );
+    _videoSourceEngine?.unregisterProvider(candidateId);
   }
 
-  void clear() => _candidates.clear();
+  void clear() {
+    _candidates.clear();
+  }
 }
