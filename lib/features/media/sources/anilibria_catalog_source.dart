@@ -15,7 +15,7 @@ class AniLibriaCatalogSource implements MediaSource {
     this.client,
     Uri? baseUri,
     this.timeout = const Duration(seconds: 10),
-  }) : baseUri = baseUri ?? Uri.https('api.anilibria.tv', '/v3/title/search');
+  }) : baseUri = baseUri ?? Uri.https('api.anilibria.app', '/api/v1/app/search/releases');
 
   final http.Client? client;
   final Uri baseUri;
@@ -44,7 +44,7 @@ class AniLibriaCatalogSource implements MediaSource {
     }
 
     final uri = baseUri.replace(
-      queryParameters: {...baseUri.queryParameters, 'search': query.trim()},
+      queryParameters: {...baseUri.queryParameters, 'query': query.trim()},
     );
     final response = await _get(uri);
     if (response.statusCode != 200) {
@@ -66,12 +66,12 @@ class AniLibriaCatalogSource implements MediaSource {
       return decoded.whereType<Map<String, dynamic>>().toList();
     }
     if (decoded is! Map<String, dynamic>) return const [];
-    final list = decoded['list'] ?? decoded['data'] ?? decoded['items'];
+    final list = decoded['list'] ?? decoded['data'] ?? decoded['items'] ?? decoded['results'] ?? decoded['releases'];
     if (list is List) {
       return list.whereType<Map<String, dynamic>>().toList();
     }
     // Some API responses may return a single title object.
-    if (decoded.containsKey('id') && decoded.containsKey('names')) {
+    if (decoded.containsKey('id') && (decoded.containsKey('names') || decoded.containsKey('name'))) {
       return [decoded];
     }
     return const [];
@@ -80,17 +80,28 @@ class AniLibriaCatalogSource implements MediaSource {
   MediaItem? _toMediaItem(Map<String, dynamic> raw) {
     final id = raw['id'];
     final names = raw['names'];
+    final modernName = raw['name'];
     final title = names is Map<String, dynamic>
         ? ((names['ru'] as String?) ?? (names['en'] as String?) ?? '')
-        : (raw['name'] as String? ?? '');
+        : modernName is Map<String, dynamic>
+        ? ((modernName['main'] as String?) ??
+              (modernName['english'] as String?) ??
+              (modernName['alternative'] as String?) ??
+              '')
+        : (modernName as String? ?? '');
     if (id == null || title.trim().isEmpty) return null;
 
-    final poster = raw['posters'];
+    final poster = raw['posters'] ?? raw['poster'];
     final posterObject = poster is Map<String, dynamic>
-        ? (poster['medium'] ?? poster['small'] ?? poster['original'])
+        ? (poster['medium'] ??
+              poster['preview'] ??
+              poster['thumbnail'] ??
+              poster['optimized'] ??
+              poster['small'] ??
+              poster['original'])
         : null;
     final posterUrl = posterObject is Map<String, dynamic>
-        ? (posterObject['url'] as String? ?? '')
+        ? (posterObject['url'] as String? ?? posterObject['src'] as String? ?? '')
         : posterObject is String
         ? posterObject
         : '';
