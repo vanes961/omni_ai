@@ -115,6 +115,35 @@ void main() {
     );
   });
 
+  test('accepts alternate response envelopes from catalog gateways', () async {
+    final source = KinopoiskCatalogSource(
+      apiKey: 'test-api-key',
+      client: MockClient((request) async => http.Response(
+        jsonEncode({
+          'result': {
+            'films': [
+              {
+                'id': 123,
+                'name': 'Envelope test',
+                'type': 'movie',
+              },
+            ],
+          },
+        }),
+        200,
+      )),
+    );
+
+    final items = await source.search(
+      'Envelope test',
+      kind: MediaSourceKind.movie,
+    );
+
+    expect(items, hasLength(1));
+    expect(items.single.id, 'kinopoisk:123');
+    expect(items.single.title, 'Envelope test');
+  });
+
   test('rejects non-http poster URLs', () async {
     final source = KinopoiskCatalogSource(
       apiKey: 'test-api-key',
