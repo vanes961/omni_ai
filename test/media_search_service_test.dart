@@ -133,8 +133,10 @@ void main() {
         return http.Response.bytes(
           utf8.encode(
             '{"docs":[{"id":77,"name":"Каталоговый фильм","type":"movie",'
-          '"rating":{"kp":8.2},"poster":{"url":"https://img.example/poster.jpg"}}]}',
+            '"rating":{"kp":8.2},"poster":{"url":"https://img.example/poster.jpg"}}]}',
+          ),
           200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }),
     );
@@ -306,10 +308,13 @@ void main() {
         if (request.url.host == 'api.themoviedb.org') {
           return http.Response('unavailable', 503);
         }
-        return http.Response(
-          '{"docs":[{"id":88,"name":"Резервный фильм","type":"movie",'
-          '"rating":{"kp":7.9},"poster":{"url":"https://img.example/88.jpg"}}]}',
+        return http.Response.bytes(
+          utf8.encode(
+            '{"docs":[{"id":88,"name":"Резервный фильм","type":"movie",'
+            '"rating":{"kp":7.9},"poster":{"url":"https://img.example/88.jpg"}}]}',
+          ),
           200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }),
     );
@@ -334,8 +339,10 @@ void main() {
         return http.Response.bytes(
           utf8.encode(
             '{"docs":[{"id":89,"name":"Фильм из резерва","type":"movie",'
-          '"rating":{"kp":8.1},"poster":{"url":"https://img.example/89.jpg"}}]}',
+            '"rating":{"kp":8.1},"poster":{"url":"https://img.example/89.jpg"}}]}',
+          ),
           200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }),
     );
