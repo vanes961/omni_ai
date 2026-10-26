@@ -114,7 +114,7 @@ class MediaSearchService {
       ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) {
         return type == 'Аниме'
-            ? _searchAnimeCatalog(normalizedQuery)
+            ? await _searchAnimeCatalog(normalizedQuery)
             : const [];
       }
       final json = jsonDecode(response.body);
@@ -163,7 +163,7 @@ class MediaSearchService {
         );
       }
       if (type == 'Аниме' && items.isEmpty) {
-        return _searchAnimeCatalog(normalizedQuery);
+        return await _searchAnimeCatalog(normalizedQuery);
       }
       return items;
     } on Object {
