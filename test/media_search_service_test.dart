@@ -686,6 +686,50 @@ void main() {
       expect(credentials.isSupportedInput, isFalse);
     });
   });
+  test('loads detail metadata for a PoiskKino media card', () async {
+    final service = MediaSearchService(
+      kinopoiskApiKey: 'poiskkino-token',
+      client: MockClient((request) async {
+        expect(request.url.path, '/v1.5/movie/77');
+        expect(request.headers['X-API-KEY'], 'poiskkino-token');
+        return http.Response(
+          jsonEncode({
+            'id': 77,
+            'name': 'Details film',
+            'description': 'Полное описание',
+            'genres': [{'name': 'драма'}, {'name': 'триллер'}],
+            'year': 2024,
+            'movieLength': 118,
+            'premiere': {'world': '2024-03-01'},
+            'backdrop': {'url': 'https://img.example/backdrop.jpg'},
+            'homepage': 'javascript:alert(1)',
+          }),
+          200,
+        );
+      }),
+    );
+    const item = MediaItem(
+      id: 'kinopoisk:77',
+      title: 'Details film',
+      type: 'Фильм',
+      posterUrl: '',
+      rating: 8.0,
+      voiceovers: [],
+      videoUrl: '',
+      description: 'Краткое описание',
+    );
+
+    final details = await service.loadDetails(item);
+
+    expect(details?.overview, 'Полное описание');
+    expect(details?.genres, ['драма', 'триллер']);
+    expect(details?.runtimeMinutes, 118);
+    expect(details?.releaseDate, '2024-03-01');
+    expect(details?.backdropUrl, 'https://img.example/backdrop.jpg');
+    expect(details?.homepage, isEmpty);
+    expect(details?.franchiseId, 'kinopoisk:item:77');
+    expect(details?.cast, isEmpty);
+  });
 }
 
 class _FakeAnimeSource implements MediaSource {
