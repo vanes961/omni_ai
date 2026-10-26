@@ -74,40 +74,44 @@ class _MediaPageState extends State<MediaPage> {
   }
 
   Future<void> _loadCatalogToken() async {
+    // Read each credential independently. A missing/unavailable secure-storage
+    // plugin for one provider must not disable another provider or prevent the
+    // build-time TMDB token from loading the catalog.
+    String? token;
+    String? poiskKinoKey;
     try {
-      final values = await Future.wait<String?>([
-        _catalogTokenStore.readToken(),
-        _poiskKinoKeyStore.readApiKey(),
-      ]);
-      if (!mounted) return;
-      var service = _searchService;
-      final token = values[0];
-      final poiskKinoKey = values[1];
-      if (token != null && token.isNotEmpty) {
-        service = service.withAccessToken(token);
-      }
-      if (poiskKinoKey != null && poiskKinoKey.isNotEmpty) {
-        service = service.withKinopoiskApiKey(poiskKinoKey);
-      }
-      setState(() {
-        _searchService = service;
-        if (_query.trim().isNotEmpty) {
-          _onlineSearch = _searchService.searchOnline(
-            _query,
-            type: _selectedType,
-          );
-        }
-      });
-      unawaited(_loadTrending());
-      unawaited(_loadRecommendations());
+      token = await _catalogTokenStore.readToken();
     } on Object {
-      // Keep the explicit missing-token message visible if secure storage is
-      // unavailable; a storage failure must not crash the media page.
+      // Keep the configured service usable if secure storage is unavailable.
     }
+    try {
+      poiskKinoKey = await _poiskKinoKeyStore.readApiKey();
+    } on Object {
+      // PoiskKino is optional; its storage failure must not block TMDB.
+    }
+    if (!mounted) return;
+    var service = _searchService;
+    if (token != null && token.trim().isNotEmpty) {
+      service = service.withAccessToken(token);
+    }
+    if (poiskKinoKey != null && poiskKinoKey.trim().isNotEmpty) {
+      service = service.withKinopoiskApiKey(poiskKinoKey);
+    }
+    setState(() {
+      _searchService = service;
+      if (_query.trim().isNotEmpty) {
+        _onlineSearch = _searchService.searchOnline(
+          _query,
+          type: _selectedType,
+        );
+      }
+    });
+    unawaited(_loadTrending());
+    unawaited(_loadRecommendations());
   }
 
   Future<void> _loadTrending() async {
-    if (!_searchService.isConfigured) return;
+    if (!_searchService.isSearchConfigured) return;
     if (mounted) setState(() => _loadingTrending = true);
     final items = await _searchService.fetchTrendingOnline(type: _selectedType);
     if (!mounted) return;
