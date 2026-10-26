@@ -176,7 +176,7 @@ class _MediaCatalogSettingsPageState extends State<MediaCatalogSettingsPage> {
         const SizedBox(height: 10),
         SizedBox(width: double.infinity, child: FilledButton.icon(key: const ValueKey('save-tmdb-token'),
           onPressed: _loading || _saving ? null : _saveToken,
-          icon: const Icon(Icons.lock_outline), label: const Text('Сохранить TMDB-токен'))),
+          icon: const Icon(Icons.lock_outline), label: const Text('Сохранить токен'))),
         const SizedBox(height: 8),
         _tokenStatus(configured: _hasToken, label: _hasToken ? 'TMDB настроен' : 'TMDB не настроен', deleteKey: 'delete-tmdb-token', onDelete: _deleteToken),
         const Divider(height: 28),
@@ -198,7 +198,7 @@ class _MediaCatalogSettingsPageState extends State<MediaCatalogSettingsPage> {
         if (_loading) const Padding(padding: EdgeInsets.only(top: 10), child: LinearProgressIndicator(minHeight: 2)),
         if (_status != null) ...[
           const SizedBox(height: 14),
-          Text(_status!, key: const ValueKey('media-catalog-token-status'), style: const TextStyle(color: SystemCorePalette.green, height: 1.4)),
+          Text(_status!, key: const ValueKey('tmdb-token-status'), style: const TextStyle(color: SystemCorePalette.green, height: 1.4)),
         ],
       ]),
     );
