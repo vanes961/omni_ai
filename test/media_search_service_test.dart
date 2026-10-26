@@ -144,6 +144,76 @@ void main() {
     expect(items.single.title, 'Каталоговый фильм');
   });
 
+  test('uses PoiskKino recommendations without a TMDB token', () async {
+    final requestedUris = <Uri>[];
+    final service = MediaSearchService(
+      kinopoiskApiKey: 'poiskkino-token',
+      client: MockClient((request) async {
+        requestedUris.add(request.url);
+        final isSeries = request.url.queryParameters['type'] == 'tv-series';
+        return http.Response(
+          jsonEncode({
+            'docs': [
+              {
+                'id': isSeries ? 502 : 501,
+                'name': isSeries ? 'Рекомендованный сериал' : 'Рекомендованный фильм',
+                'type': isSeries ? 'tv-series' : 'movie',
+                'genres': [{'name': 'драма'}],
+                'rating': {'kp': 8.0},
+              },
+            ],
+          }),
+          200,
+        );
+      }),
+    );
+
+    final items = await service.fetchRecommendationsOnline(
+      interests: const ['Драма'],
+    );
+
+    expect(requestedUris, hasLength(2));
+    expect(requestedUris.every((uri) => uri.host == 'api.poiskkino.dev'), isTrue);
+    expect(requestedUris.every((uri) => uri.queryParametersAll['genres.name'] == ['драма']), isTrue);
+    expect(items.map((item) => item.title), containsAll(['Рекомендованный фильм', 'Рекомендованный сериал']));
+  });
+
+  test('falls back to PoiskKino recommendations when TMDB returns no matches', () async {
+    final requestedHosts = <String>[];
+    final service = MediaSearchService(
+      accessToken: 'tmdb-token',
+      kinopoiskApiKey: 'poiskkino-token',
+      client: MockClient((request) async {
+        requestedHosts.add(request.url.host);
+        if (request.url.host == 'api.themoviedb.org') {
+          return http.Response('{"results":[]}', 200);
+        }
+        final isSeries = request.url.queryParameters['type'] == 'tv-series';
+        return http.Response(
+          jsonEncode({
+            'docs': [
+              {
+                'id': isSeries ? 602 : 601,
+                'name': isSeries ? 'Резервный сериал' : 'Резервный фильм',
+                'type': isSeries ? 'tv-series' : 'movie',
+                'genres': [{'name': 'комедия'}],
+              },
+            ],
+          }),
+          200,
+        );
+      }),
+    );
+
+    final items = await service.fetchRecommendationsOnline(
+      interests: const ['Комедия'],
+      type: 'Фильм',
+    );
+
+    expect(requestedHosts, ['api.themoviedb.org', 'api.poiskkino.dev']);
+    expect(items.single.title, 'Резервный фильм');
+  });
+
   test('fetches recommendations using saved favorite genres', () async {
     final requestedPaths = <String>[];
     final service = MediaSearchService(
