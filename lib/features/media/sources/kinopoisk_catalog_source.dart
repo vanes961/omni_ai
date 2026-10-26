@@ -292,6 +292,7 @@ class KinopoiskCatalogSource implements MediaSource {
 
     final description =
         (raw['description'] as String? ??
+                raw['overview'] as String? ??
                 raw['shortDescription'] as String? ??
                 raw['short_description'] as String? ??
                 '')
