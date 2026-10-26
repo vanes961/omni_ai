@@ -215,6 +215,33 @@ void main() {
     expect(items.single.title, 'Envelope test');
   });
 
+  test('loads a single catalog record by id for the details screen', () async {
+    Uri? requestedUri;
+    Map<String, String>? requestedHeaders;
+    final source = KinopoiskCatalogSource(
+      apiKey: 'details-token',
+      client: MockClient((request) async {
+        requestedUri = request.url;
+        requestedHeaders = request.headers;
+        return http.Response(
+          jsonEncode({
+            'id': 123,
+            'name': 'Details film',
+            'description': 'Full description',
+            'genres': [{'name': 'драма'}],
+          }),
+          200,
+        );
+      }),
+    );
+
+    final details = await source.fetchDetails('123');
+
+    expect(requestedUri?.path, '/v1.5/movie/123');
+    expect(requestedHeaders?['X-API-KEY'], 'details-token');
+    expect(details?['name'], 'Details film');
+  });
+
   test('rejects non-http poster URLs', () async {
     final source = KinopoiskCatalogSource(
       apiKey: 'test-api-key',
