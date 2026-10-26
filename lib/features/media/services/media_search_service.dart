@@ -145,7 +145,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -243,7 +243,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -378,9 +378,9 @@ class MediaSearchService {
           final response = await _get(
             uri,
             headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
-          'accept': 'application/json',
-        },
+              'Authorization': '***',
+              'accept': 'application/json',
+            },
           ).timeout(const Duration(seconds: 12));
           if (response.statusCode != 200) return const <MediaItem>[];
           final decoded = jsonDecode(response.body);
@@ -591,7 +591,7 @@ class MediaSearchService {
       final r = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -716,7 +716,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -825,7 +825,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
