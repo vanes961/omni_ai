@@ -24,11 +24,6 @@ class MediaSearchService {
   });
 
   static const _kinopoiskToken = String.fromEnvironment('POISKKINO_API_KEY');
-  static final MediaSourceEngine _defaultSourceEngine = MediaSourceEngine([
-    AniLibriaCatalogSource(),
-    KinopoiskCatalogSource(apiKey: _kinopoiskToken),
-  ]);
-
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
   final http.Client? client;
   final MediaSourceEngine? sourceEngine;
@@ -37,7 +32,12 @@ class MediaSearchService {
   /// define remains a fallback for development builds only.
   final String kinopoiskApiKey;
 
-  MediaSourceEngine get _mediaSources => sourceEngine ?? _defaultSourceEngine;
+  MediaSourceEngine get _mediaSources =>
+      sourceEngine ??
+      MediaSourceEngine([
+        AniLibriaCatalogSource(client: client),
+        KinopoiskCatalogSource(apiKey: kinopoiskApiKey, client: client),
+      ]);
 
   /// Keeps the same HTTP transport while replacing the credential loaded from
   /// secure device storage. This makes runtime credentials testable and avoids
@@ -144,7 +144,10 @@ class MediaSearchService {
     try {
       final response = await _get(
         uri,
-        headers: {'Authorization': '***', 'accept': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer ${accessToken.trim()}',
+          'accept': 'application/json',
+        },
       ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) {
         return type == 'Аниме'
@@ -239,7 +242,10 @@ class MediaSearchService {
     try {
       final response = await _get(
         uri,
-        headers: {'Authorization': '***', 'accept': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer ${accessToken.trim()}',
+          'accept': 'application/json',
+        },
       ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) {
         return await _fetchPoiskKinoDiscovery(type);
@@ -371,7 +377,10 @@ class MediaSearchService {
         try {
           final response = await _get(
             uri,
-            headers: {'Authorization': '***', 'accept': 'application/json'},
+            headers: {
+          'Authorization': 'Bearer ${accessToken.trim()}',
+          'accept': 'application/json',
+        },
           ).timeout(const Duration(seconds: 12));
           if (response.statusCode != 200) return const <MediaItem>[];
           final decoded = jsonDecode(response.body);
@@ -581,7 +590,10 @@ class MediaSearchService {
     try {
       final r = await _get(
         uri,
-        headers: {'Authorization': '***', 'accept': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer ${accessToken.trim()}',
+          'accept': 'application/json',
+        },
       ).timeout(const Duration(seconds: 12));
       if (r.statusCode != 200) return null;
       final data = jsonDecode(r.body);
@@ -703,7 +715,10 @@ class MediaSearchService {
     try {
       final response = await _get(
         uri,
-        headers: {'Authorization': '***', 'accept': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer ${accessToken.trim()}',
+          'accept': 'application/json',
+        },
       ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       final data = jsonDecode(response.body);
@@ -809,7 +824,10 @@ class MediaSearchService {
     try {
       final response = await _get(
         uri,
-        headers: {'Authorization': '***', 'accept': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer ${accessToken.trim()}',
+          'accept': 'application/json',
+        },
       ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       return parseSeasonEpisodes(
