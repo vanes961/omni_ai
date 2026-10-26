@@ -126,6 +126,7 @@ void main() {
   test('uses PoiskKino for trending films without a TMDB token', () async {
     Uri? requestedUri;
     final service = MediaSearchService(
+      accessToken: '',
       kinopoiskApiKey: 'poiskkino-token',
       client: MockClient((request) async {
         requestedUri = request.url;
@@ -149,6 +150,7 @@ void main() {
   test('uses PoiskKino recommendations without a TMDB token', () async {
     final requestedUris = <Uri>[];
     final service = MediaSearchService(
+      accessToken: '',
       kinopoiskApiKey: 'poiskkino-token',
       client: MockClient((request) async {
         requestedUris.add(request.url);
@@ -693,7 +695,7 @@ void main() {
       kinopoiskApiKey: 'poiskkino-token',
       client: MockClient((request) async {
         expect(request.url.path, '/v1.5/movie/77');
-        expect(request.headers['X-API-KEY'], 'poiskkino-token');
+        expect(request.headers['x-api-key'], 'poiskkino-token');
         return http.Response(
           jsonEncode({
             'id': 77,
