@@ -144,10 +144,7 @@ class MediaSearchService {
     try {
       final response = await _get(
         uri,
-        headers: {
-          'Authorization': '***',
-          'accept': 'application/json',
-        },
+        headers: {'Authorization': '***', 'accept': 'application/json'},
       ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) {
         return type == 'Аниме'
@@ -242,10 +239,7 @@ class MediaSearchService {
     try {
       final response = await _get(
         uri,
-        headers: {
-          'Authorization': '***',
-          'accept': 'application/json',
-        },
+        headers: {'Authorization': '***', 'accept': 'application/json'},
       ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200)
         return await _fetchPoiskKinoDiscovery(type);
@@ -376,10 +370,7 @@ class MediaSearchService {
         try {
           final response = await _get(
             uri,
-            headers: {
-              'Authorization': '***',
-              'accept': 'application/json',
-            },
+            headers: {'Authorization': '***', 'accept': 'application/json'},
           ).timeout(const Duration(seconds: 12));
           if (response.statusCode != 200) return const <MediaItem>[];
           final decoded = jsonDecode(response.body);
@@ -589,10 +580,7 @@ class MediaSearchService {
     try {
       final r = await _get(
         uri,
-        headers: {
-          'Authorization': '***',
-          'accept': 'application/json',
-        },
+        headers: {'Authorization': '***', 'accept': 'application/json'},
       ).timeout(const Duration(seconds: 12));
       if (r.statusCode != 200) return null;
       final data = jsonDecode(r.body);
@@ -714,10 +702,7 @@ class MediaSearchService {
     try {
       final response = await _get(
         uri,
-        headers: {
-          'Authorization': '***',
-          'accept': 'application/json',
-        },
+        headers: {'Authorization': '***', 'accept': 'application/json'},
       ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       final data = jsonDecode(response.body);
@@ -823,10 +808,7 @@ class MediaSearchService {
     try {
       final response = await _get(
         uri,
-        headers: {
-          'Authorization': '***',
-          'accept': 'application/json',
-        },
+        headers: {'Authorization': '***', 'accept': 'application/json'},
       ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) return const [];
       return parseSeasonEpisodes(
