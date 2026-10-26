@@ -112,6 +112,48 @@ class KinopoiskCatalogSource implements MediaSource {
     return List<MediaItem>.unmodifiable(items);
   }
 
+  /// Loads recommendations matching catalog genre names. Genre filters are
+  /// repeated query parameters as documented by PoiskKino's v1.5 API.
+  Future<List<MediaItem>> fetchByGenres({
+    required MediaSourceKind kind,
+    required List<String> genres,
+    int limit = 10,
+  }) async {
+    final normalizedGenres = genres
+        .map((genre) => genre.trim())
+        .where((genre) => genre.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (!supportedKinds.contains(kind) ||
+        apiKey.trim().isEmpty ||
+        normalizedGenres.isEmpty) {
+      return const <MediaItem>[];
+    }
+
+    final uri = Uri.https('api.poiskkino.dev', '/v1.5/movie', {
+      'type': kind == MediaSourceKind.series ? 'tv-series' : 'movie',
+      'genres.name': normalizedGenres,
+      'sortField': 'rating.kp',
+      'sortType': '-1',
+      'limit': limit.clamp(1, 10).toString(),
+      'notNullFields': 'name',
+    });
+    final response = await _get(uri);
+    if (response.statusCode != 200) {
+      throw CatalogHttpException(
+        'PoiskKino returned HTTP ${response.statusCode}',
+      );
+    }
+
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    final items = <MediaItem>[];
+    for (final raw in _extractEntries(decoded)) {
+      final item = _toMediaItem(raw, requestedKind: kind);
+      if (item != null) items.add(item);
+    }
+    return List<MediaItem>.unmodifiable(items);
+  }
+
   List<Map<String, dynamic>> _extractEntries(Object? decoded) {
     if (decoded is List) {
       return decoded.whereType<Map<String, dynamic>>().toList();
