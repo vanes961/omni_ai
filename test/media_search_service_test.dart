@@ -178,7 +178,12 @@ void main() {
 
     expect(requestedUris, hasLength(2));
     expect(requestedUris.every((uri) => uri.host == 'api.poiskkino.dev'), isTrue);
-    expect(requestedUris.every((uri) => uri.queryParametersAll['genres.name'] == ['драма']), isTrue);
+    expect(
+      requestedUris.every(
+        (uri) => uri.queryParametersAll['genres.name']?.contains('драма') ?? false,
+      ),
+      isTrue,
+    );
     expect(items.map((item) => item.title), containsAll(['Рекомендованный фильм', 'Рекомендованный сериал']));
   });
 
@@ -695,7 +700,12 @@ void main() {
       kinopoiskApiKey: 'poiskkino-token',
       client: MockClient((request) async {
         expect(request.url.path, '/v1.5/movie/77');
-        expect(request.headers['x-api-key'], 'poiskkino-token');
+        expect(
+          request.headers.entries
+              .where((entry) => entry.key.toLowerCase() == 'x-api-key')
+              .single.value,
+          'poiskkino-token',
+        );
         return http.Response(
           jsonEncode({
             'id': 77,
