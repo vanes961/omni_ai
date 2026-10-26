@@ -120,7 +120,7 @@ class MediaSearchService {
       final json = jsonDecode(response.body);
       if (json is! Map<String, dynamic> || json['results'] is! List) {
         return type == 'Аниме'
-            ? _searchAnimeCatalog(normalizedQuery)
+            ? await _searchAnimeCatalog(normalizedQuery)
             : const [];
       }
       final items = <MediaItem>[];
