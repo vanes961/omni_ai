@@ -432,7 +432,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
           ),
         );
         if (!mounted || generation != _playerGeneration) return;
-        final resolvedVariants = resolution.variants.toList(growable: false);
+        final resolvedVariants = resolution.variants.toList();
         // Prefer the user's saved voiceover and quality, then try the other
         // real variants in provider order as playback fallbacks.
         resolvedVariants.sort((a, b) {
