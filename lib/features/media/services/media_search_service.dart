@@ -205,7 +205,7 @@ class MediaSearchService {
         return await _searchAnimeCatalog(normalizedQuery);
       }
       if (items.isEmpty) {
-        return _searchCatalogFallback(normalizedQuery, type);
+        return await _searchCatalogFallback(normalizedQuery, type);
       }
       return items;
     } on Object {
@@ -249,10 +249,10 @@ class MediaSearchService {
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
-      if (response.statusCode != 200) return _fetchPoiskKinoDiscovery(type);
+      if (response.statusCode != 200) return await _fetchPoiskKinoDiscovery(type);
       final decoded = jsonDecode(response.body);
       if (decoded is! Map<String, dynamic> || decoded['results'] is! List) {
-        return _fetchPoiskKinoDiscovery(type);
+        return await _fetchPoiskKinoDiscovery(type);
       }
       final items = <MediaItem>[];
       for (final raw in decoded['results'] as List) {
@@ -298,7 +298,7 @@ class MediaSearchService {
           ),
         );
       }
-      return items.isEmpty ? _fetchPoiskKinoDiscovery(type) : items;
+      return items.isEmpty ? await _fetchPoiskKinoDiscovery(type) : items;
     } on Object {
       return _fetchPoiskKinoDiscovery(type);
     }
