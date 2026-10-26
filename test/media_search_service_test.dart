@@ -121,6 +121,29 @@ void main() {
     expect(items.last.title, 'Real Series');
   });
 
+  test('uses PoiskKino for trending films without a TMDB token', () async {
+    Uri? requestedUri;
+    final service = MediaSearchService(
+      kinopoiskApiKey: 'poiskkino-token',
+      client: MockClient((request) async {
+        requestedUri = request.url;
+        return http.Response(
+          '{"docs":[{"id":77,"name":"Каталоговый фильм","type":"movie",'
+          '"rating":{"kp":8.2},"poster":{"url":"https://img.example/poster.jpg"}}]}',
+          200,
+        );
+      }),
+    );
+
+    final items = await service.fetchTrendingOnline(type: 'Фильм');
+
+    expect(requestedUri?.host, 'api.poiskkino.dev');
+    expect(requestedUri?.path, '/v1.5/movie');
+    expect(requestedUri?.queryParameters['type'], 'movie');
+    expect(items.single.id, 'kinopoisk:77');
+    expect(items.single.title, 'Каталоговый фильм');
+  });
+
   test('fetches recommendations using saved favorite genres', () async {
     final requestedPaths = <String>[];
     final service = MediaSearchService(
