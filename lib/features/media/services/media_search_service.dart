@@ -339,7 +339,10 @@ class MediaSearchService {
     required List<String> interests,
     String? type,
   }) async {
-    if (!isConfigured || interests.isEmpty) return const [];
+    if (interests.isEmpty) return const [];
+    if (!isConfigured) {
+      return _fetchPoiskKinoRecommendations(interests: interests, type: type);
+    }
 
     final normalizedInterests = interests
         .map((interest) => interest.trim().toLowerCase())
@@ -433,7 +436,67 @@ class MediaSearchService {
     for (final item in responses.expand((items) => items)) {
       unique.putIfAbsent(item.id, () => item);
     }
+    if (unique.isEmpty) {
+      return _fetchPoiskKinoRecommendations(interests: interests, type: type);
+    }
     return List<MediaItem>.unmodifiable(unique.values);
+  }
+
+  Future<List<MediaItem>> _fetchPoiskKinoRecommendations({
+    required List<String> interests,
+    String? type,
+  }) async {
+    if (kinopoiskApiKey.trim().isEmpty || type == 'Аниме') {
+      return const [];
+    }
+    const genreAliases = <String, String>{
+      'боевик': 'боевик',
+      'приключения': 'приключения',
+      'анимация': 'мультфильм',
+      'драма': 'драма',
+      'ужасы': 'ужасы',
+      'комедия': 'комедия',
+      'история': 'история',
+      'вестерн': 'вестерн',
+      'триллер': 'триллер',
+      'криминал': 'криминал',
+      'документальный': 'документальный',
+      'фантастика': 'фантастика',
+      'детектив': 'детектив',
+      'музыка': 'музыка',
+      'мелодрама': 'мелодрама',
+      'семейный': 'семейный',
+      'военный': 'военный',
+    };
+    final genres = interests
+        .map((interest) => interest.trim().toLowerCase())
+        .map((interest) => genreAliases[interest])
+        .whereType<String>()
+        .toSet()
+        .toList(growable: false);
+    if (genres.isEmpty) return const [];
+
+    final source = KinopoiskCatalogSource(
+      apiKey: kinopoiskApiKey,
+      client: client,
+    );
+    final kinds = switch (type) {
+      'Фильм' => const [MediaSourceKind.movie],
+      'Сериал' => const [MediaSourceKind.series],
+      _ => const [MediaSourceKind.movie, MediaSourceKind.series],
+    };
+    try {
+      final results = await Future.wait(
+        kinds.map((kind) => source.fetchByGenres(kind: kind, genres: genres)),
+      );
+      final unique = <String, MediaItem>{};
+      for (final item in results.expand((items) => items)) {
+        unique.putIfAbsent(item.id, () => item);
+      }
+      return List<MediaItem>.unmodifiable(unique.values);
+    } on Object {
+      return const [];
+    }
   }
 
   Future<MediaDetails?> loadDetails(MediaItem item) async {
