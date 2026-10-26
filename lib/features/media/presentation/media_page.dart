@@ -70,7 +70,6 @@ class _MediaPageState extends State<MediaPage> {
         widget.catalogTokenStore ?? SecureMediaCatalogTokenStore();
     _poiskKinoKeyStore = SecurePoiskKinoApiKeyStore();
     unawaited(_loadCatalogToken());
-    if (_searchService.isConfigured) unawaited(_loadTrending());
     _loadFavoriteInterests();
   }
 
