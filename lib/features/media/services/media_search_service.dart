@@ -241,8 +241,9 @@ class MediaSearchService {
         uri,
         headers: {'Authorization': '***', 'accept': 'application/json'},
       ).timeout(const Duration(seconds: 12));
-      if (response.statusCode != 200)
+      if (response.statusCode != 200) {
         return await _fetchPoiskKinoDiscovery(type);
+      }
       final decoded = jsonDecode(response.body);
       if (decoded is! Map<String, dynamic> || decoded['results'] is! List) {
         return await _fetchPoiskKinoDiscovery(type);
