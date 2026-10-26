@@ -249,10 +249,10 @@ class MediaSearchService {
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
-      if (response.statusCode != 200) return const [];
+      if (response.statusCode != 200) return _fetchPoiskKinoDiscovery(type);
       final decoded = jsonDecode(response.body);
       if (decoded is! Map<String, dynamic> || decoded['results'] is! List) {
-        return const [];
+        return _fetchPoiskKinoDiscovery(type);
       }
       final items = <MediaItem>[];
       for (final raw in decoded['results'] as List) {
@@ -298,9 +298,9 @@ class MediaSearchService {
           ),
         );
       }
-      return items;
+      return items.isEmpty ? _fetchPoiskKinoDiscovery(type) : items;
     } on Object {
-      return const [];
+      return _fetchPoiskKinoDiscovery(type);
     }
   }
 
