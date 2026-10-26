@@ -38,7 +38,6 @@ void main() {
     expect(source.lastQuery, 'наруто');
   });
 
-
   test('supports runtime PoiskKino key injection without losing TMDB token', () {
     final service = MediaSearchService(
       accessToken: 'tmdb-token',
