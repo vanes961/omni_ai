@@ -105,7 +105,9 @@ class VideoSourceEngine {
       variants: variants.values,
       message: variants.isEmpty ? 'Не найден доступный видеопоток.' : null,
     );
-    if (variants.isNotEmpty && maxCacheEntries > 0 && cacheTtl > Duration.zero) {
+    if (variants.isNotEmpty &&
+        maxCacheEntries > 0 &&
+        cacheTtl > Duration.zero) {
       if (_cache.length >= maxCacheEntries) {
         _cache.remove(_cache.keys.first);
       }
@@ -132,3 +134,4 @@ class _CachedResolution {
   final PlaybackResolution resolution;
   final DateTime savedAt;
 }
+
