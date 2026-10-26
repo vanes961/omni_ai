@@ -69,7 +69,7 @@ class KinopoiskCatalogSource implements MediaSource {
       );
     }
 
-    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    final decoded = jsonDecode(response.body);
     final entries = _extractEntries(decoded);
     final items = <MediaItem>[];
     for (final raw in entries) {
@@ -95,7 +95,7 @@ class KinopoiskCatalogSource implements MediaSource {
         'PoiskKino returned HTTP ${response.statusCode}',
       );
     }
-    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    final decoded = jsonDecode(response.body);
     if (decoded is Map<String, dynamic>) {
       final nested = decoded['data'] ?? decoded['result'];
       if (nested is Map<String, dynamic>) return nested;
@@ -127,7 +127,7 @@ class KinopoiskCatalogSource implements MediaSource {
         'PoiskKino returned HTTP ${response.statusCode}',
       );
     }
-    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    final decoded = jsonDecode(response.body);
     final entries = _extractEntries(decoded);
     final items = <MediaItem>[];
     for (final raw in entries) {
@@ -170,7 +170,7 @@ class KinopoiskCatalogSource implements MediaSource {
       );
     }
 
-    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    final decoded = jsonDecode(response.body);
     final items = <MediaItem>[];
     for (final raw in _extractEntries(decoded)) {
       final item = _toMediaItem(raw, requestedKind: kind);
