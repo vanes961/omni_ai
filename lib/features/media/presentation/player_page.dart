@@ -403,6 +403,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         ),
       );
     }
+    Object? playerError;
     var sources = <String>{
       source.trim(),
       ...fallbackUrls.map((url) => url.trim()),
@@ -482,7 +483,6 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     if (!mounted || generation != _playerGeneration) return;
     setState(() => _segmentMarkers = savedMarkers);
 
-    Object? playerError;
     final playableSources = <String>[];
     var torrentFileSelectionCancelled = false;
     for (final candidate in sources) {
