@@ -60,6 +60,43 @@ void main() {
     expect(items.single.videoUrl, isEmpty);
   });
 
+  test('loads rating-sorted discovery items from the catalog endpoint', () async {
+    Uri? requestedUri;
+    final source = KinopoiskCatalogSource(
+      apiKey: 'test-api-key',
+      client: MockClient((request) async {
+        requestedUri = request.url;
+        return http.Response(
+          jsonEncode({
+            'docs': [
+              {
+                'id': 77,
+                'name': 'Discovery Series',
+                'type': 'tv-series',
+                'isSeries': true,
+                'rating': {'kp': 8.4},
+              },
+            ],
+          }),
+          200,
+        );
+      }),
+    );
+
+    final items = await source.fetchPopular(
+      kind: MediaSourceKind.series,
+      limit: 15,
+    );
+
+    expect(requestedUri?.path, '/v1.5/movie');
+    expect(requestedUri?.queryParameters['type'], 'tv-series');
+    expect(requestedUri?.queryParameters['sortField'], 'rating.kp');
+    expect(requestedUri?.queryParameters['sortType'], '-1');
+    expect(requestedUri?.queryParameters['limit'], '15');
+    expect(items.single.title, 'Discovery Series');
+    expect(items.single.type, 'Сериал');
+  });
+
   test('filters search results to series when requested', () async {
     final source = KinopoiskCatalogSource(
       apiKey: 'test-api-key',
