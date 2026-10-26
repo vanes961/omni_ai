@@ -39,6 +39,7 @@ void main() {
             ],
           }),
           200,
+          encoding: utf8,
         );
       }),
     );
@@ -115,6 +116,7 @@ void main() {
             ],
           }),
           200,
+          encoding: utf8,
         );
       }),
     );
@@ -231,6 +233,7 @@ void main() {
             'genres': [{'name': 'драма'}],
           }),
           200,
+          encoding: utf8,
         );
       }),
     );
