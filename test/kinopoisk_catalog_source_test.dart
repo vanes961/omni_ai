@@ -39,7 +39,7 @@ void main() {
             ],
           }),
           200,
-          encoding: utf8,
+          headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }),
     );
@@ -116,7 +116,7 @@ void main() {
             ],
           }),
           200,
-          encoding: utf8,
+          headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }),
     );
@@ -233,7 +233,7 @@ void main() {
             'genres': [{'name': 'драма'}],
           }),
           200,
-          encoding: utf8,
+          headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }),
     );
