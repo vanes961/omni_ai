@@ -15,7 +15,8 @@ class KinopoiskCatalogSource implements MediaSource {
     this.client,
     Uri? baseUri,
     this.timeout = const Duration(seconds: 10),
-  }) : baseUri = baseUri ?? Uri.https('api.poiskkino.dev', '/v1.5/movie/search');
+  }) : baseUri =
+           baseUri ?? Uri.https('api.poiskkino.dev', '/v1.5/movie/search');
 
   final String apiKey;
   final http.Client? client;
@@ -26,8 +27,10 @@ class KinopoiskCatalogSource implements MediaSource {
   String get id => 'kinopoisk';
 
   @override
-  Set<MediaSourceKind> get supportedKinds =>
-      const {MediaSourceKind.movie, MediaSourceKind.series};
+  Set<MediaSourceKind> get supportedKinds => const {
+    MediaSourceKind.movie,
+    MediaSourceKind.series,
+  };
 
   Future<http.Response> _get(Uri uri) {
     final transport = client;
@@ -228,7 +231,8 @@ class KinopoiskCatalogSource implements MediaSource {
     if (id == null || title.isEmpty) return null;
 
     final rawType = (raw['type'] as String? ?? '').toLowerCase();
-    final isSeries = raw['isSeries'] == true ||
+    final isSeries =
+        raw['isSeries'] == true ||
         const {'tv-series', 'animated-series'}.contains(rawType);
     if (requestedKind == MediaSourceKind.series && !isSeries) return null;
     if (requestedKind == MediaSourceKind.movie && isSeries) return null;
@@ -243,8 +247,9 @@ class KinopoiskCatalogSource implements MediaSource {
     );
 
     final ratingPayload = raw['rating'];
-    final ratingMap =
-        ratingPayload is Map<String, dynamic> ? ratingPayload : const {};
+    final ratingMap = ratingPayload is Map<String, dynamic>
+        ? ratingPayload
+        : const {};
     final ratingValue = ratingPayload is num
         ? ratingPayload
         : ratingMap['kp'] ?? ratingMap['imdb'] ?? ratingMap['tmdb'];
@@ -253,11 +258,13 @@ class KinopoiskCatalogSource implements MediaSource {
     final genrePayload = raw['genres'];
     final genres = genrePayload is List
         ? genrePayload
-              .map((value) => value is Map<String, dynamic>
-                  ? value['name'] as String?
-                  : value is String
-                      ? value
-                      : null)
+              .map(
+                (value) => value is Map<String, dynamic>
+                    ? value['name'] as String?
+                    : value is String
+                    ? value
+                    : null,
+              )
               .whereType<String>()
               .map((value) => value.trim())
               .where((value) => value.isNotEmpty)
@@ -267,11 +274,12 @@ class KinopoiskCatalogSource implements MediaSource {
     final year = raw['year'];
     if (year is num) genres.add(year.toInt().toString());
 
-    final description = (raw['description'] as String? ??
-            raw['shortDescription'] as String? ??
-            raw['short_description'] as String? ??
-            '')
-        .trim();
+    final description =
+        (raw['description'] as String? ??
+                raw['shortDescription'] as String? ??
+                raw['short_description'] as String? ??
+                '')
+            .trim();
 
     return MediaItem(
       id: 'kinopoisk:$id',
@@ -287,11 +295,12 @@ class KinopoiskCatalogSource implements MediaSource {
   }
 
   String _title(Map<String, dynamic> raw) {
-    final direct = (raw['name'] as String? ??
-            raw['alternativeName'] as String? ??
-            raw['alternative_name'] as String? ??
-            '')
-        .trim();
+    final direct =
+        (raw['name'] as String? ??
+                raw['alternativeName'] as String? ??
+                raw['alternative_name'] as String? ??
+                '')
+            .trim();
     if (direct.isNotEmpty) return direct;
     final names = raw['names'];
     if (names is List) {
