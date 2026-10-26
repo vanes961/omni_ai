@@ -97,6 +97,40 @@ void main() {
     expect(items.single.type, 'Сериал');
   });
 
+  test('queries recommendations by repeated genre parameters', () async {
+    Uri? requestedUri;
+    final source = KinopoiskCatalogSource(
+      apiKey: 'test-api-key',
+      client: MockClient((request) async {
+        requestedUri = request.url;
+        return http.Response(
+          jsonEncode({
+            'docs': [
+              {
+                'id': 321,
+                'name': 'Genre recommendation',
+                'type': 'movie',
+                'genres': [{'name': 'драма'}],
+              },
+            ],
+          }),
+          200,
+        );
+      }),
+    );
+
+    final items = await source.fetchByGenres(
+      kind: MediaSourceKind.movie,
+      genres: const ['драма', 'комедия'],
+    );
+
+    expect(requestedUri?.path, '/v1.5/movie');
+    expect(requestedUri?.queryParameters['type'], 'movie');
+    expect(requestedUri?.queryParametersAll['genres.name'], ['драма', 'комедия']);
+    expect(requestedUri?.queryParameters['limit'], '10');
+    expect(items.single.title, 'Genre recommendation');
+  });
+
   test('filters search results to series when requested', () async {
     final source = KinopoiskCatalogSource(
       apiKey: 'test-api-key',
