@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/features/media/services/media_catalog_token_store.dart';
+import 'package:omni_ai/features/media/services/poiskkino_api_key_store.dart';
 import 'package:omni_ai/features/settings/presentation/pages/media_catalog_settings_page.dart';
 
 void main() {
@@ -11,12 +12,15 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(body: MediaCatalogSettingsPage(tokenStore: store)),
+        home: Scaffold(body: MediaCatalogSettingsPage(
+            tokenStore: store,
+            poiskKinoKeyStore: _FakePoiskKinoApiKeyStore(),
+          )),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Токен не настроен — онлайн-поиск не работает'), findsOneWidget);
+    expect(find.text('TMDB не настроен'), findsOneWidget);
     await tester.enterText(
       find.byKey(const ValueKey('tmdb-token-field')),
       '  user-token  ',
@@ -25,9 +29,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(store.token, 'user-token');
-    expect(find.text('Токен настроен на этом устройстве'), findsOneWidget);
+    expect(find.text('TMDB настроен'), findsOneWidget);
     expect(
-      find.textContaining('Токен сохранён в защищённом хранилище'),
+      find.textContaining('TMDB-токен сохранён в защищённом хранилище'),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
@@ -40,17 +44,20 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(body: MediaCatalogSettingsPage(tokenStore: store)),
+        home: Scaffold(body: MediaCatalogSettingsPage(
+            tokenStore: store,
+            poiskKinoKeyStore: _FakePoiskKinoApiKeyStore(),
+          )),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Токен настроен на этом устройстве'), findsOneWidget);
+    expect(find.text('TMDB настроен'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('delete-tmdb-token')));
     await tester.pumpAndSettle();
 
     expect(store.token, isNull);
-    expect(find.text('Токен не настроен — онлайн-поиск не работает'), findsOneWidget);
+    expect(find.text('TMDB не настроен'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
@@ -69,5 +76,22 @@ class _FakeMediaCatalogTokenStore implements MediaCatalogTokenStore {
   @override
   Future<void> deleteToken() async {
     token = null;
+  }
+}
+
+class _FakePoiskKinoApiKeyStore implements PoiskKinoApiKeyStore {
+  String? key;
+
+  @override
+  Future<String?> readApiKey() async => key;
+
+  @override
+  Future<void> saveApiKey(String apiKey) async {
+    key = apiKey.trim();
+  }
+
+  @override
+  Future<void> deleteApiKey() async {
+    key = null;
   }
 }
