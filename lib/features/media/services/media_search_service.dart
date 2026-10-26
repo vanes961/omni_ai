@@ -28,8 +28,7 @@ class MediaSearchService {
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
   final http.Client? client;
   final MediaSourceEngine? sourceEngine;
-  MediaSourceEngine get _mediaSources =>
-      sourceEngine ?? _defaultSourceEngine;
+  MediaSourceEngine get _mediaSources => sourceEngine ?? _defaultSourceEngine;
 
   /// Keeps the same HTTP transport while replacing the credential loaded from
   /// secure device storage. This makes runtime credentials testable and avoids
