@@ -68,12 +68,18 @@ class AniLibriaCatalogSource implements MediaSource {
       return decoded.whereType<Map<String, dynamic>>().toList();
     }
     if (decoded is! Map<String, dynamic>) return const [];
-    final list = decoded['list'] ?? decoded['data'] ?? decoded['items'] ?? decoded['results'] ?? decoded['releases'];
+    final list =
+        decoded['list'] ??
+        decoded['data'] ??
+        decoded['items'] ??
+        decoded['results'] ??
+        decoded['releases'];
     if (list is List) {
       return list.whereType<Map<String, dynamic>>().toList();
     }
     // Some API responses may return a single title object.
-    if (decoded.containsKey('id') && (decoded.containsKey('names') || decoded.containsKey('name'))) {
+    if (decoded.containsKey('id') &&
+        (decoded.containsKey('names') || decoded.containsKey('name'))) {
       return [decoded];
     }
     return const [];
@@ -103,7 +109,9 @@ class AniLibriaCatalogSource implements MediaSource {
               poster['original'])
         : null;
     final posterUrl = posterObject is Map<String, dynamic>
-        ? (posterObject['url'] as String? ?? posterObject['src'] as String? ?? '')
+        ? (posterObject['url'] as String? ??
+              posterObject['src'] as String? ??
+              '')
         : posterObject is String
         ? posterObject
         : '';
