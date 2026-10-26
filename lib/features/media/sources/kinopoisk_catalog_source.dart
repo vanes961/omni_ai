@@ -84,10 +84,30 @@ class KinopoiskCatalogSource implements MediaSource {
       return decoded.whereType<Map<String, dynamic>>().toList();
     }
     if (decoded is! Map<String, dynamic>) return const [];
-    for (final key in const ['docs', 'results', 'items', 'data']) {
+    // SearchMovieResponseDtoV1_4 and compatible deployments have used
+    // different envelope names. Accept common list fields, including the
+    // `films` key used by some wrappers, without assuming arbitrary values
+    // are media records.
+    for (final key in const [
+      'docs',
+      'results',
+      'items',
+      'data',
+      'films',
+      'movies',
+    ]) {
       final value = decoded[key];
       if (value is List) {
         return value.whereType<Map<String, dynamic>>().toList();
+      }
+    }
+    // Some API gateways wrap the upstream payload in `result` or an object
+    // under `data`. Unwrap one layer and run the same strict extraction.
+    for (final key in const ['result', 'data']) {
+      final value = decoded[key];
+      if (value is Map<String, dynamic>) {
+        final nested = _extractEntries(value);
+        if (nested.isNotEmpty) return nested;
       }
     }
     // A details-shaped response is accepted for API versions that return one
