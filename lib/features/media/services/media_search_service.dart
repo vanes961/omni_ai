@@ -569,7 +569,9 @@ class MediaSearchService {
         homepage: homepage,
         franchiseId: 'kinopoisk:item:$id',
       );
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      debugPrint('PoiskKino details failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
       return null;
     }
   }
