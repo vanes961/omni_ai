@@ -124,7 +124,7 @@ class MediaSearchService {
         normalizedQuery,
         type,
       );
-      if (catalogItems.isNotEmpty) return catalogItems;
+      if (catalogItems.isNotEmpty || !isConfigured) return catalogItems;
     }
     if (!isConfigured) {
       return _searchCatalogFallback(normalizedQuery, type);
