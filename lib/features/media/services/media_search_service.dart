@@ -78,6 +78,8 @@ class MediaSearchService {
   final String accessToken;
   final FranchiseChronologyResolver? franchiseChronologyResolver;
   bool get isConfigured => accessToken.trim().isNotEmpty;
+  bool get isSearchConfigured =>
+      isConfigured || kinopoiskApiKey.trim().isNotEmpty;
   static const Map<int, String> _genres = {
     28: 'Боевик',
     12: 'Приключения',
