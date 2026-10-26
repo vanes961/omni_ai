@@ -35,7 +35,11 @@ class VideoSourceEngine {
   void registerProvider(VideoSourceProvider provider) {
     final id = provider.id.trim();
     if (id.isEmpty) {
-      throw ArgumentError.value(provider.id, 'provider.id', 'Must not be empty');
+      throw ArgumentError.value(
+        provider.id,
+        'provider.id',
+        'Must not be empty',
+      );
     }
     final index = _providers.indexWhere((current) => current.id == id);
     if (index == -1) {
