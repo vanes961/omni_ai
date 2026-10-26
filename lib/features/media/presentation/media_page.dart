@@ -768,7 +768,6 @@ class _MediaPageState extends State<MediaPage> {
       ),
     );
   }
-
 }
 
 class _TypeFilter extends StatelessWidget {
@@ -799,7 +798,9 @@ class _TypeFilter extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.zero,
           side: BorderSide(
-            color: selected ? SystemCorePalette.green : SystemCorePalette.border,
+            color: selected
+                ? SystemCorePalette.green
+                : SystemCorePalette.border,
           ),
         ),
       ),
@@ -893,7 +894,10 @@ class _MediaPosterCard extends StatelessWidget {
                   const SizedBox(width: 3),
                   Text(
                     item.rating.toStringAsFixed(1),
-                    style: const TextStyle(color: SystemCorePalette.muted, fontSize: 10),
+                    style: const TextStyle(
+                      color: SystemCorePalette.muted,
+                      fontSize: 10,
+                    ),
                   ),
                 ],
               ),
