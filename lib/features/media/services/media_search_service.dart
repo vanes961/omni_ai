@@ -57,7 +57,8 @@ class MediaSearchService {
     kinopoiskApiKey: key.trim(),
     franchiseChronologyResolver: franchiseChronologyResolver,
     client: client,
-    sourceEngine: sourceEngine ??
+    sourceEngine:
+        sourceEngine ??
         MediaSourceEngine([
           AniLibriaCatalogSource(),
           KinopoiskCatalogSource(apiKey: key.trim()),
@@ -120,10 +121,7 @@ class MediaSearchService {
     // remains a fallback for missing credentials, empty results, or outages.
     final supportsPoiskKino = type == 'Фильм' || type == 'Сериал';
     if (supportsPoiskKino && kinopoiskApiKey.trim().isNotEmpty) {
-      final catalogItems = await _searchCatalogFallback(
-        normalizedQuery,
-        type,
-      );
+      final catalogItems = await _searchCatalogFallback(normalizedQuery, type);
       if (catalogItems.isNotEmpty || !isConfigured) return catalogItems;
     }
     if (!isConfigured) {
@@ -147,7 +145,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -245,11 +243,12 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
-      if (response.statusCode != 200) return await _fetchPoiskKinoDiscovery(type);
+      if (response.statusCode != 200)
+        return await _fetchPoiskKinoDiscovery(type);
       final decoded = jsonDecode(response.body);
       if (decoded is! Map<String, dynamic> || decoded['results'] is! List) {
         return await _fetchPoiskKinoDiscovery(type);
@@ -378,7 +377,7 @@ class MediaSearchService {
           final response = await _get(
             uri,
             headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
+              'Authorization': '***',
               'accept': 'application/json',
             },
           ).timeout(const Duration(seconds: 12));
@@ -514,11 +513,13 @@ class MediaSearchService {
       final genresPayload = data['genres'];
       final genres = genresPayload is List
           ? genresPayload
-                .map((entry) => entry is Map<String, dynamic>
-                    ? entry['name'] as String?
-                    : entry is String
-                        ? entry
-                        : null)
+                .map(
+                  (entry) => entry is Map<String, dynamic>
+                      ? entry['name'] as String?
+                      : entry is String
+                      ? entry
+                      : null,
+                )
                 .whereType<String>()
                 .map((value) => value.trim())
                 .where((value) => value.isNotEmpty)
@@ -529,12 +530,13 @@ class MediaSearchService {
       final premiereMap = premiere is Map<String, dynamic>
           ? premiere
           : const <String, dynamic>{};
-      final releaseDate = (data['releaseDate'] as String? ??
-              data['release_date'] as String? ??
-              premiereMap['world'] as String? ??
-              premiereMap['russia'] as String? ??
-              '')
-          .trim();
+      final releaseDate =
+          (data['releaseDate'] as String? ??
+                  data['release_date'] as String? ??
+                  premiereMap['world'] as String? ??
+                  premiereMap['russia'] as String? ??
+                  '')
+              .trim();
       final runtimeValue = data['movieLength'] ?? data['runtime'];
       final runtime = runtimeValue is num ? runtimeValue.toInt() : null;
       final backdropPayload = data['backdrop'];
@@ -542,16 +544,15 @@ class MediaSearchService {
           ? backdropPayload
           : const <String, dynamic>{};
       final backdrop = _validatedHttpUrl(
-        backdropMap['url'] as String? ??
-            data['backdropUrl'] as String? ??
-            '',
+        backdropMap['url'] as String? ?? data['backdropUrl'] as String? ?? '',
       );
       final homepage = _validatedHttpUrl(data['homepage'] as String? ?? '');
       return MediaDetails(
-        overview: (data['description'] as String? ??
-                data['shortDescription'] as String? ??
-                item.description)
-            .trim(),
+        overview:
+            (data['description'] as String? ??
+                    data['shortDescription'] as String? ??
+                    item.description)
+                .trim(),
         genres: genres,
         cast: const [],
         runtimeMinutes: runtime != null && runtime > 0 ? runtime : null,
@@ -589,7 +590,7 @@ class MediaSearchService {
       final r = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -714,7 +715,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -823,7 +824,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));

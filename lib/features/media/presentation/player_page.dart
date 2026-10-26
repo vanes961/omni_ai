@@ -447,6 +447,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
             }
             return result;
           }
+
           return score(b).compareTo(score(a));
         });
         sources = resolvedVariants
