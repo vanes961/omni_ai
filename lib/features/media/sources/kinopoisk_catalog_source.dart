@@ -79,6 +79,39 @@ class KinopoiskCatalogSource implements MediaSource {
     return List<MediaItem>.unmodifiable(items);
   }
 
+  /// Loads a rating-sorted catalog list for discovery sections.
+  /// Uses the API's filtered movie endpoint rather than fabricating trending
+  /// titles when TMDB is unavailable.
+  Future<List<MediaItem>> fetchPopular({
+    required MediaSourceKind kind,
+    int limit = 20,
+  }) async {
+    if (!supportedKinds.contains(kind) || apiKey.trim().isEmpty) {
+      return const <MediaItem>[];
+    }
+    final uri = Uri.https('api.poiskkino.dev', '/v1.5/movie', {
+      'type': kind == MediaSourceKind.series ? 'tv-series' : 'movie',
+      'sortField': 'rating.kp',
+      'sortType': '-1',
+      'limit': limit.clamp(1, 50).toString(),
+      'notNullFields': 'name',
+    });
+    final response = await _get(uri);
+    if (response.statusCode != 200) {
+      throw CatalogHttpException(
+        'PoiskKino returned HTTP ${response.statusCode}',
+      );
+    }
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    final entries = _extractEntries(decoded);
+    final items = <MediaItem>[];
+    for (final raw in entries) {
+      final item = _toMediaItem(raw, requestedKind: kind);
+      if (item != null) items.add(item);
+    }
+    return List<MediaItem>.unmodifiable(items);
+  }
+
   List<Map<String, dynamic>> _extractEntries(Object? decoded) {
     if (decoded is List) {
       return decoded.whereType<Map<String, dynamic>>().toList();
