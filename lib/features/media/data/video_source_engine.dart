@@ -134,4 +134,3 @@ class _CachedResolution {
   final PlaybackResolution resolution;
   final DateTime savedAt;
 }
-
