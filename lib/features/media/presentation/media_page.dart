@@ -14,6 +14,7 @@ import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_like_repository.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/media/services/media_catalog_token_store.dart';
+import 'package:omni_ai/features/media/services/poiskkino_api_key_store.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 import 'package:omni_ai/features/system_core/presentation/system_core_palette.dart';
 
@@ -41,6 +42,7 @@ class _MediaPageState extends State<MediaPage> {
   final TextEditingController _searchController = TextEditingController();
   late MediaSearchService _searchService;
   late final MediaCatalogTokenStore _catalogTokenStore;
+  late final PoiskKinoApiKeyStore _poiskKinoKeyStore;
   final FavoritesRepository _favoritesRepository = FavoritesRepository();
   final MediaLikeRepository _likeRepository = MediaLikeRepository();
   final FavoriteInterestAnalytics _interestAnalytics =
@@ -66,6 +68,7 @@ class _MediaPageState extends State<MediaPage> {
     _searchService = widget.searchService;
     _catalogTokenStore =
         widget.catalogTokenStore ?? SecureMediaCatalogTokenStore();
+    _poiskKinoKeyStore = SecurePoiskKinoApiKeyStore();
     unawaited(_loadCatalogToken());
     if (_searchService.isConfigured) unawaited(_loadTrending());
     _loadFavoriteInterests();
@@ -73,10 +76,22 @@ class _MediaPageState extends State<MediaPage> {
 
   Future<void> _loadCatalogToken() async {
     try {
-      final token = await _catalogTokenStore.readToken();
-      if (!mounted || token == null || token.isEmpty) return;
+      final values = await Future.wait<String?>([
+        _catalogTokenStore.readToken(),
+        _poiskKinoKeyStore.readApiKey(),
+      ]);
+      if (!mounted) return;
+      var service = _searchService;
+      final token = values[0];
+      final poiskKinoKey = values[1];
+      if (token != null && token.isNotEmpty) {
+        service = service.withAccessToken(token);
+      }
+      if (poiskKinoKey != null && poiskKinoKey.isNotEmpty) {
+        service = service.withKinopoiskApiKey(poiskKinoKey);
+      }
       setState(() {
-        _searchService = _searchService.withAccessToken(token);
+        _searchService = service;
         if (_query.trim().isNotEmpty) {
           _onlineSearch = _searchService.searchOnline(
             _query,
