@@ -37,14 +37,7 @@ class MediaSearchService {
   /// define remains a fallback for development builds only.
   final String kinopoiskApiKey;
 
-  MediaSourceEngine get _mediaSources {
-    if (sourceEngine != null) return sourceEngine!;
-    if (kinopoiskApiKey == _kinopoiskToken) return _defaultSourceEngine;
-    return MediaSourceEngine([
-      AniLibriaCatalogSource(),
-      KinopoiskCatalogSource(apiKey: kinopoiskApiKey),
-    ]);
-  }
+  MediaSourceEngine get _mediaSources => sourceEngine ?? _defaultSourceEngine;
 
   /// Keeps the same HTTP transport while replacing the credential loaded from
   /// secure device storage. This makes runtime credentials testable and avoids
@@ -64,7 +57,11 @@ class MediaSearchService {
     kinopoiskApiKey: key.trim(),
     franchiseChronologyResolver: franchiseChronologyResolver,
     client: client,
-    sourceEngine: sourceEngine,
+    sourceEngine: sourceEngine ??
+        MediaSourceEngine([
+          AniLibriaCatalogSource(),
+          KinopoiskCatalogSource(apiKey: key.trim()),
+        ]),
   );
 
   Future<http.Response> _get(Uri uri, {required Map<String, String> headers}) {
