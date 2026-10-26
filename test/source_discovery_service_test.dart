@@ -23,32 +23,34 @@ void main() {
       expect(service.candidates.single.id, 'demo-source');
     });
 
-    test('registers only checked playback-capable providers with the engine',
-        () async {
-      final engine = VideoSourceEngine([]);
-      final service = SourceDiscoveryService(
-        adapters: [
-          _FakeAdapter([
-            _candidate(id: 'metadata-only'),
-            _candidate(
-              id: 'playback-source',
-              capabilities: const {DiscoveredSourceCapability.playback},
+    test(
+      'registers only checked playback-capable providers with the engine',
+      () async {
+        final engine = VideoSourceEngine([]);
+        final service = SourceDiscoveryService(
+          adapters: [
+            _FakeAdapter([
+              _candidate(id: 'metadata-only'),
+              _candidate(
+                id: 'playback-source',
+                capabilities: const {DiscoveredSourceCapability.playback},
+              ),
+            ]),
+          ],
+          probe: _FakeProbe(
+            (candidate) => candidate.copyWith(
+              status: DiscoveredSourceStatus.available,
             ),
-          ]),
-        ],
-        probe: _FakeProbe(
-          (candidate) => candidate.copyWith(
-            status: DiscoveredSourceStatus.available,
           ),
-        ),
-        videoSourceEngine: engine,
-        providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
-      );
+          videoSourceEngine: engine,
+          providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
+        );
 
-      await service.discoverAndCheck();
+        await service.discoverAndCheck();
 
-      expect(engine.providerIds, ['playback-source']);
-    });
+        expect(engine.providerIds, ['playback-source']);
+      },
+    );
 
     test('rejects invalid addresses before probing', () async {
       var probed = false;
@@ -88,9 +90,159 @@ void main() {
       expect(results.map((candidate) => candidate.id), ['second-source']);
     });
 
-    test('rejecting a registered source unregisters it from the engine',
-        () async {
+    test(
+      'rejecting a registered source unregisters it from the engine',
+      () async {
+        final engine = VideoSourceEngine([]);
+        final service = SourceDiscoveryService(
+          adapters: [
+            _FakeAdapter([
+              _candidate(
+                capabilities: const {DiscoveredSourceCapability.playback},
+              ),
+            ]),
+          ],
+          probe: _FakeProbe(
+            (candidate) => candidate.copyWith(
+              status: DiscoveredSourceStatus.available,
+            ),
+          ),
+          videoSourceEngine: engine,
+          providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
+        );
+        await service.discoverAndCheck();
+
+        service.reject('demo-source', reason: 'Отключён вручную');
+
+        expect(
+          service.candidates.single.status,
+          DiscoveredSourceStatus.rejected,
+        );
+        expect(service.candidates.single.note, 'Отключён вручную');
+        expect(engine.providerIds, isEmpty);
+      },
+    );
+
+    test('rejects probe results that change source identity', () async {
       final engine = VideoSourceEngine([]);
+      final service = SourceDiscoveryService(
+        adapters: [
+          _FakeAdapter([
+            _candidate(
+              capabilities: const {DiscoveredSourceCapability.playback},
+            ),
+          ]),
+        ],
+        probe: _FakeProbe(
+          (candidate) => DiscoveredSourceCandidate(
+            id: 'forged-id',
+            name: candidate.name,
+            baseUri: Uri.parse('https://example.org'),
+            mediaKinds: candidate.mediaKinds,
+            capabilities: candidate.capabilities,
+            discoveredBy: candidate.discoveredBy,
+            status: DiscoveredSourceStatus.available,
+          ),
+        ),
+        videoSourceEngine: engine,
+        providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
+      );
+
+      final results = await service.discoverAndCheck();
+
+      expect(results.single.status, DiscoveredSourceStatus.rejected);
+      expect(engine.providerIds, isEmpty);
+    });
+
+    test('unregisters a provider when a source becomes unavailable', () async {
+      var status = DiscoveredSourceStatus.available;
+      final engine = VideoSourceEngine([]);
+      final service = SourceDiscoveryService(
+        adapters: [
+          _FakeAdapter([
+            _candidate(
+              capabilities: const {DiscoveredSourceCapability.playback},
+            ),
+          ]),
+        ],
+        probe: _FakeProbe(
+          (candidate) => candidate.copyWith(status: status),
+        ),
+        videoSourceEngine: engine,
+        providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
+      );
+
+      await service.discoverAndCheck();
+      expect(engine.providerIds, ['demo-source']);
+
+      status = DiscoveredSourceStatus.unavailable;
+      await service.discoverAndCheck();
+
+      expect(engine.providerIds, isEmpty);
+    });
+
+    test('unregisters a provider when playback capability is removed',
+        () async {
+      var capabilities = const {DiscoveredSourceCapability.playback};
+      final engine = VideoSourceEngine([]);
+      final adapter = _ChangingCapabilityAdapter(() => capabilities);
+      final service = SourceDiscoveryService(
+        adapters: [adapter],
+        probe: _FakeProbe(
+          (candidate) => candidate.copyWith(
+            status: DiscoveredSourceStatus.available,
+          ),
+        ),
+        videoSourceEngine: engine,
+        providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
+      );
+
+      await service.discoverAndCheck();
+      expect(engine.providerIds, ['demo-source']);
+
+      capabilities = const {DiscoveredSourceCapability.metadata};
+      await service.discoverAndCheck();
+
+      expect(engine.providerIds, isEmpty);
+    });
+
+    test('probe errors remove stale discovered providers', () async {
+      var shouldThrow = false;
+      final engine = VideoSourceEngine([]);
+      final service = SourceDiscoveryService(
+        adapters: [
+          _FakeAdapter([
+            _candidate(
+              capabilities: const {DiscoveredSourceCapability.playback},
+            ),
+          ]),
+        ],
+        probe: _FakeProbe((candidate) {
+          if (shouldThrow) throw Exception('probe failed');
+          return candidate.copyWith(
+            status: DiscoveredSourceStatus.available,
+          );
+        }),
+        videoSourceEngine: engine,
+        providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
+      );
+
+      await service.discoverAndCheck();
+      expect(engine.providerIds, ['demo-source']);
+
+      shouldThrow = true;
+      await service.discoverAndCheck();
+
+      expect(engine.providerIds, isEmpty);
+      expect(
+        service.candidates.single.status,
+        DiscoveredSourceStatus.unavailable,
+      );
+    });
+
+    test('clear removes only providers registered by discovery', () async {
+      final baseProvider = _FakeVideoProvider('base-provider');
+      final engine = VideoSourceEngine([baseProvider]);
       final service = SourceDiscoveryService(
         adapters: [
           _FakeAdapter([
@@ -107,13 +259,12 @@ void main() {
         videoSourceEngine: engine,
         providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
       );
+
       await service.discoverAndCheck();
+      service.clear();
 
-      service.reject('demo-source', reason: 'Отключён вручную');
-
-      expect(service.candidates.single.status, DiscoveredSourceStatus.rejected);
-      expect(service.candidates.single.note, 'Отключён вручную');
-      expect(engine.providerIds, isEmpty);
+      expect(engine.providerIds, ['base-provider']);
+      expect(service.candidates, isEmpty);
     });
   });
 }
@@ -148,6 +299,22 @@ class _FakeAdapter implements SourceDiscoveryAdapter {
   }) async => results;
 }
 
+class _ChangingCapabilityAdapter implements SourceDiscoveryAdapter {
+  _ChangingCapabilityAdapter(this.capabilities);
+
+  final Set<DiscoveredSourceCapability> Function() capabilities;
+
+  @override
+  String get id => 'fake-adapter';
+
+  @override
+  Future<Iterable<DiscoveredSourceCandidate>> discover({
+    required Set<PlaybackMediaKind> mediaKinds,
+  }) async => [
+    _candidate(capabilities: capabilities()),
+  ];
+}
+
 class _ThrowingAdapter implements SourceDiscoveryAdapter {
   @override
   String get id => 'throwing-adapter';
@@ -164,7 +331,7 @@ class _FakeProbe implements DiscoveredSourceProbe {
   _FakeProbe(this.resolve);
 
   final DiscoveredSourceCandidate Function(DiscoveredSourceCandidate)
-      resolve;
+  resolve;
 
   @override
   Future<DiscoveredSourceCandidate> check(

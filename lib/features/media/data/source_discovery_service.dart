@@ -82,19 +82,17 @@ typedef DiscoveredProviderFactory =
 class SourceDiscoveryService {
   SourceDiscoveryService({
     required Iterable<SourceDiscoveryAdapter> adapters,
-    required DiscoveredSourceProbe probe,
-    VideoSourceEngine? videoSourceEngine,
-    DiscoveredProviderFactory? providerFactory,
-  }) : _adapters = List<SourceDiscoveryAdapter>.unmodifiable(adapters),
-       _probe = probe,
-       _videoSourceEngine = videoSourceEngine,
-       _providerFactory = providerFactory;
+    required this.probe,
+    this.videoSourceEngine,
+    this.providerFactory,
+  }) : _adapters = List<SourceDiscoveryAdapter>.unmodifiable(adapters);
 
   final List<SourceDiscoveryAdapter> _adapters;
-  final DiscoveredSourceProbe _probe;
-  final VideoSourceEngine? _videoSourceEngine;
-  final DiscoveredProviderFactory? _providerFactory;
+  final DiscoveredSourceProbe probe;
+  final VideoSourceEngine? videoSourceEngine;
+  final DiscoveredProviderFactory? providerFactory;
   final Map<String, DiscoveredSourceCandidate> _candidates = {};
+  final Set<String> _registeredProviderIds = {};
 
   List<DiscoveredSourceCandidate> get candidates =>
       List<DiscoveredSourceCandidate>.unmodifiable(_candidates.values);
@@ -125,51 +123,90 @@ class SourceDiscoveryService {
             candidate.id.trim().isEmpty ||
             candidate.name.trim().isEmpty ||
             candidate.discoveredBy != adapter.id) {
-          _candidates[candidate.id] = candidate.copyWith(
+          final rejected = candidate.copyWith(
             status: DiscoveredSourceStatus.rejected,
             checkedAt: DateTime.now(),
             note: 'Некорректный адрес или метаданные источника.',
           );
+          _candidates[candidate.id] = rejected;
+          _removeRegisteredProvider(candidate.id);
           continue;
         }
 
         try {
-          final checked = await _probe
+          final checked = await probe
               .check(candidate)
               .timeout(const Duration(seconds: 12));
-          final normalized = checked.copyWith(
+          if (checked.id != candidate.id ||
+              checked.baseUri != candidate.baseUri ||
+              checked.discoveredBy != candidate.discoveredBy) {
+            final rejected = candidate.copyWith(
+              status: DiscoveredSourceStatus.rejected,
+              checkedAt: DateTime.now(),
+              note: 'Проверка изменила идентификатор или адрес источника.',
+            );
+            _candidates[candidate.id] = rejected;
+            _removeRegisteredProvider(candidate.id);
+            continue;
+          }
+
+          // The probe may report health, but it cannot rewrite the identity,
+          // URL, supported media, or declared capabilities of the candidate.
+          final normalized = candidate.copyWith(
+            status: checked.status,
             checkedAt: checked.checkedAt ?? DateTime.now(),
+            note: checked.note,
           );
           _candidates[candidate.id] = normalized;
-          _registerPlaybackProvider(normalized);
+          _syncPlaybackProvider(normalized);
         } on Object {
-          _candidates[candidate.id] = candidate.copyWith(
+          final unavailable = candidate.copyWith(
             status: DiscoveredSourceStatus.unavailable,
             checkedAt: DateTime.now(),
             note: 'Проверка источника завершилась ошибкой.',
           );
+          _candidates[candidate.id] = unavailable;
+          _removeRegisteredProvider(candidate.id);
         }
       }
     }
     return candidates;
   }
 
-  void _registerPlaybackProvider(DiscoveredSourceCandidate candidate) {
-    if (candidate.status != DiscoveredSourceStatus.available ||
-        !candidate.capabilities.contains(DiscoveredSourceCapability.playback)) {
+  void _syncPlaybackProvider(DiscoveredSourceCandidate candidate) {
+    final engine = videoSourceEngine;
+    final factory = providerFactory;
+    final canPlay = candidate.status == DiscoveredSourceStatus.available &&
+        candidate.capabilities.contains(DiscoveredSourceCapability.playback);
+
+    if (!canPlay || engine == null || factory == null) {
+      _removeRegisteredProvider(candidate.id);
       return;
     }
-    final engine = _videoSourceEngine;
-    final factory = _providerFactory;
-    if (engine == null || factory == null) return;
+
+    // Do not replace a provider owned by another part of the app. Discovery
+    // may update only providers that this service registered itself.
+    if (!_registeredProviderIds.contains(candidate.id) &&
+        engine.providerIds.contains(candidate.id)) {
+      return;
+    }
 
     try {
       final provider = factory(candidate);
-      if (provider == null || provider.id != candidate.id) return;
+      if (provider == null || provider.id != candidate.id) {
+        _removeRegisteredProvider(candidate.id);
+        return;
+      }
       engine.registerProvider(provider);
+      _registeredProviderIds.add(candidate.id);
     } on Object {
-      // A provider factory failure must not invalidate catalog discovery.
+      _removeRegisteredProvider(candidate.id);
     }
+  }
+
+  void _removeRegisteredProvider(String providerId) {
+    if (!_registeredProviderIds.remove(providerId)) return;
+    videoSourceEngine?.unregisterProvider(providerId);
   }
 
   /// Allows a caller to disable a source without deleting discovery history.
@@ -181,10 +218,15 @@ class SourceDiscoveryService {
       checkedAt: DateTime.now(),
       note: reason ?? 'Источник отключён.',
     );
-    _videoSourceEngine?.unregisterProvider(candidateId);
+    _removeRegisteredProvider(candidateId);
   }
 
+  /// Clears discovery history and removes only providers registered here.
   void clear() {
+    for (final providerId in _registeredProviderIds.toList()) {
+      videoSourceEngine?.unregisterProvider(providerId);
+    }
+    _registeredProviderIds.clear();
     _candidates.clear();
   }
 }
