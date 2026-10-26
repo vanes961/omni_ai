@@ -38,6 +38,26 @@ void main() {
     expect(source.lastQuery, 'наруто');
   });
 
+  test('prefers PoiskKino results before making a TMDB request', () async {
+    var tmdbRequested = false;
+    final source = _FakeFilmSeriesSource();
+    final service = MediaSearchService(
+      accessToken: 'tmdb-token',
+      kinopoiskApiKey: 'poiskkino-token',
+      sourceEngine: MediaSourceEngine([source]),
+      client: MockClient((request) async {
+        tmdbRequested = true;
+        return http.Response('{"results":[]}', 200);
+      }),
+    );
+
+    final items = await service.searchOnline('Интерстеллар', type: 'Фильм');
+
+    expect(items.single.id, 'kinopoisk:77');
+    expect(items.single.title, 'Интерстеллар');
+    expect(tmdbRequested, isFalse);
+  });
+
   test('supports runtime PoiskKino key injection without losing TMDB token', () {
     final service = MediaSearchService(
       accessToken: 'tmdb-token',
@@ -532,6 +552,36 @@ class _FakeAnimeSource implements MediaSource {
         rating: 8,
         voiceovers: const [],
         videoUrl: '',
+      ),
+    ];
+  }
+}
+
+class _FakeFilmSeriesSource implements MediaSource {
+  @override
+  String get id => 'fake-poiskkino';
+
+  @override
+  Set<MediaSourceKind> get supportedKinds => const {
+    MediaSourceKind.movie,
+    MediaSourceKind.series,
+  };
+
+  @override
+  Future<List<MediaItem>> search(
+    String query, {
+    required MediaSourceKind kind,
+  }) async {
+    return [
+      MediaItem(
+        id: 'kinopoisk:77',
+        title: 'Интерстеллар',
+        type: kind == MediaSourceKind.series ? 'Сериал' : 'Фильм',
+        posterUrl: '',
+        rating: 8.7,
+        voiceovers: const [],
+        videoUrl: '',
+        description: 'Карточка из основного каталога.',
       ),
     ];
   }
