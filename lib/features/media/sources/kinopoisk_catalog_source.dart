@@ -79,6 +79,31 @@ class KinopoiskCatalogSource implements MediaSource {
     return List<MediaItem>.unmodifiable(items);
   }
 
+  /// Loads one catalog record by its PoiskKino ID for the details screen.
+  /// This returns metadata only and never a playback URL.
+  Future<Map<String, dynamic>?> fetchDetails(String id) async {
+    final normalizedId = id.trim();
+    if (normalizedId.isEmpty || apiKey.trim().isEmpty) return null;
+    final uri = Uri.https(
+      'api.poiskkino.dev',
+      '/v1.5/movie/${Uri.encodeComponent(normalizedId)}',
+    );
+    final response = await _get(uri);
+    if (response.statusCode == 404) return null;
+    if (response.statusCode != 200) {
+      throw CatalogHttpException(
+        'PoiskKino returned HTTP ${response.statusCode}',
+      );
+    }
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is Map<String, dynamic>) {
+      final nested = decoded['data'] ?? decoded['result'];
+      if (nested is Map<String, dynamic>) return nested;
+      if (decoded.containsKey('id')) return decoded;
+    }
+    return null;
+  }
+
   /// Loads a rating-sorted catalog list for discovery sections.
   /// Uses the API's filtered movie endpoint rather than fabricating trending
   /// titles when TMDB is unavailable.
