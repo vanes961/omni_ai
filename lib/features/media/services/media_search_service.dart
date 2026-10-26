@@ -501,7 +501,84 @@ class MediaSearchService {
     }
   }
 
+  Future<MediaDetails?> _loadPoiskKinoDetails(MediaItem item) async {
+    final id = item.id.substring('kinopoisk:'.length).trim();
+    if (id.isEmpty || kinopoiskApiKey.trim().isEmpty) return null;
+    final source = KinopoiskCatalogSource(
+      apiKey: kinopoiskApiKey,
+      client: client,
+    );
+    try {
+      final data = await source.fetchDetails(id);
+      if (data == null) return null;
+      final genresPayload = data['genres'];
+      final genres = genresPayload is List
+          ? genresPayload
+                .map((entry) => entry is Map<String, dynamic>
+                    ? entry['name'] as String?
+                    : entry is String
+                        ? entry
+                        : null)
+                .whereType<String>()
+                .map((value) => value.trim())
+                .where((value) => value.isNotEmpty)
+                .toSet()
+                .toList(growable: false)
+          : item.categories;
+      final premiere = data['premiere'];
+      final premiereMap = premiere is Map<String, dynamic>
+          ? premiere
+          : const <String, dynamic>{};
+      final releaseDate = (data['releaseDate'] as String? ??
+              data['release_date'] as String? ??
+              premiereMap['world'] as String? ??
+              premiereMap['russia'] as String? ??
+              '')
+          .trim();
+      final runtimeValue = data['movieLength'] ?? data['runtime'];
+      final runtime = runtimeValue is num ? runtimeValue.toInt() : null;
+      final backdropPayload = data['backdrop'];
+      final backdropMap = backdropPayload is Map<String, dynamic>
+          ? backdropPayload
+          : const <String, dynamic>{};
+      final backdrop = _validatedHttpUrl(
+        backdropMap['url'] as String? ??
+            data['backdropUrl'] as String? ??
+            '',
+      );
+      final homepage = _validatedHttpUrl(data['homepage'] as String? ?? '');
+      return MediaDetails(
+        overview: (data['description'] as String? ??
+                data['shortDescription'] as String? ??
+                item.description)
+            .trim(),
+        genres: genres,
+        cast: const [],
+        runtimeMinutes: runtime != null && runtime > 0 ? runtime : null,
+        releaseDate: releaseDate,
+        backdropUrl: backdrop,
+        homepage: homepage,
+        franchiseId: 'kinopoisk:item:$id',
+      );
+    } on Object {
+      return null;
+    }
+  }
+
+  String _validatedHttpUrl(String value) {
+    final uri = Uri.tryParse(value.trim());
+    if (uri == null ||
+        (uri.scheme != 'https' && uri.scheme != 'http') ||
+        uri.host.isEmpty) {
+      return '';
+    }
+    return uri.toString();
+  }
+
   Future<MediaDetails?> loadDetails(MediaItem item) async {
+    if (item.id.startsWith('kinopoisk:')) {
+      return _loadPoiskKinoDetails(item);
+    }
     if (!isConfigured || !item.id.startsWith('tmdb:')) return null;
     final p = item.id.split(':');
     if (p.length != 3 || !{'movie', 'tv'}.contains(p[1])) return null;
