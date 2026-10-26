@@ -74,16 +74,22 @@ class _MediaPageState extends State<MediaPage> {
   }
 
   Future<void> _loadCatalogToken() async {
-    // TMDB and PoiskKino are independent providers. Do not make the main
-    // catalog wait for the optional PoiskKino secure-storage channel to
-    // respond; on some Android/test environments that channel can fail or
-    // remain unavailable while TMDB is already configured.
+    // Start from the injected/build-time configuration immediately. Secure
+    // storage can be slow or unavailable in widget tests and on some devices.
+    final initialService = _searchService;
+    if (initialService.isSearchConfigured) {
+      unawaited(_loadTrending());
+      unawaited(_loadRecommendations());
+    }
+
+    var secureTokenApplied = false;
     try {
       final token = await _catalogTokenStore.readToken();
       if (!mounted) return;
       if (token != null && token.trim().isNotEmpty) {
         setState(() {
           _searchService = _searchService.withAccessToken(token);
+          secureTokenApplied = true;
           if (_query.trim().isNotEmpty) {
             _onlineSearch = _searchService.searchOnline(
               _query,
@@ -97,8 +103,12 @@ class _MediaPageState extends State<MediaPage> {
     }
 
     if (!mounted) return;
-    unawaited(_loadTrending());
-    unawaited(_loadRecommendations());
+    // Reload only when the secure token replaced the initial configuration.
+    // Otherwise the first request is already running (or there is no token).
+    if (secureTokenApplied) {
+      unawaited(_loadTrending());
+      unawaited(_loadRecommendations());
+    }
     unawaited(_loadPoiskKinoApiKey());
   }
 
