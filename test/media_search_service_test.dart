@@ -213,6 +213,56 @@ void main() {
     expect(items.single.title, 'Film');
   });
 
+  test('falls back to PoiskKino when TMDB trending returns an HTTP error', () async {
+    final requestedHosts = <String>[];
+    final service = MediaSearchService(
+      accessToken: 'tmdb-token',
+      kinopoiskApiKey: 'poiskkino-token',
+      client: MockClient((request) async {
+        requestedHosts.add(request.url.host);
+        if (request.url.host == 'api.themoviedb.org') {
+          return http.Response('unavailable', 503);
+        }
+        return http.Response(
+          '{"docs":[{"id":88,"name":"Резервный фильм","type":"movie",'
+          '"rating":{"kp":7.9},"poster":{"url":"https://img.example/88.jpg"}}]}',
+          200,
+        );
+      }),
+    );
+
+    final items = await service.fetchTrendingOnline(type: 'Фильм');
+
+    expect(requestedHosts, ['api.themoviedb.org', 'api.poiskkino.dev']);
+    expect(items.single.id, 'kinopoisk:88');
+    expect(items.single.title, 'Резервный фильм');
+  });
+
+  test('falls back to PoiskKino when TMDB trending returns no results', () async {
+    final requestedHosts = <String>[];
+    final service = MediaSearchService(
+      accessToken: 'tmdb-token',
+      kinopoiskApiKey: 'poiskkino-token',
+      client: MockClient((request) async {
+        requestedHosts.add(request.url.host);
+        if (request.url.host == 'api.themoviedb.org') {
+          return http.Response('{"results":[]}', 200);
+        }
+        return http.Response(
+          '{"docs":[{"id":89,"name":"Фильм из резерва","type":"movie",'
+          '"rating":{"kp":8.1},"poster":{"url":"https://img.example/89.jpg"}}]}',
+          200,
+        );
+      }),
+    );
+
+    final items = await service.fetchTrendingOnline(type: 'Фильм');
+
+    expect(requestedHosts, ['api.themoviedb.org', 'api.poiskkino.dev']);
+    expect(items.single.id, 'kinopoisk:89');
+    expect(items.single.title, 'Фильм из резерва');
+  });
+
   test('returns no trending data when the TMDB request fails', () async {
     final service = MediaSearchService(
       accessToken: 'test-token',
