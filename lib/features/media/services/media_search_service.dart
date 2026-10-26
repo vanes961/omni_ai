@@ -115,6 +115,17 @@ class MediaSearchService {
     if (type == 'Аниме' && !isConfigured) {
       return _searchAnimeCatalog(normalizedQuery);
     }
+
+    // Prefer the user-configured PoiskKino catalog for films and series. TMDB
+    // remains a fallback for missing credentials, empty results, or outages.
+    final supportsPoiskKino = type == 'Фильм' || type == 'Сериал';
+    if (supportsPoiskKino && kinopoiskApiKey.trim().isNotEmpty) {
+      final catalogItems = await _searchCatalogFallback(
+        normalizedQuery,
+        type,
+      );
+      if (catalogItems.isNotEmpty) return catalogItems;
+    }
     if (!isConfigured) {
       return _searchCatalogFallback(normalizedQuery, type);
     }
