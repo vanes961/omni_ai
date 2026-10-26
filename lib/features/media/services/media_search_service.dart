@@ -5,6 +5,7 @@ import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/sources/anilibria_catalog_source.dart';
 import 'package:omni_ai/features/media/sources/media_source.dart';
 import 'package:omni_ai/features/media/sources/media_source_engine.dart';
+import 'package:omni_ai/features/media/sources/kinopoisk_catalog_source.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 typedef FranchiseChronologyResolver =
@@ -21,8 +22,10 @@ class MediaSearchService {
     this.sourceEngine,
   });
 
+  static const _kinopoiskToken = String.fromEnvironment('POISKKINO_API_KEY');
   static final MediaSourceEngine _defaultSourceEngine = MediaSourceEngine([
     AniLibriaCatalogSource(),
+    KinopoiskCatalogSource(apiKey: _kinopoiskToken),
   ]);
 
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
@@ -89,7 +92,9 @@ class MediaSearchService {
     if (type == 'Аниме' && !isConfigured) {
       return _searchAnimeCatalog(normalizedQuery);
     }
-    if (!isConfigured) return const [];
+    if (!isConfigured) {
+      return _searchCatalogFallback(normalizedQuery, type);
+    }
 
     final endpoint = switch (type) {
       'Фильм' => 'movie',
@@ -115,13 +120,13 @@ class MediaSearchService {
       if (response.statusCode != 200) {
         return type == 'Аниме'
             ? await _searchAnimeCatalog(normalizedQuery)
-            : const [];
+            : await _searchCatalogFallback(normalizedQuery, type);
       }
       final json = jsonDecode(response.body);
       if (json is! Map<String, dynamic> || json['results'] is! List) {
         return type == 'Аниме'
             ? await _searchAnimeCatalog(normalizedQuery)
-            : const [];
+            : await _searchCatalogFallback(normalizedQuery, type);
       }
       final items = <MediaItem>[];
       for (final raw in json['results'] as List) {
@@ -165,12 +170,25 @@ class MediaSearchService {
       if (type == 'Аниме' && items.isEmpty) {
         return await _searchAnimeCatalog(normalizedQuery);
       }
+      if (items.isEmpty) {
+        return _searchCatalogFallback(normalizedQuery, type);
+      }
       return items;
     } on Object {
       return type == 'Аниме'
           ? await _searchAnimeCatalog(normalizedQuery)
-          : const [];
+          : await _searchCatalogFallback(normalizedQuery, type);
     }
+  }
+
+  Future<List<MediaItem>> _searchCatalogFallback(String query, String? type) {
+    final kind = switch (type) {
+      'Фильм' => MediaSourceKind.movie,
+      'Сериал' => MediaSourceKind.series,
+      _ => null,
+    };
+    if (kind == null) return Future.value(const <MediaItem>[]);
+    return _mediaSources.search(query, kind: kind);
   }
 
   Future<List<MediaItem>> _searchAnimeCatalog(String query) =>
