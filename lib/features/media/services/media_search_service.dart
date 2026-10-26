@@ -354,7 +354,9 @@ class MediaSearchService {
         )
         .map((entry) => entry.key)
         .toList();
-    if (genreIds.isEmpty) return const [];
+    if (genreIds.isEmpty) {
+      return _fetchPoiskKinoRecommendations(interests: interests, type: type);
+    }
 
     final mediaTypes = switch (type) {
       'Фильм' => const ['movie'],
