@@ -551,7 +551,9 @@ class MediaSearchService {
       return MediaDetails(
         overview:
             (data['description'] as String? ??
+                    data['overview'] as String? ??
                     data['shortDescription'] as String? ??
+                    data['short_description'] as String? ??
                     item.description)
                 .trim(),
         genres: genres,
