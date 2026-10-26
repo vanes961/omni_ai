@@ -60,8 +60,8 @@ class MediaSearchService {
     sourceEngine:
         sourceEngine ??
         MediaSourceEngine([
-          AniLibriaCatalogSource(),
-          KinopoiskCatalogSource(apiKey: key.trim()),
+          AniLibriaCatalogSource(client: client),
+          KinopoiskCatalogSource(apiKey: key.trim(), client: client),
         ]),
   );
 
@@ -145,7 +145,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': '***',
+          'Authorization': 'Bearer ${accessToken.trim()}',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -243,7 +243,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': '***',
+          'Authorization': 'Bearer ${accessToken.trim()}',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -378,7 +378,7 @@ class MediaSearchService {
           final response = await _get(
             uri,
             headers: {
-              'Authorization': '***',
+              'Authorization': 'Bearer ${accessToken.trim()}',
               'accept': 'application/json',
             },
           ).timeout(const Duration(seconds: 12));
@@ -591,7 +591,7 @@ class MediaSearchService {
       final r = await _get(
         uri,
         headers: {
-          'Authorization': '***',
+          'Authorization': 'Bearer ${accessToken.trim()}',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -716,7 +716,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': '***',
+          'Authorization': 'Bearer ${accessToken.trim()}',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -825,7 +825,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': '***',
+          'Authorization': 'Bearer ${accessToken.trim()}',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
