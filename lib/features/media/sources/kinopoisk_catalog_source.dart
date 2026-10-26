@@ -93,7 +93,7 @@ class KinopoiskCatalogSource implements MediaSource {
       'type': kind == MediaSourceKind.series ? 'tv-series' : 'movie',
       'sortField': 'rating.kp',
       'sortType': '-1',
-      'limit': limit.clamp(1, 50).toString(),
+      'limit': limit.clamp(1, 10).toString(),
       'notNullFields': 'name',
     });
     final response = await _get(uri);
