@@ -167,7 +167,9 @@ class MediaSearchService {
       }
       return items;
     } on Object {
-      return type == 'Аниме' ? _searchAnimeCatalog(normalizedQuery) : const [];
+      return type == 'Аниме'
+          ? await _searchAnimeCatalog(normalizedQuery)
+          : const [];
     }
   }
 
