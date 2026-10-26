@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/data/torrserver_playback_resolver.dart';
+import 'package:omni_ai/features/media/data/video_source_engine.dart';
+import 'package:omni_ai/features/media/data/video_source_provider.dart';
 import 'package:omni_ai/features/media/services/ani_skip_segment_provider.dart';
 import 'package:omni_ai/features/media/services/media_headers.dart';
 import 'package:omni_ai/features/media/services/media_playback_settings_store.dart';
@@ -43,6 +45,7 @@ class PlayerPage extends StatefulWidget {
     this.searchService = const MediaSearchService(),
     this.playerFactory,
     this.torrServerResolver,
+    this.videoSourceEngine,
     this.resumePositionStore,
     this.segmentMarkerStore,
     this.aniSkipSegmentProvider,
@@ -55,6 +58,7 @@ class PlayerPage extends StatefulWidget {
   final MediaSearchService searchService;
   final MediaPlayerFactory? playerFactory;
   final TorrServerPlaybackResolver? torrServerResolver;
+  final VideoSourceEngine? videoSourceEngine;
   final MediaResumePositionStore? resumePositionStore;
   final MediaSegmentMarkerStore? segmentMarkerStore;
   final AniSkipSegmentProvider? aniSkipSegmentProvider;
@@ -399,10 +403,65 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         ),
       );
     }
-    final sources = <String>{
+    var sources = <String>{
       source.trim(),
       ...fallbackUrls.map((url) => url.trim()),
     }.where((url) => url.isNotEmpty).toList(growable: false);
+
+    // Catalog metadata is not a video stream. Ask configured playback
+    // providers only when the item has no direct/fallback stream URL.
+    final sourceEngine = widget.videoSourceEngine;
+    if (sources.isEmpty && sourceEngine != null) {
+      final type = widget.item.type.toLowerCase();
+      final kind = type.contains('аниме') || type.contains('anime')
+          ? PlaybackMediaKind.anime
+          : type.contains('сериал') ||
+                type.contains('series') ||
+                type.contains('сезон')
+          ? PlaybackMediaKind.series
+          : PlaybackMediaKind.movie;
+      try {
+        final resolution = await sourceEngine.resolve(
+          PlaybackRequest(
+            mediaId: widget.item.id,
+            title: widget.item.title,
+            kind: kind,
+            season: episode?.seasonNumber,
+            episode: episode?.number,
+          ),
+        );
+        if (!mounted || generation != _playerGeneration) return;
+        final resolvedVariants = resolution.variants.toList(growable: false);
+        // Prefer the user's saved voiceover and quality, then try the other
+        // real variants in provider order as playback fallbacks.
+        resolvedVariants.sort((a, b) {
+          int score(PlaybackVariant value) {
+            var result = 0;
+            if (_selectedVoiceover != null &&
+                value.voiceover == _selectedVoiceover) {
+              result += 2;
+            }
+            if (_selectedQuality != null && value.quality == _selectedQuality) {
+              result += 1;
+            }
+            return result;
+          }
+          return score(b).compareTo(score(a));
+        });
+        sources = resolvedVariants
+            .map((variant) => variant.url.trim())
+            .where((url) => url.isNotEmpty)
+            .toSet()
+            .toList(growable: false);
+        if (sources.isEmpty) {
+          playerError = StateError(
+            resolution.message ?? 'Не найден доступный видеопоток.',
+          );
+        }
+      } on Object catch (error) {
+        playerError = error;
+      }
+    }
     final playerFactory = widget.playerFactory ?? _videoPlayerFactory;
 
     unawaited(_saveProgress(player: oldPlayer, episodeIndex: _selectedEpisode));
