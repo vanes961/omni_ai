@@ -74,40 +74,52 @@ class _MediaPageState extends State<MediaPage> {
   }
 
   Future<void> _loadCatalogToken() async {
-    // Read each credential independently. A missing/unavailable secure-storage
-    // plugin for one provider must not disable another provider or prevent the
-    // build-time TMDB token from loading the catalog.
-    String? token;
-    String? poiskKinoKey;
+    // TMDB and PoiskKino are independent providers. Do not make the main
+    // catalog wait for the optional PoiskKino secure-storage channel to
+    // respond; on some Android/test environments that channel can fail or
+    // remain unavailable while TMDB is already configured.
     try {
-      token = await _catalogTokenStore.readToken();
-    } on Object {
-      // Keep the configured service usable if secure storage is unavailable.
-    }
-    try {
-      poiskKinoKey = await _poiskKinoKeyStore.readApiKey();
-    } on Object {
-      // PoiskKino is optional; its storage failure must not block TMDB.
-    }
-    if (!mounted) return;
-    var service = _searchService;
-    if (token != null && token.trim().isNotEmpty) {
-      service = service.withAccessToken(token);
-    }
-    if (poiskKinoKey != null && poiskKinoKey.trim().isNotEmpty) {
-      service = service.withKinopoiskApiKey(poiskKinoKey);
-    }
-    setState(() {
-      _searchService = service;
-      if (_query.trim().isNotEmpty) {
-        _onlineSearch = _searchService.searchOnline(
-          _query,
-          type: _selectedType,
-        );
+      final token = await _catalogTokenStore.readToken();
+      if (!mounted) return;
+      if (token != null && token.trim().isNotEmpty) {
+        setState(() {
+          _searchService = _searchService.withAccessToken(token);
+          if (_query.trim().isNotEmpty) {
+            _onlineSearch = _searchService.searchOnline(
+              _query,
+              type: _selectedType,
+            );
+          }
+        });
       }
-    });
+    } on Object {
+      // Secure storage is optional; keep the injected/build-time token.
+    }
+
+    if (!mounted) return;
     unawaited(_loadTrending());
     unawaited(_loadRecommendations());
+    unawaited(_loadPoiskKinoApiKey());
+  }
+
+  Future<void> _loadPoiskKinoApiKey() async {
+    try {
+      final key = await _poiskKinoKeyStore.readApiKey();
+      if (!mounted || key == null || key.trim().isEmpty) return;
+      setState(() {
+        _searchService = _searchService.withKinopoiskApiKey(key);
+        if (_query.trim().isNotEmpty) {
+          _onlineSearch = _searchService.searchOnline(
+            _query,
+            type: _selectedType,
+          );
+        }
+      });
+      unawaited(_loadTrending());
+      unawaited(_loadRecommendations());
+    } on Object {
+      // PoiskKino is optional and must not block TMDB catalog access.
+    }
   }
 
   Future<void> _loadTrending() async {
