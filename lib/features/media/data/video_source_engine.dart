@@ -12,17 +12,48 @@ class VideoSourceEngine {
     this.requestTimeout = const Duration(seconds: 12),
     this.cacheTtl = const Duration(minutes: 2),
     this.maxCacheEntries = 50,
-  }) : providers = List<VideoSourceProvider>.unmodifiable(providers);
+  }) : _providers = List<VideoSourceProvider>.of(providers);
 
-  final List<VideoSourceProvider> providers;
+  final List<VideoSourceProvider> _providers;
   final Duration requestTimeout;
   final Duration cacheTtl;
   final int maxCacheEntries;
 
   final Map<String, _CachedResolution> _cache = {};
 
+  /// Current registered providers, exposed as an immutable snapshot.
+  List<VideoSourceProvider> get providers =>
+      List<VideoSourceProvider>.unmodifiable(_providers);
+
   List<String> get providerIds =>
-      List<String>.unmodifiable(providers.map((provider) => provider.id));
+      List<String>.unmodifiable(_providers.map((provider) => provider.id));
+
+  /// Registers or replaces a provider by its stable ID.
+  ///
+  /// Any cached resolutions are invalidated so a newly discovered provider is
+  /// visible on the next request rather than after the cache TTL expires.
+  void registerProvider(VideoSourceProvider provider) {
+    final id = provider.id.trim();
+    if (id.isEmpty) {
+      throw ArgumentError.value(provider.id, 'provider.id', 'Must not be empty');
+    }
+    final index = _providers.indexWhere((current) => current.id == id);
+    if (index == -1) {
+      _providers.add(provider);
+    } else {
+      _providers[index] = provider;
+    }
+    clearCache();
+  }
+
+  /// Removes a provider by ID and invalidates cached playback resolutions.
+  bool unregisterProvider(String providerId) {
+    final before = _providers.length;
+    _providers.removeWhere((provider) => provider.id == providerId);
+    final removed = _providers.length != before;
+    if (removed) clearCache();
+    return removed;
+  }
 
   /// Resolves options from every provider and combines valid variants.
   ///
@@ -36,12 +67,11 @@ class VideoSourceEngine {
     }
     if (cached != null) _cache.remove(key);
 
+    final activeProviders = providers;
     final results = await Future.wait(
-      providers.map((provider) async {
+      activeProviders.map((provider) async {
         try {
-          return await provider
-              .resolve(request)
-              .timeout(requestTimeout);
+          return await provider.resolve(request).timeout(requestTimeout);
         } on Object {
           // Isolate a provider failure so another source can still succeed.
           return null;
