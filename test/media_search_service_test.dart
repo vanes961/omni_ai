@@ -130,8 +130,9 @@ void main() {
       kinopoiskApiKey: 'poiskkino-token',
       client: MockClient((request) async {
         requestedUri = request.url;
-        return http.Response(
-          '{"docs":[{"id":77,"name":"Каталоговый фильм","type":"movie",'
+        return http.Response.bytes(
+          utf8.encode(
+            '{"docs":[{"id":77,"name":"Каталоговый фильм","type":"movie",'
           '"rating":{"kp":8.2},"poster":{"url":"https://img.example/poster.jpg"}}]}',
           200,
         );
@@ -155,8 +156,8 @@ void main() {
       client: MockClient((request) async {
         requestedUris.add(request.url);
         final isSeries = request.url.queryParameters['type'] == 'tv-series';
-        return http.Response(
-          jsonEncode({
+        return http.Response.bytes(
+          utf8.encode(jsonEncode({
             'docs': [
               {
                 'id': isSeries ? 502 : 501,
@@ -167,7 +168,9 @@ void main() {
               },
             ],
           }),
+          ),
           200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }),
     );
@@ -198,8 +201,8 @@ void main() {
           return http.Response('{"results":[]}', 200);
         }
         final isSeries = request.url.queryParameters['type'] == 'tv-series';
-        return http.Response(
-          jsonEncode({
+        return http.Response.bytes(
+          utf8.encode(jsonEncode({
             'docs': [
               {
                 'id': isSeries ? 602 : 601,
@@ -208,8 +211,9 @@ void main() {
                 'genres': [{'name': 'комедия'}],
               },
             ],
-          }),
+          })),
           200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }),
     );
@@ -327,8 +331,9 @@ void main() {
         if (request.url.host == 'api.themoviedb.org') {
           return http.Response('{"results":[]}', 200);
         }
-        return http.Response(
-          '{"docs":[{"id":89,"name":"Фильм из резерва","type":"movie",'
+        return http.Response.bytes(
+          utf8.encode(
+            '{"docs":[{"id":89,"name":"Фильм из резерва","type":"movie",'
           '"rating":{"kp":8.1},"poster":{"url":"https://img.example/89.jpg"}}]}',
           200,
         );
@@ -706,8 +711,8 @@ void main() {
               .single.value,
           'poiskkino-token',
         );
-        return http.Response(
-          jsonEncode({
+        return http.Response.bytes(
+          utf8.encode(jsonEncode({
             'id': 77,
             'name': 'Details film',
             'description': 'Полное описание',
@@ -717,8 +722,9 @@ void main() {
             'premiere': {'world': '2024-03-01'},
             'backdrop': {'url': 'https://img.example/backdrop.jpg'},
             'homepage': 'javascript:alert(1)',
-          }),
+          })),
           200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }),
     );
