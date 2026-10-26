@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/features/media/data/media_item.dart';
 import 'package:omni_ai/features/media/sources/anilibria_catalog_source.dart';
@@ -328,7 +329,9 @@ class MediaSearchService {
         unique.putIfAbsent(item.id, () => item);
       }
       return List<MediaItem>.unmodifiable(unique.values);
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      debugPrint('PoiskKino discovery failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
       return const [];
     }
   }
@@ -496,7 +499,9 @@ class MediaSearchService {
         unique.putIfAbsent(item.id, () => item);
       }
       return List<MediaItem>.unmodifiable(unique.values);
-    } on Object {
+    } on Object catch (error, stackTrace) {
+      debugPrint('PoiskKino recommendations failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
       return const [];
     }
   }
