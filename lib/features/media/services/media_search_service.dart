@@ -232,7 +232,7 @@ class MediaSearchService {
   /// Returns an empty list when credentials or the network are unavailable;
   /// no demo titles are substituted.
   Future<List<MediaItem>> fetchTrendingOnline({String? type}) async {
-    if (!isConfigured) return const [];
+    if (!isConfigured) return _fetchPoiskKinoDiscovery(type);
     final mediaType = switch (type) {
       'Фильм' => 'movie',
       'Сериал' || 'Аниме' => 'tv',
@@ -299,6 +299,35 @@ class MediaSearchService {
         );
       }
       return items;
+    } on Object {
+      return const [];
+    }
+  }
+
+  Future<List<MediaItem>> _fetchPoiskKinoDiscovery(String? type) async {
+    if (kinopoiskApiKey.trim().isEmpty || type == 'Аниме') {
+      return const [];
+    }
+    final source = KinopoiskCatalogSource(
+      apiKey: kinopoiskApiKey,
+      client: client,
+    );
+    try {
+      if (type == 'Фильм') {
+        return await source.fetchPopular(kind: MediaSourceKind.movie);
+      }
+      if (type == 'Сериал') {
+        return await source.fetchPopular(kind: MediaSourceKind.series);
+      }
+      final results = await Future.wait([
+        source.fetchPopular(kind: MediaSourceKind.movie),
+        source.fetchPopular(kind: MediaSourceKind.series),
+      ]);
+      final unique = <String, MediaItem>{};
+      for (final item in results.expand((items) => items)) {
+        unique.putIfAbsent(item.id, () => item);
+      }
+      return List<MediaItem>.unmodifiable(unique.values);
     } on Object {
       return const [];
     }
