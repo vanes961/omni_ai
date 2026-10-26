@@ -17,6 +17,7 @@ typedef FranchiseChronologyResolver =
 class MediaSearchService {
   const MediaSearchService({
     this.accessToken = _token,
+    this.kinopoiskApiKey = _kinopoiskToken,
     this.franchiseChronologyResolver,
     this.client,
     this.sourceEngine,
@@ -31,13 +32,36 @@ class MediaSearchService {
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
   final http.Client? client;
   final MediaSourceEngine? sourceEngine;
-  MediaSourceEngine get _mediaSources => sourceEngine ?? _defaultSourceEngine;
+
+  /// Can be supplied from secure device storage at runtime. The build-time
+  /// define remains a fallback for development builds only.
+  final String kinopoiskApiKey;
+
+  MediaSourceEngine get _mediaSources {
+    if (sourceEngine != null) return sourceEngine!;
+    if (kinopoiskApiKey == _kinopoiskToken) return _defaultSourceEngine;
+    return MediaSourceEngine([
+      AniLibriaCatalogSource(),
+      KinopoiskCatalogSource(apiKey: kinopoiskApiKey),
+    ]);
+  }
 
   /// Keeps the same HTTP transport while replacing the credential loaded from
   /// secure device storage. This makes runtime credentials testable and avoids
   /// silently losing an injected client when the page loads its token.
   MediaSearchService withAccessToken(String token) => MediaSearchService(
     accessToken: token,
+    kinopoiskApiKey: kinopoiskApiKey,
+    franchiseChronologyResolver: franchiseChronologyResolver,
+    client: client,
+    sourceEngine: sourceEngine,
+  );
+
+  /// Rebuilds the default catalog engine with a runtime PoiskKino key.
+  /// An explicitly injected source engine is preserved for tests/custom setups.
+  MediaSearchService withKinopoiskApiKey(String key) => MediaSearchService(
+    accessToken: accessToken,
+    kinopoiskApiKey: key.trim(),
     franchiseChronologyResolver: franchiseChronologyResolver,
     client: client,
     sourceEngine: sourceEngine,
