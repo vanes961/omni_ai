@@ -15,7 +15,9 @@ class AniLibriaCatalogSource implements MediaSource {
     this.client,
     Uri? baseUri,
     this.timeout = const Duration(seconds: 10),
-  }) : baseUri = baseUri ?? Uri.https('api.anilibria.app', '/api/v1/app/search/releases');
+  }) : baseUri =
+           baseUri ??
+           Uri.https('api.anilibria.app', '/api/v1/app/search/releases');
 
   final http.Client? client;
   final Uri baseUri;
