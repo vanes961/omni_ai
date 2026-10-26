@@ -263,6 +263,23 @@ void main() {
     expect(items.single.title, 'Фильм из резерва');
   });
 
+  test('returns empty trending results when both catalogs fail', () async {
+    final requestedHosts = <String>[];
+    final service = MediaSearchService(
+      accessToken: 'tmdb-token',
+      kinopoiskApiKey: 'poiskkino-token',
+      client: MockClient((request) async {
+        requestedHosts.add(request.url.host);
+        return http.Response('unavailable', 503);
+      }),
+    );
+
+    final items = await service.fetchTrendingOnline(type: 'Фильм');
+
+    expect(requestedHosts, ['api.themoviedb.org', 'api.poiskkino.dev']);
+    expect(items, isEmpty);
+  });
+
   test('returns no trending data when the TMDB request fails', () async {
     final service = MediaSearchService(
       accessToken: 'test-token',
