@@ -14,19 +14,20 @@ void main() {
         requestedUri = request.url;
         return http.Response.bytes(
           utf8.encode(jsonEncode({
-            'list': [
+            [
               {
                 'id': 123,
-                'names': {'ru': 'Пример аниме', 'en': 'Example Anime'},
-                'posters': {
-                  'medium': {'url': 'https://img.example/poster.jpg'},
-                },
-                'genres': ['Приключения', 'Фантастика'],
+                'name': {'main': 'Пример аниме', 'english': 'Example Anime'},
+                'poster': {'preview': 'https://img.example/poster.jpg'},
+                'genres': [
+                  {'name': 'Приключения'},
+                  {'name': 'Фантастика'},
+                ],
                 'description': '<p>Описание <b>аниме</b></p>',
-                'season': {'year': 2025},
+                'year': 2025,
                 'rating': {'average': 8.2},
               },
-              {'id': 124, 'names': {'ru': '   '}},
+              {'id': 124, 'name': {'main': '   '}},
               'invalid',
             ],
           })),
@@ -37,8 +38,9 @@ void main() {
 
     final items = await source.search('пример', kind: MediaSourceKind.anime);
 
-    expect(requestedUri?.host, 'api.anilibria.tv');
-    expect(requestedUri?.queryParameters['search'], 'пример');
+    expect(requestedUri?.host, 'api.anilibria.app');
+    expect(requestedUri?.path, '/api/v1/app/search/releases');
+    expect(requestedUri?.queryParameters['query'], 'пример');
     expect(items, hasLength(1));
     expect(items.single.id, 'anilibria:123');
     expect(items.single.title, 'Пример аниме');
