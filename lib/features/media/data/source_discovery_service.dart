@@ -156,9 +156,7 @@ class SourceDiscoveryService {
 
   void _registerPlaybackProvider(DiscoveredSourceCandidate candidate) {
     if (candidate.status != DiscoveredSourceStatus.available ||
-        !candidate.capabilities.contains(
-          DiscoveredSourceCapability.playback,
-        )) {
+        !candidate.capabilities.contains(DiscoveredSourceCapability.playback)) {
       return;
     }
     final engine = _videoSourceEngine;
