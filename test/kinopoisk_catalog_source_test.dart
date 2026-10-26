@@ -92,7 +92,7 @@ void main() {
     expect(requestedUri?.queryParameters['type'], 'tv-series');
     expect(requestedUri?.queryParameters['sortField'], 'rating.kp');
     expect(requestedUri?.queryParameters['sortType'], '-1');
-    expect(requestedUri?.queryParameters['limit'], '15');
+    expect(requestedUri?.queryParameters['limit'], '10');
     expect(items.single.title, 'Discovery Series');
     expect(items.single.type, 'Сериал');
   });
