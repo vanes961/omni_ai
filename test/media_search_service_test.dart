@@ -38,6 +38,20 @@ void main() {
     expect(source.lastQuery, 'наруто');
   });
 
+
+  test('supports runtime PoiskKino key injection without losing TMDB token', () {
+    final service = MediaSearchService(
+      accessToken: 'tmdb-token',
+    ).withKinopoiskApiKey('  poiskkino-token  ');
+
+    expect(service.accessToken, 'tmdb-token');
+    expect(service.kinopoiskApiKey, 'poiskkino-token');
+    expect(
+      service.withAccessToken('updated-tmdb-token').kinopoiskApiKey,
+      'poiskkino-token',
+    );
+  });
+
   const service = MediaSearchService();
 
   test('does not expose fabricated demo titles in the local catalog', () {
