@@ -158,14 +158,22 @@ class KinopoiskCatalogSource implements MediaSource {
       return const <MediaItem>[];
     }
 
-    final uri = Uri.https('api.poiskkino.dev', '/v1.5/movie', {
-      'type': kind == MediaSourceKind.series ? 'tv-series' : 'movie',
-      'genres.name': normalizedGenres,
-      'sortField': 'rating.kp',
-      'sortType': '-1',
-      'limit': limit.clamp(1, 10).toString(),
-      'notNullFields': 'name',
-    });
+    // Uri.https(queryParameters: ...) serializes list values as a
+    // comma-separated value. PoiskKino expects repeated genres.name keys,
+    // so use queryParametersAll to preserve one parameter per genre.
+    final uri = Uri(
+      scheme: 'https',
+      host: 'api.poiskkino.dev',
+      path: '/v1.5/movie',
+      queryParametersAll: {
+        'type': [kind == MediaSourceKind.series ? 'tv-series' : 'movie'],
+        'genres.name': normalizedGenres,
+        'sortField': ['rating.kp'],
+        'sortType': ['-1'],
+        'limit': [limit.clamp(1, 10).toString()],
+        'notNullFields': ['name'],
+      },
+    );
     final response = await _get(uri);
     if (response.statusCode != 200) {
       throw CatalogHttpException(
