@@ -68,9 +68,7 @@ abstract interface class SourceDiscoveryAdapter {
 /// Separates discovery from validation. A search result is only a candidate
 /// until it passes policy checks and a provider-specific capability probe.
 abstract interface class DiscoveredSourceProbe {
-  Future<DiscoveredSourceCandidate> check(
-    DiscoveredSourceCandidate candidate,
-  );
+  Future<DiscoveredSourceCandidate> check(DiscoveredSourceCandidate candidate);
 }
 
 typedef DiscoveredProviderFactory =
@@ -114,9 +112,9 @@ class SourceDiscoveryService {
     for (final adapter in _adapters) {
       Iterable<DiscoveredSourceCandidate> discovered;
       try {
-        discovered = await adapter.discover(mediaKinds: mediaKinds).timeout(
-          const Duration(seconds: 15),
-        );
+        discovered = await adapter
+            .discover(mediaKinds: mediaKinds)
+            .timeout(const Duration(seconds: 15));
       } on Object {
         // A failed discovery backend must not block other backends.
         continue;
@@ -136,9 +134,9 @@ class SourceDiscoveryService {
         }
 
         try {
-          final checked = await _probe.check(candidate).timeout(
-            const Duration(seconds: 12),
-          );
+          final checked = await _probe
+              .check(candidate)
+              .timeout(const Duration(seconds: 12));
           final normalized = checked.copyWith(
             checkedAt: checked.checkedAt ?? DateTime.now(),
           );
@@ -158,7 +156,9 @@ class SourceDiscoveryService {
 
   void _registerPlaybackProvider(DiscoveredSourceCandidate candidate) {
     if (candidate.status != DiscoveredSourceStatus.available ||
-        !candidate.capabilities.contains(DiscoveredSourceCapability.playback)) {
+        !candidate.capabilities.contains(
+          DiscoveredSourceCapability.playback,
+        )) {
       return;
     }
     final engine = _videoSourceEngine;
