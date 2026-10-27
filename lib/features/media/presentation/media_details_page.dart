@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/media/data/video_source_engine.dart';
 import 'package:omni_ai/features/media/domain/media_hub_contracts.dart';
 import 'package:omni_ai/features/media/presentation/player_page.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
@@ -15,12 +16,14 @@ class MediaDetailsPage extends StatelessWidget {
     required this.searchService,
     required this.preferences,
     this.playerFactory,
+    this.videoSourceEngine,
     super.key,
   });
   final MediaItem item;
   final MediaSearchService searchService;
   final UserPreferences preferences;
   final MediaPlayerFactory? playerFactory;
+  final VideoSourceEngine? videoSourceEngine;
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: SystemCorePalette.background,
@@ -382,6 +385,7 @@ class MediaDetailsPage extends StatelessWidget {
                       preferences: preferences,
                       searchService: searchService,
                       playerFactory: playerFactory,
+                      videoSourceEngine: videoSourceEngine,
                     ),
                   ),
                 ),
