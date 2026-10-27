@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/features/media/data/source_discovery_service.dart';
 import 'package:omni_ai/features/media/data/video_source_engine.dart';
@@ -21,6 +23,39 @@ void main() {
       expect(results, hasLength(1));
       expect(results.single.status, DiscoveredSourceStatus.available);
       expect(service.candidates.single.id, 'demo-source');
+    });
+
+    test('clear cancels a discovery result that is still being probed', () async {
+      final probeStarted = Completer<void>();
+      final probeResult = Completer<DiscoveredSourceCandidate>();
+      final engine = VideoSourceEngine([]);
+      final service = SourceDiscoveryService(
+        adapters: [
+          _FakeAdapter([
+            _candidate(
+              capabilities: const {DiscoveredSourceCapability.playback},
+            ),
+          ]),
+        ],
+        probe: _BlockingProbe(probeStarted, probeResult.future),
+        videoSourceEngine: engine,
+        providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
+      );
+
+      final scan = service.discoverAndCheck();
+      await probeStarted.future;
+      service.clear();
+      probeResult.complete(
+        _candidate(
+          capabilities: const {DiscoveredSourceCapability.playback},
+        ).copyWith(status: DiscoveredSourceStatus.available),
+      );
+
+      final results = await scan;
+
+      expect(results, isEmpty);
+      expect(service.candidates, isEmpty);
+      expect(engine.providerIds, isEmpty);
     });
 
     test(
@@ -511,6 +546,21 @@ class _ThrowingAdapter implements SourceDiscoveryAdapter {
     required Set<PlaybackMediaKind> mediaKinds,
   }) async {
     throw Exception('discovery backend unavailable');
+  }
+}
+
+class _BlockingProbe implements DiscoveredSourceProbe {
+  _BlockingProbe(this.started, this.result);
+
+  final Completer<void> started;
+  final Future<DiscoveredSourceCandidate> result;
+
+  @override
+  Future<DiscoveredSourceCandidate> check(
+    DiscoveredSourceCandidate candidate,
+  ) {
+    if (!started.isCompleted) started.complete();
+    return result;
   }
 }
 
