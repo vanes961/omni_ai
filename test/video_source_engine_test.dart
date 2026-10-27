@@ -2,6 +2,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:omni_ai/features/media/data/video_source_engine.dart';
 import 'package:omni_ai/features/media/data/video_source_provider.dart';
 
+class _TitleAwareProvider implements VideoSourceProvider {
+  int calls = 0;
+
+  @override
+  String get id => 'title-aware';
+
+  @override
+  Future<PlaybackResolution> resolve(PlaybackRequest request) async {
+    calls++;
+    return PlaybackResolution(
+      providerId: id,
+      variants: [PlaybackVariant(url: 'https://cdn.example/${request.title}.mp4')],
+    );
+  }
+}
+
 class _FakeProvider implements VideoSourceProvider {
   _FakeProvider(this.id, this.resolution);
 
@@ -92,6 +108,24 @@ void main() {
 
     engine.clearCache();
     await engine.resolve(request);
+    expect(provider.calls, 2);
+  });
+
+  test('does not reuse a cached result when the title changes', () async {
+    final provider = _TitleAwareProvider();
+    final engine = VideoSourceEngine([provider]);
+
+    final first = await engine.resolve(request);
+    final second = await engine.resolve(
+      const PlaybackRequest(
+        mediaId: 'kinopoisk:123',
+        title: 'Другой фильм',
+        kind: PlaybackMediaKind.movie,
+      ),
+    );
+
+    expect(first.variants.single.url, 'https://cdn.example/Пример.mp4');
+    expect(second.variants.single.url, 'https://cdn.example/Другой фильм.mp4');
     expect(provider.calls, 2);
   });
 
