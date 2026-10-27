@@ -82,6 +82,16 @@ void main() {
     expect(identical(updatedService.mediaSourceEngine, originalEngine), isTrue);
   });
 
+  test('rebuilds the default catalog engine when the PoiskKino key changes', () {
+    final originalEngine = service.mediaSourceEngine;
+    final updatedService = service
+        .withAccessToken('updated-tmdb-token')
+        .withKinopoiskApiKey('updated-poiskkino-key');
+
+    expect(identical(updatedService.mediaSourceEngine, originalEngine), isFalse);
+    expect(updatedService.kinopoiskApiKey, 'updated-poiskkino-key');
+  });
+
   test('does not expose fabricated demo titles in the local catalog', () {
     expect(service.catalog, isEmpty);
     expect(service.trending, isEmpty);
