@@ -113,10 +113,11 @@ class SourceDiscoveryService {
       // Do not reconcile old entries unless discovery completed successfully.
       List<DiscoveredSourceCandidate> discovered;
       try {
-        discovered = (await adapter
-                .discover(mediaKinds: mediaKinds)
-                .timeout(const Duration(seconds: 15)))
-            .toList(growable: false);
+        discovered =
+            (await adapter
+                    .discover(mediaKinds: mediaKinds)
+                    .timeout(const Duration(seconds: 15)))
+                .toList(growable: false);
       } on Object {
         // A failed discovery backend must not block other backends or erase
         // its last known candidates after a temporary outage.
