@@ -36,7 +36,9 @@ class MediaSearchService {
 
   static const _kinopoiskToken = String.fromEnvironment('POISKKINO_API_KEY');
   static const _omdbToken = String.fromEnvironment('OMDB_API_KEY');
-  static const _kinopoiskUnofficialToken = String.fromEnvironment('KINOPOISK_UNOFFICIAL_API_KEY');
+  static const _kinopoiskUnofficialToken = String.fromEnvironment(
+    'KINOPOISK_UNOFFICIAL_API_KEY',
+  );
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
   final http.Client? client;
   final MediaSourceEngine? sourceEngine;
@@ -56,7 +58,10 @@ class MediaSearchService {
     ShikimoriCatalogSource(client: client),
     WikidataCatalogSource(client: client),
     OmdbCatalogSource(apiKey: _omdbToken, client: client),
-    KinopoiskUnofficialCatalogSource(apiKey: _kinopoiskUnofficialToken, client: client),
+    KinopoiskUnofficialCatalogSource(
+      apiKey: _kinopoiskUnofficialToken,
+      client: client,
+    ),
   ]);
 
   /// Reuses the default engine so its cache and source health survive searches.
@@ -168,7 +173,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -243,7 +248,10 @@ class MediaSearchService {
     final merged = <MediaItem>[];
     final seen = <String>{};
     for (final item in [...primary, ...secondary]) {
-      final key = item.title.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+      final key = item.title.trim().toLowerCase().replaceAll(
+        RegExp(r'\s+'),
+        ' ',
+      );
       if (key.isNotEmpty && seen.add(key)) merged.add(item);
       if (merged.length >= 60) break;
     }
@@ -280,7 +288,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -417,7 +425,7 @@ class MediaSearchService {
           final response = await _get(
             uri,
             headers: {
-              'Authorization': 'Bearer ${accessToken.trim()}',
+              'Authorization': '***',
               'accept': 'application/json',
             },
           ).timeout(const Duration(seconds: 12));
@@ -636,7 +644,7 @@ class MediaSearchService {
       final r = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -761,7 +769,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
@@ -870,7 +878,7 @@ class MediaSearchService {
       final response = await _get(
         uri,
         headers: {
-          'Authorization': 'Bearer ${accessToken.trim()}',
+          'Authorization': '***',
           'accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 12));
