@@ -9,6 +9,7 @@ import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 import 'package:omni_ai/features/media/data/internet_archive_playback_provider.dart';
+import 'package:omni_ai/features/media/data/peertube_directory_playback_provider.dart';
 import 'package:omni_ai/features/media/data/source_discovery_service.dart';
 import 'package:omni_ai/features/media/data/video_source_engine.dart';
 import 'package:omni_ai/features/media/data/wikimedia_commons_playback_provider.dart';
@@ -99,12 +100,16 @@ class _DashboardPageState extends State<DashboardPage> {
       adapters: [
         InternetArchiveDiscoveryAdapter(),
         WikimediaCommonsDiscoveryAdapter(),
+        PeerTubeDirectoryDiscoveryAdapter(),
       ],
       probe: CompositeDiscoveredSourceProbe({
         'internet-archive': InternetArchiveSourceProbe(
           client: _mediaSourceHttpClient,
         ),
         'wikimedia-commons': WikimediaCommonsSourceProbe(
+          client: _mediaSourceHttpClient,
+        ),
+        'peertube-directory': PeerTubeDirectoryProbe(
           client: _mediaSourceHttpClient,
         ),
       }),
@@ -114,6 +119,9 @@ class _DashboardPageState extends State<DashboardPage> {
           client: _mediaSourceHttpClient,
         ),
         'wikimedia-commons' => WikimediaCommonsPlaybackProvider(
+          client: _mediaSourceHttpClient,
+        ),
+        'peertube-directory' => PeerTubeDirectoryPlaybackProvider(
           client: _mediaSourceHttpClient,
         ),
         _ => null,
