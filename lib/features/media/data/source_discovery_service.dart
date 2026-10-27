@@ -108,16 +108,22 @@ class SourceDiscoveryService {
     },
   }) async {
     for (final adapter in _adapters) {
-      Iterable<DiscoveredSourceCandidate> discovered;
+      // Materialize the complete response inside the guarded block. Some
+      // adapters expose lazy iterables that can throw while being iterated.
+      // Do not reconcile old entries unless discovery completed successfully.
+      List<DiscoveredSourceCandidate> discovered;
       try {
-        discovered = await adapter
-            .discover(mediaKinds: mediaKinds)
-            .timeout(const Duration(seconds: 15));
+        discovered = (await adapter
+                .discover(mediaKinds: mediaKinds)
+                .timeout(const Duration(seconds: 15)))
+            .toList(growable: false);
       } on Object {
-        // A failed discovery backend must not block other backends.
+        // A failed discovery backend must not block other backends or erase
+        // its last known candidates after a temporary outage.
         continue;
       }
 
+      final seenIds = discovered.map((candidate) => candidate.id).toSet();
       for (final candidate in discovered) {
         if (!candidate.hasValidWebAddress ||
             candidate.id.trim().isEmpty ||
@@ -168,6 +174,21 @@ class SourceDiscoveryService {
           _candidates[candidate.id] = unavailable;
           _removeRegisteredProvider(candidate.id);
         }
+      }
+
+      // A successful complete scan is authoritative for this adapter. Remove
+      // entries it no longer reports, including any playback provider we own.
+      final staleIds = _candidates.values
+          .where(
+            (candidate) =>
+                candidate.discoveredBy == adapter.id &&
+                !seenIds.contains(candidate.id),
+          )
+          .map((candidate) => candidate.id)
+          .toList(growable: false);
+      for (final staleId in staleIds) {
+        _candidates.remove(staleId);
+        _removeRegisteredProvider(staleId);
       }
     }
     return candidates;
