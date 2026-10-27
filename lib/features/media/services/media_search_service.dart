@@ -16,7 +16,7 @@ typedef FranchiseChronologyResolver =
     });
 
 class MediaSearchService {
-  const MediaSearchService({
+  MediaSearchService({
     this.accessToken = _token,
     this.kinopoiskApiKey = _kinopoiskToken,
     this.franchiseChronologyResolver,
@@ -33,12 +33,16 @@ class MediaSearchService {
   /// define remains a fallback for development builds only.
   final String kinopoiskApiKey;
 
-  MediaSourceEngine get _mediaSources =>
-      sourceEngine ??
-      MediaSourceEngine([
-        AniLibriaCatalogSource(client: client),
-        KinopoiskCatalogSource(apiKey: kinopoiskApiKey, client: client),
-      ]);
+  late final MediaSourceEngine _defaultMediaSources = MediaSourceEngine([
+    AniLibriaCatalogSource(client: client),
+    KinopoiskCatalogSource(apiKey: kinopoiskApiKey, client: client),
+  ]);
+
+  /// Reuses the default engine so its cache and source health survive searches.
+  MediaSourceEngine get mediaSourceEngine =>
+      sourceEngine ?? _defaultMediaSources;
+
+  MediaSourceEngine get _mediaSources => mediaSourceEngine;
 
   /// Keeps the same HTTP transport while replacing the credential loaded from
   /// secure device storage. This makes runtime credentials testable and avoids
@@ -48,7 +52,7 @@ class MediaSearchService {
     kinopoiskApiKey: kinopoiskApiKey,
     franchiseChronologyResolver: franchiseChronologyResolver,
     client: client,
-    sourceEngine: sourceEngine,
+    sourceEngine: sourceEngine ?? _defaultMediaSources,
   );
 
   /// Rebuilds the default catalog engine with a runtime PoiskKino key.
