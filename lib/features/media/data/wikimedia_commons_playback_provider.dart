@@ -15,7 +15,8 @@ class WikimediaCommonsDiscoveryAdapter implements SourceDiscoveryAdapter {
     required Set<PlaybackMediaKind> mediaKinds,
   }) async {
     if (!mediaKinds.any(
-      (kind) => kind == PlaybackMediaKind.movie || kind == PlaybackMediaKind.anime,
+      (kind) =>
+          kind == PlaybackMediaKind.movie || kind == PlaybackMediaKind.anime,
     )) {
       return const <DiscoveredSourceCandidate>[];
     }
@@ -27,7 +28,8 @@ class WikimediaCommonsDiscoveryAdapter implements SourceDiscoveryAdapter {
         mediaKinds: const {PlaybackMediaKind.movie, PlaybackMediaKind.anime},
         capabilities: const {DiscoveredSourceCapability.playback},
         discoveredBy: id,
-        note: 'Архив свободных медиафайлов; это не каталог коммерческих релизов.',
+        note:
+            'Архив свободных медиафайлов; это не каталог коммерческих релизов.',
       ),
     ];
   }
@@ -59,12 +61,18 @@ class WikimediaCommonsSourceProbe implements DiscoveredSourceProbe {
       'meta': 'siteinfo',
       'format': 'json',
     });
-    final response = await _client.get(uri, headers: const {
-      'User-Agent': 'OMNI_AI/1.0 (open media discovery)',
-      'Accept': 'application/json',
-    }).timeout(const Duration(seconds: 8));
+    final response = await _client
+        .get(
+          uri,
+          headers: const {
+            'User-Agent': 'OMNI_AI/1.0 (open media discovery)',
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(const Duration(seconds: 8));
 
-    final available = response.statusCode >= 200 &&
+    final available =
+        response.statusCode >= 200 &&
         response.statusCode < 300 &&
         response.body.isNotEmpty;
     return candidate.copyWith(
@@ -130,10 +138,15 @@ class WikimediaCommonsPlaybackProvider implements VideoSourceProvider {
     });
 
     try {
-      final response = await _client.get(uri, headers: const {
-        'User-Agent': 'OMNI_AI/1.0 (open media discovery)',
-        'Accept': 'application/json',
-      }).timeout(const Duration(seconds: 10));
+      final response = await _client
+          .get(
+            uri,
+            headers: const {
+              'User-Agent': 'OMNI_AI/1.0 (open media discovery)',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
       if (response.statusCode != 200) {
         return PlaybackResolution(
           providerId: id,
@@ -169,11 +182,13 @@ class WikimediaCommonsPlaybackProvider implements VideoSourceProvider {
 
         final metadata = info['extmetadata'];
         if (metadata is! Map || !_hasAllowedLicense(metadata)) continue;
-        variants.add(PlaybackVariant(
-          url: videoUri.toString(),
-          format: _format(videoUri.path),
-          quality: 'Auto',
-        ));
+        variants.add(
+          PlaybackVariant(
+            url: videoUri.toString(),
+            format: _format(videoUri.path),
+            quality: 'Auto',
+          ),
+        );
         if (variants.length >= 5) break;
       }
 
@@ -195,8 +210,9 @@ class WikimediaCommonsPlaybackProvider implements VideoSourceProvider {
 
   bool _hasAllowedLicense(Map metadata) {
     final licenseUrl = _metadataValue(metadata['LicenseUrl']).toLowerCase();
-    final licenseShortName =
-        _metadataValue(metadata['LicenseShortName']).toLowerCase();
+    final licenseShortName = _metadataValue(
+      metadata['LicenseShortName'],
+    ).toLowerCase();
     final combined = '$licenseUrl $licenseShortName';
     return _allowedLicenseFragments.any(combined.contains);
   }
@@ -208,8 +224,7 @@ class WikimediaCommonsPlaybackProvider implements VideoSourceProvider {
 
   bool _isVideoPath(String path) {
     final lower = path.toLowerCase();
-    return const ['.webm', '.ogv', '.ogg', '.mp4']
-        .any(lower.endsWith);
+    return const ['.webm', '.ogv', '.ogg', '.mp4'].any(lower.endsWith);
   }
 
   String _format(String path) {
