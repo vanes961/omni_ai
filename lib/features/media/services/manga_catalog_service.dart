@@ -74,10 +74,15 @@ class MangaCatalogService {
           'includes[]': ['cover_art', 'author'],
         },
       );
-      final response = await _client.get(uri, headers: const {
-        'accept': 'application/json',
-        'User-Agent': 'OMNI-AI/1.0 (MangaDex catalogue client)',
-      }).timeout(timeout);
+      final response = await _client
+          .get(
+            uri,
+            headers: const {
+              'accept': 'application/json',
+              'User-Agent': 'OMNI-AI/1.0 (MangaDex catalogue client)',
+            },
+          )
+          .timeout(timeout);
       if (response.statusCode == 200) {
         results.addAll(parseSearchResponse(jsonDecode(response.body)));
       }
@@ -103,20 +108,22 @@ class MangaCatalogService {
           _ => '',
         };
         if (sourceUrl.isEmpty) continue;
-        results.add(MangaCatalogItem(
-          id: item.id,
-          title: item.title,
-          description: item.description,
-          status: '',
-          sourceUrl: sourceUrl,
-          coverUrl: item.posterUrl,
-          authors: const [],
-          year: item.categories
-              .map((value) => int.tryParse(value))
-              .whereType<int>()
-              .firstOrNull,
-          anilistId: source == 'anilist' ? int.tryParse(sourceId) : null,
-        ));
+        results.add(
+          MangaCatalogItem(
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            status: '',
+            sourceUrl: sourceUrl,
+            coverUrl: item.posterUrl,
+            authors: const [],
+            year: item.categories
+                .map((value) => int.tryParse(value))
+                .whereType<int>()
+                .firstOrNull,
+            anilistId: source == 'anilist' ? int.tryParse(sourceId) : null,
+          ),
+        );
       }
     } on Object {
       // Individual providers are isolated by MediaSourceEngine.
@@ -125,7 +132,10 @@ class MangaCatalogService {
     final seen = <String>{};
     final unique = <MangaCatalogItem>[];
     for (final item in results) {
-      final key = item.title.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+      final key = item.title.trim().toLowerCase().replaceAll(
+        RegExp(r'\s+'),
+        ' ',
+      );
       if (key.isNotEmpty && seen.add(key)) unique.add(item);
       if (unique.length >= limit.clamp(1, 50)) break;
     }
