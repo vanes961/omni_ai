@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:omni_ai/features/media/data/video_source_engine.dart';
 import 'package:omni_ai/features/media/data/video_source_provider.dart';
 
@@ -74,6 +78,52 @@ abstract interface class DiscoveredSourceProbe {
 typedef DiscoveredProviderFactory =
     VideoSourceProvider? Function(DiscoveredSourceCandidate candidate);
 
+/// Persists manually rejected source IDs between app launches.
+abstract interface class SourceDiscoveryRejectionStore {
+  Future<Map<String, String>> load();
+  Future<void> save(Map<String, String> rejections);
+}
+
+class SharedPreferencesSourceDiscoveryRejectionStore
+    implements SourceDiscoveryRejectionStore {
+  SharedPreferencesSourceDiscoveryRejectionStore({this.store});
+
+  static const _key = 'omni_ai.media_source_rejections.v1';
+  final SharedPreferencesAsync? store;
+
+  SharedPreferencesAsync get _preferences => store ?? SharedPreferencesAsync();
+
+  @override
+  Future<Map<String, String>> load() async {
+    try {
+      final encoded = await _preferences.getString(_key);
+      if (encoded == null || encoded.isEmpty) return <String, String>{};
+      final decoded = jsonDecode(encoded);
+      if (decoded is! Map) return <String, String>{};
+      final result = <String, String>{};
+      for (final entry in decoded.entries) {
+        if (entry.key is String &&
+            entry.value is String &&
+            (entry.key as String).trim().isNotEmpty) {
+          result[entry.key as String] = entry.value as String;
+        }
+      }
+      return result;
+    } on Object {
+      return <String, String>{};
+    }
+  }
+
+  @override
+  Future<void> save(Map<String, String> rejections) async {
+    try {
+      await _preferences.setString(_key, jsonEncode(rejections));
+    } on Object {
+      // Persistence must never block media playback.
+    }
+  }
+}
+
 /// Coordinates discovery, validation, registration, and runtime status.
 ///
 /// Catalog-only candidates are recorded here but are never registered with the
@@ -85,15 +135,20 @@ class SourceDiscoveryService {
     required this.probe,
     this.videoSourceEngine,
     this.providerFactory,
-  }) : _adapters = List<SourceDiscoveryAdapter>.unmodifiable(adapters);
+    SourceDiscoveryRejectionStore? rejectionStore,
+  }) : rejectionStore = rejectionStore ??
+           SharedPreferencesSourceDiscoveryRejectionStore(),
+       _adapters = List<SourceDiscoveryAdapter>.unmodifiable(adapters);
 
   final List<SourceDiscoveryAdapter> _adapters;
   final DiscoveredSourceProbe probe;
+  final SourceDiscoveryRejectionStore rejectionStore;
   final VideoSourceEngine? videoSourceEngine;
   final DiscoveredProviderFactory? providerFactory;
   final Map<String, DiscoveredSourceCandidate> _candidates = {};
   final Set<String> _registeredProviderIds = {};
   final Map<String, String> _manualRejections = {};
+  Future<void>? _rejectionsLoad;
 
   List<DiscoveredSourceCandidate> get candidates =>
       List<DiscoveredSourceCandidate>.unmodifiable(_candidates.values);
@@ -108,6 +163,7 @@ class SourceDiscoveryService {
       PlaybackMediaKind.anime,
     },
   }) async {
+    await (_rejectionsLoad ??= _loadRejections());
     for (final adapter in _adapters) {
       // Materialize the complete response inside the guarded block. Some
       // adapters expose lazy iterables that can throw while being iterated.
@@ -254,12 +310,25 @@ class SourceDiscoveryService {
     videoSourceEngine?.unregisterProvider(providerId);
   }
 
+  Future<void> _loadRejections() async {
+    try {
+      _manualRejections.addAll(await rejectionStore.load());
+    } on Object {
+      // Discovery remains available if preferences cannot be read.
+    }
+  }
+
+  void _persistRejections() {
+    unawaited(rejectionStore.save(Map<String, String>.of(_manualRejections)));
+  }
+
   /// Allows a caller to disable a source without deleting discovery history.
   void reject(String candidateId, {String? reason}) {
     final candidate = _candidates[candidateId];
     if (candidate == null) return;
     final rejectionReason = reason ?? 'Источник отключён.';
     _manualRejections[candidateId] = rejectionReason;
+    _persistRejections();
     _candidates[candidateId] = candidate.copyWith(
       status: DiscoveredSourceStatus.rejected,
       checkedAt: DateTime.now(),
@@ -271,6 +340,7 @@ class SourceDiscoveryService {
   /// Re-enables a manually rejected source for validation on the next scan.
   void allow(String candidateId) {
     _manualRejections.remove(candidateId);
+    _persistRejections();
     final candidate = _candidates[candidateId];
     if (candidate == null ||
         candidate.status != DiscoveredSourceStatus.rejected) {
@@ -290,6 +360,7 @@ class SourceDiscoveryService {
     }
     _registeredProviderIds.clear();
     _manualRejections.clear();
+    _persistRejections();
     _candidates.clear();
   }
 }
