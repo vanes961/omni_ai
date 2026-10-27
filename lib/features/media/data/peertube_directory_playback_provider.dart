@@ -90,7 +90,7 @@ class PeerTubeDirectoryPlaybackProvider implements VideoSourceProvider {
 
   final http.Client _client;
 
-  static const _acceptedLicenceIds = {2, 3, 8};
+  static const _acceptedLicenceIds = {1, 2, 7, 8};
   static const _directoryHost = 'instances.joinpeertube.org';
 
   @override

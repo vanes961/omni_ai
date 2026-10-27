@@ -73,7 +73,7 @@ void main() {
           jsonEncode({
             'data': [
               {
-                'licence': {'id': 2, 'label': 'Attribution'},
+                'licence': {'id': 2, 'label': 'Attribution - Share Alike'},
                 'files': [
                   {
                     'fileUrl': 'https://videos.example.org/static/open.mp4',
@@ -91,7 +91,7 @@ void main() {
                 ],
               },
               {
-                'licence': {'id': 1, 'label': 'Unknown'},
+                'licence': {'id': 9, 'label': 'All Rights Reserved'},
                 'files': [
                   {'fileUrl': 'https://videos.example.org/static/unknown.mp4'},
                 ],
