@@ -101,17 +101,21 @@ class _DashboardPageState extends State<DashboardPage> {
         WikimediaCommonsDiscoveryAdapter(),
       ],
       probe: CompositeDiscoveredSourceProbe({
-        'internet-archive':
-            InternetArchiveSourceProbe(client: _mediaSourceHttpClient),
-        'wikimedia-commons':
-            WikimediaCommonsSourceProbe(client: _mediaSourceHttpClient),
+        'internet-archive': InternetArchiveSourceProbe(
+          client: _mediaSourceHttpClient,
+        ),
+        'wikimedia-commons': WikimediaCommonsSourceProbe(
+          client: _mediaSourceHttpClient,
+        ),
       }),
       videoSourceEngine: _videoSourceEngine,
       providerFactory: (candidate) => switch (candidate.id) {
-        'internet-archive' =>
-          InternetArchivePlaybackProvider(client: _mediaSourceHttpClient),
-        'wikimedia-commons' =>
-          WikimediaCommonsPlaybackProvider(client: _mediaSourceHttpClient),
+        'internet-archive' => InternetArchivePlaybackProvider(
+          client: _mediaSourceHttpClient,
+        ),
+        'wikimedia-commons' => WikimediaCommonsPlaybackProvider(
+          client: _mediaSourceHttpClient,
+        ),
         _ => null,
       },
     );
