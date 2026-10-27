@@ -125,7 +125,7 @@ class MangaCatalogService {
     final seen = <String>{};
     final unique = <MangaCatalogItem>[];
     for (final item in results) {
-      final key = item.title.trim().toLowerCase().replaceAll(RegExp(r'\\s+'), ' ');
+      final key = item.title.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
       if (key.isNotEmpty && seen.add(key)) unique.add(item);
       if (unique.length >= limit.clamp(1, 50)) break;
     }
