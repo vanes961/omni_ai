@@ -262,7 +262,8 @@ class SourceDiscoveryService {
   void allow(String candidateId) {
     _manualRejections.remove(candidateId);
     final candidate = _candidates[candidateId];
-    if (candidate == null || candidate.status != DiscoveredSourceStatus.rejected) {
+    if (candidate == null ||
+        candidate.status != DiscoveredSourceStatus.rejected) {
       return;
     }
     _candidates[candidateId] = candidate.copyWith(
