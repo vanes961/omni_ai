@@ -102,6 +102,14 @@ class WikimediaCommonsPlaybackProvider implements VideoSourceProvider {
 
   @override
   Future<PlaybackResolution> resolve(PlaybackRequest request) async {
+    if (request.kind != PlaybackMediaKind.movie &&
+        request.kind != PlaybackMediaKind.anime) {
+      return PlaybackResolution(
+        providerId: id,
+        variants: const [],
+        message: 'Wikimedia Commons подключён только для фильмов и аниме.',
+      );
+    }
     if (request.title.trim().isEmpty) {
       return PlaybackResolution(
         providerId: id,
