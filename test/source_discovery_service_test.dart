@@ -25,7 +25,9 @@ void main() {
       expect(service.candidates.single.id, 'demo-source');
     });
 
-    test('clear cancels a discovery result that is still being probed', () async {
+    test(
+      'clear cancels a discovery result that is still being probed',
+      () async {
       final probeStarted = Completer<void>();
       final probeResult = Completer<DiscoveredSourceCandidate>();
       final engine = VideoSourceEngine([]);
@@ -56,7 +58,8 @@ void main() {
       expect(results, isEmpty);
       expect(service.candidates, isEmpty);
       expect(engine.providerIds, isEmpty);
-    });
+      },
+    );
 
     test(
       'registers only checked playback-capable providers with the engine',
