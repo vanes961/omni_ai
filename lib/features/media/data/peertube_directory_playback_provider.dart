@@ -22,7 +22,8 @@ class PeerTubeDirectoryDiscoveryAdapter implements SourceDiscoveryAdapter {
         mediaKinds: mediaKinds,
         capabilities: const {DiscoveredSourceCapability.playback},
         discoveredBy: id,
-        note: 'Поиск по публичному каталогу; лицензия и видеопоток проверяются отдельно.',
+        note:
+            'Поиск по публичному каталогу; лицензия и видеопоток проверяются отдельно.',
       ),
     ];
   }
@@ -61,7 +62,8 @@ class PeerTubeDirectoryProbe implements DiscoveredSourceProbe {
           ? jsonDecode(response.body)
           : null;
       final data = decoded is Map ? decoded['data'] : null;
-      final valid = data is List &&
+      final valid =
+          data is List &&
           data.any((item) => item is Map && _validHost(item['host']));
       return candidate.copyWith(
         status: valid
