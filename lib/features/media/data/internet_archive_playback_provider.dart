@@ -56,11 +56,11 @@ class InternetArchiveSourceProbe implements DiscoveredSourceProbe {
         .get(Uri.https('archive.org', '/'))
         .timeout(const Duration(seconds: 8));
     return candidate.copyWith(
-      status: response.statusCode >= 200 && response.statusCode < 500
+      status: response.statusCode >= 200 && response.statusCode < 300
           ? DiscoveredSourceStatus.available
           : DiscoveredSourceStatus.unavailable,
       checkedAt: DateTime.now(),
-      note: response.statusCode >= 200 && response.statusCode < 500
+      note: response.statusCode >= 200 && response.statusCode < 300
           ? 'Каталог доступен; видеопотоки проверяются отдельно.'
           : 'Каталог вернул HTTP ${response.statusCode}.',
     );
