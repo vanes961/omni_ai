@@ -96,14 +96,9 @@ class _MediaPageState extends State<MediaPage> {
       widget.sourceDiscoveryService?.videoSourceEngine;
 
   Future<void> _loadCatalogToken() async {
-    // Start from the injected/build-time configuration immediately. Secure
-    // storage can be slow or unavailable in widget tests and on some devices.
-    final initialService = _searchService;
-    if (initialService.isSearchConfigured) {
-      unawaited(_loadTrending());
-      unawaited(_loadRecommendations());
-    }
-
+    // Resolve the secure token before issuing catalog requests. Starting a
+    // build-time request first can race the secure-token request and overwrite
+    // the UI with results fetched using stale credentials.
     var secureTokenApplied = false;
     try {
       final token = await _catalogTokenStore.readToken();
@@ -125,9 +120,9 @@ class _MediaPageState extends State<MediaPage> {
     }
 
     if (!mounted) return;
-    // Reload only when the secure token replaced the initial configuration.
-    // Otherwise the first request is already running (or there is no token).
-    if (secureTokenApplied) {
+    // The service now has the secure token when one exists, or its original
+    // build-time configuration otherwise. Only issue the first request now.
+    if (secureTokenApplied || _searchService.isSearchConfigured) {
       unawaited(_loadTrending());
       unawaited(_loadRecommendations());
     }
