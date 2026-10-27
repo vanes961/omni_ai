@@ -91,10 +91,23 @@ class _DashboardPageState extends State<DashboardPage> {
       verifyEvidence: chronologyResearcher.verifyEvidence,
     );
     _franchiseChronologyResolver = chronologyCoordinator.resolve;
+
+    _mediaSourceHttpClient = http.Client();
+    _videoSourceEngine = VideoSourceEngine(const []);
+    _sourceDiscoveryService = SourceDiscoveryService(
+      adapters: [InternetArchiveDiscoveryAdapter()],
+      probe: InternetArchiveSourceProbe(client: _mediaSourceHttpClient),
+      videoSourceEngine: _videoSourceEngine,
+      providerFactory: (candidate) => candidate.id == 'internet-archive'
+          ? InternetArchivePlaybackProvider(client: _mediaSourceHttpClient)
+          : null,
+    );
+    unawaited(_sourceDiscoveryService.discoverAndCheck());
   }
 
   @override
   void dispose() {
+    _mediaSourceHttpClient.close();
     if (_ownsDependencies) unawaited(_disposeOwnedAI());
     super.dispose();
   }
