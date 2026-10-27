@@ -125,12 +125,22 @@ class SourceDiscoveryService {
         continue;
       }
 
-      final seenIds = discovered.map((candidate) => candidate.id).toSet();
+      final seenIds = discovered
+          .where((candidate) => candidate.discoveredBy == adapter.id)
+          .map((candidate) => candidate.id)
+          .toSet();
       for (final candidate in discovered) {
+        // Adapter identity is a trust boundary. A malformed adapter response
+        // must not overwrite or unregister another adapter's source/provider.
+        if (candidate.discoveredBy != adapter.id) continue;
+        final existing = _candidates[candidate.id];
+        if (existing != null && existing.discoveredBy != adapter.id) {
+          continue;
+        }
+
         if (!candidate.hasValidWebAddress ||
             candidate.id.trim().isEmpty ||
-            candidate.name.trim().isEmpty ||
-            candidate.discoveredBy != adapter.id) {
+            candidate.name.trim().isEmpty) {
           final rejected = candidate.copyWith(
             status: DiscoveredSourceStatus.rejected,
             checkedAt: DateTime.now(),
