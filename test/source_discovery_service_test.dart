@@ -192,6 +192,36 @@ void main() {
       expect(engine.providerIds, ['demo-source']);
     });
 
+    test('persists manual rejections across service instances', () async {
+      final store = _FakeRejectionStore();
+      final first = SourceDiscoveryService(
+        adapters: [_FakeAdapter([_candidate()])],
+        probe: _FakeProbe(
+          (candidate) => candidate.copyWith(
+            status: DiscoveredSourceStatus.available,
+          ),
+        ),
+        rejectionStore: store,
+      );
+      await first.discoverAndCheck();
+      first.reject('demo-source', reason: 'Отключён пользователем');
+      await Future<void>.delayed(Duration.zero);
+
+      final second = SourceDiscoveryService(
+        adapters: [_FakeAdapter([_candidate()])],
+        probe: _FakeProbe(
+          (candidate) => candidate.copyWith(
+            status: DiscoveredSourceStatus.available,
+          ),
+        ),
+        rejectionStore: store,
+      );
+      final results = await second.discoverAndCheck();
+
+      expect(results.single.status, DiscoveredSourceStatus.rejected);
+      expect(results.single.note, 'Отключён пользователем');
+    });
+
     test('rejects probe results that change source identity', () async {
       final engine = VideoSourceEngine([]);
       final service = SourceDiscoveryService(
@@ -485,4 +515,16 @@ class _FakeVideoProvider implements VideoSourceProvider {
   @override
   Future<PlaybackResolution> resolve(PlaybackRequest request) async =>
       PlaybackResolution(providerId: id, variants: const []);
+}
+
+class _FakeRejectionStore implements SourceDiscoveryRejectionStore {
+  Map<String, String> values = {};
+
+  @override
+  Future<Map<String, String>> load() async => Map<String, String>.of(values);
+
+  @override
+  Future<void> save(Map<String, String> rejections) async {
+    values = Map<String, String>.of(rejections);
+  }
 }
