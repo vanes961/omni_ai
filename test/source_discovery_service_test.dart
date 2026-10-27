@@ -240,6 +240,54 @@ void main() {
       );
     });
 
+    test('removes stale candidates after a successful complete scan', () async {
+      final adapter = _MutableAdapter([
+        _candidate(
+          capabilities: const {DiscoveredSourceCapability.playback},
+        ),
+      ]);
+      final engine = VideoSourceEngine([]);
+      final service = SourceDiscoveryService(
+        adapters: [adapter],
+        probe: _FakeProbe(
+          (candidate) => candidate.copyWith(
+            status: DiscoveredSourceStatus.available,
+          ),
+        ),
+        videoSourceEngine: engine,
+        providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
+      );
+
+      await service.discoverAndCheck();
+      expect(engine.providerIds, ['demo-source']);
+
+      adapter.results = const [];
+      final results = await service.discoverAndCheck();
+
+      expect(results, isEmpty);
+      expect(engine.providerIds, isEmpty);
+    });
+
+    test('preserves last known candidates when discovery fails', () async {
+      final adapter = _MutableAdapter([_candidate()]);
+      final service = SourceDiscoveryService(
+        adapters: [adapter],
+        probe: _FakeProbe(
+          (candidate) => candidate.copyWith(
+            status: DiscoveredSourceStatus.available,
+          ),
+        ),
+      );
+
+      await service.discoverAndCheck();
+      adapter.fail = true;
+      final results = await service.discoverAndCheck();
+
+      expect(results, hasLength(1));
+      expect(results.single.id, 'demo-source');
+      expect(results.single.status, DiscoveredSourceStatus.available);
+    });
+
     test('clear removes only providers registered by discovery', () async {
       final baseProvider = _FakeVideoProvider('base-provider');
       final engine = VideoSourceEngine([baseProvider]);
@@ -297,6 +345,24 @@ class _FakeAdapter implements SourceDiscoveryAdapter {
   Future<Iterable<DiscoveredSourceCandidate>> discover({
     required Set<PlaybackMediaKind> mediaKinds,
   }) async => results;
+}
+
+class _MutableAdapter implements SourceDiscoveryAdapter {
+  _MutableAdapter(this.results);
+
+  Iterable<DiscoveredSourceCandidate> results;
+  bool fail = false;
+
+  @override
+  String get id => 'fake-adapter';
+
+  @override
+  Future<Iterable<DiscoveredSourceCandidate>> discover({
+    required Set<PlaybackMediaKind> mediaKinds,
+  }) async {
+    if (fail) throw Exception('temporary discovery failure');
+    return results;
+  }
 }
 
 class _ChangingCapabilityAdapter implements SourceDiscoveryAdapter {
