@@ -36,6 +36,7 @@ class MediaSearchService {
 
   static const _kinopoiskToken = String.fromEnvironment('POISKKINO_API_KEY');
   static const _omdbToken = String.fromEnvironment('OMDB_API_KEY');
+  static const _kinopoiskUnofficialToken = String.fromEnvironment('KINOPOISK_UNOFFICIAL_API_KEY');
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
   final http.Client? client;
   final MediaSourceEngine? sourceEngine;
@@ -55,6 +56,7 @@ class MediaSearchService {
     ShikimoriCatalogSource(client: client),
     WikidataCatalogSource(client: client),
     OmdbCatalogSource(apiKey: _omdbToken, client: client),
+    KinopoiskUnofficialCatalogSource(apiKey: _kinopoiskUnofficialToken, client: client),
   ]);
 
   /// Reuses the default engine so its cache and source health survive searches.
