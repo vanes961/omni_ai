@@ -17,11 +17,11 @@ class InternetArchiveDiscoveryAdapter implements SourceDiscoveryAdapter {
     if (!mediaKinds.contains(PlaybackMediaKind.movie)) {
       return const <DiscoveredSourceCandidate>[];
     }
-    return const [
+    return [
       DiscoveredSourceCandidate(
         id: 'internet-archive',
         name: 'Internet Archive (открыто лицензированные фильмы)',
-        baseUri: Uri(scheme: 'https', host: 'archive.org'),
+        baseUri: Uri.https('archive.org', '/'),
         mediaKinds: {PlaybackMediaKind.movie},
         capabilities: {DiscoveredSourceCapability.playback},
         discoveredBy: 'internet-archive',
