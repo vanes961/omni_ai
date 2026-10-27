@@ -121,6 +121,7 @@ class VideoSourceEngine {
 
   String _cacheKey(PlaybackRequest request) => [
     request.mediaId.trim().toLowerCase(),
+    request.title.trim().toLowerCase(),
     request.kind.name,
     request.season ?? 0,
     request.episode ?? 0,
