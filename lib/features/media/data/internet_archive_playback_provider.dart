@@ -172,7 +172,10 @@ class InternetArchivePlaybackProvider implements VideoSourceProvider {
             continue;
           }
 
-          final encodedName = name.split('/').map(Uri.encodeComponent).join('/');
+          final encodedName = name
+              .split('/')
+              .map(Uri.encodeComponent)
+              .join('/');
           final streamUri = Uri.https(
             'archive.org',
             '/download/$identifier/$encodedName',
