@@ -30,8 +30,8 @@ class MediaSearchService {
     this.franchiseChronologyResolver,
     this.client,
     required this.sourceEngine,
-    required bool usesDefaultMediaSources,
-  }) : _usesDefaultMediaSources = usesDefaultMediaSources;
+    required this._usesDefaultMediaSources,
+  });
 
   static const _kinopoiskToken = String.fromEnvironment('POISKKINO_API_KEY');
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
@@ -63,7 +63,7 @@ class MediaSearchService {
     franchiseChronologyResolver: franchiseChronologyResolver,
     client: client,
     sourceEngine: mediaSourceEngine,
-    usesDefaultMediaSources: _usesDefaultMediaSources,
+    _usesDefaultMediaSources: _usesDefaultMediaSources,
   );
 
   /// Rebuilds the default catalog engine with a runtime PoiskKino key.
