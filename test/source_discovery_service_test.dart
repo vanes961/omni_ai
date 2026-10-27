@@ -168,6 +168,29 @@ void main() {
       expect(results.single.status, DiscoveredSourceStatus.rejected);
     });
 
+    test('rejects HTTP source addresses before probing', () async {
+      var probed = false;
+      final service = SourceDiscoveryService(
+        adapters: [
+          _FakeAdapter([
+            _candidate(uri: Uri.parse('http://example.org')),
+          ]),
+        ],
+        probe: _FakeProbe((candidate) {
+          probed = true;
+          return candidate.copyWith(
+            status: DiscoveredSourceStatus.available,
+          );
+        }),
+      );
+
+      final results = await service.discoverAndCheck();
+
+      expect(probed, isFalse);
+      expect(results.single.status, DiscoveredSourceStatus.rejected);
+      expect(results.single.note, contains('Некорректный адрес'));
+    });
+
     test('continues when one discovery adapter fails', () async {
       final service = SourceDiscoveryService(
         adapters: [
