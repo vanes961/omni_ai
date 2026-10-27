@@ -42,7 +42,7 @@ class PlayerPage extends StatefulWidget {
   const PlayerPage({
     required this.item,
     required this.preferences,
-    this.searchService = const MediaSearchService(),
+    this.searchService,
     this.playerFactory,
     this.torrServerResolver,
     this.videoSourceEngine,
@@ -55,7 +55,7 @@ class PlayerPage extends StatefulWidget {
 
   final MediaItem item;
   final UserPreferences preferences;
-  final MediaSearchService searchService;
+  final MediaSearchService? searchService;
   final MediaPlayerFactory? playerFactory;
   final TorrServerPlaybackResolver? torrServerResolver;
   final VideoSourceEngine? videoSourceEngine;
@@ -141,7 +141,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         setState(() {});
       }
     });
-    _selectedVoiceover = widget.searchService.preferredVoiceover(
+    _selectedVoiceover = (widget.searchService ?? MediaSearchService())
+        .preferredVoiceover(
       widget.item,
       widget.preferences,
     );
