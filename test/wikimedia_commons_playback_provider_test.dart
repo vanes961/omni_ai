@@ -110,6 +110,29 @@ void main() {
       expect(result.variants.single.format, 'webm');
     });
 
+    test('does not resolve series because Commons is not configured for it',
+        () async {
+      var requested = false;
+      final provider = WikimediaCommonsPlaybackProvider(
+        client: MockClient((_) async {
+          requested = true;
+          return http.Response('{}', 200);
+        }),
+      );
+
+      final result = await provider.resolve(
+        const PlaybackRequest(
+          mediaId: 'tmdb:series:1',
+          title: 'Example series',
+          kind: PlaybackMediaKind.series,
+        ),
+      );
+
+      expect(requested, isFalse);
+      expect(result.variants, isEmpty);
+      expect(result.message, contains('только для фильмов и аниме'));
+    });
+
     test('does not return streams when the API request fails', () async {
       final provider = WikimediaCommonsPlaybackProvider(
         client: MockClient((_) async => http.Response('unavailable', 503)),
