@@ -8,6 +8,9 @@ import 'package:omni_ai/core/ai_engine/local/local_model_storage.dart';
 import 'package:omni_ai/core/di/ai_dependencies.dart';
 import 'package:omni_ai/core/di/app_dependencies.dart';
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
+import 'package:omni_ai/features/media/data/internet_archive_playback_provider.dart';
+import 'package:omni_ai/features/media/data/source_discovery_service.dart';
+import 'package:omni_ai/features/media/data/video_source_engine.dart';
 import 'package:omni_ai/features/media/services/franchise_chronology_coordinator.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/media/services/media_catalog_token_store.dart';
@@ -51,6 +54,9 @@ class _DashboardPageState extends State<DashboardPage> {
   late final AppDependencies _chatDependencies;
   late final UserPreferencesStore _preferencesStore;
   late final FranchiseChronologyResolver _franchiseChronologyResolver;
+  late final http.Client _mediaSourceHttpClient;
+  late final VideoSourceEngine _videoSourceEngine;
+  late final SourceDiscoveryService _sourceDiscoveryService;
 
   @override
   void initState() {
@@ -434,6 +440,8 @@ class _DashboardPageState extends State<DashboardPage> {
         searchService: MediaSearchService(
           franchiseChronologyResolver: _franchiseChronologyResolver,
         ),
+        sourceDiscoveryService: _sourceDiscoveryService,
+        videoSourceEngine: _videoSourceEngine,
         onOpenCatalogSettings: () {
           setState(() {
             _selectedTab = 3;
