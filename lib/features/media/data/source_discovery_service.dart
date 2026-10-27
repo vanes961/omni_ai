@@ -165,8 +165,9 @@ class SourceDiscoveryService {
       PlaybackMediaKind.anime,
     },
   }) async {
-    await (_rejectionsLoad ??= _loadRejections());
     final generation = _stateGeneration;
+    await (_rejectionsLoad ??= _loadRejections());
+    if (generation != _stateGeneration) return candidates;
     for (final adapter in _adapters) {
       if (generation != _stateGeneration) return candidates;
       // Materialize the complete response inside the guarded block. Some
