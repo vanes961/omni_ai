@@ -29,6 +29,10 @@ void main() {
       expect(movies.single.capabilities,
           contains(DiscoveredSourceCapability.playback));
       expect(series, isEmpty);
+      final anime = await adapter.discover(
+        mediaKinds: const {PlaybackMediaKind.anime},
+      );
+      expect(anime, isEmpty);
     });
 
     test('returns only direct video URLs with recognized open licenses',
@@ -110,7 +114,7 @@ void main() {
       expect(result.variants.single.format, 'webm');
     });
 
-    test('does not resolve series because Commons is not configured for it',
+    test('does not resolve unsupported series or anime',
         () async {
       var requested = false;
       final provider = WikimediaCommonsPlaybackProvider(
@@ -124,7 +128,7 @@ void main() {
         const PlaybackRequest(
           mediaId: 'tmdb:series:1',
           title: 'Example series',
-          kind: PlaybackMediaKind.series,
+          kind: PlaybackMediaKind.anime,
         ),
       );
 
