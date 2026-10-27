@@ -102,7 +102,6 @@ class _DashboardPageState extends State<DashboardPage> {
           ? InternetArchivePlaybackProvider(client: _mediaSourceHttpClient)
           : null,
     );
-    unawaited(_sourceDiscoveryService.discoverAndCheck());
   }
 
   @override
