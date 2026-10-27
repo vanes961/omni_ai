@@ -65,24 +65,32 @@ class WikimediaCommonsSourceProbe implements DiscoveredSourceProbe {
         .get(
           uri,
           headers: const {
-            'User-Agent': 'OMNI_AI/1.0 (open media discovery)',
+            'User-Agent': 'OMNI_AI/1.0 (https://github.com/vanes961/omni_ai)',
             'Accept': 'application/json',
           },
         )
         .timeout(const Duration(seconds: 8));
 
-    final available =
-        response.statusCode >= 200 &&
-        response.statusCode < 300 &&
-        response.body.isNotEmpty;
+    var apiAvailable = false;
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      try {
+        final decoded = jsonDecode(response.body);
+        apiAvailable =
+            decoded is Map &&
+            decoded['query'] is Map &&
+            (decoded['query'] as Map)['general'] is Map;
+      } on FormatException {
+        apiAvailable = false;
+      }
+    }
     return candidate.copyWith(
-      status: available
+      status: apiAvailable
           ? DiscoveredSourceStatus.available
           : DiscoveredSourceStatus.unavailable,
       checkedAt: DateTime.now(),
-      note: available
-          ? 'API доступен; каждый файл отдельно проверяется по лицензии.'
-          : 'API вернул HTTP ${response.statusCode}.',
+      note: apiAvailable
+          ? 'API отвечает корректно; доступность отдельных видео проверяется отдельно.'
+          : 'API недоступен или вернул некорректный ответ (HTTP ${response.statusCode}).',
     );
   }
 }
@@ -142,7 +150,7 @@ class WikimediaCommonsPlaybackProvider implements VideoSourceProvider {
           .get(
             uri,
             headers: const {
-              'User-Agent': 'OMNI_AI/1.0 (open media discovery)',
+              'User-Agent': 'OMNI_AI/1.0 (https://github.com/vanes961/omni_ai)',
               'Accept': 'application/json',
             },
           )
