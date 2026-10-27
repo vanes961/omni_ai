@@ -425,9 +425,9 @@ class MediaSearchService {
           final response = await _get(
             uri,
             headers: {
-          'Authorization': 'Bearer $accessToken',
-          'accept': 'application/json',
-        },
+              'Authorization': 'Bearer $accessToken',
+              'accept': 'application/json',
+            },
           ).timeout(const Duration(seconds: 12));
           if (response.statusCode != 200) return const <MediaItem>[];
           final decoded = jsonDecode(response.body);
