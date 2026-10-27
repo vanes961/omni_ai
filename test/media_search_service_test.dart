@@ -73,7 +73,7 @@ void main() {
     );
   });
 
-  const service = MediaSearchService();
+  final service = MediaSearchService();
 
   test('does not expose fabricated demo titles in the local catalog', () {
     expect(service.catalog, isEmpty);
