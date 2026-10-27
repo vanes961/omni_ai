@@ -38,7 +38,7 @@ class DiscoveredSourceCandidate {
   final String? note;
 
   bool get hasValidWebAddress =>
-      (baseUri.scheme == 'https' || baseUri.scheme == 'http') &&
+      baseUri.scheme == 'https' &&
       baseUri.host.isNotEmpty &&
       baseUri.userInfo.isEmpty;
 
