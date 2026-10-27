@@ -101,7 +101,8 @@ class InternetArchivePlaybackProvider implements VideoSourceProvider {
       );
     }
 
-    final query = 'title:"${_escapeQuery(request.title.trim())}" AND mediatype:movies';
+    final query =
+        'title:"${_escapeQuery(request.title.trim())}" AND mediatype:movies';
     final searchUri = Uri.https('archive.org', '/advancedsearch.php', {
       'q': query,
       'fl[]': 'identifier,title,year',
@@ -212,8 +213,10 @@ class InternetArchivePlaybackProvider implements VideoSourceProvider {
       value.replaceAll(r'\\', r'\\\\').replaceAll('"', r'\"');
 
   String _qualityFromName(String name) {
-    final match = RegExp(r'(2160|1440|1080|720|480)p', caseSensitive: false)
-        .firstMatch(name);
+    final match = RegExp(
+      r'(2160|1440|1080|720|480)p',
+      caseSensitive: false,
+    ).firstMatch(name);
     return match == null ? 'Auto' : '${match.group(1)}p';
   }
 }
