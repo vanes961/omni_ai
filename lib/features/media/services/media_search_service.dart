@@ -7,6 +7,7 @@ import 'package:omni_ai/features/media/sources/anilibria_catalog_source.dart';
 import 'package:omni_ai/features/media/sources/media_source.dart';
 import 'package:omni_ai/features/media/sources/media_source_engine.dart';
 import 'package:omni_ai/features/media/sources/kinopoisk_catalog_source.dart';
+import 'package:omni_ai/features/media/sources/public_catalog_sources.dart';
 import 'package:omni_ai/features/onboarding/data/user_preferences.dart';
 
 typedef FranchiseChronologyResolver =
@@ -34,6 +35,7 @@ class MediaSearchService {
   }) : _usesDefaultMediaSources = usesDefaultSources;
 
   static const _kinopoiskToken = String.fromEnvironment('POISKKINO_API_KEY');
+  static const _omdbToken = String.fromEnvironment('OMDB_API_KEY');
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
   final http.Client? client;
   final MediaSourceEngine? sourceEngine;
@@ -44,8 +46,14 @@ class MediaSearchService {
   final String kinopoiskApiKey;
 
   late final MediaSourceEngine _defaultMediaSources = MediaSourceEngine([
+    // Russian-first catalogs, then independent public metadata APIs.
     AniLibriaCatalogSource(client: client),
     KinopoiskCatalogSource(apiKey: kinopoiskApiKey, client: client),
+    JikanCatalogSource(client: client),
+    AniListCatalogSource(client: client),
+    KitsuCatalogSource(client: client),
+    WikidataCatalogSource(client: client),
+    OmdbCatalogSource(apiKey: _omdbToken, client: client),
   ]);
 
   /// Reuses the default engine so its cache and source health survive searches.
