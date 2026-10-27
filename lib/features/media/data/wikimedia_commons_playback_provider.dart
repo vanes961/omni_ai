@@ -16,7 +16,7 @@ class WikimediaCommonsDiscoveryAdapter implements SourceDiscoveryAdapter {
   }) async {
     if (!mediaKinds.any(
       (kind) =>
-          kind == PlaybackMediaKind.movie || kind == PlaybackMediaKind.anime,
+          kind == PlaybackMediaKind.movie,
     )) {
       return const <DiscoveredSourceCandidate>[];
     }
@@ -25,7 +25,7 @@ class WikimediaCommonsDiscoveryAdapter implements SourceDiscoveryAdapter {
         id: id,
         name: 'Wikimedia Commons (видео с открытой лицензией)',
         baseUri: Uri.https('commons.wikimedia.org', '/'),
-        mediaKinds: const {PlaybackMediaKind.movie, PlaybackMediaKind.anime},
+        mediaKinds: const {PlaybackMediaKind.movie},
         capabilities: const {DiscoveredSourceCapability.playback},
         discoveredBy: id,
         note:
@@ -118,12 +118,11 @@ class WikimediaCommonsPlaybackProvider implements VideoSourceProvider {
 
   @override
   Future<PlaybackResolution> resolve(PlaybackRequest request) async {
-    if (request.kind != PlaybackMediaKind.movie &&
-        request.kind != PlaybackMediaKind.anime) {
+    if (request.kind != PlaybackMediaKind.movie) {
       return PlaybackResolution(
         providerId: id,
         variants: const [],
-        message: 'Wikimedia Commons подключён только для фильмов и аниме.',
+        message: 'Wikimedia Commons используется только для фильмов с открытой лицензией.',
       );
     }
     if (request.title.trim().isEmpty) {
