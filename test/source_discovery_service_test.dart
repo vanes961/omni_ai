@@ -387,6 +387,26 @@ void main() {
       expect(results.single.status, DiscoveredSourceStatus.available);
     });
 
+    test('clear before first scan does not reload stale saved rejections', () async {
+      final store = _FakeRejectionStore()
+        ..values = {'demo-source': 'Previously disabled'};
+      final service = SourceDiscoveryService(
+        adapters: [_FakeAdapter([_candidate()])],
+        probe: _FakeProbe(
+          (candidate) => candidate.copyWith(
+            status: DiscoveredSourceStatus.available,
+          ),
+        ),
+        rejectionStore: store,
+      );
+
+      service.clear();
+      final results = await service.discoverAndCheck();
+
+      expect(results.single.status, DiscoveredSourceStatus.available);
+      expect(store.values, isEmpty);
+    });
+
     test('clear removes only providers registered by discovery', () async {
       final baseProvider = _FakeVideoProvider('base-provider');
       final engine = VideoSourceEngine([baseProvider]);
