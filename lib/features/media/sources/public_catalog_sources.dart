@@ -230,3 +230,25 @@ String _plain(String value) => value
     .replaceAll('&amp;', '&')
     .replaceAll(RegExp(r'\s+'), ' ')
     .trim();
+
+
+/// Public Shikimori REST catalog for Russian-language anime and manga metadata.
+class ShikimoriCatalogSource implements MediaSource {
+  ShikimoriCatalogSource({this.client, this.timeout = const Duration(seconds: 10)});
+  final http.Client? client;
+  final Duration timeout;
+  @override String get id => 'shikimori';
+  @override Set<MediaSourceKind> get supportedKinds => const {MediaSourceKind.anime, MediaSourceKind.manga};
+
+  @override
+  Future<List<MediaItem>> search(String query, {required MediaSourceKind kind}) async {
+    if (!supportedKinds.contains(kind) || query.trim().isEmpty) return const [];
+    final endpoint = kind == MediaSourceKind.anime ? 'animes' : 'mangas';
+    final uri = Uri.https('shikimori.one', '/api/' + endpoint, {'search': query.trim(), 'limit': '20'});
+    final headers = const {'accept': 'application/json', 'User-Agent': 'OMNI-AI/1.0 (catalog search)'};
+    final response = await (client == null ? http.get(uri, headers: headers) : client!.get(uri, headers: headers)).timeout(timeout);
+    if (response.statusCode != 200) throw CatalogSourceException('Shikimori HTTP ' + response.statusCode.toString());
+    final json = jsonDecode(response.body);
+    return _mapRows(json is List ? json : const [], kind, 'shikimori');
+  }
+}
