@@ -92,6 +92,14 @@ void main() {
     expect(updatedService.kinopoiskApiKey, 'updated-poiskkino-key');
   });
 
+  test('preserves an explicitly injected catalog engine when the key changes', () {
+    final engine = MediaSourceEngine([_FakeAnimeSource()]);
+    final customService = MediaSearchService(sourceEngine: engine)
+        .withKinopoiskApiKey('updated-poiskkino-key');
+
+    expect(identical(customService.mediaSourceEngine, engine), isTrue);
+  });
+
   test('does not expose fabricated demo titles in the local catalog', () {
     expect(service.catalog, isEmpty);
     expect(service.trending, isEmpty);
