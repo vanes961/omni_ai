@@ -52,6 +52,42 @@ void main() {
       },
     );
 
+    test('adapter identity mismatch cannot overwrite another source', () async {
+      final engine = VideoSourceEngine([]);
+      final service = SourceDiscoveryService(
+        adapters: [
+          _FakeAdapter([
+            _candidate(
+              id: 'shared-source',
+              discoveredBy: 'trusted-adapter',
+              capabilities: const {DiscoveredSourceCapability.playback},
+            ),
+          ], adapterId: 'trusted-adapter'),
+          _FakeAdapter([
+            _candidate(
+              id: 'shared-source',
+              discoveredBy: 'trusted-adapter',
+              uri: Uri.parse('javascript:alert(1)'),
+            ),
+          ], adapterId: 'untrusted-adapter'),
+        ],
+        probe: _FakeProbe(
+          (candidate) => candidate.copyWith(
+            status: DiscoveredSourceStatus.available,
+          ),
+        ),
+        videoSourceEngine: engine,
+        providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
+      );
+
+      final results = await service.discoverAndCheck();
+
+      expect(results, hasLength(1));
+      expect(results.single.discoveredBy, 'trusted-adapter');
+      expect(results.single.status, DiscoveredSourceStatus.available);
+      expect(engine.providerIds, ['shared-source']);
+    });
+
     test('rejects invalid addresses before probing', () async {
       var probed = false;
       final service = SourceDiscoveryService(
@@ -353,6 +389,7 @@ void main() {
 DiscoveredSourceCandidate _candidate({
   String id = 'demo-source',
   Uri? uri,
+  String discoveredBy = 'fake-adapter',
   Set<DiscoveredSourceCapability> capabilities = const {
     DiscoveredSourceCapability.metadata,
   },
@@ -363,16 +400,17 @@ DiscoveredSourceCandidate _candidate({
       baseUri: uri ?? Uri.parse('https://example.org'),
       mediaKinds: const {PlaybackMediaKind.movie},
       capabilities: capabilities,
-      discoveredBy: 'fake-adapter',
+      discoveredBy: discoveredBy,
     );
 
 class _FakeAdapter implements SourceDiscoveryAdapter {
-  _FakeAdapter(this.results);
+  _FakeAdapter(this.results, {this.adapterId = 'fake-adapter'});
 
   final Iterable<DiscoveredSourceCandidate> results;
+  final String adapterId;
 
   @override
-  String get id => 'fake-adapter';
+  String get id => adapterId;
 
   @override
   Future<Iterable<DiscoveredSourceCandidate>> discover({
