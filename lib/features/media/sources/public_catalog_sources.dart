@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures, prefer_interpolation_to_compose_strings
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/features/media/data/media_item.dart';
