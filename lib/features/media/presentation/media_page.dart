@@ -21,7 +21,7 @@ import 'package:omni_ai/features/system_core/presentation/system_core_palette.da
 class MediaPage extends StatefulWidget {
   const MediaPage({
     required this.preferences,
-    this.searchService = MediaSearchService(),
+    this.searchService,
     this.catalogTokenStore,
     this.playerFactory,
     this.onOpenCatalogSettings,
@@ -29,7 +29,7 @@ class MediaPage extends StatefulWidget {
   });
 
   final UserPreferences preferences;
-  final MediaSearchService searchService;
+  final MediaSearchService? searchService;
   final MediaCatalogTokenStore? catalogTokenStore;
   final MediaPlayerFactory? playerFactory;
   final VoidCallback? onOpenCatalogSettings;
@@ -65,7 +65,7 @@ class _MediaPageState extends State<MediaPage> {
   @override
   void initState() {
     super.initState();
-    _searchService = widget.searchService;
+    _searchService = widget.searchService ?? MediaSearchService();
     _catalogTokenStore =
         widget.catalogTokenStore ?? SecureMediaCatalogTokenStore();
     _poiskKinoKeyStore = SecurePoiskKinoApiKeyStore();
