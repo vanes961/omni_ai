@@ -93,6 +93,7 @@ class SourceDiscoveryService {
   final DiscoveredProviderFactory? providerFactory;
   final Map<String, DiscoveredSourceCandidate> _candidates = {};
   final Set<String> _registeredProviderIds = {};
+  final Map<String, String> _manualRejections = {};
 
   List<DiscoveredSourceCandidate> get candidates =>
       List<DiscoveredSourceCandidate>.unmodifiable(_candidates.values);
@@ -136,6 +137,17 @@ class SourceDiscoveryService {
             note: 'Некорректный адрес или метаданные источника.',
           );
           _candidates[candidate.id] = rejected;
+          _removeRegisteredProvider(candidate.id);
+          continue;
+        }
+
+        final rejectionReason = _manualRejections[candidate.id];
+        if (rejectionReason != null) {
+          _candidates[candidate.id] = candidate.copyWith(
+            status: DiscoveredSourceStatus.rejected,
+            checkedAt: _candidates[candidate.id]?.checkedAt ?? DateTime.now(),
+            note: rejectionReason,
+          );
           _removeRegisteredProvider(candidate.id);
           continue;
         }
@@ -236,12 +248,28 @@ class SourceDiscoveryService {
   void reject(String candidateId, {String? reason}) {
     final candidate = _candidates[candidateId];
     if (candidate == null) return;
+    final rejectionReason = reason ?? 'Источник отключён.';
+    _manualRejections[candidateId] = rejectionReason;
     _candidates[candidateId] = candidate.copyWith(
       status: DiscoveredSourceStatus.rejected,
       checkedAt: DateTime.now(),
-      note: reason ?? 'Источник отключён.',
+      note: rejectionReason,
     );
     _removeRegisteredProvider(candidateId);
+  }
+
+  /// Re-enables a manually rejected source for validation on the next scan.
+  void allow(String candidateId) {
+    _manualRejections.remove(candidateId);
+    final candidate = _candidates[candidateId];
+    if (candidate == null || candidate.status != DiscoveredSourceStatus.rejected) {
+      return;
+    }
+    _candidates[candidateId] = candidate.copyWith(
+      status: DiscoveredSourceStatus.unverified,
+      checkedAt: DateTime.now(),
+      note: 'Повторная проверка разрешена.',
+    );
   }
 
   /// Clears discovery history and removes only providers registered here.
@@ -250,6 +278,7 @@ class SourceDiscoveryService {
       videoSourceEngine?.unregisterProvider(providerId);
     }
     _registeredProviderIds.clear();
+    _manualRejections.clear();
     _candidates.clear();
   }
 }
