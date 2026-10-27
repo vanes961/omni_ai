@@ -1542,7 +1542,7 @@ void main() {
       MaterialApp(
         home: MediaDetailsPage(
           item: item,
-          searchService: const MediaSearchService(),
+          searchService: MediaSearchService(),
           preferences: UserPreferences(),
           playerFactory: (source) {
             playerSources.add(source);
