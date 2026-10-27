@@ -92,7 +92,8 @@ class _MediaPageState extends State<MediaPage> {
   }
 
   VideoSourceEngine? get _playbackEngine =>
-      widget.videoSourceEngine ?? widget.sourceDiscoveryService?.videoSourceEngine;
+      widget.videoSourceEngine ??
+      widget.sourceDiscoveryService?.videoSourceEngine;
 
   Future<void> _loadCatalogToken() async {
     // Start from the injected/build-time configuration immediately. Secure
