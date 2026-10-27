@@ -14,10 +14,7 @@ class WikimediaCommonsDiscoveryAdapter implements SourceDiscoveryAdapter {
   Future<Iterable<DiscoveredSourceCandidate>> discover({
     required Set<PlaybackMediaKind> mediaKinds,
   }) async {
-    if (!mediaKinds.any(
-      (kind) =>
-          kind == PlaybackMediaKind.movie,
-    )) {
+    if (!mediaKinds.any((kind) => kind == PlaybackMediaKind.movie)) {
       return const <DiscoveredSourceCandidate>[];
     }
     return [
@@ -122,7 +119,8 @@ class WikimediaCommonsPlaybackProvider implements VideoSourceProvider {
       return PlaybackResolution(
         providerId: id,
         variants: const [],
-        message: 'Wikimedia Commons используется только для фильмов с открытой лицензией.',
+        message:
+            'Wikimedia Commons используется только для фильмов с открытой лицензией.',
       );
     }
     if (request.title.trim().isEmpty) {
