@@ -134,7 +134,7 @@ void main() {
 
       expect(requested, isFalse);
       expect(result.variants, isEmpty);
-      expect(result.message, contains('только для фильмов и аниме'));
+      expect(result.message, contains('только для фильмов с открытой лицензией'));
     });
 
     test('does not return streams when the API request fails', () async {
