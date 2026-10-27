@@ -172,7 +172,10 @@ class MediaSearchService {
     try {
       final response = await _get(
         uri,
-        headers: {'Authorization': 'Bearer $accessToken', 'accept': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'accept': 'application/json',
+        },
       ).timeout(const Duration(seconds: 12));
       if (response.statusCode != 200) {
         return type == 'Аниме'
