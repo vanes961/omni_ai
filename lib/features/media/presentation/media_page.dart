@@ -21,7 +21,7 @@ import 'package:omni_ai/features/system_core/presentation/system_core_palette.da
 class MediaPage extends StatefulWidget {
   const MediaPage({
     required this.preferences,
-    this.searchService = const MediaSearchService(),
+    this.searchService = MediaSearchService(),
     this.catalogTokenStore,
     this.playerFactory,
     this.onOpenCatalogSettings,
