@@ -22,12 +22,22 @@ class MediaSearchService {
     this.franchiseChronologyResolver,
     this.client,
     this.sourceEngine,
-  });
+  }) : _usesDefaultMediaSources = sourceEngine == null;
+
+  MediaSearchService._({
+    required this.accessToken,
+    required this.kinopoiskApiKey,
+    this.franchiseChronologyResolver,
+    this.client,
+    required this.sourceEngine,
+    required bool usesDefaultMediaSources,
+  }) : _usesDefaultMediaSources = usesDefaultMediaSources;
 
   static const _kinopoiskToken = String.fromEnvironment('POISKKINO_API_KEY');
   static const _token = String.fromEnvironment('TMDB_ACCESS_TOKEN');
   final http.Client? client;
   final MediaSourceEngine? sourceEngine;
+  final bool _usesDefaultMediaSources;
 
   /// Can be supplied from secure device storage at runtime. The build-time
   /// define remains a fallback for development builds only.
@@ -47,27 +57,24 @@ class MediaSearchService {
   /// Keeps the same HTTP transport while replacing the credential loaded from
   /// secure device storage. This makes runtime credentials testable and avoids
   /// silently losing an injected client when the page loads its token.
-  MediaSearchService withAccessToken(String token) => MediaSearchService(
+  MediaSearchService withAccessToken(String token) => MediaSearchService._(
     accessToken: token,
     kinopoiskApiKey: kinopoiskApiKey,
     franchiseChronologyResolver: franchiseChronologyResolver,
     client: client,
-    sourceEngine: sourceEngine ?? _defaultMediaSources,
+    sourceEngine: mediaSourceEngine,
+    usesDefaultMediaSources: _usesDefaultMediaSources,
   );
 
   /// Rebuilds the default catalog engine with a runtime PoiskKino key.
   /// An explicitly injected source engine is preserved for tests/custom setups.
-  MediaSearchService withKinopoiskApiKey(String key) => MediaSearchService(
+  MediaSearchService withKinopoiskApiKey(String key) => MediaSearchService._(
     accessToken: accessToken,
     kinopoiskApiKey: key.trim(),
     franchiseChronologyResolver: franchiseChronologyResolver,
     client: client,
-    sourceEngine:
-        sourceEngine ??
-        MediaSourceEngine([
-          AniLibriaCatalogSource(client: client),
-          KinopoiskCatalogSource(apiKey: key.trim(), client: client),
-        ]),
+    sourceEngine: _usesDefaultMediaSources ? null : sourceEngine,
+    usesDefaultMediaSources: _usesDefaultMediaSources,
   );
 
   Future<http.Response> _get(Uri uri, {required Map<String, String> headers}) {
