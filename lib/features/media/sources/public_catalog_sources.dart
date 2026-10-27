@@ -142,9 +142,9 @@ class OmdbCatalogSource implements MediaSource {
   }
 }
 
-/// Wikidata fallback search, free and keyless; results are metadata only.
+/// Wikidata SPARQL fallback restricted to films or television series.
 class WikidataCatalogSource implements MediaSource {
-  WikidataCatalogSource({this.client, this.timeout = const Duration(seconds: 10)});
+  WikidataCatalogSource({this.client, this.timeout = const Duration(seconds: 12)});
   final http.Client? client;
   final Duration timeout;
   @override String get id => 'wikidata';
@@ -153,22 +153,41 @@ class WikidataCatalogSource implements MediaSource {
   @override
   Future<List<MediaItem>> search(String query, {required MediaSourceKind kind}) async {
     if (!supportedKinds.contains(kind) || query.trim().isEmpty) return const [];
-    final uri = Uri.https('www.wikidata.org', '/w/api.php', {'action': 'wbsearchentities', 'search': query.trim(), 'language': 'ru', 'uselang': 'ru', 'type': 'item', 'limit': '20', 'format': 'json'});
-    final headers = const {'accept': 'application/json', 'User-Agent': 'OMNI-AI/1.0 (public metadata catalog)'};
+    final escaped = query.trim().replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+    final classId = kind == MediaSourceKind.movie ? 'Q11424' : 'Q5398426';
+    final sparql = 'SELECT ?item ?itemLabel ?itemDescription WHERE { '
+        '?item wdt:P31/wdt:P279* wd:' + classId + '. '
+        '?item rdfs:label ?label. FILTER(LANG(?label) = "ru" && CONTAINS(LCASE(?label), LCASE("' + escaped + '"))). '
+        'SERVICE wikibase:label { bd:serviceParam wikibase:language "ru,en". } '
+        '} LIMIT 20';
+    final uri = Uri.https('query.wikidata.org', '/sparql', {'query': sparql, 'format': 'json'});
+    final headers = const {'accept': 'application/sparql-results+json', 'User-Agent': 'OMNI-AI/1.0 (public metadata catalog)'};
     final response = await (client == null ? http.get(uri, headers: headers) : client!.get(uri, headers: headers)).timeout(timeout);
     if (response.statusCode != 200) throw CatalogSourceException('Wikidata HTTP ' + response.statusCode.toString());
     final json = jsonDecode(response.body);
-    final rows = json is Map<String, dynamic> && json['search'] is List ? json['search'] as List : const [];
+    final results = json is Map<String, dynamic> ? json['results'] : null;
+    final rows = results is Map<String, dynamic> && results['bindings'] is List ? results['bindings'] as List : const [];
     final items = <MediaItem>[];
     for (final row in rows) {
       if (row is! Map<String, dynamic>) continue;
-      final id = (row['id'] as String? ?? '').trim();
-      final title = (row['label'] as String? ?? '').trim();
+      final entity = row['item'] is Map<String, dynamic> ? row['item'] as Map<String, dynamic> : const <String, dynamic>{};
+      final label = row['itemLabel'] is Map<String, dynamic> ? row['itemLabel'] as Map<String, dynamic> : const <String, dynamic>{};
+      final description = row['itemDescription'] is Map<String, dynamic> ? row['itemDescription'] as Map<String, dynamic> : const <String, dynamic>{};
+      final url = (entity['value'] as String? ?? '').trim();
+      final id = url.split('/').last;
+      final title = (label['value'] as String? ?? '').trim();
       if (id.isEmpty || title.isEmpty) continue;
-      items.add(MediaItem(id: 'wikidata:' + id, title: title,
+      items.add(MediaItem(
+        id: 'wikidata:' + id,
+        title: title,
         type: kind == MediaSourceKind.movie ? 'Фильм' : 'Сериал',
-        posterUrl: '', rating: 0, voiceovers: const [], videoUrl: '', categories: const [],
-        description: _plain(row['description'] as String? ?? '')));
+        posterUrl: '',
+        rating: 0,
+        voiceovers: const [],
+        videoUrl: '',
+        categories: const [],
+        description: _plain(description['value'] as String? ?? ''),
+      ));
     }
     return List<MediaItem>.unmodifiable(items);
   }
@@ -185,7 +204,7 @@ List<MediaItem> _mapRows(List rows, MediaSourceKind kind, String sourceId) {
   for (final row in rows) {
     if (row is! Map<String, dynamic>) continue;
     final id = row['mal_id'] ?? row['id'];
-    final title = _first([row['title_english'], row['title'], row['russian'], row['name']]);
+    final title = _first([row['russian'], row['title_english'], row['title'], row['name']]);
     if (id == null || title.isEmpty) continue;
     final images = row['images'] is Map<String, dynamic> ? row['images'] as Map<String, dynamic> : const <String, dynamic>{};
     final jpg = images['jpg'] is Map<String, dynamic> ? images['jpg'] as Map<String, dynamic> : const <String, dynamic>{};
