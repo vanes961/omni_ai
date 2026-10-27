@@ -54,6 +54,7 @@ class MangaCatalogService {
     JikanCatalogSource(client: _client, timeout: timeout),
     AniListCatalogSource(client: _client, timeout: timeout),
     KitsuCatalogSource(client: _client, timeout: timeout),
+    ShikimoriCatalogSource(client: _client, timeout: timeout),
   ]);
 
   Future<List<MangaCatalogItem>> search(String query, {int limit = 20}) async {
@@ -98,6 +99,7 @@ class MangaCatalogService {
           'jikan' => 'https://myanimelist.net/manga/$sourceId',
           'anilist' => 'https://anilist.co/manga/$sourceId',
           'kitsu' => 'https://kitsu.io/manga/$sourceId',
+          'shikimori' => 'https://shikimori.one/mangas/$sourceId',
           _ => '',
         };
         if (sourceUrl.isEmpty) continue;
