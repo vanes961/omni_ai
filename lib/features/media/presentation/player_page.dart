@@ -142,10 +142,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       }
     });
     _selectedVoiceover = (widget.searchService ?? MediaSearchService())
-        .preferredVoiceover(
-      widget.item,
-      widget.preferences,
-    );
+        .preferredVoiceover(widget.item, widget.preferences);
     unawaited(_restoreVoiceoverAndLoadEpisode());
   }
 
