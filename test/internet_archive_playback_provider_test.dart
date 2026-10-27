@@ -28,6 +28,23 @@ void main() {
     expect(engine.providerIds, contains('internet-archive'));
   });
 
+  test('marks a missing catalog endpoint as unavailable', () async {
+    final client = MockClient((request) async {
+      if (request.url.host == 'archive.org') {
+        return http.Response('not found', 404);
+      }
+      return http.Response('unexpected', 500);
+    });
+    final candidates = await InternetArchiveDiscoveryAdapter().discover(
+      mediaKinds: const {PlaybackMediaKind.movie},
+    );
+    final checked = await InternetArchiveSourceProbe(
+      client: client,
+    ).check(candidates.single);
+
+    expect(checked.status, DiscoveredSourceStatus.unavailable);
+  });
+
   test('resolves only files with an explicitly recognized open license', () async {
     final client = MockClient((request) async {
       if (request.url.path == '/advancedsearch.php') {
