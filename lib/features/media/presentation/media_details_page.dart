@@ -374,9 +374,7 @@ class MediaDetailsPage extends StatelessWidget {
                 ),
               ),
             if (item.videoUrl.trim().isNotEmpty ||
-                item.videoSources.any(
-                  (source) => source.url.trim().isNotEmpty,
-                ))
+                item.videoSources.any((source) => source.url.trim().isNotEmpty))
               FilledButton.icon(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
