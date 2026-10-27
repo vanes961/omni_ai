@@ -11,6 +11,7 @@ import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
 import 'package:omni_ai/features/media/data/internet_archive_playback_provider.dart';
 import 'package:omni_ai/features/media/data/source_discovery_service.dart';
 import 'package:omni_ai/features/media/data/video_source_engine.dart';
+import 'package:omni_ai/features/media/data/wikimedia_commons_playback_provider.dart';
 import 'package:omni_ai/features/media/services/franchise_chronology_coordinator.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
 import 'package:omni_ai/features/media/services/media_catalog_token_store.dart';
@@ -95,12 +96,24 @@ class _DashboardPageState extends State<DashboardPage> {
     _mediaSourceHttpClient = http.Client();
     _videoSourceEngine = VideoSourceEngine(const []);
     _sourceDiscoveryService = SourceDiscoveryService(
-      adapters: [InternetArchiveDiscoveryAdapter()],
-      probe: InternetArchiveSourceProbe(client: _mediaSourceHttpClient),
+      adapters: [
+        InternetArchiveDiscoveryAdapter(),
+        WikimediaCommonsDiscoveryAdapter(),
+      ],
+      probe: CompositeDiscoveredSourceProbe({
+        'internet-archive':
+            InternetArchiveSourceProbe(client: _mediaSourceHttpClient),
+        'wikimedia-commons':
+            WikimediaCommonsSourceProbe(client: _mediaSourceHttpClient),
+      }),
       videoSourceEngine: _videoSourceEngine,
-      providerFactory: (candidate) => candidate.id == 'internet-archive'
-          ? InternetArchivePlaybackProvider(client: _mediaSourceHttpClient)
-          : null,
+      providerFactory: (candidate) => switch (candidate.id) {
+        'internet-archive' =>
+          InternetArchivePlaybackProvider(client: _mediaSourceHttpClient),
+        'wikimedia-commons' =>
+          WikimediaCommonsPlaybackProvider(client: _mediaSourceHttpClient),
+        _ => null,
+      },
     );
   }
 
