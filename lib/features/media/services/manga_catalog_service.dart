@@ -33,7 +33,7 @@ class MangaCatalogItem {
   /// Optional AniList cross-reference supplied by MangaDex metadata.
   final int? anilistId;
 
-  String get canonicalId => 'mangadex:$id';
+  String get canonicalId => id.contains(':') ? id : 'mangadex:$id';
 }
 
 class MangaCatalogService {
