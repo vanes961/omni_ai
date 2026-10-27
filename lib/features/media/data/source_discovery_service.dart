@@ -150,6 +150,7 @@ class SourceDiscoveryService {
   final Map<String, String> _manualRejections = {};
   Future<void>? _rejectionsLoad;
   Future<void> _pendingRejectionWrite = Future<void>.value();
+  int _stateGeneration = 0;
 
   List<DiscoveredSourceCandidate> get candidates =>
       List<DiscoveredSourceCandidate>.unmodifiable(_candidates.values);
@@ -165,7 +166,9 @@ class SourceDiscoveryService {
     },
   }) async {
     await (_rejectionsLoad ??= _loadRejections());
+    final generation = _stateGeneration;
     for (final adapter in _adapters) {
+      if (generation != _stateGeneration) return candidates;
       // Materialize the complete response inside the guarded block. Some
       // adapters expose lazy iterables that can throw while being iterated.
       // Do not reconcile old entries unless discovery completed successfully.
@@ -181,6 +184,7 @@ class SourceDiscoveryService {
         // its last known candidates after a temporary outage.
         continue;
       }
+      if (generation != _stateGeneration) return candidates;
 
       final seenIds = discovered
           .where((candidate) => candidate.discoveredBy == adapter.id)
@@ -223,6 +227,7 @@ class SourceDiscoveryService {
           final checked = await probe
               .check(candidate)
               .timeout(const Duration(seconds: 12));
+          if (generation != _stateGeneration) return candidates;
           if (checked.id != candidate.id ||
               checked.baseUri != candidate.baseUri ||
               checked.discoveredBy != candidate.discoveredBy) {
@@ -335,6 +340,7 @@ class SourceDiscoveryService {
 
   /// Allows a caller to disable a source without deleting discovery history.
   void reject(String candidateId, {String? reason}) {
+    _stateGeneration++;
     final candidate = _candidates[candidateId];
     if (candidate == null) return;
     final rejectionReason = reason ?? 'Источник отключён.';
@@ -350,6 +356,7 @@ class SourceDiscoveryService {
 
   /// Re-enables a manually rejected source for validation on the next scan.
   void allow(String candidateId) {
+    _stateGeneration++;
     _manualRejections.remove(candidateId);
     _persistRejections();
     final candidate = _candidates[candidateId];
@@ -366,6 +373,7 @@ class SourceDiscoveryService {
 
   /// Clears discovery history and removes only providers registered here.
   void clear() {
+    _stateGeneration++;
     for (final providerId in _registeredProviderIds.toList()) {
       videoSourceEngine?.unregisterProvider(providerId);
     }
