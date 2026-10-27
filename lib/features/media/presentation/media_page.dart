@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:omni_ai/core/network/widgets/network_image_with_fallback.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/media/data/source_discovery_service.dart';
+import 'package:omni_ai/features/media/data/video_source_engine.dart';
 import 'package:omni_ai/features/favorites/data/favorite_item.dart';
 import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
 import 'package:omni_ai/features/favorites/presentation/favorites_page.dart';
@@ -24,6 +26,8 @@ class MediaPage extends StatefulWidget {
     this.searchService,
     this.catalogTokenStore,
     this.playerFactory,
+    this.sourceDiscoveryService,
+    this.videoSourceEngine,
     this.onOpenCatalogSettings,
     super.key,
   });
@@ -32,6 +36,8 @@ class MediaPage extends StatefulWidget {
   final MediaSearchService? searchService;
   final MediaCatalogTokenStore? catalogTokenStore;
   final MediaPlayerFactory? playerFactory;
+  final SourceDiscoveryService? sourceDiscoveryService;
+  final VideoSourceEngine? videoSourceEngine;
   final VoidCallback? onOpenCatalogSettings;
 
   @override
@@ -66,12 +72,27 @@ class _MediaPageState extends State<MediaPage> {
   void initState() {
     super.initState();
     _searchService = widget.searchService ?? MediaSearchService();
+    final discovery = widget.sourceDiscoveryService;
+    if (discovery != null) unawaited(_discoverPlaybackSources(discovery));
     _catalogTokenStore =
         widget.catalogTokenStore ?? SecureMediaCatalogTokenStore();
     _poiskKinoKeyStore = SecurePoiskKinoApiKeyStore();
     unawaited(_loadCatalogToken());
     _loadFavoriteInterests();
   }
+
+  Future<void> _discoverPlaybackSources(
+    SourceDiscoveryService discovery,
+  ) async {
+    try {
+      await discovery.discoverAndCheck();
+    } on Object {
+      // Discovery is optional and must never block catalog browsing.
+    }
+  }
+
+  VideoSourceEngine? get _playbackEngine =>
+      widget.videoSourceEngine ?? widget.sourceDiscoveryService?.videoSourceEngine;
 
   Future<void> _loadCatalogToken() async {
     // Start from the injected/build-time configuration immediately. Secure
@@ -796,6 +817,7 @@ class _MediaPageState extends State<MediaPage> {
           searchService: _searchService,
           preferences: widget.preferences,
           playerFactory: widget.playerFactory,
+          videoSourceEngine: _playbackEngine,
         ),
       ),
     );
