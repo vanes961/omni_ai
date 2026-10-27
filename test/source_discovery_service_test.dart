@@ -62,6 +62,28 @@ void main() {
     );
 
     test(
+      'clear ignores a probe failure from a stale scan',
+      () async {
+        final probeStarted = Completer<void>();
+        final probeResult = Completer<DiscoveredSourceCandidate>();
+        final service = SourceDiscoveryService(
+          adapters: [_FakeAdapter([_candidate()])],
+          probe: _BlockingProbe(probeStarted, probeResult.future),
+        );
+
+        final scan = service.discoverAndCheck();
+        await probeStarted.future;
+        service.clear();
+        probeResult.completeError(Exception('temporary probe failure'));
+
+        final results = await scan;
+
+        expect(results, isEmpty);
+        expect(service.candidates, isEmpty);
+      },
+    );
+
+    test(
       'registers only checked playback-capable providers with the engine',
       () async {
         final engine = VideoSourceEngine([]);
