@@ -252,6 +252,7 @@ class SourceDiscoveryService {
           _candidates[candidate.id] = normalized;
           _syncPlaybackProvider(normalized);
         } on Object {
+          if (generation != _stateGeneration) return candidates;
           final unavailable = candidate.copyWith(
             status: DiscoveredSourceStatus.unavailable,
             checkedAt: DateTime.now(),
