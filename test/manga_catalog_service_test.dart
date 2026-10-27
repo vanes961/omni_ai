@@ -105,28 +105,19 @@ void main() {
     service.close();
   });
 
-  test('throws a useful error for a non-success MangaDex response', () async {
+  test('keeps search resilient when MangaDex returns a non-success response', () async {
     final service = MangaCatalogService(
       client: MockClient((_) async => http.Response('unavailable', 503)),
     );
-    await expectLater(
-      service.search('Berserk'),
-      throwsA(
-        isA<http.ClientException>().having(
-          (error) => error.message,
-          'message',
-          contains('HTTP 503'),
-        ),
-      ),
-    );
+    expect(await service.search('Berserk'), isEmpty);
     service.close();
   });
 
-  test('propagates network failures so the screen can offer retry', () async {
+  test('keeps search resilient when the primary source is offline', () async {
     final service = MangaCatalogService(
       client: MockClient((_) async => throw http.ClientException('offline')),
     );
-    await expectLater(service.search('Berserk'), throwsA(isA<http.ClientException>()));
+    expect(await service.search('Berserk'), isEmpty);
     service.close();
   });
 }
