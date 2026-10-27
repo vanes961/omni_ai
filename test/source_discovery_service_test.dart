@@ -123,6 +123,39 @@ void main() {
       },
     );
 
+    test('manual rejection persists until the source is allowed again', () async {
+      final adapter = _MutableAdapter([
+        _candidate(
+          capabilities: const {DiscoveredSourceCapability.playback},
+        ),
+      ]);
+      final engine = VideoSourceEngine([]);
+      final service = SourceDiscoveryService(
+        adapters: [adapter],
+        probe: _FakeProbe(
+          (candidate) => candidate.copyWith(
+            status: DiscoveredSourceStatus.available,
+          ),
+        ),
+        videoSourceEngine: engine,
+        providerFactory: (candidate) => _FakeVideoProvider(candidate.id),
+      );
+
+      await service.discoverAndCheck();
+      service.reject('demo-source', reason: 'Отключён пользователем');
+      await service.discoverAndCheck();
+
+      expect(service.candidates.single.status, DiscoveredSourceStatus.rejected);
+      expect(service.candidates.single.note, 'Отключён пользователем');
+      expect(engine.providerIds, isEmpty);
+
+      service.allow('demo-source');
+      await service.discoverAndCheck();
+
+      expect(service.candidates.single.status, DiscoveredSourceStatus.available);
+      expect(engine.providerIds, ['demo-source']);
+    });
+
     test('rejects probe results that change source identity', () async {
       final engine = VideoSourceEngine([]);
       final service = SourceDiscoveryService(
