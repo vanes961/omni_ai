@@ -52,6 +52,7 @@ class MediaSearchService {
     JikanCatalogSource(client: client),
     AniListCatalogSource(client: client),
     KitsuCatalogSource(client: client),
+    ShikimoriCatalogSource(client: client),
     WikidataCatalogSource(client: client),
     OmdbCatalogSource(apiKey: _omdbToken, client: client),
   ]);
@@ -222,15 +223,29 @@ class MediaSearchService {
       if (type == 'Аниме' && items.isEmpty) {
         return await _searchAnimeCatalog(normalizedQuery);
       }
-      if (items.isEmpty) {
-        return await _searchCatalogFallback(normalizedQuery, type);
-      }
-      return items;
+      final fallback = type == 'Аниме'
+          ? await _searchAnimeCatalog(normalizedQuery)
+          : await _searchCatalogFallback(normalizedQuery, type);
+      return _mergeCatalogItems(items, fallback);
     } on Object {
       return type == 'Аниме'
           ? await _searchAnimeCatalog(normalizedQuery)
           : await _searchCatalogFallback(normalizedQuery, type);
     }
+  }
+
+  List<MediaItem> _mergeCatalogItems(
+    List<MediaItem> primary,
+    List<MediaItem> secondary,
+  ) {
+    final merged = <MediaItem>[];
+    final seen = <String>{};
+    for (final item in [...primary, ...secondary]) {
+      final key = item.title.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+      if (key.isNotEmpty && seen.add(key)) merged.add(item);
+      if (merged.length >= 60) break;
+    }
+    return List<MediaItem>.unmodifiable(merged);
   }
 
   Future<List<MediaItem>> _searchCatalogFallback(String query, String? type) {
