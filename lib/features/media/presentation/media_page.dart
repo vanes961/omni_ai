@@ -79,6 +79,13 @@ class _MediaPageState extends State<MediaPage> {
     _poiskKinoKeyStore = SecurePoiskKinoApiKeyStore();
     unawaited(_loadCatalogToken());
     _loadFavoriteInterests();
+    // Keep injected/build-time credentials useful immediately. If secure
+    // storage supplies a newer token, the refreshed request supersedes this
+    // one and the stale response is ignored by the service identity check.
+    if (_searchService.isSearchConfigured) {
+      unawaited(_loadTrending());
+      unawaited(_loadRecommendations());
+    }
   }
 
   Future<void> _discoverPlaybackSources(
@@ -122,7 +129,7 @@ class _MediaPageState extends State<MediaPage> {
     if (!mounted) return;
     // The service now has the secure token when one exists, or its original
     // build-time configuration otherwise. Only issue the first request now.
-    if (secureTokenApplied || _searchService.isSearchConfigured) {
+    if (secureTokenApplied) {
       unawaited(_loadTrending());
       unawaited(_loadRecommendations());
     }
