@@ -75,6 +75,13 @@ void main() {
 
   final service = MediaSearchService();
 
+  test('reuses the catalog engine when only the access token changes', () {
+    final originalEngine = service.mediaSourceEngine;
+    final updatedService = service.withAccessToken('updated-tmdb-token');
+
+    expect(identical(updatedService.mediaSourceEngine, originalEngine), isTrue);
+  });
+
   test('does not expose fabricated demo titles in the local catalog', () {
     expect(service.catalog, isEmpty);
     expect(service.trending, isEmpty);
