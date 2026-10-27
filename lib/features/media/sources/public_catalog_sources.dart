@@ -252,3 +252,50 @@ class ShikimoriCatalogSource implements MediaSource {
     return _mapRows(json is List ? json : const [], kind, 'shikimori');
   }
 }
+
+
+/// Optional Kinopoisk Unofficial API adapter. Requires a user-supplied API key.
+class KinopoiskUnofficialCatalogSource implements MediaSource {
+  KinopoiskUnofficialCatalogSource({required this.apiKey, this.client, this.timeout = const Duration(seconds: 10)});
+  final String apiKey;
+  final http.Client? client;
+  final Duration timeout;
+  @override String get id => 'kinopoisk_unofficial';
+  @override Set<MediaSourceKind> get supportedKinds => const {MediaSourceKind.movie, MediaSourceKind.series};
+
+  @override
+  Future<List<MediaItem>> search(String query, {required MediaSourceKind kind}) async {
+    if (!supportedKinds.contains(kind) || query.trim().isEmpty || apiKey.trim().isEmpty) return const [];
+    final uri = Uri.https('kinopoiskapiunofficial.tech', '/api/v2.1/films/search-by-keyword', {'keyword': query.trim(), 'page': '1'});
+    final headers = {'X-API-KEY': apiKey.trim(), 'accept': 'application/json'};
+    final response = await (client == null ? http.get(uri, headers: headers) : client!.get(uri, headers: headers)).timeout(timeout);
+    if (response.statusCode != 200) throw CatalogSourceException('Kinopoisk API HTTP ' + response.statusCode.toString());
+    final json = jsonDecode(response.body);
+    final rows = json is Map<String, dynamic> && json['films'] is List ? json['films'] as List : const [];
+    final items = <MediaItem>[];
+    for (final row in rows) {
+      if (row is! Map<String, dynamic>) continue;
+      final rawType = (row['type'] as String? ?? '').toUpperCase();
+      final isSeries = rawType.contains('SERIES') || rawType.contains('TV');
+      if (kind == MediaSourceKind.series && !isSeries) continue;
+      if (kind == MediaSourceKind.movie && isSeries) continue;
+      final id = row['filmId'];
+      final title = _first([row['nameRu'], row['nameEn'], row['nameOriginal']]);
+      if (id == null || title.isEmpty) continue;
+      final year = (row['year'] ?? '').toString();
+      final score = double.tryParse((row['rating'] ?? '').toString()) ?? 0;
+      items.add(MediaItem(
+        id: 'kinopoisk_unofficial:' + id.toString(),
+        title: title,
+        type: kind == MediaSourceKind.movie ? 'Фильм' : 'Сериал',
+        posterUrl: _http(_first([row['posterUrlPreview'], row['posterUrl']])),
+        rating: score.clamp(0, 10).toDouble(),
+        voiceovers: const [],
+        videoUrl: '',
+        categories: year.isEmpty ? const [] : [year],
+        description: '',
+      ));
+    }
+    return List<MediaItem>.unmodifiable(items);
+  }
+}
