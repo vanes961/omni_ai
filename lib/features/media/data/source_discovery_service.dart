@@ -312,6 +312,10 @@ class SourceDiscoveryService {
   }
 
   Future<void> _loadRejections() async {
+    // A clear/reject/allow operation can be requested before the first scan.
+    // Finish its queued write before reading storage, or the initial read may
+    // resurrect stale rejection entries that the user just cleared.
+    await _pendingRejectionWrite;
     try {
       _manualRejections.addAll(await rejectionStore.load());
     } on Object {
