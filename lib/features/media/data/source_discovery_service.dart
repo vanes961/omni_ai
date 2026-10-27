@@ -149,6 +149,7 @@ class SourceDiscoveryService {
   final Set<String> _registeredProviderIds = {};
   final Map<String, String> _manualRejections = {};
   Future<void>? _rejectionsLoad;
+  Future<void> _pendingRejectionWrite = Future<void>.value();
 
   List<DiscoveredSourceCandidate> get candidates =>
       List<DiscoveredSourceCandidate>.unmodifiable(_candidates.values);
@@ -319,7 +320,13 @@ class SourceDiscoveryService {
   }
 
   void _persistRejections() {
-    unawaited(rejectionStore.save(Map<String, String>.of(_manualRejections)));
+    final snapshot = Map<String, String>.of(_manualRejections);
+    _pendingRejectionWrite = _pendingRejectionWrite
+        .then((_) => rejectionStore.save(snapshot))
+        .catchError((Object _) {
+          // A storage failure must not block discovery or playback.
+        });
+    unawaited(_pendingRejectionWrite);
   }
 
   /// Allows a caller to disable a source without deleting discovery history.
