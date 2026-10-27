@@ -31,7 +31,7 @@ class PeerTubeDirectoryDiscoveryAdapter implements SourceDiscoveryAdapter {
 
 class PeerTubeDirectoryProbe implements DiscoveredSourceProbe {
   PeerTubeDirectoryProbe({http.Client? client})
-    : _client = client ?? http.Client();
+      : _client = client ?? http.Client();
 
   final http.Client _client;
 
@@ -88,7 +88,7 @@ class PeerTubeDirectoryProbe implements DiscoveredSourceProbe {
 /// with an explicit permissive licence. This is not a commercial movie index.
 class PeerTubeDirectoryPlaybackProvider implements VideoSourceProvider {
   PeerTubeDirectoryPlaybackProvider({http.Client? client})
-    : _client = client ?? http.Client();
+      : _client = client ?? http.Client();
 
   final http.Client _client;
 
@@ -245,8 +245,7 @@ class PeerTubeDirectoryPlaybackProvider implements VideoSourceProvider {
 
   bool _isVideoUrl(Uri uri) {
     final path = uri.path.toLowerCase();
-    return const ['.mp4', '.webm', '.ogv', '.ogg', '.m3u8']
-        .any(path.endsWith);
+    return const ['.mp4', '.webm', '.ogv', '.ogg', '.m3u8'].any(path.endsWith);
   }
 
   String? _quality(Object? raw) {
@@ -254,7 +253,7 @@ class PeerTubeDirectoryPlaybackProvider implements VideoSourceProvider {
     final label = raw['label'];
     if (label is String && label.trim().isNotEmpty) return label.trim();
     final id = int.tryParse(raw['id']?.toString() ?? '');
-    return id == null || id <= 0 ? null : id.toString() + 'p';
+    return id == null || id <= 0 ? null : '${id}p';
   }
 
   String _format(Uri uri) {
@@ -286,7 +285,16 @@ bool _validHost(Object? raw) {
       host.startsWith('127.') ||
       host.startsWith('10.') ||
       host.startsWith('192.168.') ||
-      host.startsWith('169.254.')) {
+      host.startsWith('169.254.') ||
+      RegExp(r'^172\.(1[6-9]|2[0-9]|3[01])\..+').hasMatch(host) ||
+      RegExp(r'^\d{1,3}(?:\.\d{1,3}){3}
+    return false;
+  }
+  return RegExp(
+    r'^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$',
+  ).hasMatch(host);
+}
+).hasMatch(host)) {
     return false;
   }
   return RegExp(

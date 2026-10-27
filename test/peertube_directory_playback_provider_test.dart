@@ -54,6 +54,30 @@ void main() {
       expect(checked.status, DiscoveredSourceStatus.available);
     });
 
+    test('rejects private and numeric IPv4 hosts from the directory', () async {
+      final client = MockClient((request) async {
+        return http.Response(
+          jsonEncode({
+            'data': [
+              {'host': '172.16.0.10', 'totalVideos': 100},
+              {'host': '172.31.255.1', 'totalVideos': 100},
+              {'host': '192.168.1.20', 'totalVideos': 100},
+              {'host': '203.0.113.10', 'totalVideos': 100},
+            ],
+          }),
+          200,
+        );
+      });
+      final candidate = (await PeerTubeDirectoryDiscoveryAdapter().discover(
+        mediaKinds: const {PlaybackMediaKind.movie},
+      )).single;
+      final checked = await PeerTubeDirectoryProbe(client: client).check(
+        candidate,
+      );
+
+      expect(checked.status, DiscoveredSourceStatus.unavailable);
+    });
+
     test('returns only same-host video streams with explicit open licences',
         () async {
       final client = MockClient((request) async {
