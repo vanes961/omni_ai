@@ -90,7 +90,7 @@ class VideoSourceEngine {
       if (result == null || !result.hasPlayableVariants) continue;
       providerNames.add(result.providerId);
       for (final variant in result.variants) {
-        if (!variant.isHttpStream) continue;
+        if (!variant.isSupportedSource) continue;
         final identity = [
           variant.url,
           variant.quality ?? '',

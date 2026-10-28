@@ -14,8 +14,23 @@ void main() {
     expect(valid.isHttpStream, isTrue);
     expect(invalid.isHttpStream, isFalse);
     expect(relative.isHttpStream, isFalse);
+    expect(valid.isSupportedSource, isTrue);
     expect(valid.toMediaVideoSource()?.quality, '1080p');
     expect(invalid.toMediaVideoSource(), isNull);
+  });
+
+  test('accepts valid magnet links only as torrent resolver inputs', () {
+    const valid = PlaybackVariant(
+      url: 'magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567&dn=Legal%20Video',
+    );
+    const invalid = PlaybackVariant(url: 'magnet:?dn=missing-hash');
+    const malformed = PlaybackVariant(url: 'magnet:?xt=urn:btih:xyz');
+
+    expect(valid.isMagnetSource, isTrue);
+    expect(valid.isSupportedSource, isTrue);
+    expect(valid.toMediaVideoSource(), isNull);
+    expect(invalid.isSupportedSource, isFalse);
+    expect(malformed.isSupportedSource, isFalse);
   });
 
   test('normalizes missing quality and blank voiceover safely', () {
@@ -36,11 +51,13 @@ void main() {
       providerId: 'sample-provider',
       variants: const [
         PlaybackVariant(url: 'https://cdn.example/film.m3u8'),
+        PlaybackVariant(url: 'magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567'),
         PlaybackVariant(url: 'file:///private/film.mp4'),
       ],
     );
 
-    expect(result.variants, hasLength(1));
+    expect(result.variants, hasLength(2));
+    expect(result.variants.map((variant) => variant.isMagnetSource), contains(true));
     expect(result.hasPlayableVariants, isTrue);
 
     final empty = PlaybackResolution(
