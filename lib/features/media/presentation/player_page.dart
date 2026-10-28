@@ -585,7 +585,6 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     // alternatives. TorrServer is not required for HTTP/HLS/DASH providers.
     // Magnet variants are deliberately not passed to video_player: they need
     // the native torrent bridge, which is a separate integration step.
-    final sourceEngine = widget.videoSourceEngine;
     if (sourceEngine != null) {
       sourceEngine.clearCache();
       final type = widget.item.type.toLowerCase();
