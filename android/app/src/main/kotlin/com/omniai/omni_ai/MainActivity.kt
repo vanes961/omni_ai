@@ -8,9 +8,21 @@ import java.security.MessageDigest
 
 class MainActivity : FlutterActivity() {
     private val modelChannel = "omni_ai/bundled_model"
+    private val torrentChannel = "omni_ai/torrent_engine"
+    private var torrentBridge: TorrentSessionBridge? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        val torrentEngine = torrentBridge ?: TorrentSessionBridge(applicationContext).also {
+            torrentBridge = it
+        }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, torrentChannel)
+            .setMethodCallHandler { call, result ->
+                if (!torrentEngine.handle(call, result)) {
+                    result.notImplemented()
+                }
+            }
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, modelChannel)
             .setMethodCallHandler { call, result ->
                 if (call.method != "copyBundledModel") {
@@ -100,5 +112,11 @@ class MainActivity : FlutterActivity() {
                     }
                 }.start()
             }
+    }
+
+    override fun onDestroy() {
+        torrentBridge?.close()
+        torrentBridge = null
+        super.onDestroy()
     }
 }
