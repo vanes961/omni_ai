@@ -472,7 +472,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     }
 
     // If every catalog URL failed, ask OMNI's own source engine for fresh
-    // alternatives. TorrServer is not required for HTTP/HLS/DASH providers.
+    // alternatives from OMNI's configured HTTP/HLS/DASH providers.
     // Magnet variants are deliberately not passed to video_player: they need
     // the native torrent bridge, which is a separate integration step.
     if (sourceEngine != null) {
