@@ -534,26 +534,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     if (!mounted || generation != _playerGeneration) return;
     setState(() => _segmentMarkers = savedMarkers);
 
-    final playableSources = <String>[];
-    for (final candidate in sources) {
-      final candidateUri = Uri.tryParse(candidate);
-      if (candidateUri?.scheme.toLowerCase() == 'magnet') {
-        try {
-          final playbackUri = await _prepareMagnetPlayback(
-            candidate,
-            generation,
-          );
-          if (!mounted || generation != _playerGeneration) return;
-          playableSources.add(playbackUri.toString());
-        } on Object catch (error) {
-          playerError = error;
-          _torrentActive = false;
-          unawaited(_torrentEngine.stopTorrent());
-        }
-        continue;
-      }
-      playableSources.add(candidate);
-    }
+    final attemptedSources = <String>{};
 
     Future<bool> tryPlaybackSource(String source) async {
       if (!mounted || generation != _playerGeneration) return false;
@@ -584,16 +565,37 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       }
     }
 
-    // First try the selected catalog URL and its known alternates.
-    for (final candidate in playableSources) {
-      if (await tryPlaybackSource(candidate)) return;
+    // Try catalog candidates in their declared priority order. A direct
+    // HTTP stream gets its chance before we spend time resolving a magnet.
+    for (final candidate in sources) {
+      if (!mounted || generation != _playerGeneration) return;
+      final candidateUri = Uri.tryParse(candidate);
+      var playbackSource = candidate;
+      if (candidateUri?.scheme.toLowerCase() == 'magnet') {
+        try {
+          final playbackUri = await _prepareMagnetPlayback(
+            candidate,
+            generation,
+          );
+          if (!mounted || generation != _playerGeneration) return;
+          playbackSource = playbackUri.toString();
+        } on Object catch (error) {
+          playerError = error;
+          _torrentActive = false;
+          unawaited(_torrentEngine.stopTorrent());
+          attemptedSources.add(candidate);
+          continue;
+        }
+      }
+      attemptedSources
+        ..add(candidate)
+        ..add(playbackSource);
+      if (await tryPlaybackSource(playbackSource)) return;
       if (!mounted || generation != _playerGeneration) return;
     }
 
     // If every catalog URL failed, ask OMNI's own source engine for fresh
     // alternatives from OMNI's configured HTTP/HLS/DASH providers.
-    // Magnet candidates have already been resolved to local HTTP playback
-    // URLs by the native torrent bridge before reaching video_player.
     if (sourceEngine != null) {
       sourceEngine.clearCache();
       final type = widget.item.type.toLowerCase();
@@ -615,7 +617,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
           ),
         );
         if (!mounted || generation != _playerGeneration) return;
-        final attempted = playableSources.toSet();
+        final attempted = attemptedSources;
         final fallbackVariants =
             fallbackResolution.variants
                 .where((variant) => variant.isHttpStream)

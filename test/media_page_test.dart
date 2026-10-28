@@ -207,13 +207,15 @@ void main() {
     expect(fallback.httpHeaders, primary.httpHeaders);
   });
 
-  testWidgets('skips magnet URLs until the native torrent engine is available', (
+  testWidgets('tries a working direct video before torrent fallback', (
     tester,
   ) async {
     const torrentChannel = MethodChannel('omni_ai/torrent_engine');
+    var magnetStarts = 0;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(torrentChannel, (call) async {
           if (call.method == 'startMagnet') {
+            magnetStarts++;
             throw PlatformException(
               code: 'UNAVAILABLE',
               message: 'Native torrent bridge is unavailable in this test.',
@@ -234,8 +236,8 @@ void main() {
       posterUrl: '',
       rating: 8,
       voiceovers: const [],
-      videoUrl: 'magnet:?xt=urn:btih:0123456789abcdef',
-      videoFallbackUrls: const ['https://fallback.example/video.mp4'],
+      videoUrl: 'https://primary.example/video.mp4',
+      videoFallbackUrls: const ['magnet:?xt=urn:btih:0123456789abcdef'],
     );
 
     await tester.pumpWidget(
@@ -253,7 +255,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(playerSources, [Uri.parse('https://fallback.example/video.mp4')]);
+    expect(playerSources, [Uri.parse('https://primary.example/video.mp4')]);
+    expect(magnetStarts, 0);
     expect(find.text('ВЫБЕРИТЕ ВИДЕОФАЙЛ'), findsNothing);
     expect(tester.takeException(), isNull);
   });
