@@ -10,8 +10,6 @@ import 'package:http/testing.dart';
 import 'package:omni_ai/features/media/services/ani_skip_segment_provider.dart';
 import 'package:omni_ai/core/network/widgets/network_image_with_fallback.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
-import 'package:omni_ai/features/media/data/torrserver_client.dart';
-import 'package:omni_ai/features/media/data/torrserver_playback_resolver.dart';
 import 'package:omni_ai/features/media/presentation/media_details_page.dart';
 import 'package:omni_ai/features/media/presentation/media_page.dart';
 import 'package:omni_ai/features/media/services/media_search_service.dart';
@@ -209,13 +207,13 @@ void main() {
     expect(fallback.httpHeaders, primary.httpHeaders);
   });
 
-  testWidgets('cancelling torrent file selection does not start fallback playback', (
+  testWidgets('skips magnet URLs until the native torrent engine is available', (
     tester,
   ) async {
     final playerSources = <Uri>[];
     final item = MediaItem(
-      id: 'torrent-cancel-test',
-      title: 'Torrent Cancel Test',
+      id: 'torrent-fallback-test',
+      title: 'Torrent Fallback Test',
       type: 'Фильм',
       posterUrl: '',
       rating: 8,
@@ -228,9 +226,7 @@ void main() {
       MaterialApp(
         home: PlayerPage(
           item: item,
-          preferences: UserPreferences()
-            ..torrServerUrl = 'http://torrserver.example',
-          torrServerResolver: _FileSelectionRequiredResolver(),
+          preferences: UserPreferences(),
           playerFactory: (source) {
             playerSources.add(source);
             return _FakePlaybackController();
@@ -241,13 +237,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.text('ВЫБЕРИТЕ ВИДЕОФАЙЛ'), findsOneWidget);
-    await tester.tap(find.text('ОТМЕНА'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-
-    expect(playerSources, isEmpty);
-    expect(find.text('НЕ УДАЛОСЬ ЗАПУСТИТЬ ВИДЕО'), findsOneWidget);
+    expect(playerSources, [Uri.parse('https://fallback.example/video.mp4')]);
+    expect(find.text('ВЫБЕРИТЕ ВИДЕОФАЙЛ'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -1833,38 +1824,6 @@ class _FakeMediaPlaybackSettingsStore implements MediaPlaybackSettingsStore {
     return true;
   }
 }
-class _FileSelectionRequiredResolver extends TorrServerPlaybackResolver {
-  @override
-  Future<Uri> resolve({
-    required String endpoint,
-    required Uri magnetUri,
-    String? title,
-    int? episodeNumber,
-    int? seasonNumber,
-    int? selectedFileIndex,
-    String? existingTorrentHash,
-    Duration metadataTimeout = const Duration(seconds: 30),
-    Duration pollInterval = const Duration(seconds: 1),
-  }) async {
-    throw const TorrServerFileSelectionRequired(
-      [
-        TorrServerFileStat(
-          id: 1,
-          path: 'Season 1/Episode 1.mkv',
-          length: 1024,
-        ),
-        TorrServerFileStat(
-          id: 2,
-          path: 'Season 1/Episode 2.mkv',
-          length: 2048,
-        ),
-      ],
-      torrentHash: 'test-hash',
-    );
-  }
-}
-
-
 class _FakeCatalogTokenStore implements MediaCatalogTokenStore {
   String? token;
 
