@@ -29,7 +29,7 @@ void main() {
       url: 'magnet:?xt=urn:btih:abcdefghijklmnopqrstuvwxyz234567',
     );
     const uppercaseBase32 = PlaybackVariant(
-      url: 'MAGNET:?XT=URN:BTIH:ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',
+      url: 'magnet:?xt=URN:BTIH:ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',
     );
     const shortBase32 = PlaybackVariant(
       url: 'magnet:?xt=urn:btih:abcdefghijklmnopqrstuvwxy234567',
