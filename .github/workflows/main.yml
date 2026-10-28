@@ -63,7 +63,7 @@ jobs:
 
       - name: Check formatting
         run: |
-          files="$(git diff --name-only --diff-filter=ACMRT HEAD~5 HEAD -- 'lib/**/*.dart' 'test/**/*.dart')"
+          files="$(git diff --name-only --diff-filter=ACMRT HEAD^ HEAD -- 'lib/**/*.dart' 'test/**/*.dart')"
           if [ -n "$files" ]; then
             dart format --output=none --set-exit-if-changed $files || { echo '--- formatter output ---'; dart format --output=show $files; exit 1; }
           else
