@@ -31,7 +31,7 @@ class PeerTubeDirectoryDiscoveryAdapter implements SourceDiscoveryAdapter {
 
 class PeerTubeDirectoryProbe implements DiscoveredSourceProbe {
   PeerTubeDirectoryProbe({http.Client? client})
-      : _client = client ?? http.Client();
+    : _client = client ?? http.Client();
 
   final http.Client _client;
 
@@ -88,7 +88,7 @@ class PeerTubeDirectoryProbe implements DiscoveredSourceProbe {
 /// with an explicit permissive licence. This is not a commercial movie index.
 class PeerTubeDirectoryPlaybackProvider implements VideoSourceProvider {
   PeerTubeDirectoryPlaybackProvider({http.Client? client})
-      : _client = client ?? http.Client();
+    : _client = client ?? http.Client();
 
   final http.Client _client;
 
