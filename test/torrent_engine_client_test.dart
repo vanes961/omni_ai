@@ -66,7 +66,7 @@ void main() {
 
     final client = TorrentEngineClient(channel: channel);
 
-    expect(() => client.selectFile(-1), throwsArgumentError);
+    await expectLater(client.selectFile(-1), throwsArgumentError);
     expect(invoked, isFalse);
   });
 }
