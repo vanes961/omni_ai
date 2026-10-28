@@ -608,25 +608,26 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         );
         if (!mounted || generation != _playerGeneration) return;
         final attempted = playableSources.toSet();
-        final fallbackVariants = fallbackResolution.variants
-            .where((variant) => variant.isHttpStream)
-            .toList(growable: false)
-          ..sort((a, b) {
-            int score(PlaybackVariant value) {
-              var result = 0;
-              if (_selectedVoiceover != null &&
-                  value.voiceover == _selectedVoiceover) {
-                result += 2;
-              }
-              if (_selectedQuality != null &&
-                  value.quality == _selectedQuality) {
-                result += 1;
-              }
-              return result;
-            }
+        final fallbackVariants =
+            fallbackResolution.variants
+                .where((variant) => variant.isHttpStream)
+                .toList(growable: false)
+              ..sort((a, b) {
+                int score(PlaybackVariant value) {
+                  var result = 0;
+                  if (_selectedVoiceover != null &&
+                      value.voiceover == _selectedVoiceover) {
+                    result += 2;
+                  }
+                  if (_selectedQuality != null &&
+                      value.quality == _selectedQuality) {
+                    result += 1;
+                  }
+                  return result;
+                }
 
-            return score(b).compareTo(score(a));
-          });
+                return score(b).compareTo(score(a));
+              });
         for (final variant in fallbackVariants) {
           final candidate = variant.url.trim();
           if (candidate.isEmpty || !attempted.add(candidate)) continue;
@@ -640,7 +641,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
     if (!mounted || generation != _playerGeneration) return;
     setState(() {
-      _playerError = playerError ??
+      _playerError =
+          playerError ??
           StateError('Не удалось запустить ни один найденный источник.');
       _isLoading = false;
     });
