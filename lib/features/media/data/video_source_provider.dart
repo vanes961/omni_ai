@@ -72,7 +72,12 @@ class PlaybackVariant {
             (unit) =>
                 (unit >= 48 && unit <= 57) || (unit >= 97 && unit <= 102),
           );
-      if (isHex) return true;
+      final isBase32 = hash.length == 32 &&
+          hash.codeUnits.every(
+            (unit) =>
+                (unit >= 97 && unit <= 122) || (unit >= 50 && unit <= 55),
+          );
+      if (isHex || isBase32) return true;
     }
     return false;
   }
