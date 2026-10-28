@@ -110,8 +110,8 @@ class PlaybackResolution {
     required Iterable<PlaybackVariant> variants,
     this.message,
   }) : variants = List<PlaybackVariant>.unmodifiable(
-         variants.where((variant) => variant.isSupportedSource),
-       );
+          variants.where((variant) => variant.isSupportedSource),
+        );
 
   final String providerId;
   final List<PlaybackVariant> variants;
