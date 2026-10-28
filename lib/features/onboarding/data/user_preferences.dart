@@ -16,7 +16,6 @@ class UserPreferences {
   String proxyType = 'http';
   String proxyHost = '';
   int proxyPort = 1080;
-  String torrServerUrl = '';
 
   Map<String, dynamic> toJson() => {
     'categories': categories,
@@ -29,7 +28,6 @@ class UserPreferences {
     'proxyType': proxyType,
     'proxyHost': proxyHost,
     'proxyPort': proxyPort,
-    'torrServerUrl': torrServerUrl,
   };
 
   factory UserPreferences.fromJson(Map<String, dynamic> json) {
@@ -52,9 +50,6 @@ class UserPreferences {
           ? json['proxyHost'] as String
           : ''
       ..proxyPort = json['proxyPort'] is int ? json['proxyPort'] as int : 1080
-      ..torrServerUrl = json['torrServerUrl'] is String
-          ? (json['torrServerUrl'] as String)
-          : '';
   }
 }
 
