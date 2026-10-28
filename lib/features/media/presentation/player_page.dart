@@ -1288,6 +1288,90 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                             icon: const Icon(Icons.forward_10, size: 22),
                             color: Colors.white,
                           ),
+                          if (_availableVoiceoversFor(
+                            _hasEpisodes
+                                ? widget.item.episodes[_selectedEpisode]
+                                : null,
+                          ).isNotEmpty)
+                            PopupMenuButton<String>(
+                              key: const ValueKey('in-player-voiceover-menu'),
+                              tooltip: 'Озвучка',
+                              initialValue: _selectedVoiceover,
+                              color: SystemCorePalette.panel,
+                              icon: const Icon(
+                                Icons.audiotrack,
+                                color: Colors.white,
+                                size: 21,
+                              ),
+                              onSelected: (voiceover) =>
+                                  unawaited(_selectVoiceover(voiceover)),
+                              itemBuilder: (context) => [
+                                for (final voiceover in _availableVoiceoversFor(
+                                  _hasEpisodes
+                                      ? widget.item.episodes[_selectedEpisode]
+                                      : null,
+                                ))
+                                  PopupMenuItem<String>(
+                                    value: voiceover,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (voiceover == _selectedVoiceover)
+                                          const Icon(
+                                            Icons.check,
+                                            size: 16,
+                                            color: SystemCorePalette.green,
+                                          ),
+                                        if (voiceover == _selectedVoiceover)
+                                          const SizedBox(width: 6),
+                                        Text(voiceover),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          if (_availableQualitiesFor(
+                            _hasEpisodes
+                                ? widget.item.episodes[_selectedEpisode]
+                                : null,
+                          ).isNotEmpty)
+                            PopupMenuButton<String>(
+                              key: const ValueKey('in-player-quality-menu'),
+                              tooltip: 'Качество видео',
+                              initialValue: _selectedQuality,
+                              color: SystemCorePalette.panel,
+                              icon: const Icon(
+                                Icons.hd,
+                                color: Colors.white,
+                                size: 21,
+                              ),
+                              onSelected: (quality) =>
+                                  unawaited(_selectQuality(quality)),
+                              itemBuilder: (context) => [
+                                for (final quality in _availableQualitiesFor(
+                                  _hasEpisodes
+                                      ? widget.item.episodes[_selectedEpisode]
+                                      : null,
+                                ))
+                                  PopupMenuItem<String>(
+                                    value: quality,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (quality == _selectedQuality)
+                                          const Icon(
+                                            Icons.check,
+                                            size: 16,
+                                            color: SystemCorePalette.green,
+                                          ),
+                                        if (quality == _selectedQuality)
+                                          const SizedBox(width: 6),
+                                        Text(quality),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
                           const Spacer(),
                           Text(
                             _formatPosition(player.duration),
@@ -1328,6 +1412,13 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       }
     }
     return qualities;
+  }
+
+  Future<void> _selectVoiceover(String voiceover) async {
+    if (voiceover == _selectedVoiceover) return;
+    setState(() => _selectedVoiceover = voiceover);
+    await _playbackSettingsStore.saveVoiceover(widget.item.id, voiceover);
+    if (mounted) await _loadEpisode(_selectedEpisode);
   }
 
   Future<void> _selectQuality(String quality) async {
