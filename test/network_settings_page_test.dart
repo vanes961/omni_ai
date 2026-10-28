@@ -89,21 +89,17 @@ void main() {
     expect(restored?.autoMirrorEnabled, isFalse);
   });
 
-  testWidgets('saves the TorrServer URL and validates empty endpoint', (
+  testWidgets('does not expose an external torrent server setting', (
     tester,
   ) async {
-    final keyValueStore = _MemoryStringStore();
-    final preferences = UserPreferences();
-    final preferencesStore = SharedPreferencesUserPreferencesStore(
-      store: keyValueStore,
-    );
-
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: NetworkSettingsPage(
-            preferences: preferences,
-            preferencesStore: preferencesStore,
+            preferences: UserPreferences(),
+            preferencesStore: SharedPreferencesUserPreferencesStore(
+              store: _MemoryStringStore(),
+            ),
             mirrors: [Uri.https('mirror.example', '/')],
           ),
         ),
@@ -111,23 +107,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final urlField = find.byKey(const ValueKey('torrserver-url-field'));
-    await tester.ensureVisible(urlField);
-    await tester.enterText(urlField, 'http://192.168.1.20:8090');
-    await tester.pumpAndSettle();
-    expect(preferences.torrServerUrl, 'http://192.168.1.20:8090');
-
-    final restored = await preferencesStore.load();
-    expect(restored?.torrServerUrl, 'http://192.168.1.20:8090');
-
-    await tester.enterText(urlField, '');
-    await tester.pumpAndSettle();
-    final checkButton = find.byKey(const ValueKey('check-torrserver-button'));
-    await tester.ensureVisible(checkButton);
-    await tester.tap(checkButton);
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('корректный адрес'), findsOneWidget);
+    expect(find.textContaining('TorrServer'), findsNothing);
+    expect(find.byKey(const ValueKey('torrserver-url-field')), findsNothing);
+    expect(find.byKey(const ValueKey('check-torrserver-button')), findsNothing);
+    expect(find.byKey(const ValueKey('check-network-button')), findsOneWidget);
   });
 
   testWidgets('shows an unavailable transport instead of throwing', (
