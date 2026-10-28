@@ -49,7 +49,7 @@ class UserPreferences {
       ..proxyHost = json['proxyHost'] is String
           ? json['proxyHost'] as String
           : ''
-      ..proxyPort = json['proxyPort'] is int ? json['proxyPort'] as int : 1080
+      ..proxyPort = json['proxyPort'] is int ? json['proxyPort'] as int : 1080;
   }
 }
 
