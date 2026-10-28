@@ -40,8 +40,47 @@ android {
     }
 }
 
+// Resolve the exact candidate artifacts in CI without packaging them into the app yet.
+// This verifies Maven coordinates and publication availability without increasing APK size.
+val libtorrent4jCompatibilityCheck by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    add("libtorrent4jCompatibilityCheck", "org.libtorrent4j:libtorrent4j:2.0.5-22")
+    add("libtorrent4jCompatibilityCheck", "org.libtorrent4j:libtorrent4j-android-arm:2.0.5-22")
+    add("libtorrent4jCompatibilityCheck", "org.libtorrent4j:libtorrent4j-android-arm64:2.0.5-22")
+    add("libtorrent4jCompatibilityCheck", "org.libtorrent4j:libtorrent4j-android-x86:2.0.5-22")
+    add("libtorrent4jCompatibilityCheck", "org.libtorrent4j:libtorrent4j-android-x86_64:2.0.5-22")
+}
+
+tasks.register("verifyLibtorrent4jArtifacts") {
+    group = "verification"
+    description = "Resolves the pinned libtorrent4j 2.0.5-22 base and Android ABI artifacts without packaging them."
+    doLast {
+        val artifacts = libtorrent4jCompatibilityCheck.resolve()
+        val expectedNames = setOf(
+            "libtorrent4j-2.0.5-22.jar",
+            "libtorrent4j-android-arm-2.0.5-22.jar",
+            "libtorrent4j-android-arm64-2.0.5-22.jar",
+            "libtorrent4j-android-x86-2.0.5-22.jar",
+            "libtorrent4j-android-x86_64-2.0.5-22.jar",
+        )
+        val actualNames = artifacts.map { it.name }.toSet()
+        check(actualNames.containsAll(expectedNames)) {
+            "Missing libtorrent4j artifacts. Expected $expectedNames but resolved $actualNames"
+        }
+        artifacts.sortedBy { it.name }.forEach { artifact ->
+            check(artifact.isFile && artifact.length() > 0L) {
+                "Resolved libtorrent4j artifact is empty or missing: ${artifact.name}"
+            }
+            logger.lifecycle("Resolved ${artifact.name}: ${artifact.length()} bytes")
+        }
+        logger.lifecycle("libtorrent4j 2.0.5-22 artifact resolution passed; no artifacts were added to app runtime.")
+    }
 }
 
 kotlin {
