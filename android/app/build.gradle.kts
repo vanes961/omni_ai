@@ -40,8 +40,7 @@ android {
     }
 }
 
-// Resolve the exact candidate artifacts in CI without packaging them into the app yet.
-// This verifies Maven coordinates and publication availability without increasing APK size.
+// The standalone torrent engine is packaged into the Android app.
 val libtorrent4jCompatibilityCheck by configurations.creating {
     isCanBeConsumed = false
     isCanBeResolved = true
@@ -49,6 +48,12 @@ val libtorrent4jCompatibilityCheck by configurations.creating {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    implementation("org.libtorrent4j:libtorrent4j:2.0.5-22")
+    implementation("org.libtorrent4j:libtorrent4j-android-arm:2.0.5-22")
+    implementation("org.libtorrent4j:libtorrent4j-android-arm64:2.0.5-22")
+    implementation("org.libtorrent4j:libtorrent4j-android-x86:2.0.5-22")
+    implementation("org.libtorrent4j:libtorrent4j-android-x86_64:2.0.5-22")
 
     add("libtorrent4jCompatibilityCheck", "org.libtorrent4j:libtorrent4j:2.0.5-22")
     add("libtorrent4jCompatibilityCheck", "org.libtorrent4j:libtorrent4j-android-arm:2.0.5-22")
@@ -59,7 +64,7 @@ dependencies {
 
 tasks.register("verifyLibtorrent4jArtifacts") {
     group = "verification"
-    description = "Resolves the pinned libtorrent4j 2.0.5-22 base and Android ABI artifacts without packaging them."
+    description = "Verifies the pinned libtorrent4j 2.0.5-22 base and Android ABI artifacts."
     doLast {
         val artifacts = libtorrent4jCompatibilityCheck.resolve()
         val expectedNames = setOf(
@@ -79,7 +84,7 @@ tasks.register("verifyLibtorrent4jArtifacts") {
             }
             logger.lifecycle("Resolved ${artifact.name}: ${artifact.length()} bytes")
         }
-        logger.lifecycle("libtorrent4j 2.0.5-22 artifact resolution passed; no artifacts were added to app runtime.")
+        logger.lifecycle("libtorrent4j 2.0.5-22 artifacts are available and declared for app runtime.")
     }
 }
 
