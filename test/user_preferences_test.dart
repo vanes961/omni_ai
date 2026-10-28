@@ -18,7 +18,7 @@ void main() {
         ..proxyType = 'mtproto'
         ..proxyHost = 'proxy.example'
         ..proxyPort = 443
-        ..torrServerUrl = 'http://192.168.1.20:8090';
+;
 
       await store.save(preferences);
       final restored = await SharedPreferencesUserPreferencesStore(
@@ -47,7 +47,6 @@ void main() {
         expect(preferences.proxyType, 'http');
         expect(preferences.proxyHost, isEmpty);
         expect(preferences.proxyPort, 1080);
-        expect(preferences.torrServerUrl, isEmpty);
       },
     );
 
