@@ -32,6 +32,8 @@ internal class TorrentSessionBridge(context: Context) {
     private val sessionManager = SessionManager()
     private val saveDirectory = File(appContext.filesDir, "omni_torrent_engine")
     @Volatile private var currentHandle: TorrentHandle? = null
+    @Volatile private var sessionStarted = false
+    @Volatile private var listenerRegistered = false
     @Volatile private var closed = false
 
     private val alertListener = object : AlertListener {
@@ -89,8 +91,12 @@ internal class TorrentSessionBridge(context: Context) {
         closed = true
         worker.execute {
             try {
-                sessionManager.removeListener(alertListener)
+                if (listenerRegistered) {
+                    sessionManager.removeListener(alertListener)
+                    listenerRegistered = false
+                }
                 sessionManager.stop()
+                sessionStarted = false
             } catch (_: Throwable) {
                 // Activity teardown must not crash if the native session failed.
             } finally {
@@ -110,8 +116,15 @@ internal class TorrentSessionBridge(context: Context) {
         require(canonicalSave.path.startsWith(canonicalRoot.path + File.separator)) {
             "Torrent storage must remain inside app-private storage."
         }
-        sessionManager.addListener(alertListener)
-        sessionManager.start()
+        if (!listenerRegistered) {
+            sessionManager.addListener(alertListener)
+            listenerRegistered = true
+        }
+        if (!sessionStarted) {
+            sessionManager.start()
+            sessionManager.startDht()
+            sessionStarted = true
+        }
     }
 
     private fun statusSnapshot(): Map<String, Any?> {
