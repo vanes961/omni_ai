@@ -17,8 +17,7 @@ void main() {
         ..proxyEnabled = true
         ..proxyType = 'mtproto'
         ..proxyHost = 'proxy.example'
-        ..proxyPort = 443
-;
+        ..proxyPort = 443;
 
       await store.save(preferences);
       final restored = await SharedPreferencesUserPreferencesStore(
