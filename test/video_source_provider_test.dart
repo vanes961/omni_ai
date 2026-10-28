@@ -28,6 +28,12 @@ void main() {
     const base32 = PlaybackVariant(
       url: 'magnet:?xt=urn:btih:abcdefghijklmnopqrstuvwxyz234567',
     );
+    const uppercaseBase32 = PlaybackVariant(
+      url: 'MAGNET:?XT=URN:BTIH:ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',
+    );
+    const shortBase32 = PlaybackVariant(
+      url: 'magnet:?xt=urn:btih:abcdefghijklmnopqrstuvwxy234567',
+    );
 
     expect(valid.isMagnetSource, isTrue);
     expect(valid.isSupportedSource, isTrue);
@@ -37,6 +43,8 @@ void main() {
     expect(base32.isMagnetSource, isTrue);
     expect(base32.isSupportedSource, isTrue);
     expect(base32.toMediaVideoSource(), isNull);
+    expect(uppercaseBase32.isMagnetSource, isTrue);
+    expect(shortBase32.isMagnetSource, isFalse);
   });
 
   test('normalizes missing quality and blank voiceover safely', () {
