@@ -25,12 +25,18 @@ void main() {
     );
     const invalid = PlaybackVariant(url: 'magnet:?dn=missing-hash');
     const malformed = PlaybackVariant(url: 'magnet:?xt=urn:btih:xyz');
+    const base32 = PlaybackVariant(
+      url: 'magnet:?xt=urn:btih:abcdefghijklmnopqrstuvwxyz234567',
+    );
 
     expect(valid.isMagnetSource, isTrue);
     expect(valid.isSupportedSource, isTrue);
     expect(valid.toMediaVideoSource(), isNull);
     expect(invalid.isSupportedSource, isFalse);
     expect(malformed.isSupportedSource, isFalse);
+    expect(base32.isMagnetSource, isTrue);
+    expect(base32.isSupportedSource, isTrue);
+    expect(base32.toMediaVideoSource(), isNull);
   });
 
   test('normalizes missing quality and blank voiceover safely', () {
