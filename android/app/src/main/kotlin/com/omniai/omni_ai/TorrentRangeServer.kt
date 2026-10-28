@@ -12,7 +12,6 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
-import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.ExecutorService
@@ -124,7 +123,7 @@ internal class TorrentRangeServer(
                 val firstPiece = ((fileOffset + start) / pieceLength).toInt()
                 val lastPiece = ((fileOffset + end) / pieceLength).toInt()
                 handle.setSequentialRange(firstPiece, lastPiece)
-                val ready = waitForPieces(firstPiece, lastPiece, 45_000L)
+                val ready = waitForPieces(firstPiece, firstPiece, 45_000L)
                 if (!ready) {
                     writeError(client, 503, "Requested torrent pieces are not ready")
                     return
