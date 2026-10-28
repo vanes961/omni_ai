@@ -50,6 +50,26 @@ class TorrentEngineClient {
     );
   }
 
+  Future<Uri> startPlayback(int index) async {
+    if (index < 0) {
+      throw ArgumentError.value(index, 'index', 'Must be non-negative.');
+    }
+    final result = await _channel.invokeMapMethod<String, dynamic>(
+      'startTorrentPlayback',
+      <String, Object?>{'index': index},
+    );
+    final rawUrl = result?['url'];
+    final uri = rawUrl is String ? Uri.tryParse(rawUrl) : null;
+    if (uri == null ||
+        uri.scheme != 'http' ||
+        uri.host != '127.0.0.1' ||
+        uri.port <= 0 ||
+        uri.path.length < 2) {
+      throw StateError('Native torrent engine returned an invalid playback URL.');
+    }
+    return uri;
+  }
+
   Future<void> stopTorrent() async {
     await _channel.invokeMapMethod<String, dynamic>('stopTorrent');
   }
