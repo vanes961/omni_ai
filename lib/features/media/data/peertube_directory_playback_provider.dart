@@ -184,7 +184,7 @@ class PeerTubeDirectoryPlaybackProvider implements VideoSourceProvider {
               'count': '5',
               'sort': '-views',
               'nsfw': 'false',
-              if (language != null) 'languageOneOf': language,
+              'languageOneOf': ?language,
             }),
             headers: const {'Accept': 'application/json'},
           )
