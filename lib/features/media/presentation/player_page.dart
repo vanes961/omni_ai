@@ -296,7 +296,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     await _torrentEngine.startMagnet(magnetUri);
 
     var metadataReady = false;
-    for (var attempt = 0; attempt < 120; attempt++) {
+    // Fail quickly enough to let the player try alternate sources when a
+    // magnet has no reachable peers or cannot provide metadata.
+    for (var attempt = 0; attempt < 60; attempt++) {
       if (!mounted || generation != _playerGeneration) {
         throw StateError('Воспроизведение отменено.');
       }
@@ -308,7 +310,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       await Future<void>.delayed(const Duration(milliseconds: 500));
     }
     if (!metadataReady) {
-      throw TimeoutException('Не удалось получить метаданные торрента за 60 секунд.');
+      throw TimeoutException('Не удалось получить метаданные торрента за 30 секунд.');
     }
 
     final files = await _torrentEngine.listFiles();
@@ -567,8 +569,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
     // If every catalog URL failed, ask OMNI's own source engine for fresh
     // alternatives from OMNI's configured HTTP/HLS/DASH providers.
-    // Magnet variants are deliberately not passed to video_player: they need
-    // the native torrent bridge, which is a separate integration step.
+    // Magnet candidates have already been resolved to local HTTP playback
+    // URLs by the native torrent bridge before reaching video_player.
     if (sourceEngine != null) {
       sourceEngine.clearCache();
       final type = widget.item.type.toLowerCase();
