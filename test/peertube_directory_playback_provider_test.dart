@@ -78,8 +78,9 @@ void main() {
       expect(checked.status, DiscoveredSourceStatus.unavailable);
     });
 
-    test('returns only same-host video streams with explicit open licences',
-        () async {
+    test(
+      'returns only same-host video streams with explicit open licences',
+      () async {
       final client = MockClient((request) async {
         if (request.url.host == 'instances.joinpeertube.org') {
           return http.Response(
