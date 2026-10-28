@@ -69,4 +69,36 @@ void main() {
     await expectLater(client.selectFile(-1), throwsArgumentError);
     expect(invoked, isFalse);
   });
+  test('returns only a validated loopback playback URL', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          expect(call.method, 'startTorrentPlayback');
+          expect(call.arguments, <String, Object?>{'index': 2});
+          return <String, Object?>{
+            'url': 'http://127.0.0.1:43821/ab12cd34',
+            'selectedIndex': 2,
+          };
+        });
+
+    final client = TorrentEngineClient(channel: channel);
+    final uri = await client.startPlayback(2);
+
+    expect(uri.host, '127.0.0.1');
+    expect(uri.port, 43821);
+    expect(uri.path, '/ab12cd34');
+  });
+
+  test('rejects a non-loopback playback URL from native code', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          return <String, Object?>{
+            'url': 'http://example.com/video.mp4',
+          };
+        });
+
+    final client = TorrentEngineClient(channel: channel);
+
+    await expectLater(client.startPlayback(0), throwsStateError);
+  });
+
 }
