@@ -28,7 +28,17 @@ This can make playback feel integrated, but it is a larger Android/native integr
 
 The first library candidate is [libtorrent4j](https://github.com/aldenml/libtorrent4j), whose Java API wraps the native libtorrent engine and whose project declares the MIT license. Keep it as a candidate until an Android build proves the selected artifacts work together; a dependency declaration alone is not a working player.
 
-**Android compatibility constraint:** the repository currently sets `minSdk = 26`. The upstream changelog states that `2.0.5-22` supports Android API 24 and newer, while the current `2.1.0-39` line requires API 28 or newer. Therefore, do not blindly select the newest release: first validate `2.0.5-22` against the app's Kotlin/Gradle toolchain and all target ABIs. The base artifact is `org.libtorrent4j:libtorrent4j:2.0.5-22`; native Android artifacts are published separately per ABI. See the [upstream changelog](https://github.com/aldenml/libtorrent4j/blob/master/changelog.txt) and [Maven Central artifact listing](https://central.sonatype.com/artifact/org.libtorrent4j/libtorrent4j).
+**Android compatibility constraint:** the repository currently sets `minSdk = 26`. The upstream changelog states that `2.0.5-22` supports Android API 24 and newer, while the current `2.1.0-39` line requires API 28 or newer. Therefore, do not blindly select the newest release: first validate `2.0.5-22` against the app's Kotlin/Gradle toolchain and all target ABIs. The pinned candidate is `2.0.5-22` (not `2.1.0-39`, because the latter requires API 28+). Maven coordinates are split by ABI and all must use the same version:
+
+- Java API: `org.libtorrent4j:libtorrent4j:2.0.5-22`
+- ARM 32-bit: `org.libtorrent4j:libtorrent4j-android-arm:2.0.5-22`
+- ARM 64-bit: `org.libtorrent4j:libtorrent4j-android-arm64:2.0.5-22`
+- x86: `org.libtorrent4j:libtorrent4j-android-x86:2.0.5-22`
+- x86_64: `org.libtorrent4j:libtorrent4j-android-x86_64:2.0.5-22`
+
+The feature branch now has a CI-only Gradle configuration and `verifyLibtorrent4jArtifacts` task that resolves the base artifact and all four ABI artifacts without adding them to the app runtime or APK. This is deliberately a packaging-neutral first check: a passing task proves Maven publication/coordinates and non-empty downloads only. It does **not** prove Kotlin API compilation, JNI loading, device runtime compatibility, ABI coverage in an APK, or playback. After this probe passes, the next stage is a controlled integration build with an explicit APK-size comparison and supported-ABI strategy.
+
+See the [upstream changelog](https://github.com/aldenml/libtorrent4j/blob/master/changelog.txt), [Maven Central base artifact](https://central.sonatype.com/artifact/org.libtorrent4j/libtorrent4j), and [Maven Central Android ARM64 artifact](https://central.sonatype.com/artifact/org.libtorrent4j/libtorrent4j-android-arm64).
 
 Required implementation slices, in order:
 
