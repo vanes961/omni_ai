@@ -40,17 +40,26 @@ internal class TorrentRangeServer(
     private val file = File(fileStorage.filePath(fileIndex, saveDirectory.absolutePath)).canonicalFile
     private val root = saveDirectory.canonicalFile
     private val server = ServerSocket(0, 16, InetAddress.getByName("127.0.0.1"))
-    private val acceptThread = Thread({ acceptLoop() }, "omni-torrent-http").apply {
-        isDaemon = true
-        start()
-    }
+    private val acceptThread: Thread
 
     init {
-        require(fileIndex in 0 until info.numFiles()) { "Invalid torrent file index." }
-        require(file.path.startsWith(root.path + File.separator)) {
-            "Torrent file path escaped private storage."
+        try {
+            require(fileIndex in 0 until info.numFiles()) { "Invalid torrent file index." }
+            require(file.path.startsWith(root.path + File.separator)) {
+                "Torrent file path escaped private storage."
+            }
+            require(pieceLength > 0 && fileSize >= 0L) { "Invalid torrent file metadata." }
+        } catch (error: Throwable) {
+            try {
+                server.close()
+            } catch (_: Throwable) {
+            }
+            throw error
         }
-        require(pieceLength > 0 && fileSize >= 0L) { "Invalid torrent file metadata." }
+        acceptThread = Thread({ acceptLoop() }, "omni-torrent-http").apply {
+            isDaemon = true
+            start()
+        }
     }
 
     val url: String
