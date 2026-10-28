@@ -21,9 +21,9 @@ import java.util.concurrent.Executors
 /**
  * Native session boundary for OMNI's standalone torrent engine.
  *
- * This first increment owns a libtorrent session, accepts validated magnet
- * URIs, exposes metadata/file selection and reports transfer status. It does
- * not yet expose a byte-range HTTP endpoint to the Flutter video player.
+ * Owns the standalone libtorrent session, validates magnet URIs, exposes
+ * metadata/file selection and transfer status, and hosts the selected file via
+ * a loopback HTTP byte-range server. End-to-end playback still needs device validation.
  */
 internal class TorrentSessionBridge(context: Context) {
     private val appContext = context.applicationContext

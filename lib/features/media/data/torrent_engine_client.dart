@@ -2,8 +2,9 @@ import 'package:flutter/services.dart';
 
 /// Flutter-facing API for the native, standalone libtorrent4j session.
 ///
-/// The native engine currently resolves magnet metadata and manages file
-/// priorities. Playback through a local byte-range endpoint is a later stage.
+/// The native engine resolves magnet metadata, manages file priorities, and
+/// exposes the selected file through a loopback HTTP byte-range endpoint.
+/// Real-device playback, seeking, and lifecycle behavior still require device validation.
 class TorrentEngineClient {
   TorrentEngineClient({MethodChannel? channel})
     : _channel = channel ?? const MethodChannel('omni_ai/torrent_engine');
