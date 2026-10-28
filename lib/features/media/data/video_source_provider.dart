@@ -57,8 +57,8 @@ class PlaybackVariant {
         uri.host.isNotEmpty;
   }
 
-  /// A magnet is a resolver input, never a URL for video_player itself.
-  /// Only a valid hexadecimal BitTorrent info hash is accepted.
+  /// Accepts hexadecimal or Base32 BitTorrent info hashes.
+  /// A magnet is resolver input, never a URL for video_player itself.
   bool get isMagnetSource {
     final uri = Uri.tryParse(url.trim());
     if (uri == null || uri.scheme.toLowerCase() != 'magnet') return false;
