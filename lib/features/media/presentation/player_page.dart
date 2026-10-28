@@ -546,15 +546,15 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       return;
     }
 
-    for (var index = 0; index < playableSources.length; index++) {
-      if (!mounted || generation != _playerGeneration) return;
+    Future<bool> tryPlaybackSource(String source) async {
+      if (!mounted || generation != _playerGeneration) return false;
       MediaPlaybackController? nextPlayer;
       try {
-        nextPlayer = playerFactory(Uri.parse(playableSources[index]));
+        nextPlayer = playerFactory(Uri.parse(source));
         await nextPlayer.initialize();
         if (!mounted || generation != _playerGeneration) {
           await _disposePlayer(nextPlayer);
-          return;
+          return false;
         }
         setState(() {
           _player = nextPlayer;
@@ -563,18 +563,85 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         });
         unawaited(_loadAniSkipMarkers(nextPlayer, episodeIndex, generation));
         await _offerResumeIfAvailable(nextPlayer, episodeIndex, generation);
-        return;
+        return true;
       } on PlatformException catch (error) {
         playerError = error;
         await _disposePlayer(nextPlayer);
+        return false;
       } on Object catch (error) {
         playerError = error;
         await _disposePlayer(nextPlayer);
+        return false;
       }
     }
+
+    // First try the selected catalog URL and its known alternates.
+    for (final candidate in playableSources) {
+      if (await tryPlaybackSource(candidate)) return;
+      if (!mounted || generation != _playerGeneration) return;
+    }
+
+    // If every catalog URL failed, ask OMNI's own source engine for fresh
+    // alternatives. TorrServer is not required for HTTP/HLS/DASH providers.
+    // Magnet variants are deliberately not passed to video_player: they need
+    // the native torrent bridge, which is a separate integration step.
+    final sourceEngine = widget.videoSourceEngine;
+    if (sourceEngine != null) {
+      sourceEngine.clearCache();
+      final type = widget.item.type.toLowerCase();
+      final kind = type.contains('аниме') || type.contains('anime')
+          ? PlaybackMediaKind.anime
+          : type.contains('сериал') ||
+                type.contains('series') ||
+                type.contains('сезон')
+          ? PlaybackMediaKind.series
+          : PlaybackMediaKind.movie;
+      try {
+        final fallbackResolution = await sourceEngine.resolve(
+          PlaybackRequest(
+            mediaId: widget.item.id,
+            title: widget.item.title,
+            kind: kind,
+            season: episode?.seasonNumber,
+            episode: episode?.number,
+          ),
+        );
+        if (!mounted || generation != _playerGeneration) return;
+        final attempted = playableSources.toSet();
+        final fallbackVariants = fallbackResolution.variants
+            .where((variant) => variant.isHttpStream)
+            .toList(growable: false)
+          ..sort((a, b) {
+            int score(PlaybackVariant value) {
+              var result = 0;
+              if (_selectedVoiceover != null &&
+                  value.voiceover == _selectedVoiceover) {
+                result += 2;
+              }
+              if (_selectedQuality != null &&
+                  value.quality == _selectedQuality) {
+                result += 1;
+              }
+              return result;
+            }
+
+            return score(b).compareTo(score(a));
+          });
+        for (final variant in fallbackVariants) {
+          final candidate = variant.url.trim();
+          if (candidate.isEmpty || !attempted.add(candidate)) continue;
+          if (await tryPlaybackSource(candidate)) return;
+          if (!mounted || generation != _playerGeneration) return;
+        }
+      } on Object catch (error) {
+        playerError = error;
+      }
+    }
+
     if (!mounted || generation != _playerGeneration) return;
     setState(() {
-      _playerError = playerError;
+      _playerError = playerError ??
+          StateError('Не удалось запустить ни один найденный источник.');
       _isLoading = false;
     });
   }
