@@ -290,7 +290,6 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     }
   }
 
-
   Future<Uri> _prepareMagnetPlayback(String magnetUri, int generation) async {
     _torrentActive = true;
     await _torrentEngine.startMagnet(magnetUri);
@@ -310,19 +309,33 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       await Future<void>.delayed(const Duration(milliseconds: 500));
     }
     if (!metadataReady) {
-      throw TimeoutException('Не удалось получить метаданные торрента за 30 секунд.');
+      throw TimeoutException(
+        'Не удалось получить метаданные торрента за 30 секунд.',
+      );
     }
 
     final files = await _torrentEngine.listFiles();
-    final videoFiles = files.where((file) {
-      final extension = file.name.split('.').last.toLowerCase();
-      return file.sizeBytes > 0 &&
-          const <String>{
-            'mp4', 'm4v', 'mkv', 'webm', 'avi', 'mov', 'ts', 'mpg', 'mpeg',
-          }.contains(extension);
-    }).toList(growable: false);
+    final videoFiles = files
+        .where((file) {
+          final extension = file.name.split('.').last.toLowerCase();
+          return file.sizeBytes > 0 &&
+              const <String>{
+                'mp4',
+                'm4v',
+                'mkv',
+                'webm',
+                'avi',
+                'mov',
+                'ts',
+                'mpg',
+                'mpeg',
+              }.contains(extension);
+        })
+        .toList(growable: false);
     if (videoFiles.isEmpty) {
-      throw StateError('В торренте не найден видеофайл поддерживаемого формата.');
+      throw StateError(
+        'В торренте не найден видеофайл поддерживаемого формата.',
+      );
     }
 
     TorrentEngineFile? selected;
@@ -343,11 +356,18 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(file.name, maxLines: 3, overflow: TextOverflow.ellipsis),
+                      Text(
+                        file.name,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 3),
                       Text(
                         _formatBytes(file.sizeBytes),
-                        style: const TextStyle(color: SystemCorePalette.muted, fontSize: 12),
+                        style: const TextStyle(
+                          color: SystemCorePalette.muted,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -519,7 +539,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       final candidateUri = Uri.tryParse(candidate);
       if (candidateUri?.scheme.toLowerCase() == 'magnet') {
         try {
-          final playbackUri = await _prepareMagnetPlayback(candidate, generation);
+          final playbackUri = await _prepareMagnetPlayback(
+            candidate,
+            generation,
+          );
           if (!mounted || generation != _playerGeneration) return;
           playableSources.add(playbackUri.toString());
         } on Object catch (error) {
