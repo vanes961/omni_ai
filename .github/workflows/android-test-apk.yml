@@ -53,8 +53,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Set up Gradle for libtorrent4j compatibility verification
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
       - name: Verify pinned libtorrent4j artifacts and Android ABIs
-        run: ./android/gradlew -p android :app:verifyLibtorrent4jArtifacts
+        run: gradle -p android :app:verifyLibtorrent4jArtifacts
 
       # Formatting debt already exists across the branch and must not prevent
       # us from getting real analyzer, test, and APK build results.
