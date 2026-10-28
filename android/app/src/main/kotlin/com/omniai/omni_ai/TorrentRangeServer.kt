@@ -112,10 +112,6 @@ internal class TorrentRangeServer(
                         rangeHeader = line.substringAfter(':').trim()
                     }
                 }
-                if (!waitForFile(45_000L)) {
-                    writeError(client, 503, "Torrent file is not available yet")
-                    return
-                }
                 val range = parseRange(rangeHeader, fileSize)
                 if (range == null && rangeHeader != null) {
                     writeError(client, 416, "Range Not Satisfiable", "Content-Range: bytes */$fileSize\r\n")
@@ -123,6 +119,24 @@ internal class TorrentRangeServer(
                 }
                 val start = range?.first ?: 0L
                 val end = range?.last ?: (fileSize - 1L)
+                if (parts[0] == "HEAD") {
+                    val output = BufferedOutputStream(client.getOutputStream())
+                    val status = if (range != null) "206 Partial Content" else "200 OK"
+                    output.write("HTTP/1.1 $status\r\n".toByteArray(StandardCharsets.US_ASCII))
+                    output.write("Content-Type: ${contentType(file.name)}\r\n".toByteArray(StandardCharsets.US_ASCII))
+                    output.write("Accept-Ranges: bytes\r\n".toByteArray(StandardCharsets.US_ASCII))
+                    output.write("Content-Length: ${if (fileSize == 0L) 0L else end - start + 1L}\r\n".toByteArray(StandardCharsets.US_ASCII))
+                    if (range != null) {
+                        output.write("Content-Range: bytes $start-$end/$fileSize\r\n".toByteArray(StandardCharsets.US_ASCII))
+                    }
+                    output.write("Connection: close\r\n\r\n".toByteArray(StandardCharsets.US_ASCII))
+                    output.flush()
+                    return
+                }
+                if (!waitForFile(45_000L)) {
+                    writeError(client, 503, "Torrent file is not available yet")
+                    return
+                }
                 if (fileSize == 0L) {
                     val output = BufferedOutputStream(client.getOutputStream())
                     output.write("HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".toByteArray(StandardCharsets.US_ASCII))
@@ -149,7 +163,7 @@ internal class TorrentRangeServer(
                 }
                 output.write("Connection: close\r\n\r\n".toByteArray(StandardCharsets.US_ASCII))
                 output.flush()
-                if (parts[0] == "HEAD" || fileSize == 0L) return
+                if (fileSize == 0L) return
 
                 RandomAccessFile(file, "r").use { random ->
                     random.seek(start)
