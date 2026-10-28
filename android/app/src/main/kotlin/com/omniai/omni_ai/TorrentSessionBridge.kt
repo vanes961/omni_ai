@@ -35,6 +35,7 @@ internal class TorrentSessionBridge(context: Context) {
     @Volatile private var sessionStarted = false
     @Volatile private var listenerRegistered = false
     @Volatile private var closed = false
+    @Volatile private var rangeServer: TorrentRangeServer? = null
 
     private val alertListener = object : AlertListener {
         override fun types(): IntArray? = null
@@ -75,7 +76,28 @@ internal class TorrentSessionBridge(context: Context) {
                 }
                 runWorker(result) { selectFile(index) }
             }
+            "startTorrentPlayback" -> {
+                val index = call.argument<Number>("index")?.toInt()
+                if (index == null || index < 0) {
+                    result.error("INVALID_FILE_INDEX", "A non-negative file index is required.", null)
+                    return true
+                }
+                runWorker(result) {
+                    val handle = currentHandle
+                    check(handle != null && handle.isValid()) { "No active torrent is available." }
+                    val info = handle.torrentFile()
+                        ?: throw IllegalStateException("Torrent metadata has not arrived yet.")
+                    require(index in 0 until info.numFiles()) { "File index is outside the torrent file list." }
+                    rangeServer?.close()
+                    selectFile(index)
+                    val server = TorrentRangeServer(handle, info, index, saveDirectory)
+                    rangeServer = server
+                    mapOf("url" to server.url, "selectedIndex" to index)
+                }
+            }
             "stopTorrent" -> runWorker(result) {
+                rangeServer?.close()
+                rangeServer = null
                 val handle = currentHandle
                 if (handle != null && handle.isValid()) sessionManager.remove(handle)
                 currentHandle = null
@@ -95,6 +117,8 @@ internal class TorrentSessionBridge(context: Context) {
                     sessionManager.removeListener(alertListener)
                     listenerRegistered = false
                 }
+                rangeServer?.close()
+                rangeServer = null
                 sessionManager.stop()
                 sessionStarted = false
             } catch (_: Throwable) {
