@@ -14,7 +14,11 @@ class TorrentEngineClient {
   Future<void> startMagnet(String magnetUri) async {
     final value = magnetUri.trim();
     if (value.isEmpty || value.length > 4096) {
-      throw ArgumentError.value(magnetUri, 'magnetUri', 'Invalid magnet URI length.');
+      throw ArgumentError.value(
+        magnetUri,
+        'magnetUri',
+        'Invalid magnet URI length.',
+      );
     }
     await _channel.invokeMapMethod<String, dynamic>(
       'startMagnet',
@@ -66,7 +70,9 @@ class TorrentEngineClient {
         uri.host != '127.0.0.1' ||
         uri.port <= 0 ||
         uri.path.length < 2) {
-      throw StateError('Native torrent engine returned an invalid playback URL.');
+      throw StateError(
+        'Native torrent engine returned an invalid playback URL.',
+      );
     }
     return uri;
   }
