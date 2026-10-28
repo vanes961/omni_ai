@@ -30,10 +30,7 @@ class PlaybackRequest {
       episode! > 0;
 }
 
-/// A real playable option returned by a permitted source.
-///
-/// Do not construct URLs from catalog IDs or mark a source playable until a
-/// provider has returned a concrete HTTP(S) stream URL.
+/// A real playback option returned by a configured source provider.
 class PlaybackVariant {
   const PlaybackVariant({
     required this.url,
@@ -60,70 +57,27 @@ class PlaybackVariant {
         uri.host.isNotEmpty;
   }
 
-  /// Magnet links are accepted only as resolver inputs. The player must turn
-  /// them into an HTTP stream through an explicitly configured torrent bridge;
-  /// they are never passed directly to video_player.
+  /// A magnet is a resolver input, never a URL for video_player itself.
+  /// Only a valid hexadecimal BitTorrent info hash is accepted.
   bool get isMagnetSource {
     final uri = Uri.tryParse(url.trim());
     if (uri == null || uri.scheme.toLowerCase() != 'magnet') return false;
     final topics = uri.queryParametersAll['xt'] ?? const <String>[];
-    return topics.any((topic) =>
-        RegExp(r'^urn:btih:(?:[a-fA-F0-9]{40}|[a-zA-Z2-7]{32})
-    final value = subtitleUrl;
-    if (value == null || value.trim().isEmpty) return false;
-    final uri = Uri.tryParse(value);
-    return uri != null &&
-        (uri.scheme == 'http' || uri.scheme == 'https') &&
-        uri.host.isNotEmpty;
+    for (final topic in topics) {
+      const prefix = 'urn:btih:';
+      if (!topic.toLowerCase().startsWith(prefix)) continue;
+      final hash = topic.substring(prefix.length).toLowerCase();
+      final isHex = hash.length == 40 &&
+          hash.codeUnits.every(
+            (unit) =>
+                (unit >= 48 && unit <= 57) || (unit >= 97 && unit <= 102),
+          );
+      if (isHex) return true;
+    }
+    return false;
   }
 
-  /// Bridges the normalized playback model to the existing media-card model.
-  /// Invalid URLs are intentionally not exposed as player options.
-  MediaVideoSource? toMediaVideoSource() {
-    if (!isHttpStream) return null;
-    return MediaVideoSource(
-      url: url,
-      quality: quality?.trim().isNotEmpty == true ? quality!.trim() : 'Auto',
-      voiceover: voiceover?.trim().isNotEmpty == true
-          ? voiceover!.trim()
-          : null,
-    );
-  }
-}
-
-/// Result of resolving playback options. Empty variants means no playable
-/// stream was found; it must not be represented as successful playback.
-class PlaybackResolution {
-  PlaybackResolution({
-    required this.providerId,
-    required Iterable<PlaybackVariant> variants,
-    this.message,
-  }) : variants = List<PlaybackVariant>.unmodifiable(
-         variants.where((variant) => variant.isSupportedSource),
-       );
-
-  final String providerId;
-  final List<PlaybackVariant> variants;
-  final String? message;
-
-  bool get hasPlayableVariants => variants.isNotEmpty;
-}
-
-/// Plug-in boundary for independently replaceable, authorized video sources.
-///
-/// Implementations should use documented/permissioned endpoints, apply
-/// timeouts, and never bypass DRM or access controls. Catalog sources such as
-/// PoiskKino are metadata providers and should not implement this interface
-/// unless they genuinely return playable streams.
-abstract interface class VideoSourceProvider {
-  String get id;
-
-  Future<PlaybackResolution> resolve(PlaybackRequest request);
-}
-)
-            .hasMatch(topic));
-  }
-
+  /// Torrent sources must be resolved to HTTP by a configured playback bridge.
   bool get isSupportedSource => isHttpStream || isMagnetSource;
 
   bool get hasHttpSubtitles {
@@ -135,8 +89,8 @@ abstract interface class VideoSourceProvider {
         uri.host.isNotEmpty;
   }
 
-  /// Bridges the normalized playback model to the existing media-card model.
-  /// Invalid URLs are intentionally not exposed as player options.
+  /// Bridges HTTP variants to the existing media-card model. Magnet inputs
+  /// intentionally remain in the resolver layer and are not exposed as URLs.
   MediaVideoSource? toMediaVideoSource() {
     if (!isHttpStream) return null;
     return MediaVideoSource(
@@ -149,15 +103,14 @@ abstract interface class VideoSourceProvider {
   }
 }
 
-/// Result of resolving playback options. Empty variants means no playable
-/// stream was found; it must not be represented as successful playback.
+/// Result of resolving playback options.
 class PlaybackResolution {
   PlaybackResolution({
     required this.providerId,
     required Iterable<PlaybackVariant> variants,
     this.message,
   }) : variants = List<PlaybackVariant>.unmodifiable(
-         variants.where((variant) => variant.isHttpStream),
+         variants.where((variant) => variant.isSupportedSource),
        );
 
   final String providerId;
