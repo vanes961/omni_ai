@@ -287,14 +287,7 @@ bool _validHost(Object? raw) {
       host.startsWith('192.168.') ||
       host.startsWith('169.254.') ||
       RegExp(r'^172\.(1[6-9]|2[0-9]|3[01])\..+').hasMatch(host) ||
-      RegExp(r'^\d{1,3}(?:\.\d{1,3}){3}
-    return false;
-  }
-  return RegExp(
-    r'^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$',
-  ).hasMatch(host);
-}
-).hasMatch(host)) {
+      RegExp(r'^\d{1,3}(?:\.\d{1,3}){3}$').hasMatch(host)) {
     return false;
   }
   return RegExp(
