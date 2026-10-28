@@ -210,6 +210,22 @@ void main() {
   testWidgets('skips magnet URLs until the native torrent engine is available', (
     tester,
   ) async {
+    const torrentChannel = MethodChannel('omni_ai/torrent_engine');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(torrentChannel, (call) async {
+          if (call.method == 'startMagnet') {
+            throw PlatformException(
+              code: 'UNAVAILABLE',
+              message: 'Native torrent bridge is unavailable in this test.',
+            );
+          }
+          return <String, Object?>{'stopped': true};
+        });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(torrentChannel, null);
+    });
+
     final playerSources = <Uri>[];
     final item = MediaItem(
       id: 'torrent-fallback-test',
