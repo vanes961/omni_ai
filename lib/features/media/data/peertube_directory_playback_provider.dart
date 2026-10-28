@@ -140,7 +140,18 @@ class PeerTubeDirectoryPlaybackProvider implements VideoSourceProvider {
       }
 
       final results = await Future.wait(
-        hosts.map((host) => _searchInstance(host, request.title.trim())),
+        hosts.map((host) async {
+          // Prefer Russian-language results for the user's primary locale.
+          // Fall back to the instance's broader search when no licensed,
+          // directly playable Russian-language result is available.
+          final russian = await _searchInstance(
+            host,
+            request.title.trim(),
+            language: 'ru',
+          );
+          if (russian.isNotEmpty) return russian;
+          return _searchInstance(host, request.title.trim());
+        }),
       );
       final variants = <String, PlaybackVariant>{};
       for (final result in results) {
@@ -162,8 +173,9 @@ class PeerTubeDirectoryPlaybackProvider implements VideoSourceProvider {
 
   Future<List<PlaybackVariant>> _searchInstance(
     String host,
-    String title,
-  ) async {
+    String title, {
+    String? language,
+  }) async {
     try {
       final response = await _client
           .get(
@@ -172,6 +184,7 @@ class PeerTubeDirectoryPlaybackProvider implements VideoSourceProvider {
               'count': '5',
               'sort': '-views',
               'nsfw': 'false',
+              if (language != null) 'languageOneOf': language,
             }),
             headers: const {'Accept': 'application/json'},
           )
