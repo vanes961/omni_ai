@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
-import 'package:omni_ai/features/media/data/torrserver_playback_resolver.dart';
 import 'package:omni_ai/features/media/data/video_source_engine.dart';
 import 'package:omni_ai/features/media/data/video_source_provider.dart';
 import 'package:omni_ai/features/media/services/ani_skip_segment_provider.dart';
@@ -44,7 +43,6 @@ class PlayerPage extends StatefulWidget {
     required this.preferences,
     this.searchService,
     this.playerFactory,
-    this.torrServerResolver,
     this.videoSourceEngine,
     this.resumePositionStore,
     this.segmentMarkerStore,
@@ -57,7 +55,6 @@ class PlayerPage extends StatefulWidget {
   final UserPreferences preferences;
   final MediaSearchService? searchService;
   final MediaPlayerFactory? playerFactory;
-  final TorrServerPlaybackResolver? torrServerResolver;
   final VideoSourceEngine? videoSourceEngine;
   final MediaResumePositionStore? resumePositionStore;
   final MediaSegmentMarkerStore? segmentMarkerStore;
@@ -298,61 +295,6 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         : '${position.inMinutes}:$seconds';
   }
 
-  String _formatTorrentFileSize(int bytes) {
-    const megabyte = 1024 * 1024;
-    const gigabyte = 1024 * megabyte;
-    if (bytes >= gigabyte) {
-      return '${(bytes / gigabyte).toStringAsFixed(1)} ГБ';
-    }
-    if (bytes >= megabyte) {
-      return '${(bytes / megabyte).toStringAsFixed(0)} МБ';
-    }
-    if (bytes >= 1024) {
-      return '${(bytes / 1024).toStringAsFixed(0)} КБ';
-    }
-    return '$bytes Б';
-  }
-
-  Future<int?> _chooseTorrServerFile(
-    TorrServerFileSelectionRequired selection,
-  ) {
-    return showDialog<int>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('ВЫБЕРИТЕ ВИДЕОФАЙЛ'),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: MediaQuery.sizeOf(dialogContext).height * 0.55,
-          child: ListView.separated(
-            itemCount: selection.files.length,
-            separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final file = selection.files[index];
-              final normalizedPath = file.path.replaceAll(RegExp(r'\\'), '/');
-              final parts = normalizedPath.split('/');
-              final name = parts.isEmpty ? file.path : parts.last;
-              return ListTile(
-                title: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis),
-                subtitle: Text(
-                  '${file.path}\n${_formatTorrentFileSize(file.length)}',
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                onTap: () => Navigator.of(dialogContext).pop(file.id),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('ОТМЕНА'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _loadEpisode(int episodeIndex) async {
     final generation = ++_playerGeneration;
     final oldPlayer = _player;
@@ -483,67 +425,15 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     setState(() => _segmentMarkers = savedMarkers);
 
     final playableSources = <String>[];
-    var torrentFileSelectionCancelled = false;
     for (final candidate in sources) {
       final candidateUri = Uri.tryParse(candidate);
-      if (candidateUri?.scheme.toLowerCase() != 'magnet') {
-        playableSources.add(candidate);
-        continue;
-      }
-      final endpoint = widget.preferences.torrServerUrl.trim();
-      if (endpoint.isEmpty) {
+      if (candidateUri?.scheme.toLowerCase() == 'magnet') {
         playerError = StateError(
-          'Сначала укажите адрес TorrServer в сетевых настройках.',
+          'Встроенный торрент-движок OMNI AI пока не подключён.',
         );
         continue;
       }
-
-      final resolver =
-          widget.torrServerResolver ?? TorrServerPlaybackResolver();
-      try {
-        Uri resolvedUri;
-        try {
-          resolvedUri = await resolver.resolve(
-            endpoint: endpoint,
-            magnetUri: candidateUri!,
-            title: widget.item.title,
-            episodeNumber: episode?.number,
-            seasonNumber: episode?.seasonNumber,
-          );
-        } on TorrServerFileSelectionRequired catch (selection) {
-          if (!mounted || generation != _playerGeneration) return;
-          final selectedFileIndex = await _chooseTorrServerFile(selection);
-          if (selectedFileIndex == null) {
-            playerError = StateError('Выбор видеофайла отменён.');
-            torrentFileSelectionCancelled = true;
-            break;
-          }
-          if (!mounted || generation != _playerGeneration) return;
-          resolvedUri = await resolver.resolve(
-            endpoint: endpoint,
-            magnetUri: candidateUri!,
-            title: widget.item.title,
-            episodeNumber: episode?.number,
-            seasonNumber: episode?.seasonNumber,
-            selectedFileIndex: selectedFileIndex,
-            existingTorrentHash: selection.torrentHash,
-          );
-        }
-        playableSources.add(resolvedUri.toString());
-      } on Object catch (error) {
-        playerError = error;
-      } finally {
-        if (widget.torrServerResolver == null) resolver.close();
-      }
-    }
-
-    if (torrentFileSelectionCancelled) {
-      if (!mounted || generation != _playerGeneration) return;
-      setState(() {
-        _playerError = playerError;
-        _isLoading = false;
-      });
-      return;
+      playableSources.add(candidate);
     }
 
     Future<bool> tryPlaybackSource(String source) async {
@@ -889,9 +779,6 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
       return 'Источник не удалось открыть. Повтори запуск и проверь диагностику.';
     }
     final message = error.toString().toLowerCase();
-    if (message.contains('укажите адрес torrserver')) {
-      return 'Не указан адрес TorrServer. Добавь его в сетевых настройках для magnet-источников.';
-    }
     if (message.contains('выбор видеофайла отменён')) {
       return 'Выбор видеофайла отменён. Выбери файл и повтори запуск.';
     }
