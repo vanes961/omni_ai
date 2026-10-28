@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:omni_ai/features/media/data/media_item.dart';
+import 'package:omni_ai/features/media/data/torrent_engine_client.dart';
 import 'package:omni_ai/features/media/data/video_source_engine.dart';
 import 'package:omni_ai/features/media/data/video_source_provider.dart';
 import 'package:omni_ai/features/media/services/ani_skip_segment_provider.dart';
@@ -83,6 +84,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   String? _selectedQuality;
   Duration? _seekingPosition;
   final Map<MediaSegmentType, Duration> _pendingSegmentStarts = {};
+  final TorrentEngineClient _torrentEngine = TorrentEngineClient();
+  bool _torrentActive = false;
 
   bool get _tracksEpisodeHistory {
     final type = widget.item.type.toLowerCase();
@@ -187,6 +190,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     _positionTimer?.cancel();
     unawaited(_saveProgress());
     _player?.dispose();
+    if (_torrentActive) unawaited(_torrentEngine.stopTorrent());
     super.dispose();
   }
 
@@ -284,6 +288,86 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     } else {
       await _resumeStore.clear(widget.item.id, episodeIndex);
     }
+  }
+
+
+  Future<Uri> _prepareMagnetPlayback(String magnetUri, int generation) async {
+    _torrentActive = true;
+    await _torrentEngine.startMagnet(magnetUri);
+
+    var metadataReady = false;
+    for (var attempt = 0; attempt < 120; attempt++) {
+      if (!mounted || generation != _playerGeneration) {
+        throw StateError('Воспроизведение отменено.');
+      }
+      final status = await _torrentEngine.getStatus();
+      if (status.metadataReady) {
+        metadataReady = true;
+        break;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+    }
+    if (!metadataReady) {
+      throw TimeoutException('Не удалось получить метаданные торрента за 60 секунд.');
+    }
+
+    final files = await _torrentEngine.listFiles();
+    final videoFiles = files.where((file) {
+      final extension = file.name.split('.').last.toLowerCase();
+      return file.sizeBytes > 0 &&
+          const <String>{
+            'mp4', 'm4v', 'mkv', 'webm', 'avi', 'mov', 'ts', 'mpg', 'mpeg',
+          }.contains(extension);
+    }).toList(growable: false);
+    if (videoFiles.isEmpty) {
+      throw StateError('В торренте не найден видеофайл поддерживаемого формата.');
+    }
+
+    TorrentEngineFile? selected;
+    if (videoFiles.length == 1) {
+      selected = videoFiles.single;
+    } else {
+      if (!mounted) throw StateError('Страница плеера закрыта.');
+      selected = await showDialog<TorrentEngineFile>(
+        context: context,
+        builder: (dialogContext) => SimpleDialog(
+          title: const Text('Выбери видеофайл'),
+          children: [
+            for (final file in videoFiles)
+              SimpleDialogOption(
+                onPressed: () => Navigator.of(dialogContext).pop(file),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(file.name, maxLines: 3, overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 3),
+                      Text(
+                        _formatBytes(file.sizeBytes),
+                        style: const TextStyle(color: SystemCorePalette.muted, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+    if (selected == null) throw StateError('Выбор видеофайла отменён.');
+    await _torrentEngine.selectFile(selected.index);
+    return _torrentEngine.startPlayback(selected.index);
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes >= 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} ГБ';
+    }
+    if (bytes >= 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} МБ';
+    }
+    return '${(bytes / 1024).toStringAsFixed(0)} КБ';
   }
 
   String _formatPosition(Duration position) {
@@ -428,9 +512,15 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     for (final candidate in sources) {
       final candidateUri = Uri.tryParse(candidate);
       if (candidateUri?.scheme.toLowerCase() == 'magnet') {
-        playerError = StateError(
-          'Встроенный торрент-движок OMNI AI пока не подключён.',
-        );
+        try {
+          final playbackUri = await _prepareMagnetPlayback(candidate, generation);
+          if (!mounted || generation != _playerGeneration) return;
+          playableSources.add(playbackUri.toString());
+        } on Object catch (error) {
+          playerError = error;
+          _torrentActive = false;
+          unawaited(_torrentEngine.stopTorrent());
+        }
         continue;
       }
       playableSources.add(candidate);
