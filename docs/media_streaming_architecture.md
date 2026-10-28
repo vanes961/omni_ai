@@ -14,17 +14,11 @@ Separate the system into interfaces so the UI does not depend on a specific prov
 
 ## Engine options
 
-### Option A — connect to an already running TorrServer
+### Rejected approach — TorrServer
 
-This is the fastest prototype path. OMNI AI can offer a server URL setting, a connection/health check, and a small adapter for the documented API. The server may run on the same device or another device on the user's trusted network.
+TorrServer is explicitly **not part of the product design**. Do not require a TorrServer process, server URL, external installation, health check, or TorrServer settings for playback. Existing legacy adapter/settings code must be removed from the active playback path in a controlled cleanup after references and tests are audited.
 
-Security requirements: warn that plain HTTP is unencrypted (especially for non-loopback hosts), do not put credentials in the URL or logs, do not expose an unauthenticated server to the public network, and never ship default credentials. The current settings prototype validates a root HTTP(S) URL and checks the documented `GET /echo` health endpoint. A successful health check confirms reachability only; it does not yet prove that playback works.
-
-### Option B — bundle or embed a torrent engine
-
-This can make playback feel integrated, but it is a larger Android/native integration task: ABI builds, lifecycle, storage/cache limits, foreground-service/background behavior, cleanup, device compatibility, and HTTP player integration all need validation. TorrServer is GPL-3.0; bundling or linking it may impose source-distribution and license obligations on the combined product. Review the license and distribution model before adding its binaries or code. Do not copy code before that review.
-
-### Option C — embed libtorrent4j (preferred candidate for the standalone player)
+### Selected approach — embed libtorrent4j (standalone engine)
 
 The first library candidate is [libtorrent4j](https://github.com/aldenml/libtorrent4j), whose Java API wraps the native libtorrent engine and whose project declares the MIT license. Keep it as a candidate until an Android build proves the selected artifacts work together; a dependency declaration alone is not a working player.
 
@@ -51,18 +45,15 @@ Required implementation slices, in order:
 
 This is the preferred technical direction for the requested integrated player, but it does **not** provide a catalog, episode metadata, or voiceover choices by itself. Those must come from a separate permitted catalog/source provider. Playback is limited to user-provided or otherwise authorized sources.
 
-### Option C — implement our own engine
-
-This provides control but has the highest cost and maintenance risk. It requires torrent protocol support, peer discovery, piece prioritization, integrity verification, seek-aware buffering, retries, rate limits, cache management, and security hardening. Do not start from scratch until the embedded/standalone option has been evaluated.
 
 ## Phased implementation
 
-1. Keep the current no-fake-data media UI and external ZONA handoff as a temporary state.
-2. Add a provider-neutral engine interface and tests with a fake engine; no torrent downloads yet.
-3. Add a user-configured TorrServer endpoint, validate it, and check the documented `GET /echo` health endpoint. Then test against an instance the developer controls before connecting playback.
-4. Add playback only for user-provided or otherwise authorized torrent sources, with clear progress/error/cancel states and bounded cache.
-5. Evaluate whether to bundle the engine only after Android packaging, license, privacy, and security reviews.
-6. Integrate a real metadata provider only where documented API access or permitted data access is available. Never promise that TorrServer alone provides ZONA's catalog.
+1. Keep the current no-fake-data media UI; do not invent a catalog or playback URL.
+2. Add a provider-neutral engine interface and tests with a fake engine before starting native downloads.
+3. Integrate libtorrent4j as an Android runtime dependency only after the artifact/ABI probe passes, then compile a minimal Kotlin session wrapper.
+4. Add the Flutter platform bridge for magnet/torrent input, metadata, file selection, progress, cancellation, and close. Validate inputs and never log full magnet URIs.
+5. Add a bounded loopback HTTP byte-range server for the selected file and verify seek-aware playback on real devices before advertising torrent playback as functional.
+6. Integrate catalog/source providers only where documented API access or permitted data access is available. Catalog discovery and actual torrent availability are separate responsibilities.
 
 ## Acceptance criteria
 
