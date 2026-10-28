@@ -103,7 +103,7 @@ internal class TorrentRangeServer(
                         rangeHeader = line.substringAfter(':').trim()
                     }
                 }
-                if (!file.isFile || !file.canRead()) {
+                if (!waitForFile(45_000L)) {
                     writeError(client, 503, "Torrent file is not available yet")
                     return
                 }
@@ -165,6 +165,20 @@ internal class TorrentRangeServer(
                 // Client disconnects during seeking/playback are expected.
             }
         }
+    }
+
+    private fun waitForFile(timeoutMs: Long): Boolean {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (!stopped.get() && System.currentTimeMillis() < deadline) {
+            if (file.isFile && file.canRead()) return true
+            try {
+                Thread.sleep(150)
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+                return false
+            }
+        }
+        return false
     }
 
     private fun waitForPieces(first: Int, last: Int, timeoutMs: Long): Boolean {
