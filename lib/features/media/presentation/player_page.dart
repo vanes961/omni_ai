@@ -381,6 +381,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
 
   Future<void> _loadEpisode(int episodeIndex) async {
     final generation = ++_playerGeneration;
+    if (_torrentActive) {
+      _torrentActive = false;
+      unawaited(_torrentEngine.stopTorrent());
+    }
     final oldPlayer = _player;
     final episode = _hasEpisodes ? widget.item.episodes[episodeIndex] : null;
     final defaultSource = episode?.videoUrl ?? widget.item.videoUrl;
