@@ -1,9 +1,8 @@
 name: Android installable APK
 
 on:
-  push:
-    branches:
-      - feat/ai-engine-foundation
+  # Full APKs include the ~484 MB local model. Build them only at explicit
+  # device-testing checkpoints, not for every intermediate source commit.
   workflow_dispatch:
 
 permissions:
