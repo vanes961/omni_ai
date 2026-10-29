@@ -72,6 +72,18 @@ jobs:
       - name: Build full release APK without bundled model
         run: flutter build apk --release
 
+      - name: Diagnose APK signing identity
+        if: always() && hashFiles('build/app/outputs/flutter-apk/app-release.apk') != ''
+        shell: bash
+        run: |
+          set -o pipefail
+          echo '--- Restored debug keystore certificate ---'
+          keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | grep -E 'Alias name:|SHA256:'
+          echo '--- Built APK certificate ---'
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | grep -E 'Signer #1 certificate SHA-256 digest|Signer #1 certificate DN'
+
       - name: Publish APK artifact
         uses: actions/upload-artifact@v4
         with:
