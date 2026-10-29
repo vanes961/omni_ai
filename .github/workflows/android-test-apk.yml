@@ -1,8 +1,9 @@
 name: Android installable APK
 
 on:
-  # Full APKs include the ~484 MB local model. Build them only at explicit
-  # device-testing checkpoints, not for every intermediate source commit.
+  push:
+    branches:
+      - feat/ai-engine-foundation
   workflow_dispatch:
 
 permissions:
@@ -14,6 +15,9 @@ concurrency:
 
 jobs:
   verify-and-build:
+    # The full APK embeds the ~484 MB model. Only build it for a deliberate
+    # control-point commit or a manually dispatched workflow run.
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build-apk]')
     name: Verify Flutter and build installable APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
