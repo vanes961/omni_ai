@@ -72,18 +72,32 @@ jobs:
       - name: Build full release APK without bundled model
         run: flutter build apk --release
 
-      - name: Verify APK signing identity
+      - name: Verify APK package, alignment, and signing identity
         if: always() && hashFiles('build/app/outputs/flutter-apk/app-release.apk') != ''
         shell: bash
         run: |
           set -euo pipefail
-          echo '--- Restored signing key certificate ---'
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)"
+          ZIPALIGN="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -type f -name zipalign | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          test -n "$AAPT"
+          test -n "$ZIPALIGN"
+
+          echo '--- Validate APK archive ---'
+          unzip -t "$APK" | tail -n 2
+          "$ZIPALIGN" -c -v 4 "$APK"
+          echo '--- Validate Android package metadata ---'
+          BADGING="$("$AAPT" dump badging "$APK")"
+          printf '%s\n' "$BADGING" | grep -F "package: name='com.omniai.omni_ai'"
+          printf '%s\n' "$BADGING" | grep -E "^sdkVersion:"
+          printf '%s\n' "$BADGING" | grep -E "^native-code:"
+          echo '--- Verify restored signing key certificate ---'
           KEY_SHA="$(keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | awk -F'SHA256: ' '/SHA256:/{print $2; exit}' | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           echo "Keystore SHA-256: $KEY_SHA"
-          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
-          test -n "$APKSIGNER"
-          echo '--- Built APK certificate ---'
-          APK_SHA="$("$APKSIGNER" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk | awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' | tr -d ':' | tr '[:upper:]' '[:lower:]')"
+          echo '--- Verify built APK certificate ---'
+          APK_SHA="$("$APKSIGNER" verify --verbose --print-certs "$APK" | awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           echo "APK SHA-256: $APK_SHA"
           test -n "$KEY_SHA"
           test -n "$APK_SHA"
@@ -91,12 +105,12 @@ jobs:
             echo "::error::APK signing certificate does not match the restored stable key. Refusing to publish an incompatible APK."
             exit 1
           fi
-          echo "APK signing certificate matches the restored stable key."
+          echo "APK package structure and signing identity verified."
 
-      - name: Publish APK artifact
+      - name: Publish full APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: omni-ai-android-full-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 90
