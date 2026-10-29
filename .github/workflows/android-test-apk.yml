@@ -83,7 +83,7 @@ jobs:
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
           test -n "$APKSIGNER"
           echo '--- Built APK certificate ---'
-          APK_SHA="$("$APKSIGNER" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk | awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' | tr -d ':')"
+          APK_SHA="$("$APKSIGNER" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk | awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           echo "APK SHA-256: $APK_SHA"
           test -n "$KEY_SHA"
           test -n "$APK_SHA"
