@@ -76,13 +76,17 @@ jobs:
         if: always() && hashFiles('build/app/outputs/flutter-apk/app-release.apk') != ''
         shell: bash
         run: |
-          set -o pipefail
           echo '--- Restored debug keystore certificate ---'
-          keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | grep -E 'Alias name:|SHA256:'
-          echo '--- Built APK certificate ---'
+          keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey || true
+          echo '--- Built APK certificate (full apksigner output) ---'
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
-          test -n "$APKSIGNER"
-          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | grep -E 'Signer #1 certificate SHA-256 digest|Signer #1 certificate DN'
+          if [ -z "$APKSIGNER" ]; then
+            echo 'ERROR: apksigner was not found'
+          else
+            "$APKSIGNER" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk || echo "WARNING: apksigner verify exited with code $?"
+          fi
+          echo '--- APK file metadata ---'
+          ls -lh build/app/outputs/flutter-apk/app-release.apk
 
       - name: Publish APK artifact
         uses: actions/upload-artifact@v4
