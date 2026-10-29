@@ -318,7 +318,8 @@ class MediaDetailsPage extends StatelessWidget {
             if (item.videoUrl.trim().isEmpty &&
                 !item.videoSources.any(
                   (source) => source.url.trim().isNotEmpty,
-                ))
+                ) &&
+                videoSourceEngine == null)
               Container(
                 margin: const EdgeInsets.only(bottom: 14),
                 padding: const EdgeInsets.all(14),
@@ -374,7 +375,8 @@ class MediaDetailsPage extends StatelessWidget {
                 ),
               ),
             if (item.videoUrl.trim().isNotEmpty ||
-                item.videoSources.any((source) => source.url.trim().isNotEmpty))
+                item.videoSources.any((source) => source.url.trim().isNotEmpty) ||
+                videoSourceEngine != null)
               FilledButton.icon(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
