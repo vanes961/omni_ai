@@ -72,21 +72,26 @@ jobs:
       - name: Build full release APK without bundled model
         run: flutter build apk --release
 
-      - name: Diagnose APK signing identity
+      - name: Verify APK signing identity
         if: always() && hashFiles('build/app/outputs/flutter-apk/app-release.apk') != ''
         shell: bash
         run: |
-          echo '--- Restored debug keystore certificate ---'
-          keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey || true
-          echo '--- Built APK certificate (full apksigner output) ---'
+          set -euo pipefail
+          echo '--- Restored signing key certificate ---'
+          KEY_SHA="$(keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | awk -F'SHA256: ' '/SHA256:/{print $2; exit}' | tr -d ':')"
+          echo "Keystore SHA-256: $KEY_SHA"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
-          if [ -z "$APKSIGNER" ]; then
-            echo 'ERROR: apksigner was not found'
-          else
-            "$APKSIGNER" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk || echo "WARNING: apksigner verify exited with code $?"
+          test -n "$APKSIGNER"
+          echo '--- Built APK certificate ---'
+          APK_SHA="$("$APKSIGNER" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk | awk -F': ' '/certificate SHA-256 digest:/{print $NF; exit}' | tr -d ':')"
+          echo "APK SHA-256: $APK_SHA"
+          test -n "$KEY_SHA"
+          test -n "$APK_SHA"
+          if [ "$KEY_SHA" != "$APK_SHA" ]; then
+            echo "::error::APK signing certificate does not match the restored stable key. Refusing to publish an incompatible APK."
+            exit 1
           fi
-          echo '--- APK file metadata ---'
-          ls -lh build/app/outputs/flutter-apk/app-release.apk
+          echo "APK signing certificate matches the restored stable key."
 
       - name: Publish APK artifact
         uses: actions/upload-artifact@v4
