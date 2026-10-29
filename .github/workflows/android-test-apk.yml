@@ -78,7 +78,7 @@ jobs:
         run: |
           set -euo pipefail
           echo '--- Restored signing key certificate ---'
-          KEY_SHA="$(keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | awk -F'SHA256: ' '/SHA256:/{print $2; exit}' | tr -d ':')"
+          KEY_SHA="$(keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | awk -F'SHA256: ' '/SHA256:/{print $2; exit}' | tr -d ':' | tr '[:upper:]' '[:lower:]')"
           echo "Keystore SHA-256: $KEY_SHA"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
           test -n "$APKSIGNER"
