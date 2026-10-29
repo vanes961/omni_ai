@@ -69,13 +69,13 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      - name: Build compact arm64 release APK without bundled model
-        run: flutter build apk --release --target-platform android-arm64
+      - name: Build full release APK without bundled model
+        run: flutter build apk --release
 
       - name: Publish APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: omni-ai-android-arm64-apk
+          name: omni-ai-android-full-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 14
