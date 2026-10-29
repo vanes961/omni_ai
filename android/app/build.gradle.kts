@@ -30,11 +30,21 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("stableDebug") {
+            // Use the same persisted key restored by android-test-apk.yml so APKs
+            // remain upgrade-compatible across GitHub Actions runs.
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Keep the release APK signed with the stable CI key for upgrade compatibility.
+            signingConfig = signingConfigs.getByName("stableDebug")
         }
     }
 }
