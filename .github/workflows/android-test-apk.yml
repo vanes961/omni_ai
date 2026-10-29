@@ -17,7 +17,7 @@ jobs:
   verify-and-build:
     name: Verify Flutter and build installable APK
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout feature branch
         uses: actions/checkout@v4
@@ -69,7 +69,27 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      - name: Build full release APK without bundled model
+      - name: Cache bundled Qwen model
+        id: qwen-cache
+        uses: actions/cache@v4
+        with:
+          path: android/app/src/main/assets/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf
+          key: qwen3-0.6b-q4-k-m-9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14
+
+      - name: Download bundled Qwen model
+        if: steps.qwen-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p android/app/src/main/assets/models
+          curl --location --fail --retry 3 --retry-delay 2 \
+            'https://huggingface.co/SandLogicTechnologies/Qwen3-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf' \
+            --output android/app/src/main/assets/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf
+
+      - name: Verify bundled Qwen model before packaging
+        run: |
+          echo '9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14  android/app/src/main/assets/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf' | sha256sum --check
+          test "$(stat -c%s android/app/src/main/assets/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf)" -ge 459800000
+
+      - name: Build full release APK with bundled Qwen model
         run: flutter build apk --release
 
       - name: Verify APK package, alignment, and signing identity
@@ -87,6 +107,15 @@ jobs:
 
           echo '--- Validate APK archive ---'
           unzip -t "$APK" | tail -n 2
+          echo '--- Verify the Qwen model is embedded in the APK ---'
+          MODEL_ASSET='assets/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf'
+          unzip -Z1 "$APK" | grep -Fx "$MODEL_ASSET"
+          MODEL_SHA="$(unzip -p "$APK" "$MODEL_ASSET" | sha256sum | awk '{print $1}')"
+          MODEL_BYTES="$(unzip -p "$APK" "$MODEL_ASSET" | wc -c)"
+          echo "Embedded model bytes: $MODEL_BYTES"
+          echo "Embedded model SHA-256: $MODEL_SHA"
+          test "$MODEL_BYTES" -ge 459800000
+          test "$MODEL_SHA" = '9acfc1e001311f34b4252001b626f2e466d592a42065f66571bff3790d4e1b14'
           "$ZIPALIGN" -c -v 4 "$APK"
           echo '--- Validate Android package metadata ---'
           BADGING="$("$AAPT" dump badging "$APK")"
