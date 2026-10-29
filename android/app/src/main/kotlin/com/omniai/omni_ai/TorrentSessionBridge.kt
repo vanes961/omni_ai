@@ -29,7 +29,8 @@ internal class TorrentSessionBridge(context: Context) {
     private val appContext = context.applicationContext
     private val mainHandler = Handler(Looper.getMainLooper())
     private val worker: ExecutorService = Executors.newSingleThreadExecutor()
-    private val sessionManager = SessionManager()
+    private val sessionManagerDelegate = lazy(LazyThreadSafetyMode.SYNCHRONIZED) { SessionManager() }
+    private val sessionManager by sessionManagerDelegate
     private val saveDirectory = File(appContext.filesDir, "omni_torrent_engine")
     @Volatile private var currentHandle: TorrentHandle? = null
     @Volatile private var sessionStarted = false
@@ -113,14 +114,19 @@ internal class TorrentSessionBridge(context: Context) {
         closed = true
         worker.execute {
             try {
-                if (listenerRegistered) {
-                    sessionManager.removeListener(alertListener)
-                    listenerRegistered = false
-                }
                 rangeServer?.close()
                 rangeServer = null
-                sessionManager.stop()
-                sessionStarted = false
+                // Do not initialize libtorrent during Activity teardown if the
+                // user never opened the torrent player.
+                if (sessionManagerDelegate.isInitialized()) {
+                    val manager = sessionManagerDelegate.value
+                    if (listenerRegistered) {
+                        manager.removeListener(alertListener)
+                        listenerRegistered = false
+                    }
+                    manager.stop()
+                    sessionStarted = false
+                }
             } catch (_: Throwable) {
                 // Activity teardown must not crash if the native session failed.
             } finally {
