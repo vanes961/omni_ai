@@ -695,6 +695,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           _favoriteAnalytics.analyze(const <FavoriteItem>[]),
       lessInterested: _lessInterested,
       reactionWeights: _reactionWeights,
+      selectedTopics: _profile?.topics ?? const <String>[],
     );
   }
 
@@ -1059,12 +1060,19 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
           _digestError = 'Нет подходящих материалов для дайджеста.';
         }
       });
-    } catch (_) {
-      // Ignore errors from digest requests started before interests changed.
+    } on AIEngineException catch (error) {
+      // Keep the provider failure visible: a missing key, unavailable model,
+      // timeout and invalid request require different fixes.
       if (!mounted || revisionAtStart != _interestRevision) return;
       setState(
         () => _digestError =
-            'Не удалось создать дайджест. Проверьте выбранный режим ИИ и попробуйте снова.',
+            'Ошибка ИИ (' + error.error.code.name + '). Проверьте режим ИИ и настройки провайдера.',
+      );
+    } catch (error) {
+      if (!mounted || revisionAtStart != _interestRevision) return;
+      setState(
+        () => _digestError =
+            'Ошибка дайджеста (' + error.runtimeType.toString() + '). Повторите попытку после обновления новостей.',
       );
     } finally {
       if (mounted) setState(() => _generatingDigest = false);
@@ -1086,11 +1094,8 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     if (!mounted) return;
     setState(() {
       _lessInterested = updated;
-      _articles = _favoriteAnalytics.rankNews(
-        _articles,
-        profile,
-        lessInterested: _lessInterested,
-      );
+      _favoriteInterestProfile = profile;
+      _articles = _rankPersonalized(_articles);
       _status = 'Учтено: будем реже поднимать похожие материалы.';
     });
   }
