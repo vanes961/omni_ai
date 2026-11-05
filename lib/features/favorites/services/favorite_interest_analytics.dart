@@ -293,26 +293,47 @@ class FavoriteInterestAnalytics {
     FavoriteInterestProfile profile, {
     Set<String> lessInterested = const <String>{},
     Map<String, double> reactionWeights = const <String, double>{},
+    List<String> selectedTopics = const <String>[],
   }) {
+    final normalizedSelectedTopics = selectedTopics
+        .map(_canonicalNewsTopic)
+        .where((topic) => topic.isNotEmpty)
+        .toSet();
+    double rankingScore(NewsArticle article) {
+      final existingScore = scoreNews(
+        article,
+        profile,
+        lessInterested: lessInterested,
+        reactionWeights: reactionWeights,
+      );
+      if (normalizedSelectedTopics.isEmpty) return existingScore;
+      final matchingTopics = article.topics
+          .map(_canonicalNewsTopic)
+          .where(normalizedSelectedTopics.contains)
+          .toSet();
+      // Explicitly selected interests are a first-class signal even before
+      // the user has saved favorites or reacted to articles.
+      return existingScore + matchingTopics.length * 2.5;
+    }
+
     final indexed = articles.indexed.toList();
     indexed.sort((a, b) {
-      final scoreComparison =
-          scoreNews(
-            b.$2,
-            profile,
-            lessInterested: lessInterested,
-            reactionWeights: reactionWeights,
-          ).compareTo(
-            scoreNews(
-              a.$2,
-              profile,
-              lessInterested: lessInterested,
-              reactionWeights: reactionWeights,
-            ),
-          );
+      final scoreComparison = rankingScore(b.$2).compareTo(rankingScore(a.$2));
       return scoreComparison != 0 ? scoreComparison : a.$1.compareTo(b.$1);
     });
     return List<NewsArticle>.unmodifiable(indexed.map((entry) => entry.$2));
+  }
+
+  String _canonicalNewsTopic(String topic) {
+    final normalized = topic.trim().toLowerCase();
+    return switch (normalized) {
+      'ai' || 'ии' || 'нейросети' => 'artificial intelligence',
+      'tech' || 'technology news' => 'technology',
+      'gaming' || 'video games' => 'games',
+      'cinema' || 'film' || 'films' => 'movies',
+      'tv' || 'tv series' => 'series',
+      _ => normalized,
+    };
   }
 
   List<MediaItem> rank(List<MediaItem> items, FavoriteInterestProfile profile) {
