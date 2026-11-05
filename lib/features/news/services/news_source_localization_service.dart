@@ -185,6 +185,7 @@ class NewsSourceLocalizationService {
           contentType: article.contentType,
           videoUrl: article.videoUrl,
           thumbnailUrl: article.thumbnailUrl,
+          content: article.content,
           channelName: article.channelName,
           releaseDate: article.releaseDate,
           releaseDateSourceUrl: article.releaseDateSourceUrl,
