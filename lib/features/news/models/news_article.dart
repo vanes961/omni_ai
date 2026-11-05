@@ -28,6 +28,7 @@ class NewsArticle {
     this.contentType = NewsContentType.article,
     this.videoUrl,
     this.thumbnailUrl,
+    this.content = '',
     this.channelName,
     this.releaseDate,
     this.releaseDateSourceUrl,
@@ -51,6 +52,9 @@ class NewsArticle {
   /// Original watch URL and thumbnail supplied by a video metadata provider.
   final String? videoUrl;
   final String? thumbnailUrl;
+
+  /// Clean article text fetched from the publisher page, when available.
+  final String content;
   final String? channelName;
 
   /// Release dates must come with a source; unknown dates stay null.
