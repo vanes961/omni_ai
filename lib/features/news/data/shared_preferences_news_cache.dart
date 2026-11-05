@@ -111,6 +111,7 @@ class SharedPreferencesNewsCache {
           'contentType': article.contentType.name,
           'videoUrl': article.videoUrl,
           'thumbnailUrl': article.thumbnailUrl,
+          'content': article.content,
           'channelName': article.channelName,
           'releaseDate': article.releaseDate?.toIso8601String(),
           'releaseDateSourceUrl': article.releaseDateSourceUrl,
@@ -219,6 +220,7 @@ class SharedPreferencesNewsCache {
       contentType: NewsContentType.fromJson(json['contentType']),
       videoUrl: videoUrl,
       thumbnailUrl: thumbnailUrl,
+      content: json['content'] is String ? json['content'] as String : '',
       channelName: json['channelName'] is String
           ? (json['channelName'] as String).trim()
           : null,
