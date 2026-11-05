@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:html/parser.dart' as html_parser;
 import 'package:omni_ai/features/news/models/news_article.dart';
 import 'package:omni_ai/features/news/models/news_interest_profile.dart';
 import 'package:omni_ai/features/news/services/news_relevance_filter.dart';
@@ -580,6 +581,7 @@ class NewsRssService {
           ? _tag(item, 'source')
           : (defaultSourceName ?? uri.host);
       final text = _stripMarkup(description);
+      final thumbnailUrl = _extractThumbnail(item, description, uri);
       final normalized = ' ${title.toLowerCase()} ${text.toLowerCase()} ';
       final detectedTopics = _topicKeywords.entries
           .where(
@@ -620,11 +622,51 @@ class NewsRssService {
           isCritical: isCritical,
           region: profileRegion,
           isVerified: true,
+          thumbnailUrl: thumbnailUrl,
         ),
       );
     }
     return result;
   }
+
+  String? _extractThumbnail(String item, String description, Uri baseUri) {
+    final tagPatterns = <RegExp>[
+      RegExp(r'<media:thumbnail\\b([^>]*)>', caseSensitive: false),
+      RegExp(r'<media:content\\b([^>]*)>', caseSensitive: false),
+      RegExp(r'<enclosure\\b([^>]*)>', caseSensitive: false),
+    ];
+    for (var index = 0; index < tagPatterns.length; index++) {
+      for (final match in tagPatterns[index].allMatches(item)) {
+        final attributes = match.group(1) ?? '';
+        if (index == 1 &&
+            !RegExp(r'''(?:medium\\s*=\\s*["']image["']|type\\s*=\\s*["']image/)''',
+              caseSensitive: false,
+            ).hasMatch(attributes)) {
+          continue;
+        }
+        final url = RegExp(
+          r'''url\\s*=\\s*["']([^"']+)["']''',
+          caseSensitive: false,
+        ).firstMatch(attributes)?.group(1);
+        final resolved = url == null ? null : baseUri.resolve(_decodeEntities(url));
+        if (resolved != null && _isSafeImageUrl(resolved)) {
+          return resolved.toString();
+        }
+      }
+    }
+
+    final decodedDescription = _decodeEntities(description);
+    final imageSource = RegExp(
+      r'''<img\\b[^>]*\\bsrc\\s*=\\s*["']([^"']+)["']''',
+      caseSensitive: false,
+    ).firstMatch(decodedDescription)?.group(1);
+    if (imageSource == null) return null;
+    final resolved = baseUri.resolve(imageSource.trim());
+    return _isSafeImageUrl(resolved) ? resolved.toString() : null;
+  }
+
+  bool _isSafeImageUrl(Uri uri) =>
+      uri.scheme == 'https' && uri.host.isNotEmpty && uri.userInfo.isEmpty;
 
   bool _containsKeyword(String text, String keyword) {
     final normalizedKeyword = keyword.toLowerCase();
