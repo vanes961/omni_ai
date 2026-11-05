@@ -207,6 +207,21 @@ void main() {
     );
   });
 
+  test('explicitly selected news interests affect ranking without favorites', () {
+    final profile = analytics.analyze([], now: now);
+    final unrelated = _news('unrelated', topics: ['gardening']);
+    final selected = _news('selected', topics: ['anime']);
+
+    final ranked = analytics.rankNews(
+      [unrelated, selected],
+      profile,
+      selectedTopics: [' Anime '],
+    );
+
+    expect(ranked.map((article) => article.id), ['selected', 'unrelated']);
+    expect(ranked, hasLength(2));
+  });
+
   test('empty favorites do not alter result order', () {
     final items = [
       _media('a', 'First', categories: ['Drama']),
