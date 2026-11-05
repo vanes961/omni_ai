@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:omni_ai/core/ai_engine/services/ai_engine.dart';
@@ -19,6 +20,7 @@ import 'package:omni_ai/features/favorites/data/favorites_repository.dart';
 import 'package:omni_ai/features/favorites/data/interest_feedback_repository.dart';
 import 'package:omni_ai/features/favorites/services/favorite_interest_analytics.dart';
 import 'package:omni_ai/features/news/services/news_rss_service.dart';
+import 'package:omni_ai/features/news/services/news_article_reader.dart';
 import 'package:omni_ai/features/news/services/news_digest_service.dart';
 import 'package:omni_ai/features/news/services/news_source_localization_service.dart';
 import 'package:omni_ai/features/news/services/news_reminder_service.dart';
@@ -55,6 +57,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   bool _saving = false;
   String? _status;
   late final NewsRssService _newsService;
+  late final NewsArticleReader _articleReader;
   final TextEditingController _customTopicController = TextEditingController();
   final FavoritesRepository _favoritesRepository = FavoritesRepository();
   final InterestFeedbackRepository _feedbackRepository =
@@ -118,6 +121,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
     _repository =
         widget.repository ?? SharedPreferencesNewsInterestRepository();
     _newsService = widget.newsService ?? NewsRssService();
+    _articleReader = NewsArticleReader();
     _newsCache = widget.newsCache ?? SharedPreferencesNewsCache();
     _profileFuture = _loadProfile();
     unawaited(_loadReactionWeights());
@@ -129,6 +133,7 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
   void dispose() {
     if (_ownsRepository) unawaited(_repository.dispose());
     _newsService.dispose();
+    _articleReader.dispose();
     _customTopicController.dispose();
     super.dispose();
   }
@@ -1127,75 +1132,112 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
 
   Future<void> _openArticle(NewsArticle article) async {
     unawaited(_reactToArticle(article, NewsReaction.opened));
+    final articleFuture = _articleReader.read(article);
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: SystemCorePalette.panel,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  article.sourceName.toUpperCase(),
-                  style: const TextStyle(
-                    color: SystemCorePalette.green,
-                    fontSize: 12,
-                  ),
+      builder: (context) => FutureBuilder<NewsArticle>(
+        future: articleFuture,
+        initialData: article,
+        builder: (context, snapshot) {
+          final displayArticle = snapshot.data ?? article;
+          final isLoading = snapshot.connectionState == ConnectionState.waiting;
+          final body = displayArticle.content.isNotEmpty
+              ? displayArticle.content
+              : displayArticle.summary;
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (displayArticle.thumbnailUrl != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedNetworkImage(
+                          imageUrl: displayArticle.thumbnailUrl!,
+                          width: double.infinity,
+                          height: 190,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const SizedBox(
+                            height: 190,
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                          errorWidget: (context, url, error) =>
+                              const SizedBox.shrink(),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    Text(
+                      displayArticle.sourceName.toUpperCase(),
+                      style: const TextStyle(
+                        color: SystemCorePalette.green,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      displayArticle.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (isLoading && displayArticle.content.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 10),
+                        child: LinearProgressIndicator(),
+                      ),
+                    Text(
+                      body.isEmpty
+                          ? 'Источник не предоставил текст публикации. Откройте оригинальный материал.'
+                          : body,
+                      style: const TextStyle(color: Colors.white70, height: 1.6),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Опубликовано: ${displayArticle.publishedAt.toLocal()}',
+                      style: const TextStyle(
+                        color: SystemCorePalette.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (!isLoading && displayArticle.content.isEmpty) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Полный текст не удалось получить автоматически. Доступный фрагмент показан выше.',
+                        style: TextStyle(
+                          color: SystemCorePalette.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 18),
+                    FilledButton.icon(
+                      onPressed: () async {
+                        final uri = Uri.tryParse(displayArticle.sourceUrl);
+                        if (uri != null && uri.scheme == 'https') {
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('ОТКРЫТЬ ОРИГИНАЛ'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  article.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  article.summary.isEmpty
-                      ? 'Источник не предоставил краткое описание. Откройте оригинальную публикацию.'
-                      : article.summary,
-                  style: const TextStyle(color: Colors.white70, height: 1.5),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Опубликовано: ${article.publishedAt.toLocal()}',
-                  style: const TextStyle(
-                    color: SystemCorePalette.muted,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                FilledButton.icon(
-                  onPressed: () async {
-                    final uri = Uri.tryParse(article.sourceUrl);
-                    if (uri != null && uri.scheme == 'https') {
-                      await launchUrl(
-                        uri,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.open_in_new),
-                  label: const Text('ОТКРЫТЬ ИСТОЧНИК'),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'В приложении показан RSS-фрагмент и краткое описание. Полный материал принадлежит издателю.',
-                  style: TextStyle(
-                    color: SystemCorePalette.muted,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -1599,6 +1641,22 @@ class _NewsCenterPageState extends State<NewsCenterPage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
+                                      if (article.thumbnailUrl != null) ...[
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(10),
+                                          child: CachedNetworkImage(
+                                            imageUrl: article.thumbnailUrl!,
+                                            width: double.infinity,
+                                            height: 132,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) =>
+                                                const SizedBox(height: 132),
+                                            errorWidget: (context, url, error) =>
+                                                const SizedBox.shrink(),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                      ],
                                       Row(
                                         children: [
                                           Expanded(
